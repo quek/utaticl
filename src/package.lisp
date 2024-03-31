@@ -6,3 +6,6 @@
 
 (defpackage :ig
   (:use :cl))
+
+(defpackage :ig-backend
+  (:use :cl))
