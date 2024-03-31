@@ -9,7 +9,7 @@ Windows の環境変数を編集から PATH に C:\msys64\mingw64\bin を追加
 ```
 pacman -S mingw64/mingw-w64-x86_64-cmake
 pacman -S mingw64/mingw-w64-x86_64-SDL2
-cd lib/cimgui/backend_test
+cd lib/cimgui/backend_test/example_sdl_opengl3
 mkdir build
 cd build
 cmake -DSDL_PATH="" ..
