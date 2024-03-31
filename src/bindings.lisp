@@ -7,3 +7,7 @@
 (cstruct ig::vec2 "ImVec2"
          (x "x" :type :float)
          (y "y" :type :float))
+
+;; (cstruct-and-class-item ig::vec2 "ImVec2"
+;;          (x "x" :type :float)
+;;          (y "y" :type :float))

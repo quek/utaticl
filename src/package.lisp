@@ -5,7 +5,7 @@
 (defpackage :dgw.ffi)
 
 (defpackage :ig
-  (:use :cl))
+  (:use :cl :cffi))
 
 (defpackage :ig-backend
   (:use :cl))

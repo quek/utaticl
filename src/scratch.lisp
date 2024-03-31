@@ -2,6 +2,10 @@
 
 (in-package :dgw)
 
+(defvar *done* nil)
+;;(setf *done* t)
+
+
 #+nil
 (progn
   (sdl2:init sdl2-ffi::+sdl-init-video+)
@@ -29,13 +33,9 @@
     ))
 
 
-(defvar *done* nil)
-;;(setf *done* t)
-
 (defun gui-loop (window gl-context e)
   (loop while (/= (sdl2-ffi.functions:sdl-poll-event e) 0)
         do (ig-backend::impl-sdl2-process-event (autowrap:ptr e))
-           (print e)
            (if (eq (sdl2:get-event-type e) sdl2-ffi::+sdl-quit+)
                (setf *done* t)
                (if (and (eq (sdl2:get-event-type e) sdl2-ffi::+sdl-windowevent+)
@@ -51,12 +51,8 @@
     (setf (cffi:mem-ref openp :bool) t)
     (when (ig::begin "Hello" openp 0)
       (ig::text (format nil "Hello ~a ~a."(lisp-implementation-type) (lisp-implementation-version)))
-      (cffi:with-foreign-object (size '(:struct ig::vec2))
-        (setf (cffi:foreign-slot-value size '(:struct ig::vec2) 'ig::x) 40.0
-              (cffi:foreign-slot-value size '(:struct ig::vec2) 'ig::y) 200.0)
-        #+nil
-        (when (ig::button "Exit" size)
-          (setf *done* t)))))
+      (when (ig::button "Exit" '(ig::x 200.0 ig::y 40.0))
+        (setf *done* t))))
   (ig::end)
   
   (ig::render)

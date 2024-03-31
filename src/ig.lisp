@@ -1,7 +1,23 @@
 (cl:in-package :ig)
 
-;;(cffi:load-foreign-library "cimgui.dll")
-(cffi:load-foreign-library "cimgui_sdl.dll")
+;; (defmethod translate-from-foreign (pointer (type vec2))
+;;   (with-foreign-slots ((x y) pointer (:struct vec2))
+;;     (cons x y)))
+
+;; (defmethod translate-into-foreign-memory (object (type vec2) pointer)
+;;   (with-foreign-slots ((x y) pointer (:struct vec2))
+;;     (setf x (car object)
+;;           y (cdr object))))
+
+;; (defmethod translate-to-foreign (object (type vec2))
+;;   (let ((p (foreign-alloc '(:struct vec2))))
+;;     (translate-into-foreign-memory object type p)
+;;     (values p t)))
+
+;; (defmethod free-translated-object (pointer (type vec2) freep)
+;;   (when freep
+;;     (foreign-free pointer)))
+
 
 (cffi:defcfun ("igCreateContext" create-context) :pointer
   (x :pointer))
