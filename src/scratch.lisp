@@ -51,7 +51,9 @@
     (setf (cffi:mem-ref openp :bool) t)
     (when (ig::begin "Hello" openp 0)
       (ig::text (format nil "Hello ~a ~a."(lisp-implementation-type) (lisp-implementation-version)))
-      (when (ig::button "Exit" '(ig::x 200.0 ig::y 40.0))
+      (when (ig::button "Hi!" '(100.0 35.0))
+        (print 'hi))
+      (when (ig::button "Exit" '(200.0 40.0))
         (setf *done* t))))
   (ig::end)
   

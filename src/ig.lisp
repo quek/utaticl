@@ -1,20 +1,22 @@
 (cl:in-package :ig)
 
-;; (defmethod translate-from-foreign (pointer (type vec2))
-;;   (with-foreign-slots ((x y) pointer (:struct vec2))
-;;     (cons x y)))
+(defmethod translate-from-foreign (pointer (type vec2-tclass))
+  (with-foreign-slots ((x y) pointer (:struct vec2))
+    (list x y)))
 
-;; (defmethod translate-into-foreign-memory (object (type vec2) pointer)
-;;   (with-foreign-slots ((x y) pointer (:struct vec2))
-;;     (setf x (car object)
-;;           y (cdr object))))
+(defmethod translate-into-foreign-memory (object (type vec2-tclass) pointer)
+  (with-foreign-slots ((x y) pointer (:struct vec2))
+    (setf x (car object)
+          y (cadr object))))
 
-;; (defmethod translate-to-foreign (object (type vec2))
+;; 定義しなくてもいい？
+;; (defmethod cffi:translate-to-foreign (object (type vec2-tclass))
 ;;   (let ((p (foreign-alloc '(:struct vec2))))
 ;;     (translate-into-foreign-memory object type p)
 ;;     (values p t)))
 
-;; (defmethod free-translated-object (pointer (type vec2) freep)
+;; 定義しなくてもいい？
+;; (defmethod cffi:free-translated-object (pointer (type vec2-tclass) freep)
 ;;   (when freep
 ;;     (foreign-free pointer)))
 
