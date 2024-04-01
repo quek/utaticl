@@ -9,3 +9,6 @@
 
 (defpackage :ig-backend
   (:use :cl))
+
+(defpackage :vst3
+  (:use :cl :cffi))

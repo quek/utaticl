@@ -12,11 +12,13 @@
   ((:file "package")
    (:file "library")
    ;; (:file "autowrap")
-   (:cffi-grovel-file "bindings")
+   (:cffi-grovel-file "ig-grovel")
    ;(:cffi-wrapper-file "wrapper")
    (:file "ig")
    (:file "ig-backend")
-   (:file "scratch")
+   (:cffi-grovel-file "vst3-grovel")
+   (:file "vst3")
+   (:file "ui")
    ;; (:module autowrap-spec
    ;;  :pathname "spec"
    ;;  :components ((:static-file "cimgui.h")))
