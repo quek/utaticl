@@ -48,30 +48,24 @@
 
 (defvar *funknown-iid* (make-tuid #x00000000 #x00000000 #xC0000000 #x00000046))
 
+
+(defun get-plugin-factory (vst3-path)
+  ;; TODO どこかで library を close-foreign-library する
+  (let ((library (cffi:load-foreign-library vst3-path)))
+    (cffi:foreign-funcall-pointer
+     (cffi:foreign-symbol-pointer "InitDll" :library library) ())
+    (make-instance
+     'plugin-factory
+     :ptr (cffi:foreign-funcall-pointer
+           (cffi:foreign-symbol-pointer "GetPluginFactory" :library library) ()
+           :pointer))))
+
+
 (defclass unknown ()
   ((ptr :initarg :ptr :accessor .ptr)
    (instance :accessor .instance)
    (vtbl :accessor .vtbl)))
 (setf (gethash *funknown-iid* *iid-class-map*) 'unknown)
-
-(defmacro call (this method &rest args)
-  (let ((self (gensym "SELF"))
-        (method-pointer (gensym "METHOD-POINTER")))
-    `(let* ((,self ,this)
-            (,method-pointer (funcall
-                              (symbol-function
-                               (intern
-                                (format nil "~a~a-VTBL-~a"
-                                        (if (eq (type-of ,self) 'unknown)
-                                            "F" "I")
-                                        (type-of ,self)
-                                        ',method)
-                                :vst3))
-                              (.vtbl ,self))))
-       (cffi:foreign-funcall-pointer
-        ,method-pointer ()
-        :pointer (.ptr ,self)
-        ,@args))))
 
 (defmethod initialize-instance :after ((self unknown) &key ptr)
   (setf (.instance self)
@@ -89,7 +83,20 @@
                               #'funknown-vtbl
                               (symbol-function (intern (format nil "I~a-VTBL" (type-of self))
                                                        :vst3)))
-                          (.instance self)))))
+                          (.instance self))))
+  (let ((release (funcall (if (eq (type-of self) 'unknown)
+                              #'funknown-vtbl-release
+                              (symbol-function (intern (format nil "I~a-VTBL-RELEASE" (type-of self))
+                                                       :vst3)))
+                          (.vtbl self))))
+   (sb-ext:finalize self
+                    (lambda ()
+                      (print 'finalize)
+                      (print
+                       (cffi::foreign-funcall-pointer
+                        release ()
+                        :pointer ptr
+                        :uint32))))))
 
 (defmethod query-interface ((self unknown) iid)
   (cffi:with-foreign-objects ((ptr '(:pointer :void)))
@@ -101,6 +108,9 @@
         (make-instance (gethash iid *iid-class-map*)
                        :ptr (cffi:mem-ref ptr :pointer))
         nil)))
+
+(defmethod release ((self unknown))
+  (call self release :uint32))
 
 (defvar *iplugin-factory-iid* (make-tuid #x7A4D811C #x52114A1F #xAED9D2EE #x0B43BF9F))
 

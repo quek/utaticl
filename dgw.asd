@@ -17,6 +17,7 @@
    ;(:cffi-wrapper-file "wrapper")
    (:file "ig")
    (:file "ig-backend")
+   (:file "vst3-macro")
    (:cffi-grovel-file "vst3-grovel")
    (:file "vst3")
    (:file "ui")
