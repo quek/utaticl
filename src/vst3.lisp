@@ -109,3 +109,14 @@
 
 (defclass plugin-factory3 (plugin-factory) ())
 (setf (gethash *iplugin-factory3-iid* *iid-class-map*) 'plugin-factory3)
+
+(defmethod get-class-info-unicode ((self plugin-factory3) index)
+  (cffi:with-foreign-objects ((class-info '(:struct pclass-info-w)))
+    (if (= +kresult-ok+
+           (cffi:foreign-funcall-pointer
+            (iplugin-factory3-vtbl-get-class-info-unicode (.vtbl self)) ()
+            :pointer (.ptr self)
+            :pointer class-info
+            tresult))
+        (make-pclass-info-w-from-pointer class-info)
+        nil)))

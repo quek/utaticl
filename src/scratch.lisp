@@ -47,7 +47,8 @@
   (vst3::query-interface x vst3::*iplugin-factory-iid*))
 ;;⇒ #<VST3::PLUGIN-FACTORY {1003CDE883}>
 
-(let ((x (make-instance 'vst3::plugin-factory :ptr dexed-plugin-factory)))
-  (vst3::query-interface x vst3::*iplugin-factory3-iid*))
-;;⇒ #<VST3::PLUGIN-FACTORY3 {10075D4873}>
+(let* ((x (make-instance 'vst3::plugin-factory :ptr dexed-plugin-factory))
+       (f3 (vst3::query-interface x vst3::*iplugin-factory3-iid*)))
+  (vst3::get-class-info-unicode f3 0))
+
 

@@ -1,6 +1,6 @@
 (defpackage :dgw
   (:use :cl)
-  (:export #:main))
+  (:export #:main #:char16))
 
 (defpackage :dgw.ffi)
 
@@ -11,4 +11,5 @@
   (:use :cl))
 
 (defpackage :vst3
-  (:use :cl :cffi))
+  (:use :cl :cffi)
+  (:import-from :dgw #:char16))

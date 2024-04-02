@@ -5,6 +5,18 @@
 (ctype tresult "Steinberg_tresult")
 (cvar ("Steinberg_kResultOk" kresult-ok) tresult :read-only t)
 
+(cstruct-and-class-item pclass-info-w "struct Steinberg_PClassInfoW"
+                        (cid "cid" :type :pointer)
+                        (cardinality "cardinality" :type :int32)
+                        (category "category" :type :char :count 32)
+                        (name "name" :type char16 :count 64)
+                        (class-flags "classFlags" :type :uint32)
+                        (sub-categories "subCategories" :type :char :count 128)
+                        (vendor "vendor" :type char16 :count 64)
+                        (version "version" :type char16 :count 64)
+                        (sdk-version "sdkVersion" :type dgw::char16 :count 64)) 
+
+
 (cstruct-and-class-item funknown-vtbl "Steinberg_FUnknownVtbl"
                         (query-interface "queryInterface" :type :pointer)
                         (add-ref "addRef" :type :pointer)

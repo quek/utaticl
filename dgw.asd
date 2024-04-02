@@ -12,6 +12,7 @@
   ((:file "package")
    (:file "library")
    ;; (:file "autowrap")
+   (:file "ffi-type")
    (:cffi-grovel-file "ig-grovel")
    ;(:cffi-wrapper-file "wrapper")
    (:file "ig")
