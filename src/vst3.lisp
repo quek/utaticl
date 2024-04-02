@@ -54,6 +54,25 @@
    (vtbl :accessor .vtbl)))
 (setf (gethash *funknown-iid* *iid-class-map*) 'unknown)
 
+(defmacro call (this method &rest args)
+  (let ((self (gensym "SELF"))
+        (method-pointer (gensym "METHOD-POINTER")))
+    `(let* ((,self ,this)
+            (,method-pointer (funcall
+                              (symbol-function
+                               (intern
+                                (format nil "~a~a-VTBL-~a"
+                                        (if (eq (type-of ,self) 'unknown)
+                                            "F" "I")
+                                        (type-of ,self)
+                                        ',method)
+                                :vst3))
+                              (.vtbl ,self))))
+       (cffi:foreign-funcall-pointer
+        ,method-pointer ()
+        :pointer (.ptr ,self)
+        ,@args))))
+
 (defmethod initialize-instance :after ((self unknown) &key ptr)
   (setf (.instance self)
         (funcall (if (eq (type-of self) 'unknown)
@@ -75,17 +94,12 @@
 (defmethod query-interface ((self unknown) iid)
   (cffi:with-foreign-objects ((ptr '(:pointer :void)))
     (if (= +kresult-ok+
-           (cffi:foreign-funcall-pointer
-            (funcall (if (eq (type-of self) 'unknown)
-                         #'funknown-vtbl-query-interface
-                         (symbol-function (intern (format nil "I~a-VTBL-QUERY-INTERFACE" (type-of self))
-                                                  :vst3)))
-                     (.vtbl self)) ()
-            :pointer (.ptr self)
-            :pointer (sb-sys:vector-sap iid)
-            :pointer ptr
-            vst3::tresult))
-        (make-instance (gethash iid *iid-class-map*) :ptr ptr)
+           (call self query-interface
+                 :pointer (sb-sys:vector-sap iid)
+                 :pointer ptr
+                 vst3::tresult))
+        (make-instance (gethash iid *iid-class-map*)
+                       :ptr (cffi:mem-ref ptr :pointer))
         nil)))
 
 (defvar *iplugin-factory-iid* (make-tuid #x7A4D811C #x52114A1F #xAED9D2EE #x0B43BF9F))
@@ -95,10 +109,7 @@
 (setf (gethash *iplugin-factory-iid* *iid-class-map*) 'plugin-factory)
 
 (defmethod count-classes ((self plugin-factory))
-  (cffi:foreign-funcall-pointer
-   (iplugin-factory-vtbl-count-classes (.vtbl self)) ()
-   :pointer (.ptr self)
-   :int32))
+  (call self count-classes :int32))
 
 (defvar *iplugin-factory2-iid* (make-tuid #x0007B650 #xF24B4C0B #xA464EDB9 #xF00B2ABB))
 
@@ -107,16 +118,15 @@
 
 (defvar *iplugin-factory3-iid* (make-tuid #x4555A2AB #xC1234E57 #x9B122910 #x36878931))
 
-(defclass plugin-factory3 (plugin-factory) ())
+(defclass plugin-factory3 (plugin-factory2) ())
 (setf (gethash *iplugin-factory3-iid* *iid-class-map*) 'plugin-factory3)
 
 (defmethod get-class-info-unicode ((self plugin-factory3) index)
   (cffi:with-foreign-objects ((class-info '(:struct pclass-info-w)))
     (if (= +kresult-ok+
-           (cffi:foreign-funcall-pointer
-            (iplugin-factory3-vtbl-get-class-info-unicode (.vtbl self)) ()
-            :pointer (.ptr self)
-            :pointer class-info
-            tresult))
+           (call self get-class-info-unicode
+                 :int32 index
+                 :pointer class-info
+                 tresult))
         (make-pclass-info-w-from-pointer class-info)
         nil)))
