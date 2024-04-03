@@ -6,7 +6,7 @@
 (cvar ("Steinberg_kResultOk" kresult-ok) tresult :read-only t)
 
 (cstruct-and-class-item pclass-info-w "struct Steinberg_PClassInfoW"
-                        (cid "cid" :type :pointer)
+                        (cid "cid" :type :int8 :count 16)
                         (cardinality "cardinality" :type :int32)
                         (category "category" :type :char :count 32)
                         (name "name" :type char16 :count 64)
@@ -64,3 +64,25 @@
 
 (cstruct-and-class-item iplugin-factory3 "Steinberg_IPluginFactory3"
                         (vtbl "lpVtbl" :type (:pointer (:struct iplugin-factory3-vtbl))))
+
+(cstruct-and-class-item icomponent-vtbl "Steinberg_Vst_IComponentVtbl"
+                        ;; FUnknown
+                        (query-interface "queryInterface" :type :pointer)
+                        (add-ref "addRef" :type :pointer)
+                        (release "release" :type :pointer)
+                        ;; IPluginBase
+                        (initialize "initialize" :type :pointer)
+                        (terminate "terminate" :type :pointer)
+                        ;;IComponet
+                        (get-controller-class-id "getControllerClassId" :type :pointer)
+                        (set-io-mode "setIoMode" :type :pointer)
+                        (get-bus-count "getBusCount" :type :pointer)
+                        (get-bus-info "getBusInfo" :type :pointer)
+                        (get-routing-info "getRoutingInfo" :type :pointer)
+                        (activate-bus "activateBus" :type :pointer)
+                        (set-active "setActive" :type :pointer)
+                        (set-state "setState" :type :pointer)
+                        (get-state "getState" :type :pointer))
+
+(cstruct-and-class-item icomponent "Steinberg_Vst_IComponent"
+                        (vtbl "lpVtbl" :type (:pointer (:struct icomponent-vtbl))))

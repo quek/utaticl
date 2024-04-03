@@ -20,6 +20,8 @@
    (:file "vst3-macro")
    (:cffi-grovel-file "vst3-grovel")
    (:file "vst3")
+   (:file "module")
+   (:file "module-vst3")
    (:file "ui")
    ;; (:module autowrap-spec
    ;;  :pathname "spec"

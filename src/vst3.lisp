@@ -121,6 +121,18 @@
 (defmethod count-classes ((self plugin-factory))
   (call self count-classes :int32))
 
+(defmethod create-instance ((self plugin-factory) cid iid)
+  (cffi:with-foreign-objects ((ptr '(:pointer :void)))
+    (if (= +kresult-ok+
+           (call self create-instance
+                 :pointer cid
+                 :pointer (sb-sys:vector-sap iid)
+                 :pointer ptr
+                 tresult))
+        (make-instance (gethash iid *iid-class-map*)
+                       :ptr (cffi:mem-ref ptr :pointer))
+        nil)))
+
 (defvar *iplugin-factory2-iid* (make-tuid #x0007B650 #xF24B4C0B #xA464EDB9 #xF00B2ABB))
 
 (defclass plugin-factory2 (plugin-factory) ())
@@ -138,5 +150,26 @@
                  :int32 index
                  :pointer class-info
                  tresult))
-        (make-pclass-info-w-from-pointer class-info)
+        (make-instance 'class-info-w :pclass-info (make-pclass-info-w-from-pointer class-info))
         nil)))
+
+(defclass class-info ()
+  ((pclass-info :initarg :pclass-info :reader .pclass-info)))
+
+(defclass class-info2 (class-info) ())
+
+(defclass class-info-w (class-info2) ())
+
+(defmethod .category ((self class-info-w))
+  (pclass-info-w-category (.pclass-info self)))
+
+(defmethod .cid ((self class-info-w))
+  (pclass-info-w-cid (.pclass-info self)))
+
+
+(defvar *icomponent-iid* (make-tuid #xE831FF31 #xF2D54301 #x928EBBEE #x25697802))
+(defclass component (unknown)
+  ())
+(setf (gethash *icomponent-iid* *iid-class-map*) 'component)
+
+(defvar *iparameter-changes-iid* (make-tuid #xA4779663 #x0BB64A56 #xB44384A8 #x466FEB9D))
