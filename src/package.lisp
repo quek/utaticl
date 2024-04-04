@@ -16,3 +16,5 @@
 
 (defpackage :vst3-grovel
   (:use :cl))
+
+(defpackage :vst3-groveling)
