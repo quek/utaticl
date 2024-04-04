@@ -1,7 +1,10 @@
 (in-package :grovel)
 
+(cffi:defctype read-vst3-c-api-h::char :char)
 (cffi:defctype char16 :int16)
-
+(cffi:defctype vst3::char16_t :int16)
+(cffi:defctype vst3::int32_t :int32)
+(cffi:defctype vst3::uint32_t :uint32)
 
 (defvar *vst3-c-api-h* (asdf:system-relative-pathname :dgw "lib/vst3_c_api/vst3_c_api.h"))
 
@@ -58,7 +61,11 @@
                 collect x))))
 
 (defun grovel-type (slot)
-  (gethash (name-c (car slot)) *vst3-grovel-types*))
+  (let ((type (gethash (name-c (car slot)) *vst3-grovel-types*))
+        (count (car (last slot))))
+    (if (consp count)
+        (append type (list :count (car count)))
+        type)))
 
 (defvar *vst3-grovel-types* (make-hash-table :test 'equal))
 
@@ -75,20 +82,20 @@
                      `(,(cadr typedef)
                        ,@(let ((last (car (last typedef))))
                            (when (consp last)
-                             `(:count ,(car last)))))))                             
-        )
-  (let* ((struct (loop for i in *h*
-                         thereis (and (consp (cddr i))
-                                      (string-equal "Steinberg_PClassInfoW"
-                                                    (cadr i))
-                                      i)))
+                             `(:count ,(car last))))))))
+  (let* ((struct
+           (loop for i in *h*
+                   thereis (and (consp (cddr i))
+                                (string-equal "Steinberg_PClassInfoW"
+                                              (cadr i))
+                                i)))
          (slots (loop for i in (caddr struct)
                       for name = (extract-name i)
                       for name-c = (name-c name)
                       for name-lisp = (name-lisp name)
                       for type = (grovel-type i)
                       collect `(,name-lisp ,name-c :type ,@type)))
-         (form `(cstruct-and-class-item ,(name-lisp (cadr struct)) ,(string (cadr struct))
+         (form `(cstruct-and-class-item ,(name-lisp (cadr struct)) ,(format nil "struct ~a" (string (cadr struct)))
                                         ,@slots)))
     (terpri out)
     (pprint-logical-block (out form :prefix "(" :suffix ")")
@@ -97,20 +104,20 @@
       (emit (pprint-pop) out)
       (write-char #\space out)
       (emit (pprint-pop) out)
-      (pprint-indent :block 2 out)
+      (pprint-indent :block 1 out)
       (loop (pprint-exit-if-list-exhausted)
             (pprint-newline :mandatory out)
             (emit (pprint-pop) out)))))
-
-
-
-
-;;⇒ (READ-VST3-C-API-H::|struct| READ-VST3-C-API-H::|Steinberg_PClassInfo|
+;;→ 
+;;   (READ-VST3-C-API-H::|struct| READ-VST3-C-API-H::|Steinberg_PClassInfoW|
 ;;    ((READ-VST3-C-API-H::|Steinberg_TUID| READ-VST3-C-API-H::|cid|)
 ;;     (READ-VST3-C-API-H::|Steinberg_int32| READ-VST3-C-API-H::|cardinality|)
-;;     (READ-VST3-C-API-H::|Steinberg_char8| READ-VST3-C-API-H::|category[32]|)
-;;     (READ-VST3-C-API-H::|Steinberg_char8| READ-VST3-C-API-H::|name[64]|)))
-
-
-
-
+;;     (READ-VST3-C-API-H::|Steinberg_char8| READ-VST3-C-API-H::|category| (32))
+;;     (READ-VST3-C-API-H::|Steinberg_char16| READ-VST3-C-API-H::|name| (64))
+;;     (READ-VST3-C-API-H::|Steinberg_uint32| READ-VST3-C-API-H::|classFlags|)
+;;     (READ-VST3-C-API-H::|Steinberg_char8| READ-VST3-C-API-H::|subCategories|
+;;      (128))
+;;     (READ-VST3-C-API-H::|Steinberg_char16| READ-VST3-C-API-H::|vendor| (64))
+;;     (READ-VST3-C-API-H::|Steinberg_char16| READ-VST3-C-API-H::|version| (64))
+;;     (READ-VST3-C-API-H::|Steinberg_char16| READ-VST3-C-API-H::|sdkVersion| (64)))) 
+;;⇒ NIL
