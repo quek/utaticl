@@ -40,7 +40,12 @@
 (defun |(-reader| (stream char)
   (declare (ignore char))
   (let ((*readtable* (make-readtable nil nil)))
-   (read-delimited-list #\) stream t)))
+    (read-delimited-list #\) stream t)))
+
+(defun |[-reader| (stream char)
+  (declare (ignore char))
+  (let ((*readtable* (make-readtable nil nil)))
+   (read-delimited-list #\] stream t)))
 
 (defun |{-reader| (stream char)
   (declare (ignore char))
@@ -68,8 +73,10 @@
     (set-macro-character #\\ '\\-reader nil readtable)
     (set-macro-character #\{ '|{-reader| nil readtable)
     (set-macro-character #\( '|(-reader| nil readtable)
+    (set-macro-character #\[ '|[-reader| nil readtable)
     (set-macro-character #\} (get-macro-character #\) readtable) nil readtable)
     (set-macro-character #\) (get-macro-character #\) readtable) nil readtable)
+    (set-macro-character #\] (get-macro-character #\) readtable) nil readtable)
     (set-macro-character #\; (get-macro-character #\) readtable) nil readtable)
     (when newline
       (set-macro-character #\newline (get-macro-character #\) readtable) nil readtable))
