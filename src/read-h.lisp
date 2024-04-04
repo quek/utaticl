@@ -1,4 +1,4 @@
-(in-package :vst3-grovel)
+(in-package :grovel)
 
 (defvar *statement* nil)
 
@@ -81,14 +81,3 @@
       (set-macro-character #\_ 'symbol-reader t readtable))
     
     readtable))
-
-(defvar *h* nil)
-
-(setf *h*
-      (with-open-file (in (asdf:system-relative-pathname :dgw "lib/vst3_c_api/vst3_c_api.h"))
-        (let ((*readtable* (make-readtable t nil))
-              (*package* (find-package :vst3-groveling))
-              (*statement* nil))
-          (loop for x = (read in nil in)
-                until (eq x in)
-                collect x))))

@@ -1,6 +1,6 @@
 (defpackage :dgw
   (:use :cl)
-  (:export #:main #:char16))
+  (:export #:main))
 
 (defpackage :dgw.ffi)
 
@@ -10,11 +10,12 @@
 (defpackage :ig-backend
   (:use :cl))
 
+(defpackage :read-vst3-c-api-h)
+
+(defpackage :grovel
+  (:use :cl)
+  (:export #:char16))
+
 (defpackage :vst3
   (:use :cl :cffi)
-  (:import-from :dgw #:char16))
-
-(defpackage :vst3-grovel
-  (:use :cl))
-
-(defpackage :vst3-groveling)
+  (:import-from :grovel #:char16))
