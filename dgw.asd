@@ -4,7 +4,7 @@
 (asdf:defsystem :dgw
   :licence "GPL3"
   :defsystem-depends-on ("cffi-grovel")
-  :depends-on ("cffi" "cffi-libffi" "sdl2" "cl-opengl")
+  :depends-on ("cffi" "cffi-libffi" "sdl2" "cl-opengl" "vst3-c-api")
   ;; :depends-on ("cl-autowrap/libffi")
   :serial t
   :pathname "src"
@@ -18,8 +18,8 @@
    (:file "ig")
    (:file "ig-backend")
    (:file "vst3-macro")
-   (:file "make-vst3-grovel")
-   (:cffi-grovel-file "XXXvst3-grovel")
+   ;;(:file "make-vst3-grovel")
+   ;;(:cffi-grovel-file "XXXvst3-grovel")
    (:cffi-grovel-file "vst3-grovel")
    (:file "vst3")
    (:file "module")
