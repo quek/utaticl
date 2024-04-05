@@ -23,6 +23,10 @@
                          finally (write-char c2 out)))))
           (t '/))))
 
+(defun *-reader (stream char)
+  (declare (ignore stream char))
+  '*)
+
 (defun sharpe-reader (stream char)
   (declare (ignore char))
   (let ((*readtable* (make-readtable nil t)))
@@ -70,6 +74,7 @@
     (set-macro-character #\| '|\|-reader| nil readtable)
     (set-macro-character #\# 'sharpe-reader nil readtable)
     (set-macro-character #\/ 'slash-reader nil readtable)
+    (set-macro-character #\* '*-reader nil readtable)
     (set-macro-character #\\ '\\-reader nil readtable)
     (set-macro-character #\{ '|{-reader| nil readtable)
     (set-macro-character #\( '|(-reader| nil readtable)
