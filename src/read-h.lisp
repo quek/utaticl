@@ -93,3 +93,12 @@
       (set-macro-character #\_ 'symbol-reader t readtable))
     
     readtable))
+
+(defun read-h (path)
+  (with-open-file (in path)
+    (let ((*readtable* (make-readtable t nil))
+          (*package* (find-package :read-vst3-c-api-h))
+          (*statement* nil))
+      (loop for x = (read in nil in)
+            until (eq x in)
+            collect x))))

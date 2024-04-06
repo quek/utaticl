@@ -18,6 +18,7 @@
    (:file "ig")
    (:file "ig-backend")
    (:file "vst3-macro")
+   (:file "vst3-walk")
    ;;(:file "make-vst3-grovel")
    ;;(:cffi-grovel-file "XXXvst3-grovel")
    ;;(:cffi-grovel-file "vst3-grovel")
