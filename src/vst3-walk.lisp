@@ -51,11 +51,10 @@
 (defun lisp-name (symbol)
   (intern
    (with-output-to-string (out)
-     (loop with suppress-hyphen = nil
-           for first = t then nil
+     (loop with suppress-hyphen = t
            for c across (symbol-name symbol)
            do (cond ((upper-case-p c)
-                     (when (and (not first) (not suppress-hyphen))
+                     (unless suppress-hyphen
                        (write-char #\- out))
                      (setf suppress-hyphen t)
                      (write-char (char-upcase c) out))
