@@ -20,7 +20,7 @@
    (:file "vst3-macro")
    ;;(:file "make-vst3-grovel")
    ;;(:cffi-grovel-file "XXXvst3-grovel")
-   (:cffi-grovel-file "vst3-grovel")
+   ;;(:cffi-grovel-file "vst3-grovel")
    (:file "vst3")
    (:file "module")
    (:file "module-vst3")

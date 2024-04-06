@@ -7,14 +7,17 @@
             (,method-pointer (funcall
                               (symbol-function
                                (intern
-                                (format nil "~a~a-VTBL-~a"
-                                        (if (eq (type-of ,self) 'unknown)
-                                            "F" "I")
+                                (format nil "STEINBERG-~a.LP-VTBL*.~a"
                                         (type-of ,self)
                                         ',method)
-                                :vst3))
-                              (.vtbl ,self))))
+                                :vst3-c-api))
+                              (.instance ,self))))
        (cffi:foreign-funcall-pointer
         ,method-pointer ()
-        :pointer (.ptr ,self)
+        :pointer (funcall (symbol-function
+                           (intern (format nil
+                                           "STEINBERG-~a-PTR"
+                                           (type-of self))
+                                   :vst3-c-api))
+                          (.instance self))
         ,@args))))
