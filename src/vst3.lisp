@@ -95,7 +95,7 @@
            (call self query-interface
                  :pointer (sb-sys:vector-sap iid)
                  :pointer ptr
-                 tresult))
+                 #.(autowrap:basic-foreign-type (autowrap:find-type 'vst3-c-api:steinberg-tresult))))
         (make-instance (gethash iid *iid-class-map*)
                        :ptr (cffi:mem-ref ptr :pointer))
         nil)))
