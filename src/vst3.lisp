@@ -35,7 +35,6 @@ vst3-c-api:+steinberg-k-out-of-memory+
 (defmacro ensure-ok (form)
   (let ((result (gensym)))
     `(let ((,result ,form))
-       (print (list 'result ,result))
        (case ,result
          (#.vst3-c-api::+steinberg-k-result-ok+ ,result)
          (#.vst3-c-api:+steinberg-k-no-interface+ (error (make-condition 'no-interface-error :code ,result)))
@@ -94,12 +93,14 @@ vst3-c-api:+steinberg-k-out-of-memory+
             thereis (and (equal (vst3::.category class-info) "Audio Module Class")
                          (create-instance self (vst3::.cid class-info) vst3-ffi::+steinberg-vst-icomponent-iid+)))))
 
+(defmethod create-instance ((self vst3-ffi::steinberg-iplugin-factory) (cid simple-array) iid)
+  (create-instance self (sb-sys:vector-sap cid) iid))
+
 (defmethod create-instance ((self vst3-ffi::steinberg-iplugin-factory) cid iid)
   (cffi:with-foreign-objects ((ptr :pointer))
     (ensure-ok (vst3-ffi::create-instance self cid (sb-sys:vector-sap iid) ptr))
     (make-instance (gethash iid vst3-walk::*iid-class-map*)
                    :ptr (cffi:mem-ref ptr :pointer))))
-
 
 (defmethod .category ((self vst3-c-api:steinberg-p-class-info))
   (cffi:foreign-string-to-lisp

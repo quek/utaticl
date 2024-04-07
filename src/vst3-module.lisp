@@ -15,8 +15,8 @@
                        (vst3::no-interface-error ()
                            (setf single-component-p nil)
                          (vst3::create-instance factory
-                                                (sb-sys:vector-sap vst3-ffi::+steinberg-vst-iedit-controller-iid+)
-                                                (vst3::get-controller-class-id component))))))
+                                                (vst3::get-controller-class-id component)
+                                                vst3-ffi::+steinberg-vst-iedit-controller-iid+)))))
     (make-instance 'module-vst3
                    :factory factory
                    :conponent component
@@ -26,3 +26,5 @@
 
 #+nil
 (module-vst3-load "c:/Program Files/Common Files/VST3/Dexed.vst3")
+;;⇒ #<MODULE-VST3 {1003BD1A83}>
+
