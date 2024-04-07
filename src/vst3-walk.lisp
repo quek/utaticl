@@ -116,23 +116,30 @@
     `(defmethod ,method-name ((self ,(lisp-name class-name)) ,@method-args)
        (cffi:foreign-funcall-pointer
         (,f (.instance self)) ()
-        :pointer (.instance self)
+        :pointer (.ptr self)
         ,@c-call-args
         ,result-type))))
 
 (defclass %funknown ()
-  ((instance :initarg :instance :accessor .instance)))
+  ((ptr :initarg :ptr :reader .ptr)
+   (instance :reader .instance)))
 
 (defun def-vst3-interface (comment vtbl interface iid)
-  (let ((class-name (lisp-name (caddr interface))))
+  (let* ((c-class (caddr interface))
+         (class-name (lisp-name c-class)))
     `(progn
        (defclass ,class-name (%funknown)
          ()
          (:documentation ,(subseq (cadr comment)
                                   (position #\S (cadr comment)))))
+       (defmethod initialize-instance :after ((self ,class-name) &key ptr)
+         (setf (slot-value self 'instance)
+               (,(find-symbol
+                  (format nil "MAKE-~a" (autowrap:default-c-to-lisp (symbol-name c-class)))
+                  :vst3-c-api) :ptr ptr)))
        ,@(loop for field in (cadddr vtbl)
                unless (eq :comment (and (consp field) (car field)))
-                 collect (parse-field (caddr interface) field))
+                 collect (parse-field c-class field))
        (alexandria:define-constant ,(intern (format nil "+~a+" (lisp-name (nth 3 iid))))
            (parse-uid ,@(remove 'grovel::|,| (nth 6 iid)))
          :test #'equalp))))

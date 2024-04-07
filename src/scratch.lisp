@@ -1,5 +1,20 @@
 (in-package :dgw)
 
+(let* ((x (vst3::get-plugin-factory "c:/Program Files/Common Files/VST3/Dexed.vst3")))
+  (vst3-ffi::count-classes x))
+
+(let* ((factory (vst3::get-plugin-factory "c:/Program Files/Common Files/VST3/Dexed.vst3"))
+       (factory3 (cffi:with-foreign-object (obj :pointer)
+                   (if (= vst3-c-api::+steinberg-k-result-ok+
+                          (vst3-ffi::query-interface factory vst3-ffi::+steinberg-iplugin-factory3-iid+ obj))
+                       (make-instance 'vst3-ffi::steinberg-iplugin-factory3 :ptr (cffi:mem-ref obj :pointer))))))
+  (vst3-ffi::count-classes factory3))
+
+
+
+
+
+
 (let* ((x (vst3::get-plugin-factory "c:/Program Files/Common Files/VST3/Dexed.vst3"))
        (factory3 (vst3::query-interface x vst3::*iplugin-factory3-iid*)))
   (loop for i below (vst3::count-classes factory3)

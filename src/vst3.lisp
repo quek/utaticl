@@ -56,10 +56,10 @@
   (let ((library (cffi:load-foreign-library vst3-path)))
     (cffi:foreign-funcall-pointer
      (cffi:foreign-symbol-pointer "InitDll" :library library) ())
-    (make-instance 'i-plugin-factory
-                   :ptr (cffi:foreign-funcall-pointer
-                         (cffi:foreign-symbol-pointer "GetPluginFactory" :library library) ()
-                         :pointer))))
+    (let ((plugin-factory (cffi:foreign-funcall-pointer
+                           (cffi:foreign-symbol-pointer "GetPluginFactory" :library library) ()
+                           :pointer)))
+      (make-instance 'vst3-ffi::steinberg-iplugin-factory :ptr plugin-factory))))
 
 (defclass f-unknown ()
   ((ptr :initarg :ptr :accessor .ptr)
