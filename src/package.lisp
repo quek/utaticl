@@ -19,6 +19,8 @@
 (defpackage :vst3-walk
   (:use :cl))
 
+(defpackage :vst3-ffi)
+
 (defpackage :vst3
   (:use :cl :cffi)
   (:import-from :grovel #:char16))

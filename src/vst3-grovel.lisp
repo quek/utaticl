@@ -9,12 +9,12 @@
                         (cid "cid" :type :int8 :count 16)
                         (cardinality "cardinality" :type :int32)
                         (category "category" :type :char :count 32)
-                        (name "name" :type char16 :count 64)
+                        (name "name" :type :int16 :count 64)
                         (class-flags "classFlags" :type :uint32)
                         (sub-categories "subCategories" :type :char :count 128)
-                        (vendor "vendor" :type char16 :count 64)
-                        (version "version" :type char16 :count 64)
-                        (sdk-version "sdkVersion" :type dgw::char16 :count 64)) 
+                        (vendor "vendor" :type :int16 :count 64)
+                        (version "version" :type :int16 :count 64)
+                        (sdk-version "sdkVersion" :type :int16 :count 64)) 
 
 
 (cstruct-and-class-item funknown-vtbl "Steinberg_FUnknownVtbl"

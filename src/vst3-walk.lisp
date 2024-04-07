@@ -54,7 +54,9 @@
                      (write-char (char-upcase c) out)))))))
 
 (defun ffi-type (symbol)
-  (cond ((string-equal symbol "float") :float)
+  (cond ((string-equal symbol "double") :double)
+        ((string-equal symbol "float") :float)
+        ((string-equal symbol "void") :void)
         (t (autowrap:basic-foreign-type
             (autowrap:find-type
              (find-symbol
@@ -81,7 +83,7 @@
   (loop for arg in (cdr (split-by-comma args))
         for var = (lisp-name (car (last arg)))
         nconc (let ((xs (remove "const" (butlast arg) :test #'string-equal)))
-                     (cond ((string-equal "*" (print (car (last xs))))
+                     (cond ((string-equal "*" (car (last xs)))
                             `(:pointer ,var))
                            ((equalp xs '(read-vst3-c-api-h::|Steinberg_TUID|))
                             `(:pointer (sb-sys:vector-sap ,var)))
@@ -94,13 +96,23 @@
            (autowrap:default-c-to-lisp (symbol-name method-name)))
    :vst3-c-api))
 
+(defun parse-field-result-type (exp)
+  (let ((xs (loop for x in exp
+                  if (consp x)
+                    do (loop-finish)
+                  unless (or (string-equal "const" x)
+                             (string-equal "struct" x))
+                    collect x)))
+    (cond ((string-equal "*" (car (last xs)))
+           :pointer)
+          (t (ffi-type (car xs))))))
+
 (defun parse-field (class-name field)
   (let* ((method-name (lisp-name (car (last (find-if #'consp field)))))
          (method-args (parse-method-args (car (last field))))
          (c-call-args (parse-c-call-args (car (last field))))
-         (f (find-vst3-c-api-symbol class-name method-name))
-
-         (result-type (ffi-type (car field))))
+         (f (find-vst3-c-api-symbol class-name (car (last (find-if #'consp field)))))
+         (result-type (parse-field-result-type field)))
     `(defmethod ,method-name ((self ,(lisp-name class-name)) ,@method-args)
        (cffi:foreign-funcall-pointer
         (,f (.instance self)) ()
@@ -129,6 +141,3 @@
   `(progn
      ,@(loop for (comment vtbl interface iid) on (seek-to-interfaces *h*) by #'cddddr
              collect (def-vst3-interface comment vtbl interface iid))))
-
-#+nil
-(def-vst3-interfaces)
