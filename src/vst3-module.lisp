@@ -1,24 +1,28 @@
 (in-package :dgw)
 
 (defclass module-vst3 (module)
-  ((library :accessor .library)))
-
-(defvar *x* nil)
+  ((factory :initarg :factory :reader .factory)
+   (component :initarg :conponent :reader .component)
+   (controller :initarg :controller :reader .controller)
+   (single-component-p :initarg :single-component-p :reader .single-component-p)))
 
 
 (defun module-vst3-load (path)
   (let* ((factory (vst3::get-plugin-factory path))
-         (factory (or (vst3::query-interface factory vst3::*iplugin-factory3-iid*)
-                      (vst3::query-interface factory vst3::*iplugin-factory2-iid*))))
-    (let ((component (vst3::create-component factory)))
-      component)))
+         (component (vst3::create-component factory))
+         (single-component-p t)
+         (controller (handler-case (vst3::query-interface component vst3-ffi::+steinberg-vst-iedit-controller-iid+)
+                       (vst3::no-interface-error ()
+                           (setf single-component-p nil)
+                         (vst3::create-instance factory
+                                                (sb-sys:vector-sap vst3-ffi::+steinberg-vst-iedit-controller-iid+)
+                                                (vst3::get-controller-class-id component))))))
+    (make-instance 'module-vst3
+                   :factory factory
+                   :conponent component
+                   :controller controller
+                   :single-component-p single-component-p)))
 
 
 #+nil
 (module-vst3-load "c:/Program Files/Common Files/VST3/Dexed.vst3")
-;;⇒ #<VST3::VST-I-COMPONENT {1001028823}>
-
-
-
-
-
