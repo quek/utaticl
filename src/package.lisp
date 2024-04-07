@@ -13,8 +13,7 @@
 (defpackage :read-vst3-c-api-h)
 
 (defpackage :grovel
-  (:use :cl)
-  (:export #:char16))
+  (:use :cl))
 
 (defpackage :vst3-walk
   (:use :cl))
@@ -22,5 +21,4 @@
 (defpackage :vst3-ffi)
 
 (defpackage :vst3
-  (:use :cl :cffi)
-  (:import-from :grovel #:char16))
+  (:use :cl :cffi))
