@@ -1,7 +1,14 @@
+(declaim (optimize (debug 3)))
+
 (in-package :vst3-walk)
 
 (defvar *vst3-c-api-h* (asdf:system-relative-pathname :dgw "lib/vst3_c_api/vst3_c_api.h"))
 (defvar *h* (grovel::read-h *vst3-c-api-h*))
+
+
+(cffi:defctype steinberg-tresult :int32)
+(cffi:defctype steinberg-uint32 :int32)
+
 
 (defun seek-to-interfaces (h)
   (loop for (x . xs) on h
@@ -9,44 +16,25 @@
                         (search "----- Interfaces -----" (cadr x))
                         xs)))
 
-
-(defun parse-uid (args)
-  "32ビット整数のリストから Steinberg_TUID を生成します。なんでこんな仕様なんだ？"
-  (flet ((bytes1 (int32)
-           (let ((bytes (make-array 4 :element-type 'unsigned-byte :initial-element 0)))
-             (setf (aref bytes 0) (ldb (byte 8 0) int32))
-             (setf (aref bytes 1) (ldb (byte 8 8) int32))
-             (setf (aref bytes 2) (ldb (byte 8 16) int32))
-             (setf (aref bytes 3) (ldb (byte 8 24) int32))
-             bytes))
-         (bytes2 (int32)
-           (let ((bytes (make-array 4 :element-type 'unsigned-byte :initial-element 0)))
-             (setf (aref bytes 0) (ldb (byte 8 16) int32))
-             (setf (aref bytes 1) (ldb (byte 8 24) int32))
-             (setf (aref bytes 2) (ldb (byte 8 0) int32))
-             (setf (aref bytes 3) (ldb (byte 8 8) int32))
-             bytes))
-         (bytes34 (int32)
-           (let ((bytes (make-array 4 :element-type 'unsigned-byte :initial-element 0)))
-             (setf (aref bytes 0) (ldb (byte 8 24) int32))
-             (setf (aref bytes 1) (ldb (byte 8 16) int32))
-             (setf (aref bytes 2) (ldb (byte 8 8) int32))
-             (setf (aref bytes 3) (ldb (byte 8 0) int32))
-             bytes))
-         (parse-args (arg)
-           (parse-integer (symbol-name arg) :start 2 :radix 16)))
-    (let ((tuid (make-array 16 :element-type '(unsigned-byte 8) :initial-element 0))
-          (args (mapcar #'parse-args args)))
-      (loop for i from 0 below 4
-            do (let ((bytes (funcall (case i
-                                       (0 #'bytes1)
-                                       (1 #'bytes2)
-                                       (t #'bytes34))
-                                     (nth i args))))
-                 (loop for j from 0 below 4
-                       do (setf (aref tuid (+ (* i 4) j)) (aref bytes j)))))
-      tuid)))
-
+(defun parse-uid (a b c d)
+  (let ((uid (make-array 16 :element-type '(unsigned-byte 8))))
+    (setf (aref uid 0) (ldb (byte 8 0) a))
+    (setf (aref uid 1) (ldb (byte 8 8) a))
+    (setf (aref uid 2) (ldb (byte 8 16) a))
+    (setf (aref uid 3) (ldb (byte 8 24) a))
+    (setf (aref uid 4) (ldb (byte 8 16) b))
+    (setf (aref uid 5) (ldb (byte 8 24) b))
+    (setf (aref uid 6) (ldb (byte 8 0) b))
+    (setf (aref uid 7) (ldb (byte 8 8) b))
+    (setf (aref uid 8) (ldb (byte 8 24) c))
+    (setf (aref uid 9) (ldb (byte 8 16) c))
+    (setf (aref uid 10) (ldb (byte 8 8) c))
+    (setf (aref uid 11) (ldb (byte 8 0) c))
+    (setf (aref uid 12) (ldb (byte 8 24) d))
+    (setf (aref uid 13) (ldb (byte 8 16) d))
+    (setf (aref uid 14) (ldb (byte 8 8) d))
+    (setf (aref uid 15) (ldb (byte 8 0) d))
+    uid))
 
 (defun lisp-name (symbol)
   (intern
@@ -65,20 +53,58 @@
                      (setf suppress-hyphen nil)
                      (write-char (char-upcase c) out)))))))
 
+(defun split-by-comma (list)
+  (let ((ys ()))
+    (loop with y = nil
+          for x in list
+          if (string-equal "," x)
+            do (push (nreverse y) ys)
+               (setf y nil)
+          else
+            do (push x y)
+          finally (when y (push (nreverse y) ys)))
+    (nreverse ys)))
+
+(defun parse-method-args (args)
+  (loop for arg in (cdr (split-by-comma args))
+        collect (lisp-name (car (last arg)))))
+
+(defun parse-c-call-args (args)
+  (loop for arg in (cdr (split-by-comma args))
+        for var = (lisp-name (car (last arg)))
+        nconc (let ((xs (remove "const" (butlast arg) :test #'string-equal)))
+                     (cond ((string-equal "*" (print (car (last xs))))
+                            `(:pointer ,var))
+                           ((equalp xs '(read-vst3-c-api-h::|Steinberg_TUID|))
+                            `(:pointer (sb-sys:vector-sap ,var)))
+                           (t `(,(car xs) ,var))))))
+
+(defun find-vst3-c-api-symbol (class-name method-name)
+  (find-symbol
+   (format nil "~a.LP-VTBL*.~a"
+           (autowrap:default-c-to-lisp (symbol-name class-name))
+           (autowrap:default-c-to-lisp (symbol-name method-name)))
+   :vst3-c-api))
+
 (defun parse-field (class-name field)
   (let* ((method-name (lisp-name (car (last (find-if #'consp field)))))
-         (args (car (last field)))
-         (f (find-symbol (format nil "~a-~a" class-name method-name)))
-         (result-type (car field)))
-    `(defmethod ,method-name ((self ,class-name) ,@args)
-         (cffi:foreign-funcall-pointer
-          (,f (.instance self) ,@args ,result-type)))))
+         (method-args (parse-method-args (car (last field))))
+         (c-call-args (parse-c-call-args (car (last field))))
+         (f (find-vst3-c-api-symbol class-name method-name))
+
+         (result-type (lisp-name (car field))))
+    `(defmethod ,method-name ((self ,(lisp-name class-name)) ,@method-args)
+       (cffi:foreign-funcall-pointer
+        (,f (.instance self)) ()
+        :pointer (.instance self)
+        ,@c-call-args
+        ,result-type))))
 
 (defun def-vst3-interface (comment vtbl interface iid)
   (let ((class-name (lisp-name (caddr interface)))
         #+nil
         (bases (loop for field in (cadddr vtbl)
-                     if (and (eq :comment (car (print field)))
+                     if (and (eq :comment (car field))
                              (search "/* methods derived from \"" (cadr field)))
                        collect (let* ((comment (cadr field)))
                                  (lisp-name (subseq comment
@@ -86,13 +112,15 @@
                                                     (position #\" comment :from-end t)))))))
     `(progn
        (defclass ,class-name ()
-         (instance :initarg :instance :accessor .instance)
-         ((:docuemnt ,(subseq (cadr comment)
-                              (position #\S (cadr comment))))))
+         ((instance :initarg :instance :accessor .instance))
+         (:documentation ,(subseq (cadr comment)
+                                  (position #\S (cadr comment)))))
        ,@(loop for field in (cadddr vtbl)
                unless (eq :comment (and (consp field) (car field)))
-                 collect (parse-field class-name field))
-       (defconstant ,(lisp-name (nth 3 iid)) (parse-uid ',(nth 6 iid))))))
+                 collect (parse-field (caddr interface) field))
+       (alexandria:define-constant ,(intern (format nil "+~a+" (lisp-name (nth 3 iid))))
+           (parse-uid ,@(remove 'grovel::|,| (nth 6 iid)))
+         :test #'equalp))))
 
 (defmacro def-vst3-interfaces ()
   `(progn

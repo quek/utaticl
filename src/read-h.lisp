@@ -3,8 +3,8 @@
 (defvar *statement* nil)
 
 (defun comma-reader (stream char)
-  (declare (ignore char))
-  (read stream t t t))
+  (declare (ignore stream char))
+  '|,|)
 
 (defun slash-reader (stream char)
   (declare (ignore char))
@@ -67,6 +67,17 @@
   (read-char stream)
   (values))
 
+(defun 0-reader (stream char)
+  (let ((c (peek-char nil stream)))
+    (case c
+      (#\x (let ((*readtable* (copy-readtable nil))
+                 (*read-base* 16))
+             (read-char stream)
+             (read stream)))
+      (t (let ((*readtable* (copy-readtable nil)))
+           (unread-char char stream)
+           (read stream))))))
+
 (defun make-readtable (symbol-dispatch newline)
   (let ((readtable (copy-readtable nil)))
     (setf (readtable-case readtable) :preserve)
@@ -83,6 +94,7 @@
     (set-macro-character #\) (get-macro-character #\) readtable) nil readtable)
     (set-macro-character #\] (get-macro-character #\) readtable) nil readtable)
     (set-macro-character #\; (get-macro-character #\) readtable) nil readtable)
+    (set-macro-character #\0 '0-reader t readtable)
     (when newline
       (set-macro-character #\newline (get-macro-character #\) readtable) nil readtable))
     (when symbol-dispatch
