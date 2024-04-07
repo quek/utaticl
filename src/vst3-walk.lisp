@@ -53,6 +53,14 @@
                      (setf suppress-hyphen nil)
                      (write-char (char-upcase c) out)))))))
 
+(defun ffi-type (symbol)
+  (cond ((string-equal symbol "float") :float)
+        (t (autowrap:basic-foreign-type
+            (autowrap:find-type
+             (find-symbol
+              (autowrap:default-c-to-lisp (symbol-name symbol))
+              :vst3-c-api))))))
+
 (defun split-by-comma (list)
   (let ((ys ()))
     (loop with y = nil
@@ -77,7 +85,7 @@
                             `(:pointer ,var))
                            ((equalp xs '(read-vst3-c-api-h::|Steinberg_TUID|))
                             `(:pointer (sb-sys:vector-sap ,var)))
-                           (t `(,(car xs) ,var))))))
+                           (t `(,(ffi-type (car xs)) ,var))))))
 
 (defun find-vst3-c-api-symbol (class-name method-name)
   (find-symbol
@@ -92,7 +100,7 @@
          (c-call-args (parse-c-call-args (car (last field))))
          (f (find-vst3-c-api-symbol class-name method-name))
 
-         (result-type (lisp-name (car field))))
+         (result-type (ffi-type (car field))))
     `(defmethod ,method-name ((self ,(lisp-name class-name)) ,@method-args)
        (cffi:foreign-funcall-pointer
         (,f (.instance self)) ()
@@ -100,19 +108,14 @@
         ,@c-call-args
         ,result-type))))
 
+(defclass %funknown ()
+  ((instance :initarg :instance :accessor .instance)))
+
 (defun def-vst3-interface (comment vtbl interface iid)
-  (let ((class-name (lisp-name (caddr interface)))
-        #+nil
-        (bases (loop for field in (cadddr vtbl)
-                     if (and (eq :comment (car field))
-                             (search "/* methods derived from \"" (cadr field)))
-                       collect (let* ((comment (cadr field)))
-                                 (lisp-name (subseq comment
-                                                    (1+ (position #\" comment))
-                                                    (position #\" comment :from-end t)))))))
+  (let ((class-name (lisp-name (caddr interface))))
     `(progn
-       (defclass ,class-name ()
-         ((instance :initarg :instance :accessor .instance))
+       (defclass ,class-name (%funknown)
+         ()
          (:documentation ,(subseq (cadr comment)
                                   (position #\S (cadr comment)))))
        ,@(loop for field in (cadddr vtbl)
