@@ -20,5 +20,8 @@
 
 (defpackage :vst3-ffi)
 
+(defpackage :vst3-host-application
+  (:use :cl))
+
 (defpackage :vst3
   (:use :cl :cffi))

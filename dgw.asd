@@ -25,6 +25,7 @@
    ;; (:cffi-grovel-file "vst3-grovel")
    (:file "vst3")
    (:file "module")
+   (:file "vst3-host-application")
    (:file "vst3-module")
    (:file "ui")
    ;; (:module autowrap-spec
