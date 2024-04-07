@@ -1,17 +1,5 @@
 (in-package :vst3)
 
-(cffi:defctype tresult :int32)
-
-(defconstant +kno-interface+ #x80004002)
-(defconstant +kresult-ok+ #x00000000)
-(defconstant +kresult-true+ #x00000000)
-(defconstant +kresult-false+ #x00000001)
-(defconstant +kinvalid-argument+ #x80070057)
-(defconstant +knot-implemented+ #x80004001)
-(defconstant +kinternal-error+ #x80004005)
-(defconstant +knot-initialized+ #x8000ffff)
-(defconstant +kout-of-memory+ #x8007000E)
-
 (defmacro ensure-ok (form)
   (let ((result (gensym)))
     `(let ((,result ,form))
@@ -31,9 +19,9 @@
 
 (defmethod query-interface (self iid)
   (cffi:with-foreign-object (obj :pointer)
-    (if (= vst3-c-api::+steinberg-k-result-ok+
-           (vst3-ffi::query-interface self iid obj))
-        (make-instance (gethash iid vst3-walk::*iid-class-map*) :ptr (cffi:mem-ref obj :pointer)))))
+    (ensure-ok (vst3-ffi::query-interface self iid obj))
+    (make-instance (gethash iid vst3-walk::*iid-class-map*)
+                   :ptr (cffi:mem-ref obj :pointer))))
 
 (defmethod create-component ((self vst3-ffi::steinberg-iplugin-factory))
   (let ((factory (or (query-interface self vst3-ffi::+steinberg-iplugin-factory3-iid+)
@@ -70,10 +58,9 @@
 
 (defmethod create-instance ((self vst3-ffi::steinberg-iplugin-factory) cid iid)
   (cffi:with-foreign-objects ((ptr :pointer))
-    (if (= (cffi:with-foreign-objects ((ptr :pointer))
-             (vst3-ffi::create-instance self cid (sb-sys:vector-sap iid) ptr)))
-        (make-instance (gethash iid vst3-walk::*iid-class-map*)
-                       :ptr (cffi:mem-ref ptr :pointer)))))
+    (ensure-ok (vst3-ffi::create-instance self cid (sb-sys:vector-sap iid) ptr))
+    (make-instance (gethash iid vst3-walk::*iid-class-map*)
+                   :ptr (cffi:mem-ref ptr :pointer))))
 
 
 (defmethod .category ((self vst3-c-api:steinberg-p-class-info))
