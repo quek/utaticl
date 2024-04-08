@@ -1,4 +1,4 @@
-(in-package :vst3-host-application)
+(in-package :vst3-impl)
 
 (defvar *ptr-object-map* (make-hash-table :weakness :value))
 
@@ -6,6 +6,9 @@
   ((wrap :reader .wrap)
    (vtbl :reader .vtbl)
    (ref-count :initform 1 :accessor .ref-count)))
+
+(defmethod ptr ((self unknown))
+  (autowrap:ptr (.wrap self)))
 
 (defmethod initialize-instance :before ((self unknown) &key)
   (unless (slot-boundp self 'wrap)
@@ -154,23 +157,22 @@
                   (vst3-c-api::make-steinberg-ib-stream-vtbl
                    :ptr (autowrap:ptr (.vtbl self))))))
     (setf (vst3-c-api:steinberg-ib-stream-vtbl.read vtbl)
-          (autowrap:calloc '.read))
+          (autowrap:callback '.read))
     (setf (vst3-c-api:steinberg-ib-stream-vtbl.write vtbl)
-              (autowrap:calloc '.write))
-    (setf (vst3-c-api:steinberg-ib-stream-vtbl.write vtbl)
-              (autowrap:calloc '.write))
+          (autowrap:callback '.write))
     (setf (vst3-c-api:steinberg-ib-stream-vtbl.seek vtbl)
-          (autowrap:calloc '.seek))
+          (autowrap:callback 'seek))
     (setf (vst3-c-api:steinberg-ib-stream-vtbl.tell vtbl)
-          (autowrap:calloc '.tell))))
+          (autowrap:callback 'tell))))
 
 (defmethod .read ((self bstream) buffer num-bytes num-bytes-read)
   (let ((len (min (- (length (.buffer self)) (.cursor self))
                   num-bytes)))
     (loop for i below len
           do (setf (cffi:mem-ref buffer :uchar i)
-                   (cffi:mem-ref (.buffer self) :uchar (+ i (.cursor self)))))
-    (setf (cffi:mem-ref num-bytes-read :int32) len)
+                   (aref (.buffer self) (+ i (.cursor self)))))
+    (unless (cffi:null-pointer-p num-bytes-read)
+      (setf (cffi:mem-ref num-bytes-read :int32) len))
     (incf (.cursor self) len)
     vst3-c-api:+steinberg-k-result-ok+))
 
@@ -184,14 +186,15 @@
 
 (defmethod .write ((self bstream) buffer num-bytes num-bytes-written)
   (loop for i below num-bytes
-        if (< (.cursor self) (length (.buffer self)))
-          do (setf (cffi:mem-ref (.buffer self) :uchar (+ i (.cursor self)))
+        if (< (+ i (.cursor self)) (length (.buffer self)))
+          do (setf (aref (.buffer self) (+ i (.cursor self)))
                    (cffi:mem-ref buffer :uchar i))
         else
           do (vector-push-extend (cffi:mem-ref buffer :uchar i)
                                  (.buffer self)))
   (incf (.cursor self) num-bytes)
-  (setf (cffi:mem-ref num-bytes-written :int32) num-bytes)
+  (unless (cffi:null-pointer-p num-bytes-written)
+    (setf (cffi:mem-ref num-bytes-written :int32) num-bytes))
   vst3-c-api::+steinberg-k-result-ok+)
 
 (autowrap:defcallback .write vst3-c-api::steinberg-tresult

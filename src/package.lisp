@@ -20,6 +20,9 @@
 
 (defpackage :vst3-ffi)
 
+(defpackage :vst3-impl
+  (:use :cl))
+
 (defpackage :vst3-host-application
   (:use :cl))
 

@@ -1,15 +1,20 @@
 (in-package :dgw)
 
-(defclass module-vst3 (module)
+(defclass vst3-module (module)
   ((host-applicaiton
-    :initform (make-instance 'vst3-host-application::host-application)
+    :initform (make-instance 'vst3-impl::host-application)
     :reader .host-applicaiton)
    (factory :initarg :factory :reader .factory)
    (component :initarg :conponent :reader .component)
    (controller :initarg :controller :reader .controller)
-   (single-component-p :initarg :single-component-p :reader .single-component-p)))
+   (single-component-p :initarg :single-component-p :reader .single-component-p)
+   (process :accessor .process)
+   (audio-input-bus-count :accessor .audio-input-bus-count)
+   (audio-output-bus-count :accessor .audio-output-bus-count)
+   (event-input-bus-count :accessor .event-input-bus-count)
+   (event-output-bus-count :accessor .event-output-bus-count)))
 
-(defun module-vst3-load (path)
+(defun vst3-module-load (path)
   (let* ((factory (vst3::get-plugin-factory path))
          (component (vst3::create-component factory))
          (single-component-p t)
@@ -19,27 +24,62 @@
                          (vst3::create-instance factory
                                                 (vst3::get-controller-class-id component)
                                                 vst3-ffi::+steinberg-vst-iedit-controller-iid+)))))
-    (make-instance 'module-vst3
+    (make-instance 'vst3-module
                    :factory factory
                    :conponent component
                    :controller controller
                    :single-component-p single-component-p)))
 
-(defmethod initialize ((self module-vst3))
+(defmethod initialize ((self vst3-module))
   (vst3-ffi::initialize (.component self)
-                        (autowrap:ptr (vst3-host-application::.wrap (.host-applicaiton self))))
+                        (vst3-impl::ptr (.host-applicaiton self)))
   (vst3-ffi::initialize (.controller self)
-                        (autowrap:ptr (vst3-host-application::.wrap (.host-applicaiton self))))
+                        (vst3-impl::ptr (.host-applicaiton self)))
+  
   (connect-componet-controller self)
-  (let ((bstream ))))
+  
+  (let ((bstream (make-instance 'vst3-impl::bstream)))
+    (vst3::ensure-ok (vst3-ffi::get-state (.component self) (vst3-impl::ptr bstream)))
+    (setf (vst3-impl::.cursor bstream) 0)
+    (handler-case
+        (vst3::ensure-ok (vst3-ffi::set-component-state (.controller self) (vst3-impl::ptr bstream)))
+      (vst3::not-implemented-error ()
+        ;; ignore
+        )))
 
-(defmethod terminate ((self module-vst3))
+  (let ((process (vst3::query-interface
+                  (.component self) vst3-ffi::+steinberg-vst-iaudio-processor-iid+))
+        (audio-input-bus-count (vst3-ffi::get-bus-count
+                                (.component self) vst3-c-api::+steinberg-vst-media-types-k-audio+
+                                vst3-c-api::+steinberg-vst-bus-directions-k-input+))
+        (audio-output-bus-count (vst3-ffi::get-bus-count
+                                 (.component self) vst3-c-api::+steinberg-vst-media-types-k-audio+
+                                 vst3-c-api::+steinberg-vst-bus-directions-k-output+))
+        (event-input-bus-count (vst3-ffi::get-bus-count
+                                (.component self) vst3-c-api::+steinberg-vst-media-types-k-event+
+                                vst3-c-api::+steinberg-vst-bus-directions-k-input+))
+        (event-output-bus-count (vst3-ffi::get-bus-count
+                                 (.component self) vst3-c-api::+steinberg-vst-media-types-k-event+
+                                 vst3-c-api::+steinberg-vst-bus-directions-k-output+)))
+    (setf (.process self) process)
+    (setf (.audio-input-bus-count self) audio-input-bus-count)
+    (setf (.audio-output-bus-count self) audio-output-bus-count)
+    (setf (.event-input-bus-count self) event-input-bus-count)
+    (setf (.event-output-bus-count self) event-output-bus-count)
+
+    (vst3::ensure-ok
+     (vst3-ffi::can-process-sample-size process vst3-c-api::+steinberg-vst-symbolic-sample-sizes-k-sample32+))
+
+    (vst3-ffi::set-processing process 0)
+    (vst3-ffi::set-active (.component self) 0)))
+
+(defmethod terminate ((self vst3-module))
   (disconnect-componet-controller self)
   (vst3-ffi::terminate (.component self))
   (unless (.single-component-p self)
     (vst3-ffi::terminate (.controller self))))
 
-(defmethod connect-componet-controller ((self module-vst3))
+(defmethod connect-componet-controller ((self vst3-module))
   (unless (.single-component-p self)
     (handler-case
         (let ((c1 (vst3::query-interface (.component self)
@@ -50,7 +90,7 @@
           (vst3-ffi::connect c2 (vst3-walk::.ptr c1)))
       (vst3::no-interface-error ()))))
 
-(defmethod disconnect-componet-controller ((self module-vst3))
+(defmethod disconnect-componet-controller ((self vst3-module))
   (unless (.single-component-p self)
     (handler-case
         (let ((c1 (vst3::query-interface (.component self)
@@ -62,6 +102,7 @@
       (vst3::no-interface-error ()))))
 
 #+nil
-(let ((module (module-vst3-load "c:/Program Files/Common Files/VST3/Dexed.vst3")))
+(let ((module (vst3-module-load "c:/Program Files/Common Files/VST3/Dexed.vst3")))
   (initialize module)
-  (terminate module))
+  (terminate module)
+  module)
