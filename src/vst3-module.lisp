@@ -76,8 +76,7 @@
     (vst3::ensure-ok
      (vst3-ffi::can-process-sample-size process vst3-c-api::+steinberg-vst-symbolic-sample-sizes-k-sample32+))
 
-    (vst3-ffi::set-processing process 0)
-    (vst3-ffi::set-active (.component self) 0)
+    (stop self)
 
     (autowrap:with-alloc (setup '(:struct (vst3-c-api::steinberg-vst-process-setup)))
       (setf (vst3-c-api::steinberg-vst-process-setup.process-mode setup)
@@ -104,7 +103,10 @@
                                            ,vst3-c-api::+steinberg-vst-bus-directions-k-output+))
           do (loop for i below count
                    do (vst3-ffi::activate-bus (.component self)
-                                              type direction i 1)))))
+                                              type direction i 1))))
+
+  ;; prepareParameterInfo();
+  )
 
 (defmethod terminate ((self vst3-module))
   (disconnect-componet-controller self)
@@ -146,8 +148,19 @@
 (defmethod restart-component ((self vst3-module) flags)
   (declare (ignore flags)))
 
+(defmethod start ((self vst3-module))
+  (vst3-ffi::set-active (.component self) 1)
+  (vst3-ffi::set-processing (.process self) 1))
+
+(defmethod stop ((self vst3-module))
+  (vst3-ffi::set-processing (.process self) 0)
+  (vst3-ffi::set-active (.component self) 0))
+
 #+nil
 (let ((module (vst3-module-load "c:/Program Files/Common Files/VST3/Dexed.vst3")))
   (initialize module)
+  (start module)
+
+  (stop module)
   (terminate module)
   module)
