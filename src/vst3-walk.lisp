@@ -87,6 +87,8 @@
                             `(:pointer ,var))
                            ((equalp xs '(read-vst3-c-api-h::|Steinberg_TUID|))
                             `(:pointer (sb-sys:vector-sap ,var)))
+                           ((equalp xs '(read-vst3-c-api-h::|Steinberg_FIDString|))
+                            `(:string ,var))
                            (t `(,(ffi-type (car xs)) ,var))))))
 
 (defun find-vst3-c-api-symbol (class-name method-name)

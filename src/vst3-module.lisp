@@ -10,7 +10,8 @@
    (audio-input-bus-count :accessor .audio-input-bus-count)
    (audio-output-bus-count :accessor .audio-output-bus-count)
    (event-input-bus-count :accessor .event-input-bus-count)
-   (event-output-bus-count :accessor .event-output-bus-count)))
+   (event-output-bus-count :accessor .event-output-bus-count)
+   (view :initform :nil :accessor .view)))
 
 (defmethod initialize-instance :after ((self vst3-module) &key)
   (setf (slot-value self 'host-applicaiton)
@@ -156,6 +157,22 @@
   (vst3-ffi::set-processing (.process self) 0)
   (vst3-ffi::set-active (.component self) 0))
 
+(defmethod open-editor ((self vst3-module))
+  (let* ((view-ptr (vst3-ffi::create-view (.controller self)
+                                          ;; TODO GC されちゃうからこれじゃダメな気がする
+                                          ;; vst3-walk で defconstant した方がいいと思う
+                                          "editor" ;vst3-c-api::+steinberg-vst-view-type-k-editor+
+                                          ))
+         (view (make-instance 'vst3-ffi::steinberg-iplug-view  :ptr view-ptr)))
+    (setf (.view self) view)))
+
+(defmethod close-editor ((self vst3-module))
+  (when (.view self)
+    (vst3-ffi::removed (.view self))
+    (vst3-ffi::release (.view self))
+    (sb-ext:cancel-finalization (.view self))
+    (setf (.view self) nil)))
+
 #+nil
 (let ((module (vst3-module-load
                ;;"c:/Program Files/Common Files/VST3/Dexed.vst3"
@@ -163,6 +180,7 @@
                )))
   (initialize module)
   (start module)
+  (open-editor module)
 
   (stop module)
   (terminate module)
