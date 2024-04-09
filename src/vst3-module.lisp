@@ -157,7 +157,10 @@
   (vst3-ffi::set-active (.component self) 0))
 
 #+nil
-(let ((module (vst3-module-load "c:/Program Files/Common Files/VST3/Dexed.vst3")))
+(let ((module (vst3-module-load
+               ;;"c:/Program Files/Common Files/VST3/Dexed.vst3"
+               "c:/Program Files/Common Files/VST3/DS Thorn.vst3"
+               )))
   (initialize module)
   (start module)
 

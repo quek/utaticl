@@ -96,8 +96,13 @@
         (make-instance 'component-handler :module module)))
 
 (defmethod query-interface ((self host-application) iid obj)
-  (%query-interface self vst3-ffi::+steinberg-vst-ihost-application-iid+ iid obj
-                    (call-next-method)))
+  (%query-interface
+   self vst3-ffi::+steinberg-vst-ihost-application-iid+ iid obj
+   (if (uid-equal vst3-ffi::+steinberg-vst-icomponent-handler-iid+ iid)
+       (progn
+         (setf (cffi:mem-ref obj :pointer) (autowrap:ptr (.wrap (.component-handler self))))
+         vst3-c-api:+steinberg-k-result-ok+)
+       (call-next-method))))
 
 (defmethod get-name ((self host-application) name)
   (let* ((host-name "DGW")
