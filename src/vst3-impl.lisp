@@ -71,7 +71,8 @@
                     vst3-c-api:+steinberg-k-no-interface+))
 
 (defclass host-application (unknown)
-  ())
+  ((module :initarg :module :accessor .module)
+   (component-handler :accessor .component-handler)))
 
 (defmethod initialize-instance :before ((self host-application) &key)
   (unless (slot-boundp self 'wrap)
@@ -89,6 +90,10 @@
           (autowrap:callback 'get-name))
     (setf (vst3-c-api::steinberg-vst-i-host-application-vtbl.create-instance vtbl)
           (autowrap:callback 'create-instance))))
+
+(defmethod initialize-instance :after ((self host-application) &key module)
+  (setf (slot-value self 'component-handler)
+        (make-instance 'component-handler :module module)))
 
 (defmethod query-interface ((self host-application) iid obj)
   (%query-interface self vst3-ffi::+steinberg-vst-ihost-application-iid+ iid obj
@@ -113,8 +118,8 @@
 
 (autowrap:defcallback release vst3-c-api:steinberg-uint32
     ((this-interface :pointer))
-  (print (list 'relations this-interface))
   (let ((obj (gethash (cffi:pointer-address this-interface) *ptr-object-map*)))
+    (print (list 'release obj this-interface))
     (release obj)))
 
 (autowrap:defcallback query-interface vst3-c-api::steinberg-tresult
@@ -137,6 +142,71 @@
      (obj :pointer))
   (create-instance (gethash (cffi:pointer-address this-interface) *ptr-object-map*)
                    cid iid obj))
+
+(defclass component-handler (unknown)
+  ((module :initarg :module :accessor .module)))
+
+(defmethod initialize-instance :before ((self component-handler) &key)
+  (unless (slot-boundp self 'wrap)
+    (let ((vtbl (autowrap:alloc 'vst3-c-api:steinberg-vst-i-component-handler-vtbl))
+          (wrap (autowrap:alloc 'vst3-c-api:steinberg-vst-i-component-handler)))
+      (setf (vst3-c-api:steinberg-vst-i-component-handler.lp-vtbl wrap)
+            (autowrap:ptr vtbl))
+      (setf (slot-value self 'wrap) wrap)
+      (setf (slot-value self 'vtbl) vtbl)))
+  (let ((vtbl (if (typep (.vtbl self) 'vst3-c-api::steinberg-vst-i-component-handler-vtbl)
+                  (.vtbl self)
+                  (vst3-c-api::make-steinberg-vst-i-component-handler-vtbl
+                   :ptr (autowrap:ptr (.vtbl self))))))
+    (setf (vst3-c-api::steinberg-vst-i-component-handler-vtbl.begin-edit vtbl)
+          (autowrap:callback 'begin-edit))
+    (setf (vst3-c-api::steinberg-vst-i-component-handler-vtbl.perform-edit vtbl)
+          (autowrap:callback 'perform-edit))
+    (setf (vst3-c-api::steinberg-vst-i-component-handler-vtbl.end-edit vtbl)
+          (autowrap:callback 'end-edit))
+    (setf (vst3-c-api::steinberg-vst-i-component-handler-vtbl.restart-component vtbl)
+          (autowrap:callback 'restart-component))))
+
+(defmethod begin-edit ((self component-handler) id)
+  (dgw::begin-edit (.module self) id)
+  vst3-c-api::+steinberg-k-result-ok+)
+
+(autowrap:defcallback begin-edit vst3-c-api::steinberg-tresult
+    ((this-interface :pointer)
+     (id :unsigned-int))
+  (begin-edit (gethash (cffi:pointer-address this-interface) *ptr-object-map*)
+              id))
+
+(defmethod perform-edit ((self component-handler) id value-normalized)
+  (dgw::perform-edit (.module self) id value-normalized)
+  vst3-c-api::+steinberg-k-result-ok+)
+
+(autowrap:defcallback perform-edit vst3-c-api::steinberg-tresult
+    ((this-interface :pointer)
+     (id :unsigned-int)
+     (value-normalized :double))
+  (perform-edit (gethash (cffi:pointer-address this-interface) *ptr-object-map*)
+               id value-normalized))
+
+(defmethod end-edit ((self component-handler) id)
+  (dgw::end-edit (.module self) id)
+  vst3-c-api::+steinberg-k-result-ok+)
+
+(autowrap:defcallback end-edit vst3-c-api::steinberg-tresult
+    ((this-interface :pointer)
+     (id :unsigned-int))
+  (end-edit (gethash (cffi:pointer-address this-interface) *ptr-object-map*)
+              id))
+
+(defmethod restart-component ((self component-handler) flags)
+  (dgw::restart-component (.module self) flags)
+  vst3-c-api::+steinberg-k-result-ok+)
+
+(autowrap:defcallback restart-component vst3-c-api::steinberg-tresult
+    ((this-interface :pointer)
+     (flags :int))
+  (restart-component (gethash (cffi:pointer-address this-interface) *ptr-object-map*)
+                     flags))
 
 (defclass bstream (unknown)
   ((buffer :initform (make-array 1024 :element-type '(unsigned-byte 8) :adjustable t :fill-pointer 0)

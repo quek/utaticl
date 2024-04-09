@@ -1,9 +1,7 @@
 (in-package :dgw)
 
 (defclass vst3-module (module)
-  ((host-applicaiton
-    :initform (make-instance 'vst3-impl::host-application)
-    :reader .host-applicaiton)
+  ((host-applicaiton :reader .host-applicaiton)
    (factory :initarg :factory :reader .factory)
    (component :initarg :conponent :reader .component)
    (controller :initarg :controller :reader .controller)
@@ -13,6 +11,10 @@
    (audio-output-bus-count :accessor .audio-output-bus-count)
    (event-input-bus-count :accessor .event-input-bus-count)
    (event-output-bus-count :accessor .event-output-bus-count)))
+
+(defmethod initialize-instance :after ((self vst3-module) &key)
+  (setf (slot-value self 'host-applicaiton)
+        (make-instance 'vst3-impl::host-application :module self)))
 
 (defun vst3-module-load (path)
   (let* ((factory (vst3::get-plugin-factory path))
@@ -44,9 +46,13 @@
     (handler-case
         (vst3::ensure-ok (vst3-ffi::set-component-state (.controller self) (vst3-impl::ptr bstream)))
       (vst3::not-implemented-error ()
-        ;; ignore
+        ;; 無視してだいじょうぶなやつ
         )))
 
+  (vst3-ffi::set-component-handler
+   (.controller self)
+   (vst3-impl::ptr (vst3-impl::.component-handler (.host-applicaiton self))))
+  
   (let ((process (vst3::query-interface
                   (.component self) vst3-ffi::+steinberg-vst-iaudio-processor-iid+))
         (audio-input-bus-count (vst3-ffi::get-bus-count
@@ -71,7 +77,34 @@
      (vst3-ffi::can-process-sample-size process vst3-c-api::+steinberg-vst-symbolic-sample-sizes-k-sample32+))
 
     (vst3-ffi::set-processing process 0)
-    (vst3-ffi::set-active (.component self) 0)))
+    (vst3-ffi::set-active (.component self) 0)
+
+    (autowrap:with-alloc (setup '(:struct (vst3-c-api::steinberg-vst-process-setup)))
+      (setf (vst3-c-api::steinberg-vst-process-setup.process-mode setup)
+            vst3-c-api::+steinberg-vst-process-modes-k-realtime+)
+      (setf (vst3-c-api::steinberg-vst-process-setup.symbolic-sample-size setup)
+            vst3-c-api::+steinberg-vst-symbolic-sample-sizes-k-sample32+)
+      (setf (vst3-c-api::steinberg-vst-process-setup.max-samples-per-block  setup)
+            1024)
+      (setf (vst3-c-api::steinberg-vst-process-setup.sample-rate setup)
+            48000.0d0)
+      (vst3::ensure-ok (vst3-ffi::setup-processing process (autowrap:ptr setup))))
+
+    (loop for (count type direction) in `((,audio-input-bus-count
+                                           ,vst3-c-api::+steinberg-vst-media-types-k-audio+
+                                           ,vst3-c-api::+steinberg-vst-bus-directions-k-input+)
+                                          (,audio-output-bus-count
+                                           ,vst3-c-api::+steinberg-vst-media-types-k-audio+
+                                           ,vst3-c-api::+steinberg-vst-bus-directions-k-output+)
+                                          (,event-input-bus-count
+                                           ,vst3-c-api::+steinberg-vst-media-types-k-event+
+                                           ,vst3-c-api::+steinberg-vst-bus-directions-k-input+)
+                                          (,event-output-bus-count
+                                           ,vst3-c-api::+steinberg-vst-media-types-k-event+
+                                           ,vst3-c-api::+steinberg-vst-bus-directions-k-output+))
+          do (loop for i below count
+                   do (vst3-ffi::activate-bus (.component self)
+                                              type direction i 1)))))
 
 (defmethod terminate ((self vst3-module))
   (disconnect-componet-controller self)
@@ -100,6 +133,18 @@
           (vst3-ffi::disconnect c1 (vst3-walk::.ptr c2))
           (vst3-ffi::disconnect c2 (vst3-walk::.ptr c1)))
       (vst3::no-interface-error ()))))
+
+(defmethod begin-edit ((self vst3-module) id)
+  (declare (ignore id)))
+
+(defmethod perform-edit ((self vst3-module) id value-normalized)
+  (declare (ignore id value-normalized)))
+
+(defmethod end-edit ((self vst3-module) id)
+  (declare (ignore id)))
+
+(defmethod restart-component ((self vst3-module) flags)
+  (declare (ignore flags)))
 
 #+nil
 (let ((module (vst3-module-load "c:/Program Files/Common Files/VST3/Dexed.vst3")))
