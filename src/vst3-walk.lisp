@@ -179,7 +179,24 @@
 
        (setf (gethash ,iid-symbol *iid-class-map*) ',class-name))))
 
+
+(defun def-vst3-fidstring (exp)
+  (when (and (eq 'read-vst3-c-api-h::|static| (car exp))
+             (eq 'read-vst3-c-api-h::|const|  (cadr exp))
+             (or (eq 'read-vst3-c-api-h::|Steinberg_FIDString| (caddr exp))
+                 (eq 'read-vst3-c-api-h::|Steinberg_Vst_CString| (caddr exp)))
+             (eq 'read-vst3-c-api-h::|=| (nth 4 exp))
+             (stringp (nth 5 exp)))
+    `(alexandria:define-constant
+         ,(intern (format nil "+~a+" (lisp-name (nth 3 exp))))
+         ,(nth 5 exp)
+       :test #'equal)))
+
+
 (defmacro def-vst3-interfaces ()
   `(progn
+     ,@(loop for exp in *h*
+             for sexp = (def-vst3-fidstring exp)
+             if sexp collect sexp)
      ,@(loop for (comment vtbl interface iid) on (seek-to-interfaces *h*) by #'cddddr
              collect (def-vst3-interface comment vtbl interface iid))))

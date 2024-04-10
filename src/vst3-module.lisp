@@ -159,10 +159,7 @@
 
 (defmethod open-editor ((self vst3-module))
   (let* ((view-ptr (vst3-ffi::create-view (.controller self)
-                                          ;; TODO GC されちゃうからこれじゃダメな気がする
-                                          ;; vst3-walk で defconstant した方がいいと思う
-                                          "editor" ;vst3-c-api::+steinberg-vst-view-type-k-editor+
-                                          ))
+                                          vst3-ffi::+steinberg-vst-view-type-k-editor+))
          (view (make-instance 'vst3-ffi::steinberg-iplug-view  :ptr view-ptr)))
     (setf (.view self) view)))
 
@@ -175,8 +172,8 @@
 
 #+nil
 (let ((module (vst3-module-load
-               ;;"c:/Program Files/Common Files/VST3/Dexed.vst3"
-               "c:/Program Files/Common Files/VST3/DS Thorn.vst3"
+               "c:/Program Files/Common Files/VST3/Dexed.vst3"
+               ;;"c:/Program Files/Common Files/VST3/DS Thorn.vst3"
                )))
   (initialize module)
   (start module)
