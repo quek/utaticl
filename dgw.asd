@@ -13,6 +13,7 @@
    (:file "library")
    ;; (:file "autowrap")
    (:file "read-h")
+   (:file "win")
    (:cffi-grovel-file "ig-grovel")
    ;(:cffi-wrapper-file "wrapper")
    (:file "ig")

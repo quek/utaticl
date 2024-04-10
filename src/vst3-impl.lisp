@@ -120,7 +120,8 @@
 
 (defclass host-application (unknown)
   ((module :initarg :module :accessor .module)
-   (component-handler :accessor .component-handler)))
+   (component-handler :accessor .component-handler)
+   (plug-frame :accessor .plug-frame)))
 
 (defmethod initialize-instance :before ((self host-application) &key)
   (unless (slot-boundp self 'wrap)
@@ -141,7 +142,9 @@
 
 (defmethod initialize-instance :after ((self host-application) &key module)
   (setf (slot-value self 'component-handler)
-        (make-instance 'component-handler2 :module module)))
+        (make-instance 'component-handler2 :module module))
+  (setf (slot-value self 'plug-frame)
+        (make-instance 'plug-frame :module module)))
 
 (defmethod query-interface ((self host-application) iid obj)
   (%query-interface
@@ -474,6 +477,36 @@
 (defclass attribute-list (unknown)
   ((map :initform (make-hash-table :test #'equal) :accessor .map)))
 
+(defmethod initialize-instance :before ((self attribute-list) &key)
+  (unless (slot-boundp self 'wrap)
+    (let ((vtbl (autowrap:alloc 'vst3-c-api:steinberg-vst-i-attribute-list-vtbl ))
+          (wrap (autowrap:alloc 'vst3-c-api:steinberg-vst-i-attribute-list)))
+      (setf (vst3-c-api:steinberg-vst-i-attribute-list.lp-vtbl wrap)
+            (autowrap:ptr vtbl))
+      (setf (slot-value self 'wrap) wrap)
+      (setf (slot-value self 'vtbl) vtbl)))
+
+  (let ((vtbl (if (typep (.vtbl self) 'vst3-c-api::steinberg-vst-i-attribute-list-vtbl)
+                  (.vtbl self)
+                  (vst3-c-api::make-steinberg-vst-i-attribute-list-vtbl
+                   :ptr (autowrap:ptr (.vtbl self))))))
+    (setf (vst3-c-api:steinberg-vst-i-attribute-list-vtbl.set-int vtbl)
+          (autowrap:callback 'set-int))
+    (setf (vst3-c-api:steinberg-vst-i-attribute-list-vtbl.get-int vtbl)
+          (autowrap:callback 'get-int))
+    (setf (vst3-c-api:steinberg-vst-i-attribute-list-vtbl.set-float vtbl)
+          (autowrap:callback 'set-float))
+    (setf (vst3-c-api:steinberg-vst-i-attribute-list-vtbl.get-float vtbl)
+          (autowrap:callback 'get-float))
+    (setf (vst3-c-api:steinberg-vst-i-attribute-list-vtbl.set-string vtbl)
+          (autowrap:callback 'set-string))
+    (setf (vst3-c-api:steinberg-vst-i-attribute-list-vtbl.get-string vtbl)
+          (autowrap:callback 'get-string))
+    (setf (vst3-c-api:steinberg-vst-i-attribute-list-vtbl.set-binary vtbl)
+          (autowrap:callback 'set-binary))
+    (setf (vst3-c-api:steinberg-vst-i-attribute-list-vtbl.get-binary vtbl)
+          (autowrap:callback 'get-binary))))
+
 (defmethod set-int ((self attribute-list) id value)
   (setf (gethash id (.map self)) value)
   vst3-c-api:+steinberg-k-result-true+)
@@ -598,3 +631,39 @@
      (size-in-bytes (:pointer vst3-c-api:steinberg-uint32)))
   (get-binary (gethash (cffi:pointer-address this-interface) *ptr-object-map*)
            id data size-in-bytes))
+
+(defclass plug-frame (unknown)
+  ((module :initarg :module :accessor .module)))
+
+(defmethod query-interface ((self host-application) iid obj)
+  (%query-interface
+   self vst3-ffi::+steinberg-iplug-frame-iid+ iid obj
+   (call-next-method)))
+
+(defmethod initialize-instance :before ((self plug-frame) &key)
+  (unless (slot-boundp self 'wrap)
+    (let ((vtbl (autowrap:alloc 'vst3-c-api:steinberg-i-plug-frame))
+          (wrap (autowrap:alloc 'vst3-c-api:steinberg-i-plug-frame)))
+      (setf (vst3-c-api:steinberg-i-plug-frame.lp-vtbl wrap)
+            (autowrap:ptr vtbl))
+      (setf (slot-value self 'wrap) wrap)
+      (setf (slot-value self 'vtbl) vtbl)))
+
+  (let ((vtbl (if (typep (.vtbl self) 'vst3-c-api::steinberg-i-plug-frame-vtbl)
+                  (.vtbl self)
+                  (vst3-c-api::make-steinberg-i-plug-frame-vtbl
+                   :ptr (autowrap:ptr (.vtbl self))))))
+    (setf (vst3-c-api:steinberg-i-plug-frame-vtbl.resize-view vtbl)
+          (autowrap:callback 'resize-view))))
+
+(defmethod resize-view ((self plug-frame) view new-size)
+  (declare (ignore view new-size))
+  ;; TODO 実装
+  vst3-c-api::+steinberg-k-result-true+)
+
+(autowrap:defcallback resize-view vst3-c-api::steinberg-tresult
+    ((this-interface :pointer)
+     (view (:pointer vst3-c-api:steinberg-i-plug-view))
+     (new-size (:pointer (:struct (vst3-c-api:steinberg-view-rect)))))
+  (resize-view (gethash (cffi:pointer-address this-interface) *ptr-object-map*)
+               view new-size))

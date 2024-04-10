@@ -11,7 +11,8 @@
    (audio-output-bus-count :accessor .audio-output-bus-count)
    (event-input-bus-count :accessor .event-input-bus-count)
    (event-output-bus-count :accessor .event-output-bus-count)
-   (view :initform :nil :accessor .view)))
+   (view :initform :nil :accessor .view)
+   (window :initform :nil :accessor .window)))
 
 (defmethod initialize-instance :after ((self vst3-module) &key)
   (setf (slot-value self 'host-applicaiton)
@@ -161,7 +162,15 @@
   (let* ((view-ptr (vst3-ffi::create-view (.controller self)
                                           vst3-ffi::+steinberg-vst-view-type-k-editor+))
          (view (make-instance 'vst3-ffi::steinberg-iplug-view  :ptr view-ptr)))
-    (setf (.view self) view)))
+    (setf (.view self) view)
+    (vst3-ffi::set-frame view (vst3-impl::ptr (vst3-impl::.plug-frame
+                                               (.host-applicaiton self))))
+    (autowrap:with-alloc (size '(vst3-c-api:steinberg-view-rect))
+      (vst3-ffi::get-size view size)
+      (let* ((resizable (= (vst3-ffi::can-resize view) vst3-c-api:+steinberg-k-result-true+))
+             (window (make-window size resizable)))
+        (setf (.window self) window)
+        (vst3::ensure-ok (vst3-ffi::attached view (.hndler window) vst3-ffi::+steinberg-k-platform-type-hwnd+))))))
 
 (defmethod close-editor ((self vst3-module))
   (when (.view self)

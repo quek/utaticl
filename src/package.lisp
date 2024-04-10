@@ -28,3 +28,6 @@
 
 (defpackage :vst3
   (:use :cl :cffi))
+
+(defpackage :win
+  (:use :cl :cffi))
