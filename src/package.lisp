@@ -1,5 +1,5 @@
 (defpackage :dgw
-  (:use :cl)
+  (:use :cl :anaphora)
   (:export #:main))
 
 (defpackage :dgw.ffi)

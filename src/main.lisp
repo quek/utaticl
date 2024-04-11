@@ -1,4 +1,5 @@
 (in-package :dgw)
 
 (defun main ()
-  (sdl2-main))
+  (let ((app (make-instance 'app)))
+    (sdl2-main app)))

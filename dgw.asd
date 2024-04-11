@@ -6,9 +6,13 @@
 (asdf:defsystem :dgw
   :licence "GPL3"
   :defsystem-depends-on ("cffi-grovel")
-  :depends-on ("cffi" "cffi-libffi" "sdl2" "cl-opengl"
+  :depends-on ("cffi" "cffi-libffi"
+                      "sb-concurrency"
+                      "cl-portaudio"
                       "vst3-c-api"
-                      "ftw")
+                      "sdl2" "cl-opengl"
+                      "ftw"
+                      "anaphora")
   ;; :depends-on ("cl-autowrap/libffi")
   :serial t
   :pathname "src"
@@ -33,6 +37,8 @@
    (:file "vst3-impl")
    (:file "vst3-module")
    (:file "ui")
+   (:file "audio-engine")
+   (:file "app")
    (:file "main")
    ;; (:module autowrap-spec
    ;;  :pathname "spec"

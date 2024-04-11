@@ -18,3 +18,8 @@ cmake --build .
 
 これでできた cimgui_sdl.dll をロードする。
 この DLL は ImGui を含んでいるので cimgui.dll はいらない。
+
+## cl-portaudio
+
+portaudio.lisp
+define-foreign-library で "portaudio_x64.dll" と ".dll" を付けないとエラーになる。

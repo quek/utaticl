@@ -78,7 +78,7 @@
     (vst3::ensure-ok
      (vst3-ffi::can-process-sample-size process vst3-c-api::+steinberg-vst-symbolic-sample-sizes-k-sample32+))
 
-    (stop self)
+    (stop-module self)
 
     (autowrap:with-alloc (setup '(:struct (vst3-c-api::steinberg-vst-process-setup)))
       (setf (vst3-c-api::steinberg-vst-process-setup.process-mode setup)
@@ -150,11 +150,11 @@
 (defmethod restart-component ((self vst3-module) flags)
   (declare (ignore flags)))
 
-(defmethod start ((self vst3-module))
+(defmethod start-module ((self vst3-module))
   (vst3-ffi::set-active (.component self) 1)
   (vst3-ffi::set-processing (.process self) 1))
 
-(defmethod stop ((self vst3-module))
+(defmethod stop-module ((self vst3-module))
   (vst3-ffi::set-processing (.process self) 0)
   (vst3-ffi::set-active (.component self) 0))
 
@@ -189,9 +189,9 @@
                ;;"c:/Program Files/Common Files/VST3/DS Thorn.vst3"
                )))
   (initialize module)
-  (start module)
+  (start-module module)
   (open-editor module)
 
-  (stop module)
+  (stop-module module)
   (terminate module)
   module)

@@ -33,7 +33,7 @@
     ))
 
 
-(defun gui-loop (window gl-context e)
+(defun gui-loop (app window gl-context e)
   (loop while (/= (sdl2-ffi.functions:sdl-poll-event e) 0)
         do (ig-backend::impl-sdl2-process-event (autowrap:ptr e))
            (if (eq (sdl2:get-event-type e) sdl2-ffi::+sdl-quit+)
@@ -47,15 +47,8 @@
   (ig-backend::impl-opengl3-new-frame)
   (ig-backend::impl-sdl2-new-frame)
   (ig::new-frame)
-  (cffi:with-foreign-object (openp :bool)
-    (setf (cffi:mem-ref openp :bool) t)
-    (when (ig::begin "Hello" openp 0)
-      (ig::text (format nil "Hello ~a ~a."(lisp-implementation-type) (lisp-implementation-version)))
-      (when (ig::button "Hi!" '(100.0 35.0))
-        (print 'hi))
-      (when (ig::button "Exit" '(200.0 40.0))
-        (setf *done* t))))
-  (ig::end)
+
+  (render app)
   
   (ig::render)
   (sdl2:gl-make-current window gl-context)
@@ -67,7 +60,7 @@
   (ig-backend::impl-opengl3-render-draw-data (ig::get-draw-data))
   (sdl2:gl-swap-window window))
 
-(defun sdl2-main ()
+(defun sdl2-main (app)
   (sdl2:init sdl2-ffi::+sdl-init-video+)
   (sdl2:gl-set-attr sdl2-ffi::+sdl-gl-context-flags+ 0)
   (sdl2:gl-set-attr sdl2-ffi::+sdl-gl-context-profile-mask+ sdl2-ffi::+sdl-gl-context-profile-core+)
@@ -94,7 +87,7 @@
       (setf *done* nil)
       (sdl2:with-sdl-event (e)
         (loop until *done* do
-          (gui-loop window gl-context e)))
+          (gui-loop app window gl-context e)))
       (ig-backend::impl-opengl3-shutdown)
       (ig-backend::impl-sdl2-shutdown)
       (ig::destroy-context ctx)
