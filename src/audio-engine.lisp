@@ -2,8 +2,9 @@
 
 ;;(portaudio::print-devices)
 
-(defvar *audio*)
-(defparameter *sample-rate* 48000.0d0)
+(sb-ext:defglobal *app* nil)
+(sb-ext:defglobal *audio* nil)
+(defparameter *sample-rate* 48000.0)
 (defparameter *frames-per-buffer* 1024)
 
 (defclass audio-engine ()
@@ -49,7 +50,9 @@
     :type fixnum
     :accessor .output-channels)
    (sequencer :initarg :sequencer :accessor .sequencer)
-   (master :accessor .master)
+   (master-buffer :initform (cons (make-array 1024 :element-type 'float :initial-element 0.0)
+                                  (make-array 1024 :element-type 'float :initial-element 0.0))
+                  :accessor .master-buffer)
    (process-thread :initform nil :accessor .process-thread)
    (process-thread-mailbox :accessor .process-thread-mailbox
                            :initform (sb-concurrency:make-mailbox))
@@ -145,57 +148,26 @@
                   (warn "音大きすぎ ~a" value)
                   -1.0)
                  (t value))))
-    (let* ((master (.master *audio*))
-           (volume (.volume master))
-           (last-left 0.0)
-           (last-right 0.0))
+    (let* ((left (car (.master-buffer *audio*)))
+           (right (cdr (.master-buffer *audio*)))
+           (volume 1.0))
       (loop for i below *frames-per-buffer*
-            do (setf last-left
-                     (max (abs (setf (cffi:mem-aref buffer :float (* i 2))
-                                     (limit (* (aref (.left master) i) volume))))
-                          last-left))
-               (setf last-right
-                     (max (abs (setf  (cffi:mem-aref buffer :float (1+ (* i 2)))
-                                      (limit (* (aref (.right master) i) volume))))
-                          last-right))
-               (setf (aref (.left master) i) 0.0
-                     (aref (.right master) i) 0.0))
-      (setf (.last-left master) last-left)
-      (setf (.last-right master) last-right))))
+            do (setf (cffi:mem-aref buffer :float (* i 2))
+                     (limit (* (aref left i) volume)))
+               (setf  (cffi:mem-aref buffer :float (1+ (* i 2)))
+                      (limit (* (aref right i) volume)))
+               (setf (aref left i) 0.0
+                     (aref right i) 0.0)))))
 
 (defun process-thread-loop ()
-  (declare (optimize (speed 3) (safety 0)))
+  ;; TODO (declare (optimize (speed 3) (safety 0)))
   (let ((thread-mailbox (.process-thread-mailbox *audio*))
         (audio-mailbox (.audio-mailbox *audio*)))
     (loop
       (sb-concurrency:receive-message thread-mailbox)
       (sb-sys:without-gcing
         (statistic-enter)
-        (let* ((sequencer (.sequencer *audio*))
-               (start-play-position (.play-position sequencer))
-               (end-play-position (inc-frame start-play-position))
-               (playing (.playing *audio*)))
-          (when (.looping sequencer)
-            (cond ((= (the fixnum (.loop-start-line sequencer))
-                      (the fixnum (.loop-end-line sequencer)))
-                   (when (<= (the fixnum (.end sequencer))
-                             (the fixnum (play-position-line end-play-position)))
-                     (setf (play-position-line end-play-position) 0)))
-                  ((<= (the fixnum (.loop-end-line sequencer))
-                       (the fixnum (play-position-line end-play-position)))
-                   (setf (play-position-line end-play-position)
-                         (.loop-start-line sequencer)))))
-          (process-sequencer sequencer
-                             (play-position-line start-play-position)
-                             (play-position-line-frame start-play-position)
-                             (play-position-line end-play-position)
-                             (play-position-line-frame end-play-position))
-          (when playing
-            (if (<= (the fixnum (.end sequencer))
-                    (the fixnum (play-position-line end-play-position)))
-                (setf (.playing *audio*) nil)
-                (setf (.play-position sequencer) end-play-position)))
-          (setf (.played *audio*) playing))
+        (process *app*)
         (statistic-leave))
       (sb-concurrency:send-message audio-mailbox t))))
 
@@ -268,7 +240,8 @@
       (setf (.statistic-count *audio*) 0))))
 
 (defmacro with-audio (&body body)
-  `(let ((*audio* (setf *audio* (make-instance 'audio-engine))))
+  `(progn
+     (setf *audio* (make-instance 'audio-engine))
      (portaudio:with-audio
        (cffi:with-foreign-objects ((handle :pointer))
          (unwind-protect

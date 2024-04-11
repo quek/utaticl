@@ -20,6 +20,7 @@
   ((:file "package")
    (:file "library")
    ;; (:file "autowrap")
+   (:file "audio-engine")
    (:file "read-h")
    (:file "win32")
    (:cffi-grovel-file "ig-grovel")
@@ -37,7 +38,6 @@
    (:file "vst3-impl")
    (:file "vst3-module")
    (:file "ui")
-   (:file "audio-engine")
    (:file "app")
    (:file "main")
    ;; (:module autowrap-spec

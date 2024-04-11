@@ -1,5 +1,6 @@
 (in-package :dgw)
 
 (defun main ()
-  (let ((app (make-instance 'app)))
-    (sdl2-main app)))
+  (setf *app* (make-instance 'app))
+  (with-audio
+   (sdl2-main *app*)))

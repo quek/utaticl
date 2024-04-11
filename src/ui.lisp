@@ -2,7 +2,7 @@
 
 (in-package :dgw)
 
-(defvar *done* nil)
+(sb-ext:defglobal *done* nil)
 ;;(setf *done* t)
 
 

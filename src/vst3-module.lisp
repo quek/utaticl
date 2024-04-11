@@ -165,8 +165,8 @@
     (setf (.view self) view)
     (vst3-ffi::set-frame view (vst3-impl::ptr (vst3-impl::.plug-frame
                                                (.host-applicaiton self))))
-    (autowrap:with-alloc (size '(vst3-c-api:steinberg-view-rect))
-      (vst3-ffi::get-size view size)
+    (autowrap:with-alloc (size '(:struct (vst3-c-api:steinberg-view-rect)))
+      (vst3-ffi::get-size view (autowrap:ptr size))
       (let* ((resizable (= (vst3-ffi::can-resize view) vst3-c-api:+steinberg-k-result-true+))
              (width (- (vst3-c-api:steinberg-view-rect.right size)
                         (vst3-c-api:steinberg-view-rect.left size)))
