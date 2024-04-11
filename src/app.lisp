@@ -1,0 +1,15 @@
+(in-package :dgw)
+
+(defclass app ()
+  ())
+
+(defmethod render ((self app))
+  (cffi:with-foreign-object (openp :bool)
+    (setf (cffi:mem-ref openp :bool) t)
+    (when (ig::begin "Hello" openp 0)
+      (ig::text (format nil "Hello ~a ~a."(lisp-implementation-type) (lisp-implementation-version)))
+      (when (ig::button "Hi!" '(100.0 35.0))
+        (print 'hi))
+      (when (ig::button "Exit" '(200.0 40.0))
+        (setf *done* t)))
+      (ig::end)))
