@@ -4,3 +4,6 @@
 [submodule "lib/cimgui"]
 	path = lib/cimgui
 	url = https://github.com/cimgui/cimgui.git
+[submodule "lib/ftw"]
+	path = lib/ftw
+	url = https://github.com/fjames86/ftw.git

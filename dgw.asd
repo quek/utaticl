@@ -1,10 +1,14 @@
- (eval-when (:compile-toplevel :load-toplevel :execute)
-   (require :sb-grovel))
+(asdf:initialize-source-registry
+ '(:source-registry
+   (:tree (:here "lib"))
+   :inherit-configuration))
 
 (asdf:defsystem :dgw
   :licence "GPL3"
   :defsystem-depends-on ("cffi-grovel")
-  :depends-on ("cffi" "cffi-libffi" "sdl2" "cl-opengl" "vst3-c-api")
+  :depends-on ("cffi" "cffi-libffi" "sdl2" "cl-opengl"
+                      "vst3-c-api"
+                      "ftw")
   ;; :depends-on ("cl-autowrap/libffi")
   :serial t
   :pathname "src"
@@ -29,6 +33,7 @@
    (:file "vst3-impl")
    (:file "vst3-module")
    (:file "ui")
+   (:file "main")
    ;; (:module autowrap-spec
    ;;  :pathname "spec"
    ;;  :components ((:static-file "cimgui.h")))

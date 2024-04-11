@@ -67,7 +67,7 @@
   (ig-backend::impl-opengl3-render-draw-data (ig::get-draw-data))
   (sdl2:gl-swap-window window))
 
-(defun sdl2-scratch-main ()
+(defun sdl2-main ()
   (sdl2:init sdl2-ffi::+sdl-init-video+)
   (sdl2:gl-set-attr sdl2-ffi::+sdl-gl-context-flags+ 0)
   (sdl2:gl-set-attr sdl2-ffi::+sdl-gl-context-profile-mask+ sdl2-ffi::+sdl-gl-context-profile-core+)
