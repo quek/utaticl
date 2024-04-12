@@ -185,13 +185,15 @@
           (vst3::ensure-ok (vst3-ffi::attached view hwnd vst3-ffi::+steinberg-k-platform-type-hwnd+)))))
     (call-next-method)))
 
-(defmethod close-editor ((self vst3-module))
+(defmethod editor-close ((self vst3-module))
   (when (.editor-open-p self)
     (when (.view self)
       (vst3-ffi::removed (.view self))
       (vst3-ffi::release (.view self))
       (sb-ext:cancel-finalization (.view self))
-      (setf (.view self) nil))
+      (setf (.view self) nil)
+      (ftw:destroy-window (.hwnd self))
+      (setf (.hwnd self) nil))
     (call-next-method)))
 
 (defmethod process ((self module))

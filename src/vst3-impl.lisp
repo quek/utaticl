@@ -166,6 +166,7 @@
             name))
 
 (defmethod create-instance ((self host-application) cid iid obj)
+  (break)
   (cond ((and (uid-equal cid vst3-ffi::+steinberg-vst-imessage-iid+)
               (uid-equal iid vst3-ffi::+steinberg-vst-imessage-iid+))
          (let ((message (make-instance 'message)))
