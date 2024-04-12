@@ -54,16 +54,20 @@
                    ;; TODO io->DislplaySize.x, io->DisplaySize.y
                    1024 768)
   (opengl:clear-color 0.45 0.55 0.60 1.0) ;TODO clearColor
-  (opengl:clear :color-buffer-bit) ;TODO GL_COLOR_BUFFER_BIT
+  (opengl:clear :color-buffer-bit)
   (ig-backend::impl-opengl3-render-draw-data (ig::get-draw-data))
   (sdl2:gl-swap-window window))
 
 (defun sdl2-main (app)
-  (sdl2:init sdl2-ffi::+sdl-init-video+)
+  "https://github.com/cimgui/cimgui/blob/docking_inter/backend_test/example_sdl_opengl3/main.c"
+  (sdl2:init (logior sdl2-ffi:+sdl-init-video+))
   (sdl2:gl-set-attr sdl2-ffi::+sdl-gl-context-flags+ 0)
   (sdl2:gl-set-attr sdl2-ffi::+sdl-gl-context-profile-mask+ sdl2-ffi::+sdl-gl-context-profile-core+)
   (sdl2:gl-set-attr sdl2-ffi::+sdl-gl-context-major-version+ 3)
-  (sdl2:gl-set-attr sdl2-ffi::+sdl-gl-context-minor-version+ 2)
+  (sdl2:gl-set-attr sdl2-ffi::+sdl-gl-context-minor-version+ 0)
+
+  ;; (sdl2:set-hint sdl2-ffi:+sdl-hint-ime-show-ui+ "1")
+  
   (sdl2:set-hint :render-driver "opengl")
   (sdl2:gl-set-attr sdl2-ffi::+sdl-gl-depth-size+ 24)
   (sdl2:gl-set-attr sdl2-ffi::+sdl-gl-stencil-size+ 8)
@@ -77,15 +81,19 @@
     (sdl2:gl-set-swap-interval 1)       ;enable vsync
     (let* ((ctx (ig::create-context (cffi:null-pointer))))
       (ig::set-current-context ctx)
+      
       ;; TODO ImGuiIO の設定
+      
       (ig-backend::impl-sdl2-init-for-opengl
        (autowrap:ptr window)
        (autowrap:ptr gl-context))
       (ig-backend::impl-opengl3-init "#version 130")
+
       (setf *done* nil)
       (sdl2:with-sdl-event (e)
         (loop until *done* do
           (gui-loop app window gl-context e)))
+      
       (ig-backend::impl-opengl3-shutdown)
       (ig-backend::impl-sdl2-shutdown)
       (ig::destroy-context ctx)
