@@ -15,8 +15,9 @@
    (hwnd :initform :nil :accessor .hwnd)))
 
 (defmethod initialize-instance :after ((self vst3-module) &key)
-  (setf (slot-value self 'host-applicaiton)
-        (make-instance 'vst3-impl::host-application :module self)))
+  (let ((host-applicaiton (make-instance 'vst3-impl::host-application :module self)))
+    (vst3-impl::add-ref host-applicaiton)
+    (setf (slot-value self 'host-applicaiton) host-applicaiton)))
 
 (defun vst3-module-load (path)
   (let* ((factory (vst3::get-plugin-factory path))
@@ -78,7 +79,8 @@
     (vst3::ensure-ok
      (vst3-ffi::can-process-sample-size process vst3-c-api::+steinberg-vst-symbolic-sample-sizes-k-sample32+))
 
-    (stop-module self)
+    (vst3-ffi::set-processing (.process self) 0)
+    (vst3-ffi::set-active (.component self) 0)
 
     (autowrap:with-alloc (setup '(:struct (vst3-c-api::steinberg-vst-process-setup)))
       (setf (vst3-c-api::steinberg-vst-process-setup.process-mode setup)
@@ -111,11 +113,11 @@
   )
 
 (defmethod terminate ((self vst3-module))
-  (stop self)
   (disconnect-componet-controller self)
   (vst3-ffi::terminate (.component self))
   (unless (.single-component-p self)
-    (vst3-ffi::terminate (.controller self))))
+    (vst3-ffi::terminate (.controller self)))
+  (vst3-impl::release (.host-applicaiton self)))
 
 (defmethod connect-componet-controller ((self vst3-module))
   (unless (.single-component-p self)
@@ -159,7 +161,6 @@
 
 (defmethod stop ((self vst3-module))
   (when (.start-p self)
-    (editor-close self)
     (vst3-ffi::set-processing (.process self) 0)
     (vst3-ffi::set-active (.component self) 0)
     (call-next-method)))
