@@ -14,9 +14,8 @@
         (setf *done* t)))
       (ig::end)))
 
-(defmethod stop-app ((self app))
+(defmethod stop ((self app))
   (awhen (.module self)
-    (stop-module it)
     (terminate it)))
 
 (defmethod open-vst3-module ()
@@ -27,8 +26,9 @@
                  )))
     (setf (.module *app*) module)
     (initialize module)
-    (start-module module)
-    (open-editor module)))
+    (start module)
+    (editor-open module)
+    ))
 
 (defmethod process ((self app))
   (awhen (.module self)

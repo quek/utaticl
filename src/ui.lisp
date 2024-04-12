@@ -1,5 +1,3 @@
-(declaim (optimize (debug 3)))
-
 (in-package :dgw)
 
 (sb-ext:defglobal *done* nil)
