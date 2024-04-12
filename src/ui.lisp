@@ -77,6 +77,13 @@
                                      :flags (list sdl2-ffi:+sdl-window-shown+
                                                   sdl2-ffi:+sdl-window-opengl+
                                                   sdl2-ffi:+sdl-window-resizable+)))
+         ;; FIXMI なぜか初回の sdl2:create-window だと窓が表示されない・・・
+         (window (progn
+                   (sdl2:destroy-window window)
+                   (sdl2:create-window :title "DGW" :w 1024 :h 768
+                                       :flags (list sdl2-ffi:+sdl-window-shown+
+                                                    sdl2-ffi:+sdl-window-opengl+
+                                                    sdl2-ffi:+sdl-window-resizable+))))
          (gl-context (sdl2:gl-create-context window)))
     (sdl2:gl-set-swap-interval 1)       ;enable vsync
     (let* ((ctx (ig::create-context (cffi:null-pointer))))

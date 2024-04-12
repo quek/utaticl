@@ -479,7 +479,7 @@
 
 (defmethod initialize-instance :before ((self attribute-list) &key)
   (unless (slot-boundp self 'wrap)
-    (let ((vtbl (autowrap:alloc 'vst3-c-api:steinberg-vst-i-attribute-list-vtbl ))
+    (let ((vtbl (autowrap:alloc 'vst3-c-api:steinberg-vst-i-attribute-list-vtbl))
           (wrap (autowrap:alloc 'vst3-c-api:steinberg-vst-i-attribute-list)))
       (setf (vst3-c-api:steinberg-vst-i-attribute-list.lp-vtbl wrap)
             (autowrap:ptr vtbl))
@@ -642,7 +642,7 @@
 
 (defmethod initialize-instance :before ((self plug-frame) &key)
   (unless (slot-boundp self 'wrap)
-    (let ((vtbl (autowrap:alloc 'vst3-c-api:steinberg-i-plug-frame))
+    (let ((vtbl (autowrap:alloc 'vst3-c-api:steinberg-i-plug-frame-vtbl))
           (wrap (autowrap:alloc 'vst3-c-api:steinberg-i-plug-frame)))
       (setf (vst3-c-api:steinberg-i-plug-frame.lp-vtbl wrap)
             (autowrap:ptr vtbl))
