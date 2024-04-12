@@ -25,10 +25,10 @@
                  "c:/Program Files/Common Files/VST3/Dexed.vst3"
                  ;;"c:/Program Files/Common Files/VST3/DS Thorn.vst3"
                  )))
+    (setf (.module *app*) module)
     (initialize module)
     (start-module module)
-    (open-editor module)
-    (setf (.module *app*) module)))
+    (open-editor module)))
 
 (defmethod process ((self app))
   (awhen (.module self)

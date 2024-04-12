@@ -183,6 +183,9 @@
     (sb-ext:cancel-finalization (.view self))
     (setf (.view self) nil)))
 
+(defmethod process ((self module))
+  )
+
 #+nil
 (let ((module (vst3-module-load
                "c:/Program Files/Common Files/VST3/Dexed.vst3"
