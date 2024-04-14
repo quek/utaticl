@@ -13,14 +13,21 @@
    (event-output-bus-count :accessor .event-output-bus-count)
    (view :initform :nil :accessor .view)
    (hwnd :initform :nil :accessor .hwnd)
-   (process-data :reader .process-data)))
+   (process-data :reader .process-data)
+   (buffer-in :initform (list (make-array 1024 :element-type 'single-float :initial-element 0.0)
+                              (make-array 1024 :element-type 'single-float :initial-element 0.0))
+              :accessor .buffer-in)
+   (buffer-out :initform (list (make-array 1024 :element-type 'single-float :initial-element 0.0)
+                               (make-array 1024 :element-type 'single-float :initial-element 0.0))
+               :accessor .buffer-out)
+   (parameter-changes-in :initform (make-instance 'vst3-impl::parameter-changes)
+                         :accessor .parameter-changes-in)))
 
 (defmethod initialize-instance :after ((self vst3-module) &key)
   (let ((host-applicaiton (make-instance 'vst3-impl::host-application :module self))
         (process-data (autowrap:alloc '(:struct (vst3-c-api:steinberg-vst-process-data))))
         (inputs (autowrap:alloc '(:struct (vst3-c-api:steinberg-vst-audio-bus-buffers))))
-        (outputs (autowrap:alloc '(:struct (vst3-c-api:steinberg-vst-audio-bus-buffers))))
-        (input-parameter-changes (make-instance 'vst3-impl::parameter-changes)))
+        (outputs (autowrap:alloc '(:struct (vst3-c-api:steinberg-vst-audio-bus-buffers)))))
     (vst3-impl::add-ref host-applicaiton)
     (setf (slot-value self 'host-applicaiton) host-applicaiton)
 
@@ -36,11 +43,11 @@
     (setf (vst3-c-api:steinberg-vst-process-data.num-outputs process-data)
           1)
     (setf (vst3-c-api:steinberg-vst-process-data.inputs process-data)
-          inputs)
+          (autowrap:ptr inputs))
     (setf (vst3-c-api:steinberg-vst-process-data.outputs process-data)
-          outputs)
+          (autowrap:ptr outputs))
     (setf (vst3-c-api:steinberg-vst-process-data.input-parameter-changes process-data)
-          input-parameter-changes)
+          (vst3-impl::ptr (.parameter-changes-in self)))
     (setf (vst3-c-api:steinberg-vst-process-data.output-parameter-changes process-data)
           (cffi:null-pointer))
     (setf (vst3-c-api:steinberg-vst-process-data.input-events process-data)
@@ -52,13 +59,21 @@
 
     (setf (vst3-c-api::steinberg-vst-audio-bus-buffers.num-channels inputs) 2)
     (setf (vst3-c-api::steinberg-vst-audio-bus-buffers.silence-flags inputs) 0)
-    (setf (vst3-c-api::steinberg-vst-audio-bus-buffers.steinberg-vst-audio-bus-buffers-channel-buffers32 inputs)
-          (make-array *frames-per-buffer* :element-type 'float :initial-element 0.0))
+    (let ((channels (autowrap:alloc :pointer 2)))
+      (loop for i below 2
+            do (setf (cffi:mem-ref channels :pointer i)
+                     (sb-sys:vector-sap (nth i (.buffer-in self)))))
+      (setf (vst3-c-api::steinberg-vst-audio-bus-buffers.steinberg-vst-audio-bus-buffers-channel-buffers32 inputs)
+            channels))
     
     (setf (vst3-c-api::steinberg-vst-audio-bus-buffers.num-channels outputs) 2)
     (setf (vst3-c-api::steinberg-vst-audio-bus-buffers.silence-flags outputs) 0)
-    (setf (vst3-c-api::steinberg-vst-audio-bus-buffers.steinberg-vst-audio-bus-buffers-channel-buffers32 outputs)
-          (make-array *frames-per-buffer* :element-type 'float :initial-element 0.0))))
+    (let ((channels (autowrap:alloc :pointer 2)))
+      (loop for i below 2
+            do (setf (cffi:mem-ref channels :pointer i)
+                     (sb-sys:vector-sap (nth i (.buffer-out self)))))
+            (setf (vst3-c-api::steinberg-vst-audio-bus-buffers.steinberg-vst-audio-bus-buffers-channel-buffers32 outputs)
+            channels))))
 
 (defun vst3-module-load (path)
   (let* ((factory (vst3::get-plugin-factory path))
@@ -239,9 +254,9 @@
     (call-next-method)))
 
 (defmethod process ((self module))
-  (let ((pd (.process-data self)))
-
-    ))
+  (let ((process-data (.process-data self)))
+    (vst3-ffi::process (.process self)
+                       (autowrap:ptr process-data))))
 
 
 

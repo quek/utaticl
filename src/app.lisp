@@ -20,6 +20,7 @@
 
 (defmethod open-vst3-module ()
   (print 'open-vst3-module)
+  (start-audio)
   (let ((module (vst3-module-load
                  "c:/Program Files/Common Files/VST3/Dexed.vst3"
                  ;;"c:/Program Files/Common Files/VST3/DS Thorn.vst3"
@@ -32,4 +33,5 @@
 
 (defmethod process ((self app))
   (awhen (.module self)
-    (process it)))
+    (when (.start-p it)
+      (process it))))

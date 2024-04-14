@@ -50,8 +50,8 @@
     :type fixnum
     :accessor .output-channels)
    (sequencer :initarg :sequencer :accessor .sequencer)
-   (master-buffer :initform (cons (make-array 1024 :element-type 'float :initial-element 0.0)
-                                  (make-array 1024 :element-type 'float :initial-element 0.0))
+   (master-buffer :initform (list (make-array 1024 :element-type 'single-float :initial-element 0.0)
+                                  (make-array 1024 :element-type 'single-float :initial-element 0.0))
                   :accessor .master-buffer)
    (process-thread :initform nil :accessor .process-thread)
    (process-thread-mailbox :accessor .process-thread-mailbox
@@ -149,7 +149,7 @@
                   -1.0)
                  (t value))))
     (let* ((left (car (.master-buffer *audio*)))
-           (right (cdr (.master-buffer *audio*)))
+           (right (cadr (.master-buffer *audio*)))
            (volume 1.0))
       (loop for i below *frames-per-buffer*
             do (setf (cffi:mem-aref buffer :float (* i 2))
@@ -168,6 +168,19 @@
       (sb-sys:without-gcing
         (statistic-enter)
         (process *app*)
+
+        ;; TODO かんぜんに暫定
+        (let ((module (.module *app*)))
+          (when module
+            (let ((in (.buffer-out module))
+                  (out (.master-buffer *audio*)))
+              (loop for channel below 2
+                    do (loop for i below *frames-per-buffer*
+                             for x = (nth channel out)
+                             for y = (nth channel in)
+                             do (setf (aref x i)
+                                      (aref y i)))))))
+        
         (statistic-leave))
       (sb-concurrency:send-message audio-mailbox t))))
 
