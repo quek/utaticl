@@ -633,38 +633,73 @@
   (get-binary (gethash (cffi:pointer-address this-interface) *ptr-object-map*)
            id data size-in-bytes))
 
-(defclass plug-frame (unknown)
-  ((module :initarg :module :accessor .module)))
 
-(defmethod query-interface ((self host-application) iid obj)
-  (%query-interface
-   self vst3-ffi::+steinberg-iplug-frame-iid+ iid obj
-   (call-next-method)))
+(defmacro def-vst3-impl (name super-classes slots methods
+                         &key iid vst3-c-api-class)
+  (labels ((sym (format &rest args)
+             (find-symbol (apply #'format nil format args) :vst3-c-api)))
+    `(progn
+       (defclass ,name ,super-classes
+         ,slots)
 
-(defmethod initialize-instance :before ((self plug-frame) &key)
-  (unless (slot-boundp self 'wrap)
-    (let ((vtbl (autowrap:alloc 'vst3-c-api:steinberg-i-plug-frame-vtbl))
-          (wrap (autowrap:alloc 'vst3-c-api:steinberg-i-plug-frame)))
-      (setf (vst3-c-api:steinberg-i-plug-frame.lp-vtbl wrap)
-            (autowrap:ptr vtbl))
-      (setf (slot-value self 'wrap) wrap)
-      (setf (slot-value self 'vtbl) vtbl)))
+       (defmethod query-interface ((self ,name) iid obj)
+         (%query-interface self ,iid iid obj
+                           (call-next-method)))
 
-  (let ((vtbl (if (typep (.vtbl self) 'vst3-c-api::steinberg-i-plug-frame-vtbl)
-                  (.vtbl self)
-                  (vst3-c-api::make-steinberg-i-plug-frame-vtbl
-                   :ptr (autowrap:ptr (.vtbl self))))))
-    (setf (vst3-c-api:steinberg-i-plug-frame-vtbl.resize-view vtbl)
-          (autowrap:callback 'resize-view))))
+       (defmethod initialize-instance :before ((self ,name) &key)
+         (unless (slot-boundp self 'wrap)
+           (let ((vtbl (autowrap:alloc ',(sym "~a-VTBL" vst3-c-api-class)))
+                 (wrap (autowrap:alloc ',vst3-c-api-class)))
+             (setf (,(sym "~a.LP-VTBL" vst3-c-api-class) wrap)
+                   (autowrap:ptr vtbl))
+             (setf (slot-value self 'wrap) wrap)
+             (setf (slot-value self 'vtbl) vtbl)))
 
-(defmethod resize-view ((self plug-frame) view new-size)
-  (declare (ignore view new-size))
-  ;; TODO 実装
-  vst3-c-api::+steinberg-k-result-true+)
+         (let ((vtbl (if (typep (.vtbl self) ',(sym "~a-VTBL" vst3-c-api-class))
+                         (.vtbl self)
+                         (,(sym "MAKE-~a-VTBL" vst3-c-api-class)
+                          :ptr (autowrap:ptr (.vtbl self))))))
+           ,@(loop for method in methods
+                   for method-name = (car method)
+                   collect `(setf (,(sym "~a-VTBL.~a" vst3-c-api-class method-name) vtbl)
+                                  (autowrap:callback ',method-name)))))
 
-(autowrap:defcallback resize-view vst3-c-api::steinberg-tresult
-    ((this-interface :pointer)
-     (view (:pointer vst3-c-api:steinberg-i-plug-view))
-     (new-size (:pointer (:struct (vst3-c-api:steinberg-view-rect)))))
-  (resize-view (gethash (cffi:pointer-address this-interface) *ptr-object-map*)
-               view new-size))
+       ,@(loop for method in methods
+               for (method-name method-args result-type . body) = method
+               collect `(defmethod ,method-name ((self ,name) ,@(mapcar #'car method-args))
+                          ,@body)
+               collect `(autowrap:defcallback ,method-name ,result-type
+                            ((this-interface :pointer)
+                             ,@method-args)
+                          (,method-name (gethash (cffi:pointer-address this-interface) *ptr-object-map*)
+                                        ,@(mapcar #'car method-args)))))))
+
+
+(def-vst3-impl plug-frame (unknown)
+  ((module :initarg :module :accessor .module))
+  ((resize-view ((view (:pointer vst3-c-api:steinberg-i-plug-view))
+                 (new-size (:pointer (:struct (vst3-c-api:steinberg-view-rect)))))
+                vst3-c-api::steinberg-tresult
+                (declare (ignore view new-size))
+                ;; TODO 実装
+                vst3-c-api::+steinberg-k-result-true+))
+  :iid vst3-ffi::+steinberg-iplug-frame-iid+
+  :vst3-c-api-class vst3-c-api:steinberg-i-plug-frame)
+
+(def-vst3-impl parameter-changes (unknown)
+  ()
+  ((get-parameter-count ()
+                        :int
+                        ;; TODO
+                        0)
+   (get-parameter-data ((id (:pointer :unsigned-int))
+                        (index (:pointer :int)))
+                       :pointer
+                       ;; TODO
+                       (cffi:null-pointer))
+   (add-parameter-data ((index :int))
+                       :pointer
+                       ;; TODO
+                       (cffi:null-pointer)))
+  :iid vst3-ffi::+steinberg-vst-iparameter-changes-iid+
+  :vst3-c-api-class vst3-c-api:steinberg-vst-i-parameter-changes)
