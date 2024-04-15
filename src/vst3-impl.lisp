@@ -451,12 +451,12 @@
     (autowrap:free (.message-id self)))
   (let ((len 1))
     (loop for i to 1024
-          until (zerop (cffi:mem-ref id :int8))
+          until (zerop (autowrap:c-aref id i :char))
           do (incf len))
     (let ((ptr (autowrap:alloc :int8 len)))
       (loop for i below len
-            do (setf (cffi:mem-ref ptr :int8 i)
-                     (cffi:mem-ref id :int8 i)))
+            do (setf (autowrap:c-aref ptr i :char)
+                     (autowrap:c-aref id i :char)))
       (setf (.message-id self) ptr)))
   (values))
 

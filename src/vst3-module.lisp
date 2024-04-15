@@ -159,7 +159,7 @@
     (setf (vst3-c-api::steinberg-vst-audio-bus-buffers.silence-flags inputs) 0)
     (let ((channels (autowrap:alloc :pointer 2)))
       (loop for i below 2
-            do (setf (cffi:mem-ref channels :pointer i)
+            do (setf (autowrap:c-aref channels i :pointer)
                      (sb-sys:vector-sap (nth i (.buffer-in self)))))
       (setf (vst3-c-api::steinberg-vst-audio-bus-buffers.steinberg-vst-audio-bus-buffers-channel-buffers32 inputs)
             channels))
@@ -168,7 +168,7 @@
     (setf (vst3-c-api::steinberg-vst-audio-bus-buffers.silence-flags outputs) 0)
     (let ((channels (autowrap:alloc :pointer 2)))
       (loop for i below 2
-            do (setf (cffi:mem-ref channels :pointer i)
+            do (setf (autowrap:c-aref channels i :pointer)
                      (sb-sys:vector-sap (nth i (.buffer-out self)))))
       (setf (vst3-c-api::steinberg-vst-audio-bus-buffers.steinberg-vst-audio-bus-buffers-channel-buffers32 outputs)
             channels)))
@@ -269,14 +269,15 @@
 
 #+nil
 (let ((module (vst3-module-load
-               "c:/Program Files/Common Files/VST3/Dexed.vst3"
+               ;;"c:/Program Files/Common Files/VST3/Dexed.vst3"
                ;;"c:/Program Files/Common Files/VST3/DS Thorn.vst3"
+               "c:/Program Files/Common Files/VST3/MeldaProduction/MSoundFactory.vst3"
                )))
   (initialize module)
   (start module)
-  (editor-open module)
+  ;;(editor-open module)
 
-  (editor-close module)
+  ;;(editor-close module)
   (stop module)
   (terminate module)
   module)
