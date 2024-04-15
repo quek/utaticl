@@ -16,6 +16,7 @@
    (process-data :reader .process-data)
    (buffer-in :accessor .buffer-in)
    (buffer-out :accessor .buffer-out)
+   (event-in :accessor .event-in)
    (parameter-changes-in :initform (make-instance 'vst3-impl::parameter-changes)
                          :accessor .parameter-changes-in)))
 
@@ -122,10 +123,12 @@
         (buffer-in (loop for channel below 2
                          collect (make-array 1024 :element-type 'single-float :initial-element 0.0)))
         (buffer-out (loop for channel below 2
-                          collect (make-array 1024 :element-type 'single-float :initial-element 0.0))))
+                          collect (make-array 1024 :element-type 'single-float :initial-element 0.0)))
+        (event-in (make-instance 'vst3-impl::event-list)))
     (setf (slot-value self 'process-data) process-data)
     (setf (.buffer-in self) buffer-in)
     (setf (.buffer-out self) buffer-out)
+    (setf (.event-in self) event-in)
     
     (setf (vst3-c-api:steinberg-vst-process-data.process-mode process-data)
           vst3-c-api:+steinberg-vst-process-modes-k-realtime+)
@@ -146,7 +149,7 @@
     (setf (vst3-c-api:steinberg-vst-process-data.output-parameter-changes process-data)
           (cffi:null-pointer))
     (setf (vst3-c-api:steinberg-vst-process-data.input-events process-data)
-          (cffi:null-pointer))
+          (vst3-impl::ptr (.event-in self)))
     (setf (vst3-c-api:steinberg-vst-process-data.output-events process-data)
           (cffi:null-pointer))
     (setf (vst3-c-api:steinberg-vst-process-data.process-context process-data)

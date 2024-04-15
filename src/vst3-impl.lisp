@@ -703,3 +703,21 @@
                        (cffi:null-pointer)))
   :iid vst3-ffi::+steinberg-vst-iparameter-changes-iid+
   :vst3-c-api-class vst3-c-api:steinberg-vst-i-parameter-changes)
+
+(def-vst3-impl event-list (unknown)
+  ()
+  ((get-event-count ()
+                    :int
+                    ;; TODO
+                    0)
+   (get-event ((index :int)
+               (e :pointer))
+              vst3-c-api::steinberg-tresult
+              ;; TODO
+              vst3-c-api:+steinberg-k-result-ok+)
+   (add-event ((e :pointer))
+              vst3-c-api::steinberg-tresult
+              ;; TODO
+              vst3-c-api:+steinberg-k-result-ok+))
+  :iid vst3-ffi::+steinberg-vst-ievent-list-iid+
+  :vst3-c-api-class vst3-c-api:steinberg-vst-i-event-list)

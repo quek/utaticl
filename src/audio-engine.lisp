@@ -171,7 +171,7 @@
 
         ;; TODO かんぜんに暫定
         (let ((module (.module *app*)))
-          (when module
+          (when (and module (.start-p module))
             (let ((in (.buffer-out module))
                   (out (.master-buffer *audio*)))
               (loop for channel below 2
