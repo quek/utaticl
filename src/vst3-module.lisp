@@ -121,9 +121,9 @@
         (outputs (autowrap:alloc '(:struct (vst3-c-api:steinberg-vst-audio-bus-buffers))
                                  (.audio-output-bus-count self)))
         (buffer-in (loop for channel below 2
-                         collect (make-array 1024 :element-type 'single-float :initial-element 0.0)))
+                         collect (make-array *frames-per-buffer* :element-type 'single-float :initial-element 0.0)))
         (buffer-out (loop for channel below 2
-                          collect (make-array 1024 :element-type 'single-float :initial-element 0.0)))
+                          collect (make-array *frames-per-buffer* :element-type 'single-float :initial-element 0.0)))
         (event-in (make-instance 'vst3-impl::event-list)))
     (setf (slot-value self 'process-data) process-data)
     (setf (.buffer-in self) buffer-in)
@@ -262,10 +262,9 @@
 
 (defmethod process ((self module))
   (let ((process-data (.process-data self)))
+    (log:debug (subseq (car (.buffer-out self)) 0 10))
     (vst3-ffi::process (.process self)
                        (autowrap:ptr process-data))))
-
-
 
 #+nil
 (let ((module (vst3-module-load

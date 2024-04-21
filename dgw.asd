@@ -12,12 +12,13 @@
                       "vst3-c-api"
                       "sdl2" "cl-opengl"
                       "ftw"
-                      "anaphora")
+                      "anaphora" "log4cl")
   ;; :depends-on ("cl-autowrap/libffi")
   :serial t
   :pathname "src"
   :components
   ((:file "package")
+   (:file "prelude")
    (:file "library")
    ;; (:file "autowrap")
    (:file "audio-engine")
