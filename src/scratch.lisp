@@ -4,14 +4,29 @@
   (vst3::create-component factory))
 ;;⇒ #<VST3-FFI::STEINBERG-VST-ICOMPONENT {1005053A93}>
 
+(let* ((module (vst3-module-load
+                ;;"c:/Program Files/Common Files/VST3/Vital.vst3"
+                ;;"c:/Program Files/Common Files/VST3/DS Thorn.vst3"
+                ;;"c:/Program Files/Common Files/VST3/Dexed.vst3"
+                ;;"c:/Program Files/Common Files/VST3/USYNTH.vst3"
+                "c:/Program Files/Common Files/VST3/MeldaProduction/MSoundFactory.vst3"
+                )))
+  (initialize module)
+  (vst3-ffi::create-view (.controller module) "editor"))
+
 (let* ((factory (vst3::get-plugin-factory "c:/Program Files/Common Files/VST3/MeldaProduction/MSoundFactory.vst3")))
   (vst3::create-component factory))
+
+(let* ((factory (vst3::get-plugin-factory "c:/Program Files/Common Files/VST3/Kilohearts/Phase Plant.vst3")))
+  (vst3::create-component factory))
+
 
 (let* ((path "c:/Program Files/Common Files/VST3/MeldaProduction/MSoundFactory.vst3")
        ;;(path "c:/Program Files/Common Files/VST3/Dexed.vst3")
        ;;p(path "c:/Program Files/Common Files/VST3/F-em (64 bit).vst3")
        ;;(path "c:/Program Files/Common Files/VST3/Kilohearts/Phase Plant.vst3")
        ;;(path "c:/Program Files/Common Files/VST3/DS Thorn.vst3")
+       (path "c:/Program Files/Common Files/VST3/Vital.vst3")
        (factory (vst3::get-plugin-factory path))
        (component (autowrap:with-alloc (%class-info '(:struct (vst3-c-api:steinberg-p-class-info)))
                     (loop for index below (vst3-ffi::count-classes factory)
@@ -26,3 +41,4 @@
                                                                       obj)
                                            (vst3-c-api::make-steinberg-vst-i-component :ptr (cffi:mem-ref obj :pointer))))))))
   component)
+;;⇒ #<VST3-C-API:STEINBERG-VST-I-COMPONENT {#X00129360}>

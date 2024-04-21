@@ -29,12 +29,14 @@
   (let* ((factory (vst3::get-plugin-factory path))
          (component (vst3::create-component factory))
          (single-component-p t)
-         (controller (handler-case (vst3::query-interface component vst3-ffi::+steinberg-vst-iedit-controller-iid+)
-                       (vst3::no-interface-error ()
-                         (setf single-component-p nil)
-                         (vst3::create-instance factory
-                                                (vst3::get-controller-class-id component)
-                                                vst3-ffi::+steinberg-vst-iedit-controller-iid+)))))
+         (controller (labels ((f ()
+                                (setf single-component-p nil)
+                                (vst3::create-instance factory
+                                                       (vst3::get-controller-class-id component)
+                                                       vst3-ffi::+steinberg-vst-iedit-controller-iid+)))
+                       (handler-case (vst3::query-interface component vst3-ffi::+steinberg-vst-iedit-controller-iid+)
+                         (vst3::no-interface-error () (f))
+                         (vst3::false-error () (f))))))
     (make-instance 'vst3-module
                    :factory factory
                    :conponent component
@@ -233,7 +235,7 @@
   (unless (.editor-open-p self)
     (let* ((view-ptr (vst3-ffi::create-view (.controller self)
                                             vst3-ffi::+steinberg-vst-view-type-k-editor+))
-           (view (make-instance 'vst3-ffi::steinberg-iplug-view  :ptr view-ptr)))
+           (view (make-instance 'vst3-ffi::steinberg-iplug-view :ptr view-ptr)))
       (setf (.view self) view)
       (vst3-ffi::set-frame view (vst3-impl::ptr (vst3-impl::.plug-frame
                                                  (.host-applicaiton self))))
@@ -270,13 +272,14 @@
 (let ((module (vst3-module-load
                ;;"c:/Program Files/Common Files/VST3/Dexed.vst3"
                ;;"c:/Program Files/Common Files/VST3/DS Thorn.vst3"
-               "c:/Program Files/Common Files/VST3/MeldaProduction/MSoundFactory.vst3"
+               ;;"c:/Program Files/Common Files/VST3/MeldaProduction/MSoundFactory.vst3"
+               "c:/Program Files/Common Files/VST3/Vital.vst3"
                )))
   (initialize module)
   (start module)
-  ;;(editor-open module)
+  (editor-open module)
 
-  ;;(editor-close module)
+  (editor-close module)
   (stop module)
   (terminate module)
   module)
