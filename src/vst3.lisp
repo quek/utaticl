@@ -46,13 +46,23 @@ vst3-c-api:+steinberg-k-out-of-memory+
 
 (defun get-plugin-factory (vst3-path)
   ;; TODO どこかで library を close-foreign-library する
-  (let ((library (cffi:load-foreign-library vst3-path)))
-    (cffi:foreign-funcall-pointer
-     (cffi:foreign-symbol-pointer "InitDll" :library library) ())
-    (let ((plugin-factory (cffi:foreign-funcall-pointer
-                           (cffi:foreign-symbol-pointer "GetPluginFactory" :library library) ()
-                           :pointer)))
-      (make-instance 'vst3-ffi::steinberg-iplugin-factory :ptr plugin-factory))))
+  ;; cffi:foreign-symbol-pointer の library 引数が使われない
+  ;; (let ((library (cffi:load-foreign-library vst3-path)))
+  ;;   (cffi:foreign-funcall-pointer
+  ;;    (cffi:foreign-symbol-pointer "InitDll" :library library) ())
+  ;;   (let ((plugin-factory (cffi:foreign-funcall-pointer
+  ;;                          (cffi:foreign-symbol-pointer "GetPluginFactory" :library library) ()
+  ;;                          :pointer)))
+  ;;     (make-instance 'vst3-ffi::steinberg-iplugin-factory :ptr plugin-factory)))
+  
+  (let* ((lib (cffi:foreign-funcall "LoadLibraryA" :string vst3-path :pointer))
+         (init-dll (cffi:foreign-funcall "GetProcAddress" :pointer lib :string "InitDll" :pointer))
+         (init-dll-ret (cffi:foreign-funcall-pointer init-dll () :bool))
+         (get-plugin-factory (cffi:foreign-funcall "GetProcAddress" :pointer lib :string "GetPluginFactory" :pointer))
+         (plugin-factory (cffi:foreign-funcall-pointer get-plugin-factory () :pointer)))
+    (unless init-dll-ret
+      (error "InitDll Failed ~a" vst3-path))
+    (make-instance 'vst3-ffi::steinberg-iplugin-factory :ptr plugin-factory)))
 
 (defmethod query-interface (self iid)
   (cffi:with-foreign-object (obj :pointer)
