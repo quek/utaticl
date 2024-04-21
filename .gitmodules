@@ -7,3 +7,6 @@
 [submodule "lib/ftw"]
 	path = lib/ftw
 	url = https://github.com/fjames86/ftw.git
+[submodule "lib/clap"]
+	path = lib/clap
+	url = https://github.com/free-audio/clap.git

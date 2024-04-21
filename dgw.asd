@@ -10,6 +10,7 @@
                       "sb-concurrency"
                       "cl-portaudio"
                       "vst3-c-api"
+                      "clap"
                       "sdl2" "cl-opengl"
                       "ftw"
                       "anaphora" "log4cl")
@@ -38,6 +39,7 @@
    (:file "module")
    (:file "vst3-impl")
    (:file "vst3-module")
+   (:file "clap-module")
    (:file "ui")
    (:file "app")
    (:file "main")

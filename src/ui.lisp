@@ -99,7 +99,10 @@
       (setf *done* nil)
       (sdl2:with-sdl-event (e)
         (loop until *done* do
-          (gui-loop app window gl-context e)))
+          (handler-case
+              (gui-loop app window gl-context e)
+            ;; TODO
+            (CL-OPENGL-BINDINGS:OPENGL-ERROR ()))))
       
       (ig-backend::impl-opengl3-shutdown)
       (ig-backend::impl-sdl2-shutdown)

@@ -152,7 +152,6 @@
    (query-interface (.component-handler self) iid obj)))
 
 (defmethod get-name ((self host-application) name)
-  (break "get-name")
   (let* ((host-name "DGW")
          (array (sb-ext:string-to-octets host-name :external-format :utf16le)))
     (loop for i below (length host-name)
