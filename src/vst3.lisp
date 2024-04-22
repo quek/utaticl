@@ -111,11 +111,14 @@ vst3-c-api:+steinberg-k-out-of-memory+
                          (create-instance self (vst3::.cid class-info) vst3-ffi::+steinberg-vst-icomponent-iid+)))))
 
 (defmethod create-instance ((self vst3-ffi::steinberg-iplugin-factory) (cid simple-array) iid)
-  (create-instance self (sb-sys:vector-sap cid) iid))
+  (sb-sys:with-pinned-objects (cid)
+    (create-instance self (sb-sys:vector-sap cid) iid)))
 
 (defmethod create-instance ((self vst3-ffi::steinberg-iplugin-factory) cid iid)
   (cffi:with-foreign-objects ((ptr :pointer))
-    (ensure-ok (vst3-ffi::create-instance self cid (sb-sys:vector-sap iid) ptr))
+    (ensure-ok
+     (sb-sys:with-pinned-objects (iid)
+       (vst3-ffi::create-instance self cid (sb-sys:vector-sap iid) ptr)))
     (make-instance (gethash iid vst3-walk::*iid-class-map*)
                    :ptr (cffi:mem-ref ptr :pointer))))
 

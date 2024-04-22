@@ -153,10 +153,13 @@
 
 (defmethod get-name ((self host-application) name)
   (let* ((host-name "DGW")
-         (array (sb-ext:string-to-octets host-name :external-format :utf16le)))
-    (loop for i below (length host-name)
-          do (setf (cffi:mem-ref name :int16 i)
-                   (cffi:mem-ref (sb-sys:vector-sap array) :int16 i)))
+         (array (sb-ext:string-to-octets host-name :external-format :utf16le))
+         (length (length array)))
+    (loop for i below length
+          do (setf (cffi:mem-ref name :char i)
+                   (aref array i)))
+    (setf (cffi:mem-ref name :char length) 0)
+    (setf (cffi:mem-ref name :char (1+ length)) 0)
     vst3-c-api:+steinberg-k-result-ok+))
 
 (autowrap:defcallback get-name vst3-c-api::steinberg-tresult
@@ -566,9 +569,9 @@
           until (zerop (cffi:mem-ref string :int16 i))
           do (incf len))
     (let ((v (make-array (* len 2) :element-type '(unsigned-byte 8))))
-      (loop for i below len
-            do (setf (cffi:mem-ref string :int16 i)
-                     (cffi:mem-ref (sb-sys:vector-sap v) :int16 i)))
+      (loop for i below (* len 2)
+            do (setf (cffi:mem-ref string :char i)
+                     (aref v i)))
       (let ((s (sb-ext:octets-to-string v :external-format :utf16le)))
         (setf (gethash id (.map self)) s)))
     vst3-c-api:+steinberg-k-result-true+))
@@ -585,9 +588,9 @@
     (if (typep x 'string)
         (let* ((v (sb-ext:string-to-octets x :external-format :utf16le))
                (len (min (- size-in-bytes 2) (* (length x) 2))))
-          (loop for i below len
-                do (setf (cffi:mem-ref string :int16 i)
-                         (cffi:mem-ref (sb-sys:vector-sap v) :int16 i)))
+          (loop for i below (* len 2)
+                do (setf (cffi:mem-ref string :char)
+                         (aref v i)))
           (setf (cffi:mem-ref string :int16 len) 0)
           vst3-c-api:+steinberg-k-result-true+)
         vst3-c-api:+steinberg-k-result-false+)))
@@ -620,6 +623,7 @@
   (let ((x (gethash id (.map self))))
     (if (typep x '(simple-array (unsigned-byte 8)))
         (progn
+          ;; TODO GC
           (setf (cffi:mem-ref data :pointer) (sb-sys:vector-sap x))
           (setf (cffi:mem-ref data :unsigned-int) (length x))
           vst3-c-api:+steinberg-k-result-true+)
