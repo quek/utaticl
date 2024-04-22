@@ -123,9 +123,9 @@
         (outputs (autowrap:alloc '(:struct (vst3-c-api:steinberg-vst-audio-bus-buffers))
                                  (.audio-output-bus-count self)))
         (buffer-in (loop for channel below 2
-                         collect (make-array *frames-per-buffer* :element-type 'single-float :initial-element 0.0)))
+                         collect (autowrap:calloc :float *frames-per-buffer*)))
         (buffer-out (loop for channel below 2
-                          collect (make-array *frames-per-buffer* :element-type 'single-float :initial-element 0.0)))
+                          collect (autowrap:calloc :float *frames-per-buffer*)))
         (event-in (make-instance 'vst3-impl::event-list)))
     (setf (slot-value self 'process-data) process-data)
     (setf (.buffer-in self) buffer-in)
@@ -162,7 +162,7 @@
     (let ((channels (autowrap:alloc :pointer 2)))
       (loop for i below 2
             do (setf (autowrap:c-aref channels i :pointer)
-                     (sb-sys:vector-sap (nth i (.buffer-in self)))))
+                     (nth i (.buffer-in self))))
       (setf (vst3-c-api::steinberg-vst-audio-bus-buffers.steinberg-vst-audio-bus-buffers-channel-buffers32 inputs)
             channels))
     
@@ -171,7 +171,7 @@
     (let ((channels (autowrap:alloc :pointer 2)))
       (loop for i below 2
             do (setf (autowrap:c-aref channels i :pointer)
-                     (sb-sys:vector-sap (nth i (.buffer-out self)))))
+                     (nth i (.buffer-out self))))
       (setf (vst3-c-api::steinberg-vst-audio-bus-buffers.steinberg-vst-audio-bus-buffers-channel-buffers32 outputs)
             channels)))
   ;; prepareParameterInfo();
@@ -183,7 +183,17 @@
   (unless (.single-component-p self)
     (vst3-ffi::terminate (.controller self)))
   (vst3-impl::release (.host-applicaiton self))
-  (autowrap:free (.process-data self)))
+  
+  (let* ((process-data (.process-data self))
+         (inputs (vst3-c-api:steinberg-vst-process-data.inputs* process-data))
+         (outputs (vst3-c-api:steinberg-vst-process-data.outputs* process-data)))
+    (autowrap:free (vst3-c-api::steinberg-vst-audio-bus-buffers.steinberg-vst-audio-bus-buffers-channel-buffers32 inputs))
+    (autowrap:free inputs)
+    (mapc #'autowrap:free (.buffer-in self))
+    (autowrap:free (vst3-c-api::steinberg-vst-audio-bus-buffers.steinberg-vst-audio-bus-buffers-channel-buffers32 outputs))
+    (autowrap:free outputs)
+    (mapc #'autowrap:free (.buffer-out self))
+    (autowrap:free process-data)))
 
 (defmethod connect-componet-controller ((self vst3-module))
   (unless (.single-component-p self)
@@ -264,22 +274,24 @@
 
 (defmethod process ((self module))
   (let ((process-data (.process-data self)))
-    (log:debug (subseq (car (.buffer-out self)) 0 10))
+    (log:debug (loop for i below 10
+                     collect (autowrap:c-aref (car (.buffer-out self)) i :float) ))
     (vst3-ffi::process (.process self)
                        (autowrap:ptr process-data))))
 
 #+nil
-(let ((module (vst3-module-load
-               ;;"c:/Program Files/Common Files/VST3/Dexed.vst3"
-               ;;"c:/Program Files/Common Files/VST3/DS Thorn.vst3"
-               ;;"c:/Program Files/Common Files/VST3/MeldaProduction/MSoundFactory.vst3"
-               "c:/Program Files/Common Files/VST3/Vital.vst3"
-               )))
-  (initialize module)
-  (start module)
-  (editor-open module)
+(sb-int:with-float-traps-masked (:invalid :inexact :overflow :divide-by-zero)
+ (let ((module (vst3-module-load
+                ;;"c:/Program Files/Common Files/VST3/Dexed.vst3"
+                ;;"c:/Program Files/Common Files/VST3/DS Thorn.vst3"
+                ;;"c:/Program Files/Common Files/VST3/MeldaProduction/MSoundFactory.vst3"
+                "c:/Program Files/Common Files/VST3/Vital.vst3"
+                )))
+   (initialize module)
+   (start module)
+   ;;(editor-open module)
 
-  (editor-close module)
-  (stop module)
-  (terminate module)
-  module)
+   ;;(editor-close module)
+   (stop module)
+   (terminate module)
+   module))

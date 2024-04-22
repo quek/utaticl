@@ -179,7 +179,7 @@
                              for x = (nth channel out)
                              for y = (nth channel in)
                              do (setf (aref x i)
-                                      (aref y i)))))))
+                                      (autowrap:c-aref y i :float)))))))
         
         (statistic-leave))
       (sb-concurrency:send-message audio-mailbox t))))
