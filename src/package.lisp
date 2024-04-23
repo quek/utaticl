@@ -1,11 +1,8 @@
 (defpackage :dgw
-  (:use :cl :anaphora)
+  (:use :cl :anaphora :plus-c)
   (:export #:main))
 
 (defpackage :dgw.ffi)
-
-(defpackage :ig
-  (:use :cl :cffi))
 
 (defpackage :ig-backend
   (:use :cl))

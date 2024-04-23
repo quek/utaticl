@@ -12,6 +12,7 @@
                       "vst3-c-api"
                       "clap"
                       "sdl2" "cl-opengl"
+                      "cimgui-autowrap"
                       "ftw"
                       "anaphora" "log4cl")
   ;; :depends-on ("cl-autowrap/libffi")
@@ -21,12 +22,9 @@
   ((:file "package")
    (:file "prelude")
    (:file "library")
-   ;; (:file "autowrap")
    (:file "audio-engine")
    (:file "read-h")
    (:file "win32")
-   (:cffi-grovel-file "ig-grovel")
-   ;(:cffi-wrapper-file "wrapper")
    (:file "ig")
    (:file "ig-backend")
    (:file "vst3-macro")

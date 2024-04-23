@@ -55,7 +55,7 @@
                    1024 768)
   (opengl:clear-color 0.45 0.55 0.60 1.0) ;TODO clearColor
   (opengl:clear :color-buffer-bit)
-  (ig-backend::impl-opengl3-render-draw-data (ig::get-draw-data))
+  (ig-backend::impl-opengl3-render-draw-data (autowrap:ptr (ig::get-draw-data)))
   (sdl2:gl-swap-window window))
 
 (defun sdl2-main (app)
@@ -87,8 +87,6 @@
          (gl-context (sdl2:gl-create-context window)))
     (sdl2:gl-set-swap-interval 1)       ;enable vsync
     (let* ((ctx (ig::create-context (cffi:null-pointer))))
-      (ig::set-current-context ctx)
-      
       ;; TODO ImGuiIO の設定
       
       (ig-backend::impl-sdl2-init-for-opengl

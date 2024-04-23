@@ -274,6 +274,7 @@
 
 (defmethod process ((self module))
   (let ((process-data (.process-data self)))
+    #+nil
     (log:debug (loop for i below 10
                      collect (autowrap:c-aref (car (.buffer-out self)) i :float) ))
     (vst3-ffi::process (.process self)
