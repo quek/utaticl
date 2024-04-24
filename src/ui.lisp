@@ -86,9 +86,27 @@
                                                     sdl2-ffi:+sdl-window-resizable+))))
          (gl-context (sdl2:gl-create-context window)))
     (sdl2:gl-set-swap-interval 1)       ;enable vsync
-    (let* ((ctx (ig::create-context (cffi:null-pointer))))
+    (let* ((ctx (ig::create-context (cffi:null-pointer)))
+           (io (ig:get-io)))
       ;; TODO ImGuiIO の設定
-      
+      (setf (c-ref io ig:im-gui-io :ini-filename)
+            (namestring (merge-pathnames "user/config/imgui.ini" *working-directory*)))
+      (setf (c-ref io ig:im-gui-io :config-docking-with-shift) 1)
+      (setf (c-ref io ig:im-gui-io :config-windows-move-from-title-bar-only) 1)
+      (setf (plus-c:c-ref io ig:im-gui-io :config-flags)
+            (logior (plus-c:c-ref io ig:im-gui-io :config-flags)
+                    ig:+im-gui-config-flags-nav-enable-keyboard+
+                    ig:+im-gui-config-flags-docking-enable+))
+      (autowrap:with-alloc (glyph-ranges 'ig:im-wchar 3)
+        (setf (c-ref glyph-ranges ig:im-wchar 0) #x0020
+              (c-ref glyph-ranges ig:im-wchar 1) #xfffd
+              (c-ref glyph-ranges ig:im-wchar 2) 0)
+        (ig:im-font-atlas-add-font-from-file-ttf
+         (plus-c:c-ref io ig:im-gui-io :fonts)
+         (namestring (merge-pathnames "factory/font/NotoSansJP-Regular.ttf" *working-directory*))
+         16.0
+         (cffi:null-pointer)
+         glyph-ranges))
       (ig-backend::impl-sdl2-init-for-opengl
        (autowrap:ptr window)
        (autowrap:ptr gl-context))

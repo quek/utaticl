@@ -16,7 +16,7 @@
       (when (c-with ((size ig:im-vec2))
               (setf (c-ref size ig:im-vec2 :x) 200.0)
               (setf (c-ref size ig:im-vec2 :y) 40.0)
-              (/= 0 (ig::button "Exit" size)))
+              (/= 0 (ig::button "さようなら" size)))
         (setf *done* t)))
     (ig::end)))
 
