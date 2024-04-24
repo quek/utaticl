@@ -170,7 +170,7 @@
         (process *app*)
 
         ;; TODO かんぜんに暫定
-        (let ((module (.module *app*)))
+        (let ((module (.module (car (.projects *app*)))))
           (when (and module (.start-p module))
             (let ((in (.buffer-out module))
                   (out (.master-buffer *audio*)))

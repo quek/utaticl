@@ -46,7 +46,7 @@
   (ig-backend::impl-sdl2-new-frame)
   (ig::new-frame)
 
-  (render app)
+  (render app (make-instance 'render-context))
   
   (ig::render)
   (sdl2:gl-make-current window gl-context)
@@ -88,7 +88,7 @@
     (sdl2:gl-set-swap-interval 1)       ;enable vsync
     (let* ((ctx (ig::create-context (cffi:null-pointer)))
            (io (ig:get-io)))
-      ;; TODO ImGuiIO の設定
+
       (setf (c-ref io ig:im-gui-io :ini-filename)
             (namestring (merge-pathnames "user/config/imgui.ini" *working-directory*)))
       (setf (c-ref io ig:im-gui-io :config-docking-with-shift) 1)
@@ -118,7 +118,9 @@
           (handler-case
               (gui-loop app window gl-context e)
             ;; TODO
-            (CL-OPENGL-BINDINGS:OPENGL-ERROR ()))))
+            (CL-OPENGL-BINDINGS:OPENGL-ERROR (e)
+              ;; (log:error e)
+              ))))
       
       (ig-backend::impl-opengl3-shutdown)
       (ig-backend::impl-sdl2-shutdown)

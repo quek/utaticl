@@ -283,16 +283,16 @@
 #+nil
 (sb-int:with-float-traps-masked (:invalid :inexact :overflow :divide-by-zero)
  (let ((module (vst3-module-load
-                ;;"c:/Program Files/Common Files/VST3/Dexed.vst3"
+                "c:/Program Files/Common Files/VST3/Dexed.vst3"
                 ;;"c:/Program Files/Common Files/VST3/DS Thorn.vst3"
                 ;;"c:/Program Files/Common Files/VST3/MeldaProduction/MSoundFactory.vst3"
-                "c:/Program Files/Common Files/VST3/Vital.vst3"
+                ;;"c:/Program Files/Common Files/VST3/Vital.vst3"
                 )))
    (initialize module)
    (start module)
-   ;;(editor-open module)
-
-   ;;(editor-close module)
+   (editor-open module)
+   (sleep 5)
+   (editor-close module)
    (stop module)
    (terminate module)
    module))

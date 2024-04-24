@@ -39,6 +39,10 @@
    (:file "vst3-module")
    (:file "clap-module")
    (:file "ui")
+   (:file "render")
+   (:file "project")
+   (:file "track")
+   (:file "piano-roll")
    (:file "app")
    (:file "main")
    ;; (:module autowrap-spec
