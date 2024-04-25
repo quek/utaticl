@@ -39,6 +39,7 @@
    (:file "vst3-module")
    (:file "clap-module")
    (:file "ui")
+   (:file "classes")
    (:file "render")
    (:file "neko")
    (:file "project")

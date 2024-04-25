@@ -1,8 +1,5 @@
 (in-package :dgw)
 
-(defclass app ()
-  ((projects :initform (list (make-instance 'project)) :accessor .projects)))
-  
 (defmethod render ((self app) context)
   (loop for project in (.projects self)
         do (render project context)))

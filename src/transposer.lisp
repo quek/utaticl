@@ -1,8 +1,5 @@
 (in-package :dgw)
 
-(defclass transposer ()
-  ())
-
 (defmethod render ((self transposer) context)
   (when (ig:begin "##transponser")
     (when (ig:button "▶")
