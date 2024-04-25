@@ -1,7 +1,8 @@
 (in-package :dgw)
 
 (defclass project ()
-  ((bpm ::initform 128.0 :accessor .bpm)
+  ((arrangement :initform (make-instance 'arrangement) :accessor .arrangement)
+   (bpm :initform 128.0 :accessor .bpm)
    (master :initform nil :accessor .master)
    (playing-p :initform nil :accessor .playing-p)
    (transposer :initform (make-instance 'transposer) :accessor .transposer)
@@ -11,6 +12,7 @@
 (defmethod render ((self project) context)
   (let ((*project* self))
     (render (.transposer self) context)
+    (render (.arrangement self) context)
     (cffi:with-foreign-object (openp :bool)
       (setf (cffi:mem-ref openp :bool) t)
       (when (ig::begin "Hello" openp 0)

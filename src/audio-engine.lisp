@@ -2,8 +2,6 @@
 
 ;;(portaudio::print-devices)
 
-(sb-ext:defglobal *app* nil)
-(sb-ext:defglobal *audio* nil)
 (defparameter *sample-rate* 48000.0)
 (defparameter *frames-per-buffer* 1024)
 
