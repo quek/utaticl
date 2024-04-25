@@ -3,7 +3,7 @@
 (defclass project ()
   ((arrangement :initform (make-instance 'arrangement) :accessor .arrangement)
    (bpm :initform 128.0 :accessor .bpm)
-   (master :initform nil :accessor .master)
+   (master-track :initform (make-instance 'master-track) :accessor .master-track)
    (playing-p :initform nil :accessor .playing-p)
    (transposer :initform (make-instance 'transposer) :accessor .transposer)
    ;;TODO DELETE

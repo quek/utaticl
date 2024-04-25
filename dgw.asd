@@ -40,6 +40,7 @@
    (:file "clap-module")
    (:file "ui")
    (:file "render")
+   (:file "neko")
    (:file "project")
    (:file "transposer")
    (:file "arrangement")

@@ -11,8 +11,8 @@
     (when (ig:button "■")
       (stop self))
     (ig:same-line)
-    (ig:set-next-item-width (* (ig:get-font-size) 4))
-    (ig:drag-float "BPM" (.bpm *project*)))
+    (ig:set-next-item-width (* (ig:get-font-size) 3))
+    (ig:drag-float "BPM" (.bpm *project*) :format "%.2f"))
 
   (ig:end))
 
