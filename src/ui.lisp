@@ -85,6 +85,7 @@
                                                     sdl2-ffi:+sdl-window-opengl+
                                                     sdl2-ffi:+sdl-window-resizable+))))
          (gl-context (sdl2:gl-create-context window)))
+    (sdl2:raise-window window)
     (sdl2:gl-set-swap-interval 1)       ;enable vsync
     (let* ((ctx (ig::create-context (cffi:null-pointer)))
            (io (ig:get-io)))
