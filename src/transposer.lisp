@@ -4,7 +4,6 @@
   ())
 
 (defmethod render ((self transposer) context)
-  (print (.bpm *project*))
   (when (ig:begin "##transponser")
     (when (ig:button "▶")
       (play self))
