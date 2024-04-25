@@ -41,6 +41,7 @@
    (:file "ui")
    (:file "render")
    (:file "project")
+   (:file "transposer")
    (:file "track")
    (:file "piano-roll")
    (:file "app")

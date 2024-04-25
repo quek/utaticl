@@ -3,3 +3,6 @@
 (log:config :trace)
 
 (defparameter *working-directory* (asdf:system-source-directory :dgw))
+
+(defvar *project*)
+
