@@ -41,6 +41,7 @@
    (:file "ui-utils")
    (:file "ui")
    (:file "classes")
+   (:file "commands")
    (:file "render")
    (:file "neko")
    (:file "project")

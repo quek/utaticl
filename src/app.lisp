@@ -1,5 +1,9 @@
 (in-package :dgw)
 
+(defmethod cmd-run ((self app))
+  (loop for project in (.projects self)
+        do (cmd-run project)))
+
 (defmethod render ((self app))
   (loop for project in (.projects self)
         do (render project)))

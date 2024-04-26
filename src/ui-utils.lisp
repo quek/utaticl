@@ -24,3 +24,11 @@
      (* b #x10000)
      (* g #x100)
      r))
+
+(defmacro defshortcut (key-chord &body body)
+  `(progn
+     (ig:set-next-item-shortcut ,key-chord)
+     (ig:push-id)
+     (when (ig:button "##_" (@ -1.0 -1.0))
+       ,@body)
+     (ig:pop-id)))

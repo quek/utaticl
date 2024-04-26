@@ -1,11 +1,20 @@
 (in-package :dgw)
 
+(defmethod max-bar ((self arrangement))
+  ;; TODO
+  8)
+
 (defmethod render ((self arrangement))
   (when (ig:begin "##arrangement")
     (when (ig:begin-child "##canvas")
       (render-time-ruler self)
-      (render (.master-track *project*)))
-    (ig:end-child))
+      (render-track (.master-track *project*))
+      (when (ig:button "+" (@ (.track-width self) 0.0))
+        ;; TODO undo
+        (cmd-add *project* 'track-add)))
+    (ig:end-child)
+    (defshortcut (logior ig:+im-gui-mod-ctrl+ ig:+im-gui-key-z+)
+      (cmd-add *project* 'undo)))
   (ig:end))
 
 (defmethod render-time-ruler ((self arrangement))
@@ -26,6 +35,7 @@
                     (p2 (@+ p1 (@ 0.0 (.y window-size)))))
                (ig:add-line draw-list p1 p2 (color #xcc #xcc #xcc))))))
 
-(defmethod max-bar ((self arrangement))
-  ;; TODO
-  8)
+(defmethod render-track (track)
+  (render track)
+  (loop for x in (.tracks track)
+        do (render-track x)))

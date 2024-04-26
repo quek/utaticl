@@ -48,6 +48,7 @@
 
   (let ((*render-context* (make-instance 'render-context)))
     (render app))
+  (cmd-run app)
   
   (ig::render)
   (sdl2:gl-make-current window gl-context)
@@ -121,8 +122,11 @@
               (gui-loop app window gl-context e)
             ;; TODO
             (CL-OPENGL-BINDINGS:OPENGL-ERROR (e)
+              (declare (ignorable e))
               ;; (log:error e)
-              ))))
+              )
+            (error (e)
+              (log:error e)))))
       
       (ig-backend::impl-opengl3-shutdown)
       (ig-backend::impl-sdl2-shutdown)

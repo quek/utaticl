@@ -7,6 +7,9 @@
 (defclass project (neko)
   ((arrangement :initform (make-instance 'arrangement) :accessor .arrangement)
    (bpm :initform 128.0 :accessor .bpm)
+   (cmd-queue :initform nil :accessor .cmd-queue)
+   (cmd-undo-stack :initform nil :accessor .cmd-undo-stack)
+   (cmd-redo-stack :initform nil :accessor .cmd-redo-stack)
    (master-track :initform (make-instance 'master-track) :accessor .master-track)
    (playing-p :initform nil :accessor .playing-p)
    (transposer :initform (make-instance 'transposer) :accessor .transposer)
@@ -24,7 +27,7 @@
 (defclass track (neko)
   ((clips :initform nil :accessor .clips)
    (modules :initform nil :accessor .modules)
-   (tracks :initform nil :accessor tracks))
+   (tracks :initform nil :accessor .tracks))
   (:default-initargs :name "TRACK"))
 
 (defclass master-track (track)

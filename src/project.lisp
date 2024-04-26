@@ -35,6 +35,25 @@
     (when (.start-p it)
       (process it))))
 
+(defun cmd-add (project cmd-class &rest args)
+  (push (apply #'make-instance cmd-class args) (.cmd-queue project)))
+
+(defmethod cmd-run ((self project))
+  (let ((*project* self))
+    (setf (.cmd-redo-stack self) nil)
+    (loop for cmd in (nreverse (.cmd-queue self))
+          do (execute cmd)
+             (when (.undo-p cmd)
+               (push cmd (.cmd-undo-stack self))))
+    (setf (.cmd-queue self) nil)))
+
+(defmethod cmd-undo ((self project))
+  (let ((*project* self)
+        (cmd (pop (.cmd-undo-stack self))))
+    (when cmd
+      (undo cmd)
+      (push cmd (.cmd-redo-stack self)))))
+
 (defmethod terminate ((self project))
   (let ((module (.module self)))
     (when module
