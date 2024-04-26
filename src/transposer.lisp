@@ -9,9 +9,14 @@
       (stop self))
     (ig:same-line)
     (ig:set-next-item-width (* (ig:get-font-size) 3))
-    (ig:drag-float "BPM" (.bpm *project*) :format "%.2f"))
-
+    (ig:drag-float "BPM" (.bpm *project*) :format "%.2f")
+    (ig:same-line)
+    (let* ((io (ig:get-io))
+           (framerate (c-ref io ig:im-gui-io :framerate))
+           (ms (/ 1000.0  framerate)))
+      (ig:text (format nil "~,3f ms/frame (~,1f FPS)" ms framerate))))
   (ig:end))
+
 
 (defmethod play ((self transposer))
   (setf (.playing-p *project*) t))

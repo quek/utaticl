@@ -20,7 +20,7 @@
   (cadr self))
 
 (defun color (r g b &optional (a #x80))
-  (+ (* r #x1000000)
-     (* g #x10000)
-     (* b #x100)
-     a))
+  (+ (* a #x1000000)
+     (* b #x10000)
+     (* g #x100)
+     r))

@@ -74,7 +74,7 @@
   (sdl2:gl-set-attr sdl2-ffi::+sdl-gl-stencil-size+ 8)
   (sdl2:gl-set-attr sdl2-ffi::+sdl-gl-doublebuffer+ 1)
   (sdl2:get-current-display-mode 0)
-  (let* ((window (sdl2:create-window :title "DGW" :w 1024 :h 768
+  (let* ((window (sdl2:create-window :title "DGW" :w 1600 :h 900
                                      :flags (list sdl2-ffi:+sdl-window-shown+
                                                   sdl2-ffi:+sdl-window-opengl+
                                                   sdl2-ffi:+sdl-window-resizable+)))
