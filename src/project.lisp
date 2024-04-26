@@ -1,9 +1,9 @@
 (in-package :dgw)
 
-(defmethod render ((self project) context)
+(defmethod render ((self project))
   (let ((*project* self))
-    (render (.transposer self) context)
-    (render (.arrangement self) context)
+    (render (.transposer self))
+    (render (.arrangement self))
     (cffi:with-foreign-object (openp :bool)
       (setf (cffi:mem-ref openp :bool) t)
       (when (ig::begin "Hello" openp 0)

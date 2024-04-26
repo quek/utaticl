@@ -7,14 +7,14 @@
   :licence "GPL3"
   :defsystem-depends-on ("cffi-grovel")
   :depends-on ("cffi" "cffi-libffi"
-                      "sb-concurrency"
-                      "cl-portaudio"
-                      "vst3-c-api"
-                      "clap"
-                      "sdl2" "cl-opengl"
-                      "cimgui-autowrap"
-                      "ftw"
-                      "anaphora" "log4cl")
+               "sb-concurrency"
+               "cl-portaudio"
+               "vst3-c-api"
+               "clap"
+               "sdl2" "cl-opengl"
+               "cimgui-autowrap"
+               "ftw"
+               "anaphora" "log4cl")
   ;; :depends-on ("cl-autowrap/libffi")
   :serial t
   :pathname "src"
@@ -38,6 +38,7 @@
    (:file "vst3-impl")
    (:file "vst3-module")
    (:file "clap-module")
+   (:file "ui-utils")
    (:file "ui")
    (:file "classes")
    (:file "render")

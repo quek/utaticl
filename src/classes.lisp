@@ -17,7 +17,9 @@
   ())
 
 (defclass arrangement (neko)
-  ((track-width :initform 150.0 :accessor .track-width)))
+  ((track-width :initform 150.0 :accessor .track-width)
+   (zoom-x :initform 50.0 :accessor .zoom-x)
+   (zoom-y :initform 50.0 :accessor .zoom-y)))
 
 (defclass track (neko)
   ((clips :initform nil :accessor .clips)

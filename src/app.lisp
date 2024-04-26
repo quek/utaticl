@@ -1,8 +1,8 @@
 (in-package :dgw)
 
-(defmethod render ((self app) context)
+(defmethod render ((self app))
   (loop for project in (.projects self)
-        do (render project context)))
+        do (render project)))
 
 (defmethod terminate ((self app))
   (loop for project in (.projects self)

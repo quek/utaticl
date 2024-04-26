@@ -40,13 +40,14 @@
                         (sdl2::c-let ((event sdl2-ffi:sdl-event :from e))
                           (sdl2::c-let ((we sdl2-ffi:sdl-window-event :from (event :window)))
                             (and (= (we :event) sdl2-ffi::+sdl-windowevent-close+)
-                                 (= (print (we :window-id)) (print (sdl2:get-window-id window)))))))
+                                 (= (we :window-id) (sdl2:get-window-id window))))))
                    (setf *done* t))))
   (ig-backend::impl-opengl3-new-frame)
   (ig-backend::impl-sdl2-new-frame)
   (ig::new-frame)
 
-  (render app (make-instance 'render-context))
+  (let ((*render-context* (make-instance 'render-context)))
+    (render app))
   
   (ig::render)
   (sdl2:gl-make-current window gl-context)
