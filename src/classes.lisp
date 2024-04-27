@@ -71,7 +71,8 @@
   ())
 
 (defclass commander ()
-  ((show-p :initarg :show-p :initform nil :accessor .show-p)))
+  ((query :initform "" :accessor .query)
+   (show-p :initarg :show-p :initform nil :accessor .show-p)))
 
 (defclass app ()
   ((projects :initform (list (make-instance 'project)) :accessor .projects)))

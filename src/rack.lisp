@@ -1,0 +1,12 @@
+(in-package :dgw)
+
+(defmethod render ((self rack))
+  (when (ig:begin "##rack" (cffi:null-pointer) ig:+im-gui-window-flags-no-scrollbar+)
+    (when (ig:begin-child "##canvas" :window-flags ig:+im-gui-window-flags-horizontal-scrollbar+)
+      (ig:text "Rack...")
+      (when (ig:button "+")
+        (let ((file (ftw:get-open-file-name :initial-dir "c:\\Program Files\\Common Files\\VST3")))
+          file)))
+    (ig:end-child)
+    (shortcut-common))
+  (ig:end))
