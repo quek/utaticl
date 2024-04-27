@@ -9,9 +9,16 @@
                  (list 0.0 0.0)
                  (let ((car (car args))
                        (cdr (apply #'add (cdr args))))
-                   (list (+ (car car) (car cdr))
-                         (+ (cadr car) (cadr cdr)))))))
+                   (list (+ (.x car) (.x cdr))
+                         (+ (.y car) (.y cdr)))))))
     (apply #'add vec2-list)))
+
+(defun @- (vec2 &rest vec2-list)
+  (if (endp vec2-list)
+      (list (- (.x vec2)) (- (.y vec2)))
+      (let ((rhs (apply #'@+ vec2-list)))
+        (@ (- (.x vec2) (.x rhs))
+           (- (.y vec2) (.y rhs))))))
 
 (defmethod .x ((self list))
   (car self))
