@@ -25,6 +25,20 @@
      (* g #x100)
      r))
 
+(defun color+ (a b)
+  (destructuring-bind (ar ag ab aa) (color-decode a)
+    (destructuring-bind (br bg bb ba) (color-decode b)
+      (color (min (max (+ ar br) 0) #xff)
+             (min (max (+ ag bg) 0) #xff)
+             (min (max (+ ab bb) 0) #xff)
+             (min (max (+ aa ba) 0) #xff)))))
+
+(defun color-decode (c)
+  (list (ldb (byte 8 0) c)
+        (ldb (byte 8 8) c)
+        (ldb (byte 8 16) c)
+        (ldb (byte 8 24) c)))
+
 (defmacro defshortcut ((&rest key-chord) &body body)
   `(progn
      (ig:set-next-item-shortcut (logior ,@key-chord))
@@ -37,6 +51,7 @@
   (let* ((draw-list (ig:get-window-draw-list))
          (window-pos (ig:get-window-pos))
          (window-width (ig:get-window-width))
-         (p1 (@+ pos window-pos (@ 0.0 -3.0)))
+         (scroll-y (ig:get-scroll-y))
+         (p1 (@+ pos window-pos (@ 0.0 (- scroll-y)) (@ 0.0 -3.0)))
          (p2 (@+ p1 (@ window-width 0.0))))
     (ig:add-line draw-list p1 p2 (.color-line *theme*))))

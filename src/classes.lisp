@@ -27,8 +27,9 @@
 (defclass track (neko)
   ((clips :initform nil :accessor .clips)
    (modules :initform nil :accessor .modules)
+   (select-p :initform nil :accessor .select-p)
    (tracks :initform nil :accessor .tracks))
-  (:default-initargs :name "TRACK"))
+  (:default-initargs :name "TRACK" :color (color #x33 #x33 #x33)))
 
 (defclass master-track (track)
   ()
