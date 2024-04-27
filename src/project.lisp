@@ -38,12 +38,19 @@
 (defun cmd-add (project cmd-class &rest args)
   (push (apply #'make-instance cmd-class args) (.cmd-queue project)))
 
+(defmethod cmd-redo ((self project))
+  (let ((*project* self)
+        (cmd (pop (.cmd-redo-stack self))))
+    (when cmd
+      (redo cmd)
+      (push cmd (.cmd-undo-stack self)))))
+
 (defmethod cmd-run ((self project))
   (let ((*project* self))
-    (setf (.cmd-redo-stack self) nil)
     (loop for cmd in (nreverse (.cmd-queue self))
           do (execute cmd)
              (when (.undo-p cmd)
+               (setf (.cmd-redo-stack self) nil)
                (push cmd (.cmd-undo-stack self))))
     (setf (.cmd-queue self) nil)))
 

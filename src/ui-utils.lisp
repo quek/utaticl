@@ -25,10 +25,18 @@
      (* g #x100)
      r))
 
-(defmacro defshortcut (key-chord &body body)
+(defmacro defshortcut ((&rest key-chord) &body body)
   `(progn
-     (ig:set-next-item-shortcut ,key-chord)
+     (ig:set-next-item-shortcut (logior ,@key-chord))
      (ig:push-id)
-     (when (ig:button "UNDO##_" (@ ig:+flt-min+ ig:+flt-min+))
+     (when (ig:button "##_" (@ ig:+flt-min+ ig:+flt-min+))
        ,@body)
      (ig:pop-id)))
+
+(defun draw-horizontal-line (pos)
+  (let* ((draw-list (ig:get-window-draw-list))
+         (window-pos (ig:get-window-pos))
+         (window-width (ig:get-window-width))
+         (p1 (@+ pos window-pos (@ 0.0 -3.0)))
+         (p2 (@+ p1 (@ window-width 0.0))))
+    (ig:add-line draw-list p1 p2 (.color-line *theme*))))

@@ -11,6 +11,13 @@
 (defmethod redo ((self command))
   (execute self))
 
+(defcommand cmd-redo (command)
+  ()
+  (:default-initargs :undo-p nil))
+
+(defmethod execute ((self cmd-redo))
+  (cmd-redo *project*))
+
 (defcommand cmd-track-add (command)
   ())
 

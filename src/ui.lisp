@@ -46,9 +46,10 @@
   (ig-backend::impl-sdl2-new-frame)
   (ig::new-frame)
 
-  (let ((*render-context* (make-instance 'render-context)))
-    (render app))
-  (cmd-run app)
+  (let ((*render-context* (make-instance 'render-context))
+        (*theme* (make-instance 'theme)))
+    (render app)
+    (cmd-run app))
   
   (ig::render)
   (sdl2:gl-make-current window gl-context)
@@ -59,6 +60,16 @@
   (opengl:clear :color-buffer-bit)
   (ig-backend::impl-opengl3-render-draw-data (autowrap:ptr (ig::get-draw-data)))
   (sdl2:gl-swap-window window))
+
+(defvar *invoke-debugger-p* t)
+
+(defun error-handler (e)
+  (log:error e)
+  (log:error (with-output-to-string (out)
+               (sb-debug:print-backtrace :stream out)))
+  (when *invoke-debugger-p*
+    (with-simple-restart (continue "Return from here.")
+      (invoke-debugger e))))
 
 (defun sdl2-main (app)
   "https://github.com/cimgui/cimgui/blob/docking_inter/backend_test/example_sdl_opengl3/main.c"
@@ -75,14 +86,14 @@
   (sdl2:gl-set-attr sdl2-ffi::+sdl-gl-stencil-size+ 8)
   (sdl2:gl-set-attr sdl2-ffi::+sdl-gl-doublebuffer+ 1)
   (sdl2:get-current-display-mode 0)
-  (let* ((window (sdl2:create-window :title "DGW" :w 1600 :h 900
-                                     :flags (list sdl2-ffi:+sdl-window-shown+
-                                                  sdl2-ffi:+sdl-window-opengl+
-                                                  sdl2-ffi:+sdl-window-resizable+)))
+  (let* ((window (sdl2:create-window :title "DGW" :w 1024 :h 768
+                                     :flags (list ;; sdl2-ffi:+sdl-window-shown+
+                                             sdl2-ffi:+sdl-window-opengl+
+                                             sdl2-ffi:+sdl-window-resizable+)))
          ;; FIXMI なぜか初回の sdl2:create-window だと窓が表示されない・・・
          (window (progn
                    (sdl2:destroy-window window)
-                   (sdl2:create-window :title "DGW" :w 1024 :h 768
+                   (sdl2:create-window :title "DGW" :w 1600 :h 900
                                        :flags (list sdl2-ffi:+sdl-window-shown+
                                                     sdl2-ffi:+sdl-window-opengl+
                                                     sdl2-ffi:+sdl-window-resizable+))))
@@ -118,15 +129,14 @@
       (setf *done* nil)
       (sdl2:with-sdl-event (e)
         (loop until *done* do
-          (handler-case
-              (gui-loop app window gl-context e)
-            ;; TODO
-            (CL-OPENGL-BINDINGS:OPENGL-ERROR (e)
-              (declare (ignorable e))
-              ;; (log:error e)
-              )
-            (error (e)
-              (log:error e)))))
+          (handler-bind ((error 'error-handler))
+            (handler-case
+                (gui-loop app window gl-context e)
+              ;; TODO
+              (CL-OPENGL-BINDINGS:OPENGL-ERROR (e)
+                (declare (ignorable e))
+                ;; (log:error e)
+                )))))
       
       (ig-backend::impl-opengl3-shutdown)
       (ig-backend::impl-sdl2-shutdown)
