@@ -62,3 +62,11 @@
          (p1 (@+ pos window-pos (@ 0.0 (- scroll-y)) (@ 0.0 -3.0)))
          (p2 (@+ p1 (@ window-width 0.0))))
     (ig:add-line draw-list p1 p2 (.color-line *theme*))))
+
+(defun shortcut-common ()
+  (defshortcut (ig:+im-gui-key-semicolon+)
+    (setf (.show-p (.commander *project*)) t))
+  (defshortcut (ig:+im-gui-mod-ctrl+ ig:+im-gui-key-z+)
+    (cmd-add *project* 'cmd-undo))
+  (defshortcut (ig:+im-gui-mod-ctrl+ ig:+im-gui-mod-shift+ ig:+im-gui-key-z+)
+    (cmd-add *project* 'cmd-redo)))

@@ -4,6 +4,8 @@
   (let ((*project* self))
     (render (.transposer self))
     (render (.arrangement self))
+    (render (.rack self))
+    (render (.commander self))
     (cffi:with-foreign-object (openp :bool)
       (setf (cffi:mem-ref openp :bool) t)
       (when (ig::begin "Hello" openp 0)

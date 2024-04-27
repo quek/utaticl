@@ -38,6 +38,7 @@
    (:file "vst3-impl")
    (:file "vst3-module")
    (:file "clap-module")
+   (:file "midi")
    (:file "classes")
    (:file "commands")
    (:file "theme")
@@ -48,8 +49,10 @@
    (:file "project")
    (:file "transposer")
    (:file "arrangement")
+   (:file "rack")
    (:file "track")
    (:file "piano-roll")
+   (:file "commander")
    (:file "app")
    (:file "main")
    ;; (:module autowrap-spec

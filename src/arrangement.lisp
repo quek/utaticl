@@ -1,5 +1,8 @@
 (in-package :dgw)
 
+(defmethod handle-mouse ((self arrangement))
+  )
+
 (defmethod max-bar ((self arrangement))
   ;; TODO
   8)
@@ -19,13 +22,12 @@
         (ig:set-cursor-pos (@+ pos (@ (ig:get-scroll-x) 0.0)))
         (ig:set-next-item-shortcut (logior ig:+im-gui-mod-ctrl+ ig:+im-gui-key-t+))
         (when (ig:button "+" (@ (.track-width self) 0.0))
-          (cmd-add *project* 'cmd-track-add))))
+          (cmd-add *project* 'cmd-track-add)))
+
+      (handle-mouse self))
     
     (ig:end-child)
-    (defshortcut (ig:+im-gui-mod-ctrl+ ig:+im-gui-key-z+)
-      (cmd-add *project* 'cmd-undo))
-    (defshortcut (ig:+im-gui-mod-ctrl+ ig:+im-gui-mod-shift+ ig:+im-gui-key-z+)
-      (cmd-add *project* 'cmd-redo)))
+    (shortcut-common))
   (ig:end))
 
 (defmethod render-time-ruler ((self arrangement))
