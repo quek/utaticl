@@ -5,8 +5,8 @@
   8)
 
 (defmethod render ((self arrangement))
-  (when (ig:begin "##arrangement")
-    (when (ig:begin-child "##canvas")
+  (when (ig:begin "##arrangement" (cffi:null-pointer) ig:+im-gui-window-flags-no-scrollbar+)
+    (when (ig:begin-child "##canvas" :window-flags ig:+im-gui-window-flags-horizontal-scrollbar+)
       (render-time-ruler self)
       (render-track self (.master-track *project*))
       (draw-horizontal-line (ig:get-cursor-pos))
@@ -29,12 +29,11 @@
     (ig:show-demo-window (cffi:null-pointer ))
     (loop for bar from 0 to max-bar
           for x = (+ (* bar 4 (.zoom-x self))
-                     (.track-width self)
-                     (- scroll-x))
+                     (.track-width self))
           for cursor-pos = (list x 0.0)
           do (ig:set-cursor-pos cursor-pos)
              (ig:text (format nil " ~d" (1+ bar)))
-             (let* ((p1 (@+ cursor-pos window-pos))
+             (let* ((p1 (@+ cursor-pos window-pos (@ (- scroll-x) 0.0)))
                     (p2 (@+ p1 (@ 0.0 (.y window-size)))))
                (ig:add-line draw-list p1 p2 (.color-line *theme*))))))
 
