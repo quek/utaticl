@@ -29,6 +29,6 @@
   `(progn
      (ig:set-next-item-shortcut ,key-chord)
      (ig:push-id)
-     (when (ig:button "##_" (@ -1.0 -1.0))
+     (when (ig:button "UNDO##_" (@ ig:+flt-min+ ig:+flt-min+))
        ,@body)
      (ig:pop-id)))

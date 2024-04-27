@@ -10,11 +10,10 @@
       (render-time-ruler self)
       (render-track (.master-track *project*))
       (when (ig:button "+" (@ (.track-width self) 0.0))
-        ;; TODO undo
-        (cmd-add *project* 'track-add)))
+        (cmd-add *project* 'cmd-track-add)))
     (ig:end-child)
     (defshortcut (logior ig:+im-gui-mod-ctrl+ ig:+im-gui-key-z+)
-      (cmd-add *project* 'undo)))
+      (cmd-add *project* 'cmd-undo)))
   (ig:end))
 
 (defmethod render-time-ruler ((self arrangement))

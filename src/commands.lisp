@@ -11,21 +11,21 @@
 (defmethod redo ((self command))
   (execute self))
 
-(defcommand track-add (command)
+(defcommand cmd-track-add (command)
   ())
 
-(defmethod execute ((self track-add))
+(defmethod execute ((self cmd-track-add))
   (setf (.tracks (.master-track *project*))
         (append (.tracks (.master-track *project*))
                 (list (make-instance 'track)))))
 
-(defmethod undo ((self track-add))
+(defmethod undo ((self cmd-track-add))
   (setf (.tracks (.master-track *project*))
         (butlast (.tracks (.master-track *project*)))))
 
-(defcommand undo (command)
+(defcommand cmd-undo (command)
   ()
   (:default-initargs :undo-p nil))
 
-(defmethod execute ((self undo))
+(defmethod execute ((self cmd-undo))
   (cmd-undo *project*))
