@@ -21,6 +21,7 @@
   :components
   ((:file "package")
    (:file "prelude")
+   (:file "utils")
    (:file "library")
    (:file "audio-engine")
    (:file "read-h")
