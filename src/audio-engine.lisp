@@ -150,12 +150,13 @@
 
         ;; TODO かんぜんに暫定
         (let ((master-track (.master-track (car (.projects *app*)))))
-          (let ((in (.buffer-out master-track))
+          (let ((in (vst3-c-api:steinberg-vst-process-data.outputs*.steinberg-vst-audio-bus-buffers-channel-buffers32
+                     (.process-data master-track)))
                 (out (.master-buffer *audio*)))
             (loop for channel below 2
                   do (loop for i below *frames-per-buffer*
                            for x = (nth channel out)
-                           for y = (nth channel in)
+                           for y = (autowrap:c-aref in channel :pointer)
                            do (setf (aref x i)
                                     (autowrap:c-aref y i :float))))))
         

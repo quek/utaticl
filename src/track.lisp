@@ -73,7 +73,8 @@
 (defmethod process ((self track))
   (loop for module in (.modules self)
         if (.start-p module)
-          do (process module)))
+          do (swap-in-out *process-data*)
+             (process module)))
 
 (defmethod module-add ((self track) module)
   (setf (.modules self) (append (.modules self) (list module)))
