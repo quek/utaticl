@@ -6,3 +6,6 @@
   ())
 
 (defgeneric render (self))
+
+(defmethod render ((self null)))
+

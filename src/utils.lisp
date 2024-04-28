@@ -9,3 +9,6 @@
               for yc = (char-downcase (char y yi))
                 thereis (and (char= (char-downcase xc) yc)
                              (= (incf yi) end))))))
+
+(defun uid ()
+  (random-uuid:to-string (random-uuid:make-uuid)))

@@ -1,8 +1,11 @@
 (in-package :dgw)
 
 (defclass neko ()
-  ((name :initarg :name :initform "" :accessor .name)
+  ((neko-id :initarg :neko-id :initform (uid) :accessor .neko-id)
+   (name :initarg :name :initform "" :accessor .name)
    (color :initarg :color :initform nil :accessor .color)))
+
+(defserialize neko neko-id name color)
 
 (defclass project (neko)
   ((arrangement :initform (make-instance 'arrangement) :accessor .arrangement)
@@ -16,7 +19,8 @@
    (playing-p :initform nil :accessor .playing-p)
    (transposer :initform (make-instance 'transposer) :accessor .transposer)
    ;;TODO DELETE
-   (module :initform nil :accessor .module)))
+   (module :initform nil :accessor .module)
+   (target-track :initform :nil :accessor .target-track)))
 
 (defclass transposer ()
   ())
@@ -27,7 +31,14 @@
    (zoom-y :initform 50.0 :accessor .zoom-y)))
 
 (defclass rack ()
-  ())
+  ((plugin-selector :initform nil :accessor .plugin-selector)) )
+
+(defclass show-mixin ()
+  ((show-p :initarg :show-p :initform nil :accessor .show-p)))
+
+(defclass plugin-selector (show-mixin)
+  ((plugin-infos :accessor .plugin-infos)
+   (query :initform "" :accessor .query)))
 
 (defclass track (neko)
   ((clips :initarg :clips :initform nil :accessor .clips)
@@ -67,12 +78,46 @@
                           (make-instance 'note :key +c5+ :time 3.0d0 :duration 1.0d0))
           :accessor .notes)))
 
+(defclass plugin-info ()
+  ((id :initarg :id :accessor .id)
+   (name :initarg :name :accessor .name)
+   (path :initarg :path :accessor .path)
+   (file-write-date :initarg :file-write-date :accessor .file-write-date)))
+
+(defserialize plugin-info id name path file-write-date)
+
+(defclass plugin-info-vst3 (plugin-info)
+  ())
+
+(defclass module (neko)
+  ((start-p :initform nil :accessor .start-p)
+   (editor-open-p :initform nil :accessor .editor-open-p)))
+
+(defclass vst3-module (module)
+  ((host-applicaiton :reader .host-applicaiton)
+   (factory :initarg :factory :reader .factory)
+   (component :initarg :conponent :initform nil :reader .component)
+   (controller :initarg :controller :initform nil :reader .controller)
+   (single-component-p :initarg :single-component-p :reader .single-component-p)
+   (process :accessor .process)
+   (audio-input-bus-count :accessor .audio-input-bus-count)
+   (audio-output-bus-count :accessor .audio-output-bus-count)
+   (event-input-bus-count :accessor .event-input-bus-count)
+   (event-output-bus-count :accessor .event-output-bus-count)
+   (view :initform :nil :accessor .view)
+   (hwnd :initform :nil :accessor .hwnd)
+   (process-data :reader .process-data)
+   (buffer-in :accessor .buffer-in)
+   (buffer-out :accessor .buffer-out)
+   (event-in :accessor .event-in)
+   (parameter-changes-in :initform (make-instance 'vst3-impl::parameter-changes)
+                         :accessor .parameter-changes-in)))
+
 (defclass piano-roll ()
   ())
 
-(defclass commander ()
-  ((query :initform "" :accessor .query)
-   (show-p :initarg :show-p :initform nil :accessor .show-p)))
+(defclass commander (show-mixin)
+  ((query :initform "" :accessor .query)))
 
 (defclass app ()
   ((projects :initform (list (make-instance 'project)) :accessor .projects)))

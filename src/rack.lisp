@@ -3,10 +3,21 @@
 (defmethod render ((self rack))
   (when (ig:begin "##rack" (cffi:null-pointer) ig:+im-gui-window-flags-no-scrollbar+)
     (when (ig:begin-child "##canvas" :window-flags ig:+im-gui-window-flags-horizontal-scrollbar+)
-      (ig:text "Rack...")
+      
+      (loop for module in (.modules (.target-track *project*))
+            do (ig:text (.name module))
+               (ig:same-line))
+
       (when (ig:button "+")
-        (let ((file (ftw:get-open-file-name :initial-dir "c:\\Program Files\\Common Files\\VST3")))
-          file)))
+        (show-plugin-selector self)))
     (ig:end-child)
     (shortcut-common))
-  (ig:end))
+  (ig:end)
+
+  (render (.plugin-selector self)))
+
+
+(defmethod show-plugin-selector ((self rack))
+  (let ((plugin-selector (make-instance 'plugin-selector)))
+    (setf (.plugin-selector self) plugin-selector)
+    (show plugin-selector)))

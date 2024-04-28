@@ -1,9 +1,5 @@
 (in-package :dgw)
 
-(defclass module ()
-  ((start-p :initform nil :accessor .start-p)
-   (editor-open-p :initform nil :accessor .editor-open-p)))
-
 (defmethod editor-open ((self module))
   (setf (.editor-open-p self) t))
 

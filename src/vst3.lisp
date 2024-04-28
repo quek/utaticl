@@ -150,3 +150,33 @@ vst3-c-api:+steinberg-k-out-of-memory+
   (let ((id (make-array 16 :element-type '(unsigned-byte 8))))
     (ensure-ok (vst3-ffi::get-controller-class-id self id))
     id))
+
+(defun plugin-scan-vst3 (&optional (dir "c:\\Program Files\\Common Files\\VST3"))
+  (loop for %path in (directory (merge-pathnames "**/*.vst3" dir))
+        for path = (namestring %path)
+        for file-write-date = (file-write-date path)
+        unless (uiop:directory-pathname-p path)
+          nconc (let* ((factory (vst3::get-plugin-factory path)))
+                  (autowrap:with-alloc (%class-info '(:struct (vst3-c-api::steinberg-p-class-info)))
+                    (loop for index below (vst3-ffi::count-classes factory)
+                          for class-info = (progn (ensure-ok
+                                                   (vst3-ffi::get-class-info
+                                                    factory index (autowrap:ptr %class-info)))
+                                                  (vst3-c-api::make-steinberg-p-class-info
+                                                   :ptr (autowrap:ptr %class-info)))
+                          if (equal (vst3::.category class-info) "Audio Module Class")
+                            collect (make-instance
+                                     'dgw::plugin-info-vst3
+                                     :id (let ((cid (make-array 16 :element-type '(unsigned-byte 8)))
+                                               (p (vst3-c-api:steinberg-p-class-info.cid& class-info)))
+                                           (loop for i below 16 do
+                                             (setf (aref cid i)
+                                                   (autowrap:c-aref p i :unsigned-char)))
+                                           cid)
+                                     :name (cffi:foreign-string-to-lisp
+                                            (vst3-c-api:steinberg-p-class-info.name[]& class-info))
+                                     :path path
+                                     :file-write-date file-write-date))))))
+#+nil
+(sb-int:with-float-traps-masked (:invalid :inexact :overflow :divide-by-zero)
+  (plugin-scan-vst3))

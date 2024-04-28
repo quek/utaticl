@@ -2,7 +2,7 @@
 
 (defmethod render ((self commander))
   (when (.show-p self)
-    (ig:open-popup-str "Commander" 0))
+    (ig:open-popup "Commander"))
   
   (ig:set-next-window-size-constraints (@ 300.0 200.0) (@ ig:+flt-max+ ig:+flt-max+))
   
@@ -19,14 +19,13 @@
                                        4) ;"CMD-" を削除
               if (fuzzy= class-name (.query self))
                 do (if run
-                       (progn
-                         (cmd-add *project* class)
-                         (setf (.show-p self) nil))
+                       #1=(progn
+                            (cmd-add *project* class)
+                            (hide self))
                        (when (ig:button class-name)
-                         (cmd-add *project* class)
-                         (setf (.show-p self) nil))))))
+                         #1#)))))
     
     (when (ig:is-key-pressed ig:+im-gui-key-escape+)
-      (setf (.show-p self) nil))
+      (hide self))
     
     (ig:end-popup)))

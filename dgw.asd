@@ -6,7 +6,8 @@
 (asdf:defsystem :dgw
   :licence "GPL3"
   :defsystem-depends-on ("cffi-grovel")
-  :depends-on ("cffi" "cffi-libffi"
+  :depends-on ("cffi"
+               "cffi-libffi"
                "sb-concurrency"
                "cl-portaudio"
                "vst3-c-api"
@@ -14,7 +15,9 @@
                "sdl2" "cl-opengl"
                "cimgui-autowrap"
                "ftw"
-               "anaphora" "log4cl")
+               "anaphora"
+               "log4cl"
+               "random-uuid")
   ;; :depends-on ("cl-autowrap/libffi")
   :serial t
   :pathname "src"
@@ -22,12 +25,15 @@
   ((:file "package")
    (:file "prelude")
    (:file "utils")
+   (:file "serialize")
+   (:file "classes")
    (:file "library")
    (:file "audio-engine")
    (:file "read-h")
    (:file "win32")
    (:file "ig")
    (:file "ig-backend")
+   (:file "plugin-info")
    (:file "vst3-macro")
    (:file "vst3-walk")
    (:file "vst3-ffi")
@@ -40,7 +46,6 @@
    (:file "vst3-module")
    (:file "clap-module")
    (:file "midi")
-   (:file "classes")
    (:file "commands")
    (:file "theme")
    (:file "render")
@@ -53,7 +58,9 @@
    (:file "rack")
    (:file "track")
    (:file "piano-roll")
+   (:file "show-mixin")
    (:file "commander")
+   (:file "plugin-selector")
    (:file "app")
    (:file "main")
    ;; (:module autowrap-spec

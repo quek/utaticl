@@ -1,5 +1,15 @@
 (in-package :dgw)
 
+(defmethod initialize-instance :after ((self project) &key)
+  (setf (.target-track self) (.master-track self)))
+
+(defun find-track (project track-id)
+  (labels ((f (track)
+             (if (equal track-id (.neko-id track))
+                 track
+                 (some #'f (.tracks track)))))
+    (f (.master-track project))))
+
 (defmethod render ((self project))
   (let ((*project* self))
     (render (.transposer self))

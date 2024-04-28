@@ -65,7 +65,7 @@
 
 (defun shortcut-common ()
   (defshortcut (ig:+im-gui-key-semicolon+)
-    (setf (.show-p (.commander *project*)) t))
+    (show (.commander *project*)))
   (defshortcut (ig:+im-gui-mod-ctrl+ ig:+im-gui-key-z+)
     (cmd-add *project* 'cmd-undo))
   (defshortcut (ig:+im-gui-mod-ctrl+ ig:+im-gui-mod-shift+ ig:+im-gui-key-z+)
