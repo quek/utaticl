@@ -105,7 +105,7 @@
    (component :initarg :conponent :initform nil :reader .component)
    (controller :initarg :controller :initform nil :reader .controller)
    (single-component-p :initarg :single-component-p :reader .single-component-p)
-   (process :accessor .process)
+   (audio-processor :accessor .audio-processor)
    (audio-input-bus-count :accessor .audio-input-bus-count)
    (audio-output-bus-count :accessor .audio-output-bus-count)
    (event-input-bus-count :accessor .event-input-bus-count)

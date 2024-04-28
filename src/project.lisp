@@ -25,7 +25,7 @@
       (ig::end))))
 
 (defmethod process ((self project))
-  (.process (.master-track self)))
+  (process (.master-track self)))
 
 (defun cmd-add (project cmd-class &rest args)
   (push (apply #'make-instance cmd-class args) (.cmd-queue project)))

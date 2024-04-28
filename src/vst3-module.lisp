@@ -58,7 +58,7 @@
         (event-output-bus-count (vst3-ffi::get-bus-count
                                  (.component self) vst3-c-api::+steinberg-vst-media-types-k-event+
                                  vst3-c-api::+steinberg-vst-bus-directions-k-output+)))
-    (setf (.process self) process)
+    (setf (.audio-processor self) process)
     (setf (.audio-input-bus-count self) audio-input-bus-count)
     (setf (.audio-output-bus-count self) audio-output-bus-count)
     (setf (.event-input-bus-count self) event-input-bus-count)
@@ -67,7 +67,7 @@
     (vst3::ensure-ok
      (vst3-ffi::can-process-sample-size process vst3-c-api::+steinberg-vst-symbolic-sample-sizes-k-sample32+))
 
-    (vst3-ffi::set-processing (.process self) 0)
+    (vst3-ffi::set-processing (.audio-processor self) 0)
     (vst3-ffi::set-active (.component self) 0)
 
     (autowrap:with-alloc (setup '(:struct (vst3-c-api::steinberg-vst-process-setup)))
@@ -151,12 +151,12 @@
 (defmethod start ((self vst3-module))
   (unless (.start-p self)
     (vst3-ffi::set-active (.component self) 1)
-    (vst3-ffi::set-processing (.process self) 1)
+    (vst3-ffi::set-processing (.audio-processor self) 1)
     (call-next-method)))
 
 (defmethod stop ((self vst3-module))
   (when (.start-p self)
-    (vst3-ffi::set-processing (.process self) 0)
+    (vst3-ffi::set-processing (.audio-processor self) 0)
     (vst3-ffi::set-active (.component self) 0)
     (call-next-method)))
 
@@ -197,7 +197,7 @@
   (setf (vst3-c-api:steinberg-vst-process-data.output-parameter-changes *process-data*)
         (cffi:null-pointer))          ;TODO
   
-  (vst3-ffi::process (.process self)
+  (vst3-ffi::process (.audio-processor self)
                      (autowrap:ptr *process-data*))
   #+nil
   (log:debug (loop for i below 10

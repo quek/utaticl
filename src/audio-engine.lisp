@@ -171,7 +171,6 @@
   (declare (optimize (speed 3) (safety 0))
            (ignore input-buffer time-info status-flags user-data
                    frame-per-buffer))
-  (break)
   (let ((thread-mailbox (.process-thread-mailbox *audio*))
         (audio-mailbox (.audio-mailbox *audio*)))
     (sunless (.process-thread *audio*)
