@@ -16,8 +16,5 @@
 
   (render (.plugin-selector self)))
 
-
 (defmethod show-plugin-selector ((self rack))
-  (let ((plugin-selector (make-instance 'plugin-selector)))
-    (setf (.plugin-selector self) plugin-selector)
-    (show plugin-selector)))
+  (show (.plugin-selector self)))

@@ -49,7 +49,8 @@
   (let ((*render-context* (make-instance 'render-context))
         (*theme* (make-instance 'theme)))
     (render app)
-    (cmd-run app))
+    (sb-thread:with-mutex ((.mutex app))
+      (cmd-run app)))
   
   (ig::render)
   (sdl2:gl-make-current window gl-context)

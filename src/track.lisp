@@ -10,14 +10,8 @@
                      (cffi:null-pointer)
                      (autowrap:alloc '(:struct (vst3-c-api:steinberg-vst-audio-bus-buffers))
                                      (.nbus-audio-out self))))
-        (buffer-in (loop repeat 2
-                         collect (autowrap:calloc :float *frames-per-buffer*)))
-        (buffer-out (loop repeat 2
-                          collect (autowrap:calloc :float *frames-per-buffer*)))
         (event-in (make-instance 'vst3-impl::event-list)))
     (setf (.process-data self) process-data)
-    (setf (.buffer-in self) buffer-in)
-    (setf (.buffer-out self) buffer-out)
     (setf (.event-in self) event-in)
     
     (setf (vst3-c-api:steinberg-vst-process-data.process-mode process-data)
@@ -49,7 +43,7 @@
       (let ((channels (autowrap:alloc :pointer 2)))
         (loop for i below 2
               do (setf (autowrap:c-aref channels i :pointer)
-                       (nth i (.buffer-in self))))
+                       (autowrap:calloc :float *frames-per-buffer*)))
         (setf (vst3-c-api::steinberg-vst-audio-bus-buffers.steinberg-vst-audio-bus-buffers-channel-buffers32 inputs)
               channels)))
 
@@ -59,7 +53,7 @@
       (let ((channels (autowrap:alloc :pointer 2)))
         (loop for i below 2
               do (setf (autowrap:c-aref channels i :pointer)
-                       (nth i (.buffer-out self))))
+                       (autowrap:calloc :float *frames-per-buffer*)))
         (setf (vst3-c-api::steinberg-vst-audio-bus-buffers.steinberg-vst-audio-bus-buffers-channel-buffers32 outputs)
               channels)))))
 
@@ -80,7 +74,8 @@
   (setf (.modules self) (append (.modules self) (list module)))
   (initialize module)
   (start module)
-  (editor-open module))
+  (when (zerop (c-ref (ig:get-io) ig:im-gui-io :key-shift))
+    (editor-open module)))
 
 (defmethod render ((self track))
   (ig:push-id)
@@ -88,22 +83,20 @@
   (ig:pop-id))
 
 (defmethod terminate ((self track))
+  (loop for module in (.modules self)
+        do (stop module)
+           (terminate module))
   (mapc #'terminate (.tracks self))
-  (mapc #'terminate (.modules self))
   
-  (let* ((process-data (.process-data self))
-         (inputs (vst3-c-api:steinberg-vst-process-data.inputs* process-data))
-         (outputs (vst3-c-api:steinberg-vst-process-data.outputs* process-data)))
-    (unless (autowrap:wrapper-null-p inputs)
-      (autowrap:free
-       (vst3-c-api::steinberg-vst-audio-bus-buffers.steinberg-vst-audio-bus-buffers-channel-buffers32
-        inputs))
-      (autowrap:free inputs))
-    (mapc #'autowrap:free (.buffer-in self))
-    (unless (autowrap:wrapper-null-p outputs)
-      (autowrap:free
-       (vst3-c-api::steinberg-vst-audio-bus-buffers.steinberg-vst-audio-bus-buffers-channel-buffers32
-        outputs))
-      (autowrap:free outputs))
-    (mapc #'autowrap:free (.buffer-out self))
+  (let* ((process-data (.process-data self)))
+    (flet ((free (x)
+             (let ((ptr (vst3-c-api::steinberg-vst-audio-bus-buffers.steinberg-vst-audio-bus-buffers-channel-buffers32 x)))
+               (unless (autowrap:wrapper-null-p x)
+                 (loop for i below (.nbus-audio-in self)
+                       do (autowrap:free (autowrap:c-aref ptr i :pointer)))
+                 (autowrap:free ptr)
+                 (autowrap:free x)))))
+      (free (vst3-c-api:steinberg-vst-process-data.inputs* process-data))
+      (free (vst3-c-api:steinberg-vst-process-data.outputs* process-data)))
+    
     (autowrap:free process-data)))

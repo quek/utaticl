@@ -29,7 +29,8 @@
    (zoom-y :initform 50.0 :accessor .zoom-y)))
 
 (defclass rack ()
-  ((plugin-selector :initform nil :accessor .plugin-selector)) )
+  ((plugin-selector :initform (make-instance 'plugin-selector)
+                    :accessor .plugin-selector)) )
 
 (defclass show-mixin ()
   ((show-p :initarg :show-p :initform nil :accessor .show-p)))
@@ -39,9 +40,7 @@
    (query :initform "" :accessor .query)))
 
 (defclass track (neko)
-  ((buffer-in :accessor .buffer-in)
-   (buffer-out :accessor .buffer-out)
-   (clips :initarg :clips :initform nil :accessor .clips)
+  ((clips :initarg :clips :initform nil :accessor .clips)
    (event-in :accessor .event-in)
    (modules :initform nil :accessor .modules)
    (nbus-audio-in :initform 1 :accessor .nbus-audio-in)
@@ -122,4 +121,5 @@
   ((query :initform "" :accessor .query)))
 
 (defclass app ()
-  ((projects :initform (list (make-instance 'project)) :accessor .projects)))
+  ((mutex :initform (sb-thread:make-mutex :name "APP") :accessor .mutex)
+   (projects :initform (list (make-instance 'project)) :accessor .projects)))

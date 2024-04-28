@@ -13,5 +13,6 @@
         do (terminate project)))
 
 (defmethod process ((self app))
-  (loop for project in (.projects self)
-        do (process project)))
+  (sb-thread:with-mutex ((.mutex self))
+    (loop for project in (.projects self)
+          do (process project))))
