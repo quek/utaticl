@@ -109,25 +109,6 @@
          (sb-thread:terminate-thread it)
          (setf it nil)))
 
-(defun play-from-start ()
-  (%play (make-play-position :line 0 :line-frame 0)))
-
-(defun play-from-last ()
-  (%play (.last-play-position (.sequencer *audio*))))
-
-(defun play-from-current ()
-  (let* ((sequencer (.sequencer *audio*)))
-    (setf (.last-play-position sequencer) (.play-position sequencer))
-    (%play (.play-position sequencer))))
-
-(defun %play (play-position)
-  (let* ((sequencer (.sequencer *audio*)))
-    (setf (.play-position sequencer) play-position))
-  (setf (.playing *audio*) t))
-
-;; (defun stop ()
-;;   (setf (.playing *audio*) nil))
-
 (defun playing ()
   (.playing *audio*))
 
@@ -168,16 +149,15 @@
         (process *app*)
 
         ;; TODO かんぜんに暫定
-        (let ((module (.module (car (.projects *app*)))))
-          (when (and module (.start-p module))
-            (let ((in (.buffer-out module))
-                  (out (.master-buffer *audio*)))
-              (loop for channel below 2
-                    do (loop for i below *frames-per-buffer*
-                             for x = (nth channel out)
-                             for y = (nth channel in)
-                             do (setf (aref x i)
-                                      (autowrap:c-aref y i :float)))))))
+        (let ((master-track (.master-track (car (.projects *app*)))))
+          (let ((in (.buffer-out master-track))
+                (out (.master-buffer *audio*)))
+            (loop for channel below 2
+                  do (loop for i below *frames-per-buffer*
+                           for x = (nth channel out)
+                           for y = (nth channel in)
+                           do (setf (aref x i)
+                                    (autowrap:c-aref y i :float))))))
         
         (statistic-leave))
       (sb-concurrency:send-message audio-mailbox t))))
@@ -191,6 +171,7 @@
   (declare (optimize (speed 3) (safety 0))
            (ignore input-buffer time-info status-flags user-data
                    frame-per-buffer))
+  (break)
   (let ((thread-mailbox (.process-thread-mailbox *audio*))
         (audio-mailbox (.audio-mailbox *audio*)))
     (sunless (.process-thread *audio*)

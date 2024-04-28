@@ -96,71 +96,6 @@
           do (loop for i below count
                    do (vst3-ffi::activate-bus (.component self)
                                               type direction i 1))))
-
-  (let ((process-data (autowrap:alloc '(:struct (vst3-c-api:steinberg-vst-process-data))))
-        (inputs (if (zerop (.audio-input-bus-count self))
-                    (cffi:null-pointer)
-                    (autowrap:alloc '(:struct (vst3-c-api:steinberg-vst-audio-bus-buffers))
-                                    (.audio-input-bus-count self))))
-        (outputs (if (zerop (.audio-output-bus-count self))
-                     (cffi:null-pointer)
-                     (autowrap:alloc '(:struct (vst3-c-api:steinberg-vst-audio-bus-buffers))
-                                     (.audio-output-bus-count self))))
-        (buffer-in (loop for channel below 2
-                         collect (autowrap:calloc :float *frames-per-buffer*)))
-        (buffer-out (loop for channel below 2
-                          collect (autowrap:calloc :float *frames-per-buffer*)))
-        (event-in (make-instance 'vst3-impl::event-list)))
-    (setf (slot-value self 'process-data) process-data)
-    (setf (.buffer-in self) buffer-in)
-    (setf (.buffer-out self) buffer-out)
-    (setf (.event-in self) event-in)
-    
-    (setf (vst3-c-api:steinberg-vst-process-data.process-mode process-data)
-          vst3-c-api:+steinberg-vst-process-modes-k-realtime+)
-    (setf (vst3-c-api::steinberg-vst-process-data.symbolic-sample-size process-data)
-          vst3-c-api::+steinberg-vst-symbolic-sample-sizes-k-sample32+)
-    (setf (vst3-c-api:steinberg-vst-process-data.num-samples process-data)
-          *frames-per-buffer*)
-    (setf (vst3-c-api:steinberg-vst-process-data.num-inputs process-data)
-          (.audio-input-bus-count self))
-    (setf (vst3-c-api:steinberg-vst-process-data.num-outputs process-data)
-          (.audio-output-bus-count self))
-    (setf (vst3-c-api:steinberg-vst-process-data.inputs process-data)
-          (autowrap:ptr inputs))
-    (setf (vst3-c-api:steinberg-vst-process-data.outputs process-data)
-          (autowrap:ptr outputs))
-    (setf (vst3-c-api:steinberg-vst-process-data.input-parameter-changes process-data)
-          (vst3-impl::ptr (.parameter-changes-in self)))
-    (setf (vst3-c-api:steinberg-vst-process-data.output-parameter-changes process-data)
-          (cffi:null-pointer))
-    (setf (vst3-c-api:steinberg-vst-process-data.input-events process-data)
-          (vst3-impl::ptr (.event-in self)))
-    (setf (vst3-c-api:steinberg-vst-process-data.output-events process-data)
-          (cffi:null-pointer))
-    (setf (vst3-c-api:steinberg-vst-process-data.process-context process-data)
-          (cffi:null-pointer))
-
-    (unless (zerop (.audio-input-bus-count self))
-      (setf (vst3-c-api::steinberg-vst-audio-bus-buffers.num-channels inputs) 2)
-      (setf (vst3-c-api::steinberg-vst-audio-bus-buffers.silence-flags inputs) 0)
-      (let ((channels (autowrap:alloc :pointer 2)))
-        (loop for i below 2
-              do (setf (autowrap:c-aref channels i :pointer)
-                       (nth i (.buffer-in self))))
-        (setf (vst3-c-api::steinberg-vst-audio-bus-buffers.steinberg-vst-audio-bus-buffers-channel-buffers32 inputs)
-              channels)))
-
-    (unless (zerop (.audio-output-bus-count self))
-      (setf (vst3-c-api::steinberg-vst-audio-bus-buffers.num-channels outputs) 2)
-      (setf (vst3-c-api::steinberg-vst-audio-bus-buffers.silence-flags outputs) 0)
-      (let ((channels (autowrap:alloc :pointer 2)))
-        (loop for i below 2
-              do (setf (autowrap:c-aref channels i :pointer)
-                       (nth i (.buffer-out self))))
-        (setf (vst3-c-api::steinberg-vst-audio-bus-buffers.steinberg-vst-audio-bus-buffers-channel-buffers32 outputs)
-              channels))))
-  
   ;; prepareParameterInfo();
   )
 
@@ -177,24 +112,7 @@
       (when (and (.controller self) terminate-controller-p)
         (vst3-ffi::terminate (.controller self)))))
   
-  (vst3-impl::release (.host-applicaiton self))
-
-  (let* ((process-data (.process-data self))
-         (inputs (vst3-c-api:steinberg-vst-process-data.inputs* process-data))
-         (outputs (vst3-c-api:steinberg-vst-process-data.outputs* process-data)))
-    (unless (autowrap:wrapper-null-p inputs)
-      (autowrap:free
-       (vst3-c-api::steinberg-vst-audio-bus-buffers.steinberg-vst-audio-bus-buffers-channel-buffers32
-        inputs))
-      (autowrap:free inputs))
-    (mapc #'autowrap:free (.buffer-in self))
-    (unless (autowrap:wrapper-null-p outputs)
-      (autowrap:free
-       (vst3-c-api::steinberg-vst-audio-bus-buffers.steinberg-vst-audio-bus-buffers-channel-buffers32
-        outputs))
-      (autowrap:free outputs))
-    (mapc #'autowrap:free (.buffer-out self))
-    (autowrap:free process-data)))
+  (vst3-impl::release (.host-applicaiton self)))
 
 (defmethod connect-componet-controller ((self vst3-module))
   (unless (.single-component-p self)
@@ -274,12 +192,17 @@
     (call-next-method)))
 
 (defmethod process ((self module))
-  (let ((process-data (.process-data self)))
-    #+nil
-    (log:debug (loop for i below 10
-                     collect (autowrap:c-aref (car (.buffer-out self)) i :float) ))
-    (vst3-ffi::process (.process self)
-                       (autowrap:ptr process-data))))
+  (setf (vst3-c-api:steinberg-vst-process-data.input-parameter-changes *process-data*)
+        (vst3-impl::ptr (.parameter-changes-in self)))
+  (setf (vst3-c-api:steinberg-vst-process-data.output-parameter-changes *process-data*)
+        (cffi:null-pointer))          ;TODO
+  
+  (vst3-ffi::process (.process self)
+                     (autowrap:ptr *process-data*))
+  #+nil
+  (log:debug (loop for i below 10
+                   collect (autowrap:c-aref (car (.buffer-out self)) i :float) ))
+  )
 
 #+nil
 (sb-int:with-float-traps-masked (:invalid :inexact :overflow :divide-by-zero)

@@ -18,8 +18,6 @@
    (master-track :initform (make-instance 'master-track) :accessor .master-track)
    (playing-p :initform nil :accessor .playing-p)
    (transposer :initform (make-instance 'transposer) :accessor .transposer)
-   ;;TODO DELETE
-   (module :initform nil :accessor .module)
    (target-track :initform :nil :accessor .target-track)))
 
 (defclass transposer ()
@@ -41,8 +39,16 @@
    (query :initform "" :accessor .query)))
 
 (defclass track (neko)
-  ((clips :initarg :clips :initform nil :accessor .clips)
+  ((buffer-in :accessor .buffer-in)
+   (buffer-out :accessor .buffer-out)
+   (clips :initarg :clips :initform nil :accessor .clips)
+   (event-in :accessor .event-in)
    (modules :initform nil :accessor .modules)
+   (nbus-audio-in :initform 1 :accessor .nbus-audio-in)
+   (nbus-audio-out :initform 1 :accessor .nbus-audio-out)
+   (nbus-event-in :initform 1 :accessor .nbus-event-in)
+   (nbus-event-out :initform 1 :accessor .nbus-event-out)
+   (process-data :accessor .process-data)
    (select-p :initform nil :accessor .select-p)
    (tracks :initform nil :accessor .tracks))
   (:default-initargs :name "TRACK" :color (color #x33 #x33 #x33)
@@ -106,10 +112,6 @@
    (event-output-bus-count :accessor .event-output-bus-count)
    (view :initform :nil :accessor .view)
    (hwnd :initform :nil :accessor .hwnd)
-   (process-data :reader .process-data)
-   (buffer-in :accessor .buffer-in)
-   (buffer-out :accessor .buffer-out)
-   (event-in :accessor .event-in)
    (parameter-changes-in :initform (make-instance 'vst3-impl::parameter-changes)
                          :accessor .parameter-changes-in)))
 
