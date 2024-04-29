@@ -8,5 +8,6 @@
        (with-audio
          (start-audio)
          (sdl2-main *app*)
+         (stop-audio)
          (terminate *app*))))
    :name "DGW"))

@@ -3,34 +3,6 @@
 (sb-ext:defglobal *done* nil)
 ;;(setf *done* t)
 
-
-#+nil
-(progn
-  (sdl2:init sdl2-ffi::+sdl-init-video+)
-  (sdl2:gl-set-attr sdl2-ffi::+sdl-gl-context-flags+ 0)
-  (sdl2:gl-set-attr sdl2-ffi::+sdl-gl-context-profile-mask+ sdl2-ffi::+sdl-gl-context-profile-core+)
-  (sdl2:gl-set-attr sdl2-ffi::+sdl-gl-context-major-version+ 3)
-  (sdl2:gl-set-attr sdl2-ffi::+sdl-gl-context-minor-version+ 2)
-  (sdl2:set-hint :render-driver "opengl")
-  (sdl2:gl-set-attr sdl2-ffi::+sdl-gl-depth-size+ 24)
-  (sdl2:gl-set-attr sdl2-ffi::+sdl-gl-stencil-size+ 8)
-  (sdl2:gl-set-attr sdl2-ffi::+sdl-gl-doublebuffer+ 1)
-  (sdl2:get-current-display-mode 0))
-#+nil
-(let* ((window (sdl2:create-window :title "DGW" :w 1024 :h 768
-                                   :flags (list sdl2-ffi:+sdl-window-shown+
-                                                sdl2-ffi:+sdl-window-opengl+
-                                                sdl2-ffi:+sdl-window-resizable+)))
-       (gl-context (sdl2:gl-create-context window)))
-  (sdl2:gl-set-swap-interval 1)       ;enable vsync
-  (let* ((ctx (ig::create-context (cffi:null-pointer))))
-    (ig::set-current-context ctx)
-    (ig-backend::impl-sdl2-init-for-opengl
-     (autowrap:ptr window)
-     (autowrap:ptr gl-context))
-    ))
-
-
 (defun gui-loop (app window gl-context e)
   (loop while (/= (sdl2-ffi.functions:sdl-poll-event e) 0)
         do (ig-backend::impl-sdl2-process-event (autowrap:ptr e))
@@ -54,11 +26,16 @@
 
   (ig::render)
   (sdl2:gl-make-current window gl-context)
-  (opengl:viewport 0 0
-                   ;; TODO io->DislplaySize.x, io->DisplaySize.y
-                   1024 768)
-  (opengl:clear-color 0.45 0.55 0.60 1.0) ;TODO clearColor
-  (opengl:clear :color-buffer-bit)
+  (let ((io (ig:get-io)))
+    (handler-case
+        (progn
+          (opengl:viewport 0 0
+                           (c-ref io ig:im-gui-io :display-size :x)
+                           (c-ref io ig:im-gui-io :display-size :y))
+          (opengl:clear-color 0.45 0.55 0.60 1.0) ;TODO clearColor
+          (opengl:clear :color-buffer-bit))
+      (error (e)
+        (log:error "~a" e))))
   (ig-backend::impl-opengl3-render-draw-data (autowrap:ptr (ig::get-draw-data)))
   (sdl2:gl-swap-window window))
 
@@ -81,7 +58,7 @@
   (sdl2:gl-set-attr sdl2-ffi::+sdl-gl-context-minor-version+ 0)
 
   ;; (sdl2:set-hint sdl2-ffi:+sdl-hint-ime-show-ui+ "1")
-  
+
   (sdl2:set-hint :render-driver "opengl")
   (sdl2:gl-set-attr sdl2-ffi::+sdl-gl-depth-size+ 24)
   (sdl2:gl-set-attr sdl2-ffi::+sdl-gl-stencil-size+ 8)
@@ -136,23 +113,18 @@
       (ig-backend::impl-opengl3-init "#version 130")
 
       (setf *done* nil)
-      (sdl2:with-sdl-event (e)
-        (loop until *done* do
-          (handler-bind ((error 'error-handler))
-            (handler-case
-                (gui-loop app window gl-context e)
-              ;; TODO
-              (CL-OPENGL-BINDINGS:OPENGL-ERROR (e)
-                (declare (ignorable e))
-                ;; (log:error e)
-                )))))
 
-      (ig-backend::impl-opengl3-shutdown)
-      (ig-backend::impl-sdl2-shutdown)
-      (ig::destroy-context ctx)
-      (sdl2:gl-delete-context gl-context)
-      (sdl2:destroy-window window)
-      (sdl2:quit))))
+      (unwind-protect
+           (sdl2:with-sdl-event (e)
+             (loop until *done* do
+               (handler-bind ((error 'error-handler))
+                 (gui-loop app window gl-context e))))
+        (ig-backend::impl-opengl3-shutdown)
+        (ig-backend::impl-sdl2-shutdown)
+        (ig::destroy-context ctx)
+        (sdl2:gl-delete-context gl-context)
+        (sdl2:destroy-window window)
+        (sdl2:quit)))))
 
 #+nil
 (defun glfw-scratch-main ()
