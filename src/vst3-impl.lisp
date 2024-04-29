@@ -684,8 +684,14 @@
   ((resize-view ((view (:pointer vst3-c-api:steinberg-i-plug-view))
                  (new-size (:pointer (:struct (vst3-c-api:steinberg-view-rect)))))
                 vst3-c-api::steinberg-tresult
-                (declare (ignore view new-size))
+                (declare (ignore view))
                 ;; TODO 実装
+                (let ((hwnd (dgw::.hwnd (.module self)))
+                      (width (- (plus-c:c-ref new-size (:struct (vst3-c-api:steinberg-view-rect)) :right)
+                                (plus-c:c-ref new-size (:struct (vst3-c-api:steinberg-view-rect)) :left)))
+                      (heigth (- (plus-c:c-ref new-size (:struct (vst3-c-api:steinberg-view-rect)) :bottom)
+                                 (plus-c:c-ref new-size (:struct (vst3-c-api:steinberg-view-rect)) :top))))
+                  (win32::resize hwnd width heigth))
                 vst3-c-api::+steinberg-k-result-true+))
   :iid vst3-ffi::+steinberg-iplug-frame-iid+
   :vst3-c-api-class vst3-c-api:steinberg-i-plug-frame)

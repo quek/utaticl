@@ -47,5 +47,24 @@
                             '(:no-size :no-move :no-copy-bits :show-window))
         hwnd))))
 
+(defun resize (hwnd width height)
+  (let ((client-rect (ftw:get-client-rect hwnd)))
+    (unless (and (= width (- (ftw:rect-right client-rect)
+                             (ftw:rect-left client-rect)))
+                 (= height (- (ftw:rect-bottom client-rect)
+                              (ftw:rect-top client-rect))))
+      (let ((window-info (ftw:get-window-info hwnd)))
+        (cffi:with-foreign-objects ((rect '(:struct ftw::rect)))
+          (ftw:rect-foreign (ftw:make-rect :left 0 :top 0 :right width :bottom height)
+                            rect)
+          (adjust-window-rect-ex rect
+                                 (ftw:info-style window-info)
+                                 0
+                                 (ftw:info-ex-style window-info))
+          (let ((rect (ftw:foreign-rect rect (ftw:make-rect))))
+            (ftw:set-window-pos hwnd :top 0 0
+                                (- (ftw:rect-right rect) (ftw:rect-left rect))
+                                (- (ftw:rect-bottom rect) (ftw:rect-top rect))
+                                '(:no-move :no-copy-bits :no-activate))))))))
 #+nil
 (make-window 1024 760 t)
