@@ -20,3 +20,7 @@
 (cffi:defcfun ("ImGui_ImplOpenGL3_Shutdown" impl-opengl3-shutdown) :void)
 
 (cffi:defcfun ("ImGui_ImplSDL2_Shutdown" impl-sdl2-shutdown) :void)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(cffi:defcfun ("ImGui_ImplWin32_Init" impl-win32-init) :void
+  (hwnd :pointer))
