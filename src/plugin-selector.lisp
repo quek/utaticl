@@ -27,7 +27,7 @@
             if (fuzzy= (.name plugin-info) (.query self))
               do (if run-p
                      #1=(progn
-                          (cmd-add *project* 'cmd-plugin-add
+                          (cmd-add *project* 'cmd-module-add
                                    :track-id (.neko-id (.target-track *project*))
                                    :plugin-info plugin-info)
                           (ig:close-current-popup)

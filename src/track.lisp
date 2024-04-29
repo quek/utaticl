@@ -77,6 +77,10 @@
   (when (zerop (c-ref (ig:get-io) ig:im-gui-io :key-shift))
     (editor-open module)))
 
+(defmethod module-delete ((self track) module)
+  (terminate module)
+  (setf (.modules self) (delete module (.modules self))))
+
 (defmethod render ((self track))
   (ig:push-id)
   (ig:button (.name self))

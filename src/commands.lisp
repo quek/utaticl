@@ -11,14 +11,23 @@
 (defmethod redo ((self command))
   (execute self))
 
-(defcommand cmd-plugin-add (command)
+(defcommand cmd-module-add (command)
   ((track-id :initarg :track-id :accessor .track-id)
    (plugin-info :initarg :plugin-info :accessor .plugin-info)))
 
-(defmethod execute ((self cmd-plugin-add))
+(defmethod execute ((self cmd-module-add))
   (let ((track (find-track *project* (.track-id self)))
         (module (plugin-load (.plugin-info self))))
     (module-add track module)))
+
+(defcommand cmd-module-delete (command)
+  ((track-id :initarg :track-id :accessor .track-id)
+   (module-id :initarg :module-id :accessor .module-id)))
+
+(defmethod execute ((self cmd-module-delete))
+  (let* ((track (find-track *project* (.track-id self)))
+        (module (find (.module-id self) (.modules track) :key #'.neko-id)))
+    (module-delete track module)))
 
 (defcommand cmd-plugin-scan (command)
   ())
