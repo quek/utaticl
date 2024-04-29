@@ -44,7 +44,7 @@
       (ftw:rect-foreign (ftw:make-rect :left 0 :top 0 :right width :bottom height)
                         rect)
       (adjust-window-rect-ex rect styles 0 ex-styles)
-      
+
       (let* ((rect (ftw:foreign-rect rect (ftw:make-rect)))
              (height (- (ftw:rect-bottom rect) (ftw:rect-top rect)))
              (width (- (ftw:rect-right rect) (ftw:rect-left rect)))
@@ -53,7 +53,9 @@
                                       :ex-styles ex-styles
                                       :styles styles
                                       :height height
-                                      :width width)))
+                                      :width width
+                                      ;; エディタウインドが前面にとどまるように
+                                      :parent dgw::*hwnd*)))
         (ftw:set-window-pos hwnd :top 0 0 0 0
                             '(:no-size :no-move :no-copy-bits :show-window))
         hwnd))))

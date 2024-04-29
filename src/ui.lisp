@@ -51,7 +51,7 @@
     (render app)
     (sb-thread:with-mutex ((.mutex app))
       (cmd-run app)))
-  
+
   (ig::render)
   (sdl2:gl-make-current window gl-context)
   (opengl:viewport 0 0
@@ -99,6 +99,14 @@
                                                     sdl2-ffi:+sdl-window-opengl+
                                                     sdl2-ffi:+sdl-window-resizable+))))
          (gl-context (sdl2:gl-create-context window)))
+
+    (autowrap:with-alloc (wm-info 'sdl2-ffi:sdl-syswm-info)
+      (sdl2-ffi.functions:sdl-get-version (c-ref wm-info sdl2-ffi:sdl-syswm-info :version &))
+      (sdl2-ffi.functions:sdl-get-window-wm-info window wm-info)
+      ;; なんで :win :windows がないの？ しかたないので :x11 :display を使う
+      ;; たぶんメモリレイアウト的に大丈夫なはず
+      (setf *hwnd* (c-ref wm-info sdl2-ffi:sdl-syswm-info :info :x11 :display)))
+
     (sdl2:raise-window window)
     (sdl2:gl-set-swap-interval 1)       ;enable vsync
     (let* ((ctx (ig::create-context (cffi:null-pointer)))
@@ -138,7 +146,7 @@
                 (declare (ignorable e))
                 ;; (log:error e)
                 )))))
-      
+
       (ig-backend::impl-opengl3-shutdown)
       (ig-backend::impl-sdl2-shutdown)
       (ig::destroy-context ctx)
