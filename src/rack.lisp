@@ -6,6 +6,7 @@
 
       (loop for module in (.modules (.target-track *project*))
             do (ig:begin-group)
+               (ig:push-id)
                (when (ig:button (.name module))
                  (if (.editor-open-p module)
                      (editor-close module)
@@ -14,6 +15,7 @@
                  (cmd-add *project* 'cmd-module-delete
                           :track-id (.neko-id (.target-track *project*))
                           :module-id (.neko-id module)))
+               (ig:pop-id)
                (ig:end-group)
                (ig:same-line))
 

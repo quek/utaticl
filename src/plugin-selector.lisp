@@ -9,7 +9,8 @@
                                   collect (deserialize sexp)))))
         (setf (.plugin-infos self)
               (sort plugin-infos (lambda (x y)
-                                   (string< (.name x) (.name y))))))))
+                                   (string< (string-upcase (.name x))
+                                            (string-upcase (.name y)))))))))
 
   (ig:open-popup "Plugin Selector"))
 
