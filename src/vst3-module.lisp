@@ -208,7 +208,7 @@
         (vst3-impl::ptr (.parameter-changes-in self)))
   (setf (vst3-c-api:steinberg-vst-process-data.output-parameter-changes *process-data*)
         (cffi:null-pointer))          ;TODO
-  
+
   (vst3-ffi::process (.audio-processor self)
                      (autowrap:ptr *process-data*))
   #+nil

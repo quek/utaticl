@@ -35,8 +35,8 @@
                      (progn
                        (when (ig:button (.name plugin-info))
                          #1#)))))
-    
+
     (when (ig:is-key-pressed ig:+im-gui-key-escape+)
       (ig:close-current-popup))
-    
+
     (ig:end-popup)))
