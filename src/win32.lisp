@@ -8,6 +8,17 @@
 
 
 (ftw:defwndproc wnd-proc (hwnd msg wparam lparam)
+  (let ((module (gethash (cffi:pointer-address hwnd) dgw::*hwnd-vst3-module-map*)))
+    (when module
+      (ftw:switch msg
+        (ftw::+wm-size+
+         (when (/= wparam ftw::+size-minimized+)
+           (let* ((rect (ftw:get-client-rect hwnd))
+                  (width (- (ftw:rect-right rect) (ftw:rect-left rect)))
+                  (height (- (ftw:rect-bottom rect) (ftw:rect-top rect))))
+             (dgw::on-resize module width height))))
+        (ftw::+wm-destroy+
+         (dgw::editor-close module)))))
   (ftw:default-window-proc hwnd msg wparam lparam))
 
 (defvar *registered-class* nil)

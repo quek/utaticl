@@ -1,5 +1,7 @@
 (in-package :dgw)
 
+(defvar *hwnd-vst3-module-map* (make-hash-table))
+
 (defmethod initialize-instance :after ((self vst3-module) &key)
   (let ((host-applicaiton (make-instance 'vst3-impl::host-application :module self)))
     (vst3-impl::add-ref host-applicaiton)
@@ -177,6 +179,7 @@
                           (vst3-c-api:steinberg-view-rect.top size)))
                (hwnd (win32::make-window width height resizable)))
           (setf (.hwnd self) hwnd)
+          (setf (gethash (cffi:pointer-address hwnd) *hwnd-vst3-module-map*) self)
           (vst3::ensure-ok (vst3-ffi::attached view hwnd vst3-ffi::+steinberg-k-platform-type-hwnd+)))))
     (call-next-method)))
 
@@ -187,9 +190,18 @@
       (vst3-ffi::release (.view self))
       (sb-ext:cancel-finalization (.view self))
       (setf (.view self) nil)
+      (remhash (cffi:pointer-address (.hwnd self)) *hwnd-vst3-module-map*)
       (ftw:destroy-window (.hwnd self))
       (setf (.hwnd self) nil))
     (call-next-method)))
+
+(defmethod on-resize ((self vst3-module) width height)
+  (when (.editor-open-p self)
+    (let ((view (.view self)))
+      (autowrap:with-calloc (rect '(:struct (vst3-c-api::steinberg-view-rect)))
+        (setf (vst3-c-api:steinberg-view-rect.right rect) width)
+        (setf (vst3-c-api:steinberg-view-rect.bottom rect) height)
+        (vst3-ffi::on-size view (autowrap:ptr rect))))))
 
 (defmethod process ((self module))
   (setf (vst3-c-api:steinberg-vst-process-data.input-parameter-changes *process-data*)
