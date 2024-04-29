@@ -9,12 +9,9 @@
                (ig:same-line))
 
       (when (ig:button "+")
-        (show-plugin-selector self)))
-    (ig:end-child)
-    (shortcut-common))
-  (ig:end)
-
-  (render (.plugin-selector self)))
-
-(defmethod show-plugin-selector ((self rack))
-  (show (.plugin-selector self)))
+        (open-plugin-selector (.plugin-selector self)))
+      (render (.plugin-selector self))
+      
+      (ig:end-child)
+      (shortcut-common))
+    (ig:end)))

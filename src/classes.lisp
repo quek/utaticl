@@ -35,7 +35,7 @@
 (defclass show-mixin ()
   ((show-p :initarg :show-p :initform nil :accessor .show-p)))
 
-(defclass plugin-selector (show-mixin)
+(defclass plugin-selector ()
   ((plugin-infos :accessor .plugin-infos)
    (query :initform "" :accessor .query)))
 
