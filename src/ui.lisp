@@ -35,9 +35,18 @@
           (opengl:clear-color 0.45 0.55 0.60 1.0) ;TODO clearColor
           (opengl:clear :color-buffer-bit))
       (error (e)
-        (log:error "~a" e))))
-  (ig-backend::impl-opengl3-render-draw-data (autowrap:ptr (ig::get-draw-data)))
-  (sdl2:gl-swap-window window))
+        (log:error "~a" e)))
+
+    (ig-backend::impl-opengl3-render-draw-data (autowrap:ptr (ig::get-draw-data)))
+
+    (when (logand (c-ref io ig:im-gui-io :config-flags) ig:+im-gui-config-flags-viewports-enable+)
+      (let ((backup-current-window (sdl2-ffi.functions:sdl-gl-get-current-window))
+            (backup-current-context (sdl2-ffi.functions:sdl-gl-get-current-context)))
+        (ig:update-platform-windows)
+        (ig:render-platform-windows-default (cffi:null-pointer) (cffi:null-pointer))
+        (sdl2:gl-make-current backup-current-window backup-current-context)))
+
+    (sdl2:gl-swap-window window)))
 
 (defvar *invoke-debugger-p* t)
 

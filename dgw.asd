@@ -1,3 +1,7 @@
+(ql:quickload :cffi)
+(setf cffi:*foreign-library-directories*
+      '("c:/Users/ancient/quicklisp/local-projects/dgw/dll/"))
+
 (asdf:initialize-source-registry
  '(:source-registry
    (:tree (:here "lib"))
