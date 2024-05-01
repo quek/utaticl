@@ -18,6 +18,7 @@
   (ig-backend::impl-sdl2-new-frame)
   (ig::new-frame)
 
+  (ig:show-demo-window (cffi:null-pointer))
   (let ((*render-context* (make-instance 'render-context))
         (*theme* (make-instance 'theme)))
     (render app)
