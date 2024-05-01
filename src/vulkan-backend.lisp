@@ -8,6 +8,8 @@
 
 (cffi:load-foreign-library "c:/Users/ancient/quicklisp/local-projects/cimgui-autowrap/lib/cimgui/backend_test/example_sdl_vulkan/build/cimgui_sdl.dll")
 
+(defconstant +uint64-max+ (1- (expt 2 64)))
+
 (cffi:defcstruct imgui-impl-vulkan-init-info
   (instance vulkan:instance)
   (physical-device vulkan:physical-device)
@@ -39,16 +41,12 @@
   (image-acquired-semaphore vulkan:semaphore)
   (render-complete-semaphore vulkan:semaphore))
 
-(cffi:defcstruct vk-surface-format-khr
-  (format :int)
-  (color-space :int))
-
 (cffi:defcstruct imgui-impl-vulkan-h-window
   (width :int)
   (height :int)
   (swapchain vulkan:swapchain-khr)
   (surface vulkan:surface-khr)
-  (surface-format (:struct vk-surface-format-khr))
+  (surface-format (:struct vulkan:surface-format-khr))
   (present-mode vulkan:present-mode-khr)
   (render-pass vulkan:render-pass)
   (pipeline vulkan:pipeline)
@@ -110,7 +108,7 @@
   (wnd (:pointer (:struct imgui-impl-vulkan-h-window)))
   (allocator :pointer))
 
-(cffi:defcfun ("ImGui_ImplVulkanH_SelectSurfaceFormat" imgui-impl-vulkan-h-select-surface-format) (:struct vk-surface-format-khr)
+(cffi:defcfun ("ImGui_ImplVulkanH_SelectSurfaceFormat" imgui-impl-vulkan-h-select-surface-format) (:struct vulkan:surface-format-khr)
   (physical-device vulkan:physical-device)
   (surface vulkan:surface-khr)
   (request-formats :pointer)
@@ -213,7 +211,7 @@
       (setf *descriptor-pool* (vk:create-descriptor-pool *device* pool-info)))))
 
 (defun setup-vulkan-window (%surface width height)
-  (cffi:with-foreign-slots ((clear-enable surface)
+  (cffi:with-foreign-slots ((clear-enable surface present-mode)
                             *main-window-data*
                             (:struct imgui-impl-vulkan-h-window))
     (setf clear-enable t)
@@ -240,17 +238,59 @@
       (let ((VK_PRESENT_MODE_FIFO_KHR 2))
         (setf (cffi:mem-aref present-modes 'vulkan:present-mode-khr 0)
               VK_PRESENT_MODE_FIFO_KHR)
-        (imgui-impl-vulkan-h-select-present-mode
-         (vk:raw-handle *physical-device*) surface present-modes 1)))
+        (setf present-mode (imgui-impl-vulkan-h-select-present-mode
+                            (vk:raw-handle *physical-device*) surface present-modes 1))))
 
     (imgui-impl-vulkan-h-create-or-resize-window
-     *instance* *physical-device* *device* *main-window-data*
+     (vk:raw-handle *instance*) (vk:raw-handle *physical-device*)
+     (vk:raw-handle *device*) *main-window-data*
      *queue-family* vk:*default-allocator*
-     width height *min-image-count*)
-    ))
+     width height *min-image-count*)))
+
+(defun frame-render (draw-data)
+  (cffi:with-foreign-slots ((frame-semaphores semaphore-index swapchain frame-index)
+                            *main-window-data* (:struct imgui-impl-vulkan-h-window))
+    (let* ((frame-semaphore (cffi:mem-aref frame-semaphores
+                                           '(:struct imgui-impl-vulkan-h-frame-semaphores)
+                                           semaphore-index))
+           (image-acquired-semaphore
+             (cffi:foreign-slot-value
+              frame-semaphore
+              '(:struct imgui-impl-vulkan-h-frame-semaphores)
+              'image-acquired-semaphore))
+           (render-complete-semaphore
+             (cffi:foreign-slot-value
+              frame-semaphore
+              '(:struct imgui-impl-vulkan-h-frame-semaphores)
+              'render-complete-semaphore)))
+      (handler-case
+          (setf frame-index (vk:acquire-next-image-khr
+                             *device* swapchain +uint64-max+ image-acquired-semaphore))
+        (%vk:error-out-of-date-khr ()
+          (setf *swap-chain-rebuild* nil)
+          (return-from frame-render))
+        (%vk:suboptimal-khr ()
+          (setf *swap-chain-rebuild* nil)
+          (return-from frame-render)))))
+  
+  (cffi:with-foreign-slots ((frames frame-index)
+                            *main-window-data* (:struct imgui-impl-vulkan-h-window))
+    (let* ((fd (cffi:mem-aref frames '(:pointer (:struct imgui-impl-vulkan-h-frame))
+                              frame-index)))
+      (cffi:with-foreign-slots ((fence) fd (:struct imgui-impl-vulkan-h-frame))
+        (vk:wait-for-fences *device* (list fence) vk:+true+ +uint64-max+)
+        (vk:reset-fences *device* (list fence)))))
+
+  ;; ここから
+
+  )
 
 
 (defun vulkan-backend-main ()
+
+  (loop for i below (cffi:foreign-type-size '(:struct imgui-impl-vulkan-h-window))
+        do (setf (cffi:mem-ref *main-window-data* :char i) 0))
+
   (sdl2:init sdl2-ffi:+sdl-init-video+ sdl2-ffi:+sdl-init-timer+)
   (let ((window (sdl2:create-window :title "DGW" :w 1024 :h 768
                                     :flags (list sdl2-ffi:+sdl-window-shown+
@@ -273,13 +313,30 @@
            (cffi:with-foreign-object (surface 'vulkan:surface-khr)
              (sdl-vulkan-create-surface (autowrap:ptr window) (vk:raw-handle *instance*) surface)
              (multiple-value-bind (w h) (sdl2:get-window-size window)
-               (setup-vulkan-window (cffi:mem-ref surface 'vulkan:surface-khr) w h))
-             )
+               (setup-vulkan-window (cffi:mem-ref surface 'vulkan:surface-khr) w h)))
 
            (ig:create-context (cffi:null-pointer))
-           #+nil
+
            (let ((io (ig:get-io)))
-             )
+             (ensure-directories-exist (merge-pathnames "user/config/" dgw::*working-directory*))
+             (setf (plus-c:c-ref io ig:im-gui-io :ini-filename)
+                   (namestring (merge-pathnames "user/config/imgui.ini" dgw::*working-directory*)))
+             (setf (plus-c:c-ref io ig:im-gui-io :config-docking-with-shift) 1)
+             (setf (plus-c:c-ref io ig:im-gui-io :config-windows-move-from-title-bar-only) 1)
+             (setf (plus-c:c-ref io ig:im-gui-io :config-flags)
+                   (logior (plus-c:c-ref io ig:im-gui-io :config-flags)
+                           ig:+im-gui-config-flags-nav-enable-keyboard+
+                           ig:+im-gui-config-flags-docking-enable+))
+             (autowrap:with-alloc (glyph-ranges 'ig:im-wchar 3)
+               (setf (plus-c:c-ref glyph-ranges ig:im-wchar 0) #x0020
+                     (plus-c:c-ref glyph-ranges ig:im-wchar 1) #xfffd
+                     (plus-c:c-ref glyph-ranges ig:im-wchar 2) 0)
+               (ig:im-font-atlas-add-font-from-file-ttf
+                (plus-c:c-ref io ig:im-gui-io :fonts)
+                (namestring (merge-pathnames "factory/font/NotoSansJP-Regular.ttf" dgw::*working-directory*))
+                16.0
+                (cffi:null-pointer)
+                glyph-ranges)))
 
            (imgui-impl-sdl2-init-for-vulkan (autowrap:ptr window))
 
@@ -299,13 +356,13 @@
                                         allocator
                                         check-vk-result-fn) init-info
                                        (:struct imgui-impl-vulkan-init-info))
-               (setf instance *instance*)
-               (setf physical-device *physical-device*)
-               (setf device *device*)
+               (setf instance (vk:raw-handle *instance*))
+               (setf physical-device (vk:raw-handle *physical-device*))
+               (setf device (vk:raw-handle *device*))
                (setf queue-family *queue-family*)
-               (setf queue *queue*)
-               (setf pipeline-cache *pipeline-cache*)
-               (setf descriptor-pool *descriptor-pool*)
+               (setf queue (vk:raw-handle *queue*))
+               (setf pipeline-cache (vk:raw-handle *pipeline-cache*))
+               (setf descriptor-pool (vk:raw-handle *descriptor-pool*))
                (setf render-pass (cffi:foreign-slot-value *main-window-data*
                                                           '(:struct imgui-impl-vulkan-h-window)
                                                           'render-pass))
@@ -317,6 +374,60 @@
                (setf msaa-samples 1)           ;VK_SAMPLE_COUNT_1_BIT
                (setf allocator vk:*default-allocator*)
                (setf check-vk-result-fn (cffi:callback 'check-vk-result))
-               (imgui-impl-vulkan-init init-info))))
-      (sdl2:destroy-window window))
-    ))
+               (imgui-impl-vulkan-init init-info)))
+
+           (setf dgw::*done* nil)
+           (sdl2:with-sdl-event (e)
+             (loop until dgw::*done* do
+               (handler-bind ((error 'error-handler))
+                 (vulkan-ui-loop window e)))))
+
+      (vk:device-wait-idle *device*)
+      (imgui-impl-vulkan-shutdown)
+      (ig-backend::impl-sdl2-shutdown)
+      (ig:destroy-context (cffi:null-pointer))
+      (cleanup-vulkan-window)
+      (cleanup-vulkan )
+      (sdl2:destroy-window window)
+      (sdl2:quit))))
+
+(defun vulkan-ui-loop (window e)
+  (loop while (/= (sdl2-ffi.functions:sdl-poll-event e) 0)
+        do (ig-backend::impl-sdl2-process-event (autowrap:ptr e))
+           (if (eq (sdl2:get-event-type e) :quit)
+               (setf dgw::*done* t)
+               (if (and (eq (sdl2:get-event-type e) :windowevent)
+                        (sdl2::c-let ((event sdl2-ffi:sdl-event :from e))
+                          (sdl2::c-let ((we sdl2-ffi:sdl-window-event :from (event :window)))
+                            (and (= (we :event) sdl2-ffi::+sdl-windowevent-close+)
+                                 (= (we :window-id) (sdl2:get-window-id window))))))
+                   (setf dgw::*done* t))))
+  (when *swap-chain-rebuild*
+    (multiple-value-bind (width height) (sdl2:get-window-size window)
+      (when (and (plusp width) (plusp height))
+        (imgui-impl-vulkan-set-min-image-count *min-image-count*)
+        (imgui-impl-vulkan-h-create-or-resize-window
+         (vk:raw-handle *instance*) (vk:raw-handle *physical-device*)
+         (vk:raw-handle *device*) *main-window-data*
+         *queue-family* vk:*default-allocator*
+         width height *min-image-count*)
+        (setf (cffi:foreign-slot-value *main-window-data*
+                                       '(:struct imgui-impl-vulkan-h-window)
+                                       'frame-index)
+              0)
+        (setf *swap-chain-rebuild* nil))))
+
+  (imgui-impl-vulkan-new-frame)
+  (ig-backend::impl-sdl2-new-frame)
+  (ig::new-frame)
+
+  (ig:show-demo-window (cffi:null-pointer))
+
+  (ig::render)
+
+  (let* ((draw-data (ig:get-draw-data))
+         (minimized-p (or (<= (plus-c:c-ref draw-data ig:im-draw-data :display-size :x) 0.0)
+                          (<= (plus-c:c-ref draw-data ig:im-draw-data :display-size :y) 0.0))))
+    (unless minimized-p
+      (frame-render draw-data)
+      (frame-present))))
