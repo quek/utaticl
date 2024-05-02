@@ -151,7 +151,7 @@
 ;; static uint32_t                 g_QueueFamily = (uint32_t)-1;
 (defvar *queue-family* #xffffffff)
 ;; static VkQueue                  g_Queue = VK_NULL_HANDLE;
-(defvar *queue* (cffi:foreign-alloc :pointer))
+(defvar *queue*)
 ;; static VkDebugReportCallbackEXT g_DebugReport = VK_NULL_HANDLE;
 (defvar *debug-report*)
 ;; static VkPipelineCache          g_PipelineCache = VK_NULL_HANDLE;
@@ -168,6 +168,7 @@
 
 (cffi:defcallback check-vk-result :void
     ((err vulkan:result))
+  (print (list 'check-vk-result err))
   (unless (eq err :success)
     (format t "[vulkan] Error: VkResult = ~d!" err)
     (unless (member err '(:success :not-ready :timeout :event-set :event-reset :incomplete
@@ -207,7 +208,8 @@
            (create-info (vk:make-device-create-info
                          :queue-create-infos (list queue-info)
                          :enabled-extension-names '("VK_KHR_swapchain"))))
-      (setf *device* (vk:create-device *physical-device* create-info)))
+      (setf *device* (vk:create-device *physical-device* create-info))
+      (setf *queue* (vk:get-device-queue *device* *queue-family* 0)))
 
     (let ((pool-info (vk:make-descriptor-pool-create-info
                       :flags '(:free-descriptor-set)
@@ -346,7 +348,6 @@
 
   (loop for i below (cffi:foreign-type-size '(:struct imgui-impl-vulkan-h-window))
         do (setf (cffi:mem-ref *main-window-data* :char i) 0))
-  (setf (cffi:mem-ref *queue* :pointer) (cffi:null-pointer))
   (setf (cffi:mem-ref *pipeline-cache* :pointer) (cffi:null-pointer))
 
   (sdl2:init sdl2-ffi:+sdl-init-video+ sdl2-ffi:+sdl-init-timer+)
@@ -426,7 +427,7 @@
                  (setf physical-device (vk:raw-handle *physical-device*))
                  (setf device (vk:raw-handle *device*))
                  (setf queue-family *queue-family*)
-                 (setf queue *queue*)
+                 (setf queue (vk:raw-handle *queue*))
                  (setf pipeline-cache *pipeline-cache*)
                  (setf descriptor-pool (vk:raw-handle *descriptor-pool*))
                  (setf render-pass wd-render-pass)
