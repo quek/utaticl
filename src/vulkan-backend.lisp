@@ -6,7 +6,8 @@
 
 (in-package :vulkan-backend)
 
-(cffi:load-foreign-library "c:/Users/ancient/quicklisp/local-projects/cimgui-autowrap/lib/cimgui/backend_test/example_sdl_vulkan/build/cimgui_sdl.dll")
+;; TODO cimgui-autowrap/src/lib.lisp で読み込んでいる
+;; (cffi:load-foreign-library "c:/Users/ancient/quicklisp/local-projects/cimgui-autowrap/lib/cimgui/backend_test/example_sdl_vulkan/build/cimgui_sdl.dll")
 
 (defconstant +uint64-max+ (1- (expt 2 64)))
 
@@ -150,11 +151,11 @@
 ;; static uint32_t                 g_QueueFamily = (uint32_t)-1;
 (defvar *queue-family* #xffffffff)
 ;; static VkQueue                  g_Queue = VK_NULL_HANDLE;
-(defvar *queue*)
+(defvar *queue* (cffi:foreign-alloc :pointer))
 ;; static VkDebugReportCallbackEXT g_DebugReport = VK_NULL_HANDLE;
 (defvar *debug-report*)
 ;; static VkPipelineCache          g_PipelineCache = VK_NULL_HANDLE;
-(defvar *pipeline-cache*)
+(defvar *pipeline-cache* (cffi:foreign-alloc :pointer))
 ;; static VkDescriptorPool         g_DescriptorPool = VK_NULL_HANDLE;
 (defvar *descriptor-pool*)
 
@@ -167,9 +168,15 @@
 
 (cffi:defcallback check-vk-result :void
     ((err vulkan:result))
-  (unless (zerop err)
+  (unless (eq err :success)
     (format t "[vulkan] Error: VkResult = ~d!" err)
-    (when (minusp err)
+    (unless (member err '(:success :not-ready :timeout :event-set :event-reset :incomplete
+                          :suboptimal-khr
+                          :thread-idle-khr
+                          :thread-done-khr
+                          :operation-deferred-khr
+                          :operation-not-deferred-khr
+                          :pipeline-compile-required-ext))
       (error "[vulkan] Error: VkResult = ~d!" err))))
 
 (defun setup-vulkan (extensions extensions-count)
@@ -247,49 +254,99 @@
      *queue-family* vk:*default-allocator*
      width height *min-image-count*)))
 
-(defun frame-render (draw-data)
-  (cffi:with-foreign-slots ((frame-semaphores semaphore-index swapchain frame-index)
+(defun semaphore (which)
+  (cffi:with-foreign-slots ((frame-semaphores semaphore-index)
                             *main-window-data* (:struct imgui-impl-vulkan-h-window))
-    (let* ((frame-semaphore (cffi:mem-aref frame-semaphores
-                                           '(:struct imgui-impl-vulkan-h-frame-semaphores)
-                                           semaphore-index))
-           (image-acquired-semaphore
-             (cffi:foreign-slot-value
-              frame-semaphore
-              '(:struct imgui-impl-vulkan-h-frame-semaphores)
-              'image-acquired-semaphore))
-           (render-complete-semaphore
-             (cffi:foreign-slot-value
-              frame-semaphore
-              '(:struct imgui-impl-vulkan-h-frame-semaphores)
-              'render-complete-semaphore)))
+    (let ((frame-semaphore (cffi:mem-aref frame-semaphores
+                                          '(:struct imgui-impl-vulkan-h-frame-semaphores)
+                                          semaphore-index)))
+      (cffi:foreign-slot-value
+       frame-semaphore
+       '(:struct imgui-impl-vulkan-h-frame-semaphores)
+       which))))
+
+(defun frame-render (draw-data)
+  (cffi:with-foreign-slots ((swapchain frame-index
+                             frames render-pass width height clear-value)
+                            *main-window-data* (:struct imgui-impl-vulkan-h-window))
+    (let* ((image-acquired-semaphore (semaphore 'image-acquired-semaphore))
+           (render-complete-semaphore (semaphore 'render-complete-semaphore)))
+
       (handler-case
           (setf frame-index (vk:acquire-next-image-khr
                              *device* swapchain +uint64-max+ image-acquired-semaphore))
-        (%vk:error-out-of-date-khr ()
+        ((or %vk:error-out-of-date-khr %vk:suboptimal-khr) ()
           (setf *swap-chain-rebuild* nil)
-          (return-from frame-render))
-        (%vk:suboptimal-khr ()
-          (setf *swap-chain-rebuild* nil)
-          (return-from frame-render)))))
-  
-  (cffi:with-foreign-slots ((frames frame-index)
-                            *main-window-data* (:struct imgui-impl-vulkan-h-window))
-    (let* ((fd (cffi:mem-aref frames '(:pointer (:struct imgui-impl-vulkan-h-frame))
-                              frame-index)))
-      (cffi:with-foreign-slots ((fence) fd (:struct imgui-impl-vulkan-h-frame))
-        (vk:wait-for-fences *device* (list fence) vk:+true+ +uint64-max+)
-        (vk:reset-fences *device* (list fence)))))
+          (return-from frame-render)))
 
-  ;; ここから
+      (let* ((fd (cffi:mem-aref frames '(:pointer (:struct imgui-impl-vulkan-h-frame))
+                                frame-index)))
+        (cffi:with-foreign-slots ((fence command-pool command-buffer framebuffer)
+                                  fd (:struct imgui-impl-vulkan-h-frame))
+          (vk:wait-for-fences *device* (list fence) vk:+true+ +uint64-max+)
+          (vk:reset-fences *device* (list fence))
 
-  )
+          (vk:reset-command-pool *device* command-pool)
 
+          (vk:begin-command-buffer
+           command-buffer
+           (vk:make-command-buffer-begin-info :flags '(:one-time-submit)))
+
+          (vk:cmd-begin-render-pass
+           command-buffer
+           (vk:make-render-pass-begin-info
+            :render-pass render-pass
+            :framebuffer framebuffer
+            :render-area (vk:make-rect-2d :extent (vk:make-extent-2d :width width :height height))
+            :clear-values (list clear-value))
+           :inline)
+
+          (imgui-impl-vulkan-render-draw-data draw-data command-buffer (cffi:null-pointer))
+
+          (vk:cmd-end-render-pass command-buffer)
+          (vk:end-command-buffer command-buffer)
+
+          (vk:queue-submit
+           *queue*
+           (list (vk:make-submit-info
+                  :wait-semaphores (list image-acquired-semaphore)
+                  :wait-dst-stage-mask '(:color-attachment-output)
+                  :command-buffers (list command-buffer)
+                  :signal-semaphores (list render-complete-semaphore)))
+           fence))))))
+
+(defun frame-present ()
+  (unless *swap-chain-rebuild*
+    (cffi:with-foreign-slots ((swapchain frame-index semaphore-index image-count)
+                              *main-window-data*
+                              (:struct imgui-impl-vulkan-h-window))
+      (handler-case
+          (vk:queue-present-khr
+           *queue*
+           (vk:make-present-info-khr
+            :wait-semaphores (list (semaphore 'render-complete-semaphore))
+            :swapchains (list swapchain)
+            :image-indices (list frame-index)))
+        ((or %vk:error-out-of-date-khr %vk:suboptimal-khr) ()
+          (setf *swap-chain-rebuild* t)
+          (return-from frame-present)))
+
+      (setf semaphore-index (mod (1+ semaphore-index) image-count)))))
+
+(defun cleanup-vulkan-window ()
+  (imgui-impl-vulkan-h-destroy-window *instance* *device* *main-window-data* vk:*default-allocator*))
+
+(defun cleanup-vulkan ()
+  (vk:destroy-descriptor-pool *device* *descriptor-pool*)
+  (vk:destroy-device *device*)
+  (vk:destroy-instance *instance*))
 
 (defun vulkan-backend-main ()
 
   (loop for i below (cffi:foreign-type-size '(:struct imgui-impl-vulkan-h-window))
         do (setf (cffi:mem-ref *main-window-data* :char i) 0))
+  (setf (cffi:mem-ref *queue* :pointer) (cffi:null-pointer))
+  (setf (cffi:mem-ref *pipeline-cache* :pointer) (cffi:null-pointer))
 
   (sdl2:init sdl2-ffi:+sdl-init-video+ sdl2-ffi:+sdl-init-timer+)
   (let ((window (sdl2:create-window :title "DGW" :w 1024 :h 768
@@ -299,7 +356,9 @@
                                                  sdl2-ffi:+sdl-window-allow-highdpi+ ))))
 
     (unwind-protect
-         (progn
+         (cffi:with-foreign-slots ((clear-enable render-pass image-count)
+                                   *main-window-data*
+                                   (:struct imgui-impl-vulkan-h-window))
            (cffi:with-foreign-object (extensions-count :uint32)
              (sdl-vulkan-get-instance-extensions (autowrap:ptr window)
                                                  extensions-count
@@ -312,6 +371,7 @@
 
            (cffi:with-foreign-object (surface 'vulkan:surface-khr)
              (sdl-vulkan-create-surface (autowrap:ptr window) (vk:raw-handle *instance*) surface)
+             (setf clear-enable t)
              (multiple-value-bind (w h) (sdl2:get-window-size window)
                (setup-vulkan-window (cffi:mem-ref surface 'vulkan:surface-khr) w h)))
 
@@ -341,40 +401,40 @@
            (imgui-impl-sdl2-init-for-vulkan (autowrap:ptr window))
 
            (cffi:with-foreign-object (init-info '(:struct imgui-impl-vulkan-init-info))
-             (cffi:with-foreign-slots ((instance
-                                        physical-device
-                                        device
-                                        queue-family
-                                        queue
-                                        pipeline-cache
-                                        descriptor-pool
-                                        render-pass
-                                        subpass
-                                        min-image-count
-                                        image-count
-                                        msaa-samples
-                                        allocator
-                                        check-vk-result-fn) init-info
-                                       (:struct imgui-impl-vulkan-init-info))
-               (setf instance (vk:raw-handle *instance*))
-               (setf physical-device (vk:raw-handle *physical-device*))
-               (setf device (vk:raw-handle *device*))
-               (setf queue-family *queue-family*)
-               (setf queue (vk:raw-handle *queue*))
-               (setf pipeline-cache (vk:raw-handle *pipeline-cache*))
-               (setf descriptor-pool (vk:raw-handle *descriptor-pool*))
-               (setf render-pass (cffi:foreign-slot-value *main-window-data*
-                                                          '(:struct imgui-impl-vulkan-h-window)
-                                                          'render-pass))
-               (setf subpass 0)
-               (setf min-image-count *min-image-count*)
-               (setf image-count (cffi:foreign-slot-value *main-window-data*
-                                                          '(:struct imgui-impl-vulkan-h-window)
-                                                          'image-count))
-               (setf msaa-samples 1)           ;VK_SAMPLE_COUNT_1_BIT
-               (setf allocator vk:*default-allocator*)
-               (setf check-vk-result-fn (cffi:callback 'check-vk-result))
-               (imgui-impl-vulkan-init init-info)))
+             (let ((wd-render-pass render-pass)
+                   (wd-image-count image-count))
+              (cffi:with-foreign-slots ((instance
+                                         physical-device
+                                         device
+                                         queue-family
+                                         queue
+                                         pipeline-cache
+                                         descriptor-pool
+                                         render-pass
+                                         subpass
+                                         min-image-count
+                                         image-count
+                                         msaa-samples
+                                         allocator
+                                         check-vk-result-fn) init-info
+                                        (:struct imgui-impl-vulkan-init-info))
+                (setf instance (vk:raw-handle *instance*))
+                (setf physical-device (vk:raw-handle *physical-device*))
+                (setf device (vk:raw-handle *device*))
+                (setf queue-family *queue-family*)
+                (setf queue *queue*)
+                (setf pipeline-cache *pipeline-cache*)
+                (setf descriptor-pool (vk:raw-handle *descriptor-pool*))
+                (setf render-pass wd-render-pass)
+                (setf subpass 0)
+                (setf min-image-count *min-image-count*)
+                (setf image-count wd-image-count)
+                (setf msaa-samples :1)
+                (setf allocator vk:*default-allocator*)
+                (setf check-vk-result-fn (cffi:callback check-vk-result))
+                ;; FIXMI ここで落ちる
+                ;;     VkResult err = vkCreateGraphicsPipelines(device, pipelineCache, 1, &info, allocator, pipeline);
+                (imgui-impl-vulkan-init init-info))))
 
            (setf dgw::*done* nil)
            (sdl2:with-sdl-event (e)
@@ -387,7 +447,7 @@
       (ig-backend::impl-sdl2-shutdown)
       (ig:destroy-context (cffi:null-pointer))
       (cleanup-vulkan-window)
-      (cleanup-vulkan )
+      (cleanup-vulkan)
       (sdl2:destroy-window window)
       (sdl2:quit))))
 
