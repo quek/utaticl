@@ -354,7 +354,7 @@
                                     :flags (list sdl2-ffi:+sdl-window-shown+
                                                  sdl2-ffi:+sdl-window-vulkan+
                                                  sdl2-ffi:+sdl-window-resizable+
-                                                 sdl2-ffi:+sdl-window-allow-highdpi+ ))))
+                                                 sdl2-ffi:+sdl-window-allow-highdpi+))))
 
     (unwind-protect
          (cffi:with-foreign-slots ((surface render-pass image-count)
