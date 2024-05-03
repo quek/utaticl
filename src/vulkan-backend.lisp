@@ -154,8 +154,6 @@
 (defvar *queue*)
 ;; static VkDebugReportCallbackEXT g_DebugReport = VK_NULL_HANDLE;
 (defvar *debug-report*)
-;; static VkPipelineCache          g_PipelineCache = VK_NULL_HANDLE;
-(defvar *pipeline-cache* (cffi:foreign-alloc :pointer))
 ;; static VkDescriptorPool         g_DescriptorPool = VK_NULL_HANDLE;
 (defvar *descriptor-pool*)
 
@@ -348,7 +346,6 @@
 
   (loop for i below (cffi:foreign-type-size '(:struct imgui-impl-vulkan-h-window))
         do (setf (cffi:mem-ref *main-window-data* :char i) 0))
-  (setf (cffi:mem-ref *pipeline-cache* :pointer) (cffi:null-pointer))
 
   (sdl2:init sdl2-ffi:+sdl-init-video+ sdl2-ffi:+sdl-init-timer+)
   (let ((window (sdl2:create-window :title "DGW" :w 1024 :h 768
@@ -381,6 +378,8 @@
              (setup-vulkan-window surface w h))
 
            (ig:create-context (cffi:null-pointer))
+           ;; (ig:log-to-file -1 "c:/tmp/a.log")
+           (ig:log-text "abc %d" :int 123)
 
            (let ((io (ig:get-io)))
              (ensure-directories-exist (merge-pathnames "user/config/" dgw::*working-directory*))
@@ -392,6 +391,7 @@
                    (logior (plus-c:c-ref io ig:im-gui-io :config-flags)
                            ig:+im-gui-config-flags-nav-enable-keyboard+
                            ig:+im-gui-config-flags-docking-enable+))
+             #+nil
              (autowrap:with-alloc (glyph-ranges 'ig:im-wchar 3)
                (setf (plus-c:c-ref glyph-ranges ig:im-wchar 0) #x0020
                      (plus-c:c-ref glyph-ranges ig:im-wchar 1) #xfffd
@@ -402,6 +402,8 @@
                 16.0
                 (cffi:null-pointer)
                 glyph-ranges)))
+
+           (ig:style-colors-dark (cffi:null-pointer))
 
            (imgui-impl-sdl2-init-for-vulkan (autowrap:ptr window))
 
@@ -428,7 +430,7 @@
                  (setf device (vk:raw-handle *device*))
                  (setf queue-family *queue-family*)
                  (setf queue (vk:raw-handle *queue*))
-                 (setf pipeline-cache *pipeline-cache*)
+                 (setf pipeline-cache (cffi:null-pointer))
                  (setf descriptor-pool (vk:raw-handle *descriptor-pool*))
                  (setf render-pass wd-render-pass)
                  (setf subpass 0)
@@ -437,8 +439,6 @@
                  (setf msaa-samples :1)
                  (setf allocator vk:*default-allocator*)
                  (setf check-vk-result-fn (cffi:callback check-vk-result))
-                 ;; FIXMI ここで落ちる
-                 ;;     VkResult err = vkCreateGraphicsPipelines(device, pipelineCache, 1, &info, allocator, pipeline);
                  (imgui-impl-vulkan-init init-info))))
 
            (setf dgw::*done* nil)
@@ -450,6 +450,7 @@
       (vk:device-wait-idle *device*)
       (imgui-impl-vulkan-shutdown)
       (ig-backend::impl-sdl2-shutdown)
+      (ig:log-finish)
       (ig:destroy-context (cffi:null-pointer))
       (cleanup-vulkan-window)
       (cleanup-vulkan)
@@ -467,6 +468,7 @@
                             (and (= (we :event) sdl2-ffi::+sdl-windowevent-close+)
                                  (= (we :window-id) (sdl2:get-window-id window))))))
                    (setf dgw::*done* t))))
+
   (when *swap-chain-rebuild*
     (multiple-value-bind (width height) (sdl2:get-window-size window)
       (when (and (plusp width) (plusp height))
@@ -482,6 +484,10 @@
               0)
         (setf *swap-chain-rebuild* nil))))
 
+  ;; FIXME ここで落ちる
+  ;; imgui_impl_vulkan.cpp:716         err = vkAllocateMemory(v->Device, &alloc_info, v->Allocator, &bd->FontMemory);
+  ;; ERROR-OUT-OF-DEVICE-MEMORY -2
+  ;; C からは req.size 131072
   (imgui-impl-vulkan-new-frame)
   (ig-backend::impl-sdl2-new-frame)
   (ig::new-frame)
