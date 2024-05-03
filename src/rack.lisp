@@ -6,7 +6,7 @@
 
       (loop for module in (.modules (.target-track *project*))
             do (ig:begin-group)
-               (ig:push-id)
+               (ig:push-id module)
                (when (ig:button (.name module))
                  (if (.editor-open-p module)
                      (editor-close module)

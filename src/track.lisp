@@ -82,16 +82,19 @@
   (setf (.modules self) (delete module (.modules self))))
 
 (defmethod render ((self track))
-  (ig:push-id)
+  (ig:push-id self)
   (ig:button (.name self))
   (ig:pop-id))
+
+(defmethod (setf .select-p) :after ((value (eql t)) (self track))
+  (setf (.target-track *project*) self))
 
 (defmethod terminate ((self track))
   (loop for module in (.modules self)
         do (stop module)
            (terminate module))
   (mapc #'terminate (.tracks self))
-  
+
   (let* ((process-data (.process-data self)))
     (flet ((free (x)
              (let ((ptr (sb:vst-audio-bus-buffers.vst-audio-bus-buffers-channel-buffers32 x)))
@@ -102,5 +105,9 @@
                  (autowrap:free x)))))
       (free (sb:vst-process-data.inputs* process-data))
       (free (sb:vst-process-data.outputs* process-data)))
-    
+
     (autowrap:free process-data)))
+
+(defmethod unselect-all-tracks ((self track))
+  (setf (.select-p self) nil)
+  (mapc #'unselect-all-tracks (.tracks self)))

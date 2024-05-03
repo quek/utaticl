@@ -47,12 +47,13 @@
         (ldb (byte 8 24) c)))
 
 (defmacro defshortcut ((&rest key-chord) &body body)
-  `(progn
-     (ig:set-next-item-shortcut (logior ,@key-chord))
-     (ig:push-id)
-     (when (ig:button "##_" (@ ig:+flt-min+ ig:+flt-min+))
-       ,@body)
-     (ig:pop-id)))
+  (let ((code (gensym)))
+    `(let ((,code (logior ,@key-chord)))
+       (ig:set-next-item-shortcut ,code)
+       (ig:push-id-int ,code)
+       (when (ig:button "##_" (@ ig:+flt-min+ ig:+flt-min+))
+         ,@body)
+       (ig:pop-id))))
 
 (defun draw-horizontal-line (pos)
   (let* ((draw-list (ig:get-window-draw-list))

@@ -7,6 +7,12 @@
 
 (defserialize neko neko-id name color)
 
+(defmethod print-object ((self neko) stream)
+  (print-unreadable-object (self stream :type t :identity t)
+    (format stream "~a ~a"
+            (.name self)
+            (.neko-id self))))
+
 (defclass project (neko)
   ((arrangement :initform (make-instance 'arrangement) :accessor .arrangement)
    (commander :initform (make-instance 'commander) :accessor .commander)
