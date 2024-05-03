@@ -16,7 +16,9 @@
                "cl-portaudio"
                "vst3-c-api"
                "clap"
-               "sdl2" "cl-opengl"
+               "sdl2"
+               "cl-opengl"              ;TODO DELETE
+               "vk"
                "cimgui-autowrap"
                "ftw"
                "anaphora"
@@ -67,6 +69,7 @@
    (:file "commander")
    (:file "plugin-selector")
    (:file "app")
+   (:file "vulkan-backend")
    (:file "main")
    ;; (:module autowrap-spec
    ;;  :pathname "spec"

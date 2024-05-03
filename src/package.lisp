@@ -28,3 +28,6 @@
 
 (defpackage :win32
   (:use :cl))
+
+(defpackage vulkan-backend
+  (:use :cl))

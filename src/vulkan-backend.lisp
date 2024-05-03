@@ -1,9 +1,3 @@
-(defpackage vulkan-backend
-  (:use :cl))
-
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (ql:quickload "vk"))
-
 (in-package :vulkan-backend)
 
 ;; TODO cimgui-autowrap/src/lib.lisp で読み込んでいる
@@ -345,14 +339,14 @@
   (vk:destroy-device *device*)
   (vk:destroy-instance *instance*))
 
-(defun vulkan-backend-main ()
+(defun vulkan-backend-main (app)
 
   (loop for i below (cffi:foreign-type-size '(:struct imgui-impl-vulkan-h-window))
         do (setf (cffi:mem-ref *main-window-data* :char i) 0))
 
   (sdl2:init sdl2-ffi:+sdl-init-video+ sdl2-ffi:+sdl-init-timer+)
   (let ((window (sdl2:create-window :title "DGW" :w 1024 :h 768
-                                    :flags (list sdl2-ffi:+sdl-window-shown+
+                                    :flags (list ;; sdl2-ffi:+sdl-window-shown+
                                                  sdl2-ffi:+sdl-window-vulkan+
                                                  sdl2-ffi:+sdl-window-resizable+
                                                  sdl2-ffi:+sdl-window-allow-highdpi+))))
@@ -454,7 +448,7 @@
            (setf dgw::*done* nil)
            (sdl2:with-sdl-event (e)
              (loop until dgw::*done* do
-               (vulkan-ui-loop window e))))
+               (vulkan-ui-loop app window e))))
 
       (vk:device-wait-idle *device*)
       (imgui-impl-vulkan-shutdown)
@@ -466,7 +460,7 @@
       (sdl2:destroy-window window)
       (sdl2:quit))))
 
-(defun vulkan-ui-loop (window e)
+(defun vulkan-ui-loop (app window e)
   (loop while (/= (sdl2-ffi.functions:sdl-poll-event e) 0)
         do (ig-backend::impl-sdl2-process-event (autowrap:ptr e))
            (if (eq (sdl2:get-event-type e) :quit)
@@ -493,15 +487,16 @@
               0)
         (setf *swap-chain-rebuild* nil))))
 
-  ;; FIXME ここで落ちる
-  ;; imgui_impl_vulkan.cpp:716         err = vkAllocateMemory(v->Device, &alloc_info, v->Allocator, &bd->FontMemory);
-  ;; ERROR-OUT-OF-DEVICE-MEMORY -2
-  ;; C からは req.size 131072
   (imgui-impl-vulkan-new-frame)
   (ig-backend::impl-sdl2-new-frame)
   (ig::new-frame)
 
   (ig:show-demo-window (cffi:null-pointer))
+  (let ((dgw::*render-context* (make-instance 'dgw::render-context))
+        (dgw::*theme* (make-instance 'dgw::theme)))
+    (dgw::render app)
+    (sb-thread:with-mutex ((dgw::.mutex app))
+      (dgw::cmd-run app)))
 
   (ig::render)
 
