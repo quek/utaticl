@@ -11,11 +11,16 @@
   (when (ig:begin "##arrangement" (cffi:null-pointer) ig:+im-gui-window-flags-no-scrollbar+)
     (when (ig:begin-child "##canvas" :window-flags ig:+im-gui-window-flags-horizontal-scrollbar+)
       (render-time-ruler self)
-      (let ((pos (ig:get-cursor-pos)))
-        (ig:set-cursor-pos (@+ pos (@ (ig:get-scroll-x) (- (ig:get-scroll-y)))))
+      (let ((pos (ig:get-cursor-pos))
+            (scroll-y (ig:get-scroll-y))
+            (window-pos (ig:get-window-pos)))
+        (ig:set-cursor-pos (@+ pos (@ (ig:get-scroll-x) (- scroll-y))))
+        (ig:push-clip-rect (@+ window-pos (@ .0 (- (.y pos) scroll-y 3)))
+                           (@+ window-pos (ig:get-window-size)))
         (ig:begin-group)
         (render-track self (.master-track *project*))
-        (ig:end-group))
+        (ig:end-group)
+        (ig:pop-clip-rect))
       (draw-horizontal-line (ig:get-cursor-pos))
 
       (let ((pos (ig:get-cursor-pos)))
@@ -25,7 +30,7 @@
           (cmd-add *project* 'cmd-track-add)))
 
       (handle-mouse self))
-    
+
     (ig:end-child)
     (shortcut-common))
   (ig:end))
@@ -37,7 +42,6 @@
          (window-size (ig:get-window-size))
          (scroll-x (ig:get-scroll-x))
          (scroll-y (ig:get-scroll-y)))
-    (ig:show-demo-window (cffi:null-pointer ))
     (loop for bar from 0 to max-bar
           for x = (+ (* bar 4 (.zoom-x self))
                      (.track-width self))
