@@ -1,8 +1,5 @@
 (in-package :dgw)
 
-(sb-ext:defglobal *done* nil)
-;;(setf *done* t)
-
 (defun gui-loop (app window gl-context e)
   (loop while (/= (sdl2-ffi.functions:sdl-poll-event e) 0)
         do (ig-backend::impl-sdl2-process-event (autowrap:ptr e))
@@ -48,16 +45,6 @@
         (sdl2:gl-make-current backup-current-window backup-current-context)))
 
     (sdl2:gl-swap-window window)))
-
-(defvar *invoke-debugger-p* t)
-
-(defun error-handler (e)
-  (log:error e)
-  (log:error (with-output-to-string (out)
-               (sb-debug:print-backtrace :stream out)))
-  (when *invoke-debugger-p*
-    (with-simple-restart (continue "Return from here.")
-      (invoke-debugger e))))
 
 (defun sdl2-main (app)
   "https://github.com/cimgui/cimgui/blob/docking_inter/backend_test/example_sdl_opengl3/main.c"
@@ -135,31 +122,3 @@
         (sdl2:gl-delete-context gl-context)
         (sdl2:destroy-window window)
         (sdl2:quit)))))
-
-#+nil
-(defun glfw-scratch-main ()
-  (glfw:initialize)
-
-  (let* ((window (glfw:create-window :width 1280 :height 720 :title "TITLE")))
-    (glfw::make-context-current window)
-    (glfw::swap-interval 1)             ;enable vsync
-    (let ((ctx (ig::create-context (cffi:null-pointer))))
-      ()
-      (loop with *done* = nil
-            until *done* do
-              (ig::new-frame)
-              (cffi:with-foreign-object (openp :bool)
-                (setf (cffi:mem-ref openp :bool) t)
-                (when (ig::begin "Hello" openp 0)
-                  (ig::text "World!")
-                  (cffi:with-foreign-object (size '(:struct ig::vec2))
-                    (setf (cffi:foreign-slot-value size '(:struct ig::vec2) 'ig::x) 40.0
-                          (cffi:foreign-slot-value size '(:struct ig::vec2) 'ig::y) 200.0)
-                    (when (ig::button "Exit" size)
-                      (setf *done* t)))))
-              (ig::end)
-              (ig::render)
-              (ig::get-draw-data))
-      (ig::destroy-context ctx))
-    (glfw::destroy-window window))
-  (glfw::terminate))

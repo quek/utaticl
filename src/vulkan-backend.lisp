@@ -269,8 +269,7 @@
           (setf *swap-chain-rebuild* nil)
           (return-from frame-render)))
 
-      (let* ((fd (cffi:mem-aref frames ;; '(:pointer (:struct imgui-impl-vulkan-h-frame))
-                                '(:struct imgui-impl-vulkan-h-frame)
+      (let* ((fd (cffi:mem-aref frames '(:struct imgui-impl-vulkan-h-frame)
                                 frame-index)))
         (let ((fence (vk:make-fence-wrapper (getf fd 'fence)))
               (command-pool (vk:make-command-pool-wrapper (getf fd 'command-pool)))
@@ -291,6 +290,7 @@
             :render-pass (vk:make-render-pass-wrapper render-pass)
             :framebuffer framebuffer
             :render-area (vk:make-rect-2d :extent (vk:make-extent-2d :width width :height height))
+            ;; TODO imgui-impl-vulkan-h-window の clear-value を使う
             :clear-values (list (vk:make-clear-value
                                  :color (vk:make-clear-color-value
                                          :float-32 #(0.45 0.55 0.60 0.80)))))
@@ -345,11 +345,24 @@
         do (setf (cffi:mem-ref *main-window-data* :char i) 0))
 
   (sdl2:init sdl2-ffi:+sdl-init-video+ sdl2-ffi:+sdl-init-timer+)
-  (let ((window (sdl2:create-window :title "DGW" :w 1024 :h 768
-                                    :flags (list ;; sdl2-ffi:+sdl-window-shown+
-                                                 sdl2-ffi:+sdl-window-vulkan+
-                                                 sdl2-ffi:+sdl-window-resizable+
-                                                 sdl2-ffi:+sdl-window-allow-highdpi+))))
+  (let ((window (progn
+                  ;; FIXMI なぜか初回の sdl2:create-window だと窓が表示されない・・・
+                  (sdl2:destroy-window
+                   #1=(sdl2:create-window :title "DGW" :w 1600 :h 900
+                                          :flags (list sdl2-ffi:+sdl-window-shown+
+                                                       sdl2-ffi:+sdl-window-vulkan+
+                                                       sdl2-ffi:+sdl-window-resizable+
+                                                       sdl2-ffi:+sdl-window-allow-highdpi+)))
+                  #1#)))
+
+    (sdl2:raise-window window)
+
+    (autowrap:with-alloc (wm-info 'sdl2-ffi:sdl-syswm-info)
+      (sdl2-ffi.functions:sdl-get-version (plus-c:c-ref wm-info sdl2-ffi:sdl-syswm-info :version plus-c:&))
+      (sdl2-ffi.functions:sdl-get-window-wm-info window wm-info)
+      ;; なんで :win :windows がないの？ しかたないので :x11 :display を使う
+      ;; たぶんメモリレイアウト的に大丈夫なはず
+      (setf dgw::*hwnd* (plus-c:c-ref wm-info sdl2-ffi:sdl-syswm-info :info :x11 :display)))
 
     (unwind-protect
          (cffi:with-foreign-slots ((surface render-pass image-count)
@@ -375,8 +388,6 @@
              (setup-vulkan-window surface w h))
 
            (ig:create-context (cffi:null-pointer))
-           ;; (ig:log-to-file -1 "c:/tmp/a.log")
-           (ig:log-text "abc %d" :int 123)
 
            (let ((io (ig:get-io)))
              (ensure-directories-exist (merge-pathnames "user/config/" dgw::*working-directory*))
@@ -388,7 +399,7 @@
                    (logior (plus-c:c-ref io ig:im-gui-io :config-flags)
                            ig:+im-gui-config-flags-nav-enable-keyboard+
                            ig:+im-gui-config-flags-docking-enable+))
-             #+nil
+
              (autowrap:with-alloc (glyph-ranges 'ig:im-wchar 3)
                (setf (plus-c:c-ref glyph-ranges ig:im-wchar 0) #x0020
                      (plus-c:c-ref glyph-ranges ig:im-wchar 1) #xfffd

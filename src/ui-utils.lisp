@@ -63,6 +63,14 @@
          (p2 (@+ p1 (@ window-width 0.0))))
     (ig:add-line draw-list p1 p2 (.color-line *theme*))))
 
+(defun error-handler (e)
+  (log:error e)
+  (log:error (with-output-to-string (out)
+               (sb-debug:print-backtrace :stream out)))
+  (when *invoke-debugger-p*
+    (with-simple-restart (continue "Return from here.")
+      (invoke-debugger e))))
+
 (defun shortcut-common ()
   (defshortcut (ig:+im-gui-key-semicolon+)
     (show (.commander *project*)))
