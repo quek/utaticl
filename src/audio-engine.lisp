@@ -150,7 +150,7 @@
 
         ;; TODO かんぜんに暫定
         (let ((master-track (.master-track (car (.projects *app*)))))
-          (let ((in (vst3-c-api:steinberg-vst-process-data.outputs*.steinberg-vst-audio-bus-buffers-channel-buffers32
+          (let ((in (sb:vst-process-data.outputs*.vst-audio-bus-buffers-channel-buffers32
                      (.process-data master-track)))
                 (out (.master-buffer *audio*)))
             (loop for channel below 2

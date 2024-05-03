@@ -15,8 +15,8 @@
                                 (setf single-component-p nil)
                                 (vst3::create-instance factory
                                                        (vst3::get-controller-class-id component)
-                                                       vst3-ffi::+steinberg-vst-iedit-controller-iid+)))
-                       (handler-case (vst3::query-interface component vst3-ffi::+steinberg-vst-iedit-controller-iid+)
+                                                       vst3-ffi::+vst-iedit-controller-iid+)))
+                       (handler-case (vst3::query-interface component vst3-ffi::+vst-iedit-controller-iid+)
                          (vst3::no-interface-error () (f))
                          (vst3::false-error () (f))))))
     (make-instance 'vst3-module
@@ -47,19 +47,19 @@
    (vst3-impl::ptr (vst3-impl::.component-handler (.host-applicaiton self))))
 
   (let ((process (vst3::query-interface
-                  (.component self) vst3-ffi::+steinberg-vst-iaudio-processor-iid+))
+                  (.component self) vst3-ffi::+vst-iaudio-processor-iid+))
         (audio-input-bus-count (vst3-ffi::get-bus-count
-                                (.component self) vst3-c-api::+steinberg-vst-media-types-k-audio+
-                                vst3-c-api::+steinberg-vst-bus-directions-k-input+))
+                                (.component self) sb:+vst-media-types-k-audio+
+                                sb:+vst-bus-directions-k-input+))
         (audio-output-bus-count (vst3-ffi::get-bus-count
-                                 (.component self) vst3-c-api::+steinberg-vst-media-types-k-audio+
-                                 vst3-c-api::+steinberg-vst-bus-directions-k-output+))
+                                 (.component self) sb:+vst-media-types-k-audio+
+                                 sb:+vst-bus-directions-k-output+))
         (event-input-bus-count (vst3-ffi::get-bus-count
-                                (.component self) vst3-c-api::+steinberg-vst-media-types-k-event+
-                                vst3-c-api::+steinberg-vst-bus-directions-k-input+))
+                                (.component self) sb:+vst-media-types-k-event+
+                                sb:+vst-bus-directions-k-input+))
         (event-output-bus-count (vst3-ffi::get-bus-count
-                                 (.component self) vst3-c-api::+steinberg-vst-media-types-k-event+
-                                 vst3-c-api::+steinberg-vst-bus-directions-k-output+)))
+                                 (.component self) sb:+vst-media-types-k-event+
+                                 sb:+vst-bus-directions-k-output+)))
     (setf (.audio-processor self) process)
     (setf (.audio-input-bus-count self) audio-input-bus-count)
     (setf (.audio-output-bus-count self) audio-output-bus-count)
@@ -67,34 +67,34 @@
     (setf (.event-output-bus-count self) event-output-bus-count)
 
     (vst3::ensure-ok
-     (vst3-ffi::can-process-sample-size process vst3-c-api::+steinberg-vst-symbolic-sample-sizes-k-sample32+))
+     (vst3-ffi::can-process-sample-size process sb:+vst-symbolic-sample-sizes-k-sample32+))
 
     (vst3-ffi::set-processing (.audio-processor self) 0)
     (vst3-ffi::set-active (.component self) 0)
 
-    (autowrap:with-alloc (setup '(:struct (vst3-c-api::steinberg-vst-process-setup)))
-      (setf (vst3-c-api::steinberg-vst-process-setup.process-mode setup)
-            vst3-c-api::+steinberg-vst-process-modes-k-realtime+)
-      (setf (vst3-c-api::steinberg-vst-process-setup.symbolic-sample-size setup)
-            vst3-c-api::+steinberg-vst-symbolic-sample-sizes-k-sample32+)
-      (setf (vst3-c-api::steinberg-vst-process-setup.max-samples-per-block  setup)
+    (autowrap:with-alloc (setup '(:struct (sb:vst-process-setup)))
+      (setf (sb:vst-process-setup.process-mode setup)
+            sb:+vst-process-modes-k-realtime+)
+      (setf (sb:vst-process-setup.symbolic-sample-size setup)
+            sb:+vst-symbolic-sample-sizes-k-sample32+)
+      (setf (sb:vst-process-setup.max-samples-per-block  setup)
             1024)
-      (setf (vst3-c-api::steinberg-vst-process-setup.sample-rate setup)
+      (setf (sb:vst-process-setup.sample-rate setup)
             48000.0d0)
       (vst3::ensure-ok (vst3-ffi::setup-processing process (autowrap:ptr setup))))
 
     (loop for (count type direction) in `((,audio-input-bus-count
-                                           ,vst3-c-api::+steinberg-vst-media-types-k-audio+
-                                           ,vst3-c-api::+steinberg-vst-bus-directions-k-input+)
+                                           ,sb:+vst-media-types-k-audio+
+                                           ,sb:+vst-bus-directions-k-input+)
                                           (,audio-output-bus-count
-                                           ,vst3-c-api::+steinberg-vst-media-types-k-audio+
-                                           ,vst3-c-api::+steinberg-vst-bus-directions-k-output+)
+                                           ,sb:+vst-media-types-k-audio+
+                                           ,sb:+vst-bus-directions-k-output+)
                                           (,event-input-bus-count
-                                           ,vst3-c-api::+steinberg-vst-media-types-k-event+
-                                           ,vst3-c-api::+steinberg-vst-bus-directions-k-input+)
+                                           ,sb:+vst-media-types-k-event+
+                                           ,sb:+vst-bus-directions-k-input+)
                                           (,event-output-bus-count
-                                           ,vst3-c-api::+steinberg-vst-media-types-k-event+
-                                           ,vst3-c-api::+steinberg-vst-bus-directions-k-output+))
+                                           ,sb:+vst-media-types-k-event+
+                                           ,sb:+vst-bus-directions-k-output+))
           do (loop for i below count
                    do (vst3-ffi::activate-bus (.component self)
                                               type direction i 1))))
@@ -107,9 +107,9 @@
     (let ((terminate-controller-p
             (autowrap:with-alloc (obj :pointer)
               (/= (vst3-ffi::query-interface (.component self)
-                                             vst3-ffi::+steinberg-vst-iedit-controller-iid+
+                                             vst3-ffi::+vst-iedit-controller-iid+
                                              obj)
-                  vst3-c-api:+steinberg-k-result-ok+))))
+                  sb:+k-result-ok+))))
       (vst3-ffi::terminate (.component self))
       (when (and (.controller self) terminate-controller-p)
         (vst3-ffi::terminate (.controller self)))))
@@ -120,9 +120,9 @@
   (unless (.single-component-p self)
     (handler-case
         (let ((c1 (vst3::query-interface (.component self)
-                                         vst3-ffi::+steinberg-vst-iconnection-point-iid+))
+                                         vst3-ffi::+vst-iconnection-point-iid+))
               (c2 (vst3::query-interface (.controller self)
-                                         vst3-ffi::+steinberg-vst-iconnection-point-iid+)))
+                                         vst3-ffi::+vst-iconnection-point-iid+)))
           (vst3-ffi::connect c1 (vst3-walk::.ptr c2))
           (vst3-ffi::connect c2 (vst3-walk::.ptr c1)))
       (vst3::no-interface-error ()))))
@@ -131,9 +131,9 @@
   (unless (.single-component-p self)
     (handler-case
         (let ((c1 (vst3::query-interface (.component self)
-                                         vst3-ffi::+steinberg-vst-iconnection-point-iid+))
+                                         vst3-ffi::+vst-iconnection-point-iid+))
               (c2 (vst3::query-interface (.controller self)
-                                         vst3-ffi::+steinberg-vst-iconnection-point-iid+)))
+                                         vst3-ffi::+vst-iconnection-point-iid+)))
           (vst3-ffi::disconnect c1 (vst3-walk::.ptr c2))
           (vst3-ffi::disconnect c2 (vst3-walk::.ptr c1)))
       (vst3::no-interface-error ()))))
@@ -165,22 +165,22 @@
 (defmethod editor-open ((self vst3-module))
   (unless (.editor-open-p self)
     (let* ((view-ptr (vst3-ffi::create-view (.controller self)
-                                            vst3-ffi::+steinberg-vst-view-type-k-editor+))
-           (view (make-instance 'vst3-ffi::steinberg-iplug-view :ptr view-ptr)))
+                                            vst3-ffi::+vst-view-type-k-editor+))
+           (view (make-instance 'vst3-ffi::iplug-view :ptr view-ptr)))
       (setf (.view self) view)
       (vst3-ffi::set-frame view (vst3-impl::ptr (vst3-impl::.plug-frame
                                                  (.host-applicaiton self))))
-      (autowrap:with-alloc (size '(:struct (vst3-c-api:steinberg-view-rect)))
+      (autowrap:with-alloc (size '(:struct (sb:view-rect)))
         (vst3-ffi::get-size view (autowrap:ptr size))
-        (let* ((resizable (= (vst3-ffi::can-resize view) vst3-c-api:+steinberg-k-result-true+))
-               (width (- (vst3-c-api:steinberg-view-rect.right size)
-                         (vst3-c-api:steinberg-view-rect.left size)))
-               (height (- (vst3-c-api:steinberg-view-rect.bottom size)
-                          (vst3-c-api:steinberg-view-rect.top size)))
+        (let* ((resizable (= (vst3-ffi::can-resize view) sb:+k-result-true+))
+               (width (- (sb:view-rect.right size)
+                         (sb:view-rect.left size)))
+               (height (- (sb:view-rect.bottom size)
+                          (sb:view-rect.top size)))
                (hwnd (win32::make-window width height resizable)))
           (setf (.hwnd self) hwnd)
           (setf (gethash (cffi:pointer-address hwnd) *hwnd-vst3-module-map*) self)
-          (vst3::ensure-ok (vst3-ffi::attached view hwnd vst3-ffi::+steinberg-k-platform-type-hwnd+)))))
+          (vst3::ensure-ok (vst3-ffi::attached view hwnd vst3-ffi::+k-platform-type-hwnd+)))))
     (call-next-method)))
 
 (defmethod editor-close ((self vst3-module))
@@ -198,15 +198,15 @@
 (defmethod on-resize ((self vst3-module) width height)
   (when (.editor-open-p self)
     (let ((view (.view self)))
-      (autowrap:with-calloc (rect '(:struct (vst3-c-api::steinberg-view-rect)))
-        (setf (vst3-c-api:steinberg-view-rect.right rect) width)
-        (setf (vst3-c-api:steinberg-view-rect.bottom rect) height)
+      (autowrap:with-calloc (rect '(:struct (sb:view-rect)))
+        (setf (sb:view-rect.right rect) width)
+        (setf (sb:view-rect.bottom rect) height)
         (vst3-ffi::on-size view (autowrap:ptr rect))))))
 
 (defmethod process ((self module))
-  (setf (vst3-c-api:steinberg-vst-process-data.input-parameter-changes *process-data*)
+  (setf (sb:vst-process-data.input-parameter-changes *process-data*)
         (vst3-impl::ptr (.parameter-changes-in self)))
-  (setf (vst3-c-api:steinberg-vst-process-data.output-parameter-changes *process-data*)
+  (setf (sb:vst-process-data.output-parameter-changes *process-data*)
         (cffi:null-pointer))          ;TODO
 
   (vst3-ffi::process (.audio-processor self)

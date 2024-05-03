@@ -1,20 +1,20 @@
 (in-package :vst3)
 
-vst3-c-api:+steinberg-k-result-ok+
+sb:+k-result-ok+
 ;;⇒ 0
-vst3-c-api:+steinberg-k-no-interface+
+sb:+k-no-interface+
 ;;⇒ -2147467262
-vst3-c-api:+steinberg-k-result-false+
+sb:+k-result-false+
 ;;⇒ 1
-vst3-c-api:+steinberg-k-invalid-argument+
+sb:+k-invalid-argument+
 ;;⇒ -2147024809
-vst3-c-api:+steinberg-k-not-implemented+
+sb:+k-not-implemented+
 ;;⇒ -2147467263
-vst3-c-api:+steinberg-k-internal-error+
+sb:+k-internal-error+
 ;;⇒ -2147467259
-vst3-c-api:+steinberg-k-not-initialized+
+sb:+k-not-initialized+
 ;;⇒ -2147418113
-vst3-c-api:+steinberg-k-out-of-memory+
+sb:+k-out-of-memory+
 ;;⇒ -2147024882
 
 
@@ -38,14 +38,14 @@ vst3-c-api:+steinberg-k-out-of-memory+
   (let ((result (gensym)))
     `(let ((,result ,form))
        (case ,result
-         (#.vst3-c-api::+steinberg-k-result-ok+ ,result)
-         (#.vst3-c-api:+steinberg-k-no-interface+ (error (make-condition 'no-interface-error :code ,result)))
-         (#.vst3-c-api:+steinberg-k-invalid-argument+ (error (make-condition 'invalid-argument-error :code ,result)))
-         (#.vst3-c-api:+steinberg-k-not-implemented+ (error (make-condition 'not-implemented-error :code ,result)))
-         (#.vst3-c-api:+steinberg-k-internal-error+ (error (make-condition 'internal-error :code ,result)))
-         (#.vst3-c-api:+steinberg-k-not-initialized+ (error (make-condition 'not-initialized-error :code ,result)))
-         (#.vst3-c-api:+steinberg-k-out-of-memory+ (error (make-condition 'out-of-memory-error :code ,result)))
-         (#.vst3-c-api:+steinberg-k-result-false+ (error (make-condition 'false-error :code ,result)))
+         (#.sb:+k-result-ok+ ,result)
+         (#.sb:+k-no-interface+ (error (make-condition 'no-interface-error :code ,result)))
+         (#.sb:+k-invalid-argument+ (error (make-condition 'invalid-argument-error :code ,result)))
+         (#.sb:+k-not-implemented+ (error (make-condition 'not-implemented-error :code ,result)))
+         (#.sb:+k-internal-error+ (error (make-condition 'internal-error :code ,result)))
+         (#.sb:+k-not-initialized+ (error (make-condition 'not-initialized-error :code ,result)))
+         (#.sb:+k-out-of-memory+ (error (make-condition 'out-of-memory-error :code ,result)))
+         (#.sb:+k-result-false+ (error (make-condition 'false-error :code ,result)))
          (t (error (make-condition 'unknown-error :code ,result)))))))
 
 (defun get-plugin-factory (vst3-path)
@@ -57,7 +57,7 @@ vst3-c-api:+steinberg-k-out-of-memory+
   ;;   (let ((plugin-factory (cffi:foreign-funcall-pointer
   ;;                          (cffi:foreign-symbol-pointer "GetPluginFactory" :library library) ()
   ;;                          :pointer)))
-  ;;     (make-instance 'vst3-ffi::steinberg-iplugin-factory :ptr plugin-factory)))
+  ;;     (make-instance 'vst3-ffi::iplugin-factory :ptr plugin-factory)))
   
   (let* ((lib (cffi:foreign-funcall "LoadLibraryA" :string vst3-path :pointer))
          (init-dll (cffi:foreign-funcall "GetProcAddress" :pointer lib :string "InitDll" :pointer)))
@@ -69,7 +69,7 @@ vst3-c-api:+steinberg-k-out-of-memory+
       (let ((plugin-factory (cffi:foreign-funcall-pointer get-plugin-factory () :pointer)))
         (when (cffi:null-pointer-p plugin-factory)
           (error "GetPluginFactory Failed! ~a" vst3-path))
-        (make-instance 'vst3-ffi::steinberg-iplugin-factory :ptr plugin-factory)))))
+        (make-instance 'vst3-ffi::iplugin-factory :ptr plugin-factory)))))
 
 (defmethod query-interface (self iid)
   (cffi:with-foreign-object (obj :pointer)
@@ -77,44 +77,44 @@ vst3-c-api:+steinberg-k-out-of-memory+
     (make-instance (gethash iid vst3-walk::*iid-class-map*)
                    :ptr (cffi:mem-ref obj :pointer))))
 
-(defmethod create-component ((self vst3-ffi::steinberg-iplugin-factory))
-  (let ((factory (or (query-interface self vst3-ffi::+steinberg-iplugin-factory3-iid+)
-                     (query-interface self vst3-ffi::+steinberg-iplugin-factory2-iid+)
+(defmethod create-component ((self vst3-ffi::iplugin-factory))
+  (let ((factory (or (query-interface self vst3-ffi::+iplugin-factory3-iid+)
+                     (query-interface self vst3-ffi::+iplugin-factory2-iid+)
                      self)))
     (%create-component factory)))
 
-(defmethod %create-component ((self vst3-ffi::steinberg-iplugin-factory))
-  (autowrap:with-many-alloc ((%class-info '(:struct (vst3-c-api::steinberg-p-class-info))))
+(defmethod %create-component ((self vst3-ffi::iplugin-factory))
+  (autowrap:with-many-alloc ((%class-info '(:struct (sb:p-class-info))))
     (loop for index below (vst3-ffi::count-classes self)
           for class-info = (progn (ensure-ok
                                    (vst3-ffi::get-class-info self index (autowrap:ptr %class-info)))
-                                  (vst3-c-api::make-steinberg-p-class-info :ptr (autowrap:ptr %class-info)))
+                                  (sb::make-p-class-info :ptr (autowrap:ptr %class-info)))
             thereis (and (equal (vst3::.category class-info) "Audio Module Class")
-                         (create-instance self (vst3::.cid class-info) vst3-ffi::+steinberg-vst-icomponent-iid+)))))
+                         (create-instance self (vst3::.cid class-info) vst3-ffi::+vst-icomponent-iid+)))))
 
-(defmethod %create-component ((self vst3-ffi::steinberg-iplugin-factory2))
-  (autowrap:with-many-alloc ((%class-info '(:struct (vst3-c-api::steinberg-p-class-info2))))
+(defmethod %create-component ((self vst3-ffi::iplugin-factory2))
+  (autowrap:with-many-alloc ((%class-info '(:struct (sb:p-class-info2))))
     (loop for index below (vst3-ffi::count-classes self)
           for class-info = (progn (ensure-ok
                                    (vst3-ffi::get-class-info2 self index (autowrap:ptr %class-info)))
-                                  (vst3-c-api::make-steinberg-p-class-info2 :ptr (autowrap:ptr %class-info)))
+                                  (sb::make-p-class-info2 :ptr (autowrap:ptr %class-info)))
             thereis (and (equal (vst3::.category class-info) "Audio Module Class")
-                         (create-instance self (vst3::.cid class-info) vst3-ffi::+steinberg-vst-icomponent-iid+)))))
+                         (create-instance self (vst3::.cid class-info) vst3-ffi::+vst-icomponent-iid+)))))
 
-(defmethod %create-component ((self vst3-ffi::steinberg-iplugin-factory3))
-  (autowrap:with-many-alloc ((%class-info '(:struct (vst3-c-api::steinberg-p-class-info-w))))
+(defmethod %create-component ((self vst3-ffi::iplugin-factory3))
+  (autowrap:with-many-alloc ((%class-info '(:struct (sb:p-class-info-w))))
     (loop for index below (vst3-ffi::count-classes self)
           for class-info = (progn (ensure-ok
                                    (vst3-ffi::get-class-info-unicode self index (autowrap:ptr %class-info)))
-                                  (vst3-c-api::make-steinberg-p-class-info-w :ptr (autowrap:ptr %class-info)))
+                                  (sb::make-p-class-info-w :ptr (autowrap:ptr %class-info)))
             thereis (and (equal (vst3::.category class-info) "Audio Module Class")
-                         (create-instance self (vst3::.cid class-info) vst3-ffi::+steinberg-vst-icomponent-iid+)))))
+                         (create-instance self (vst3::.cid class-info) vst3-ffi::+vst-icomponent-iid+)))))
 
-(defmethod create-instance ((self vst3-ffi::steinberg-iplugin-factory) (cid simple-array) iid)
+(defmethod create-instance ((self vst3-ffi::iplugin-factory) (cid simple-array) iid)
   (sb-sys:with-pinned-objects (cid)
     (create-instance self (sb-sys:vector-sap cid) iid)))
 
-(defmethod create-instance ((self vst3-ffi::steinberg-iplugin-factory) cid iid)
+(defmethod create-instance ((self vst3-ffi::iplugin-factory) cid iid)
   (cffi:with-foreign-objects ((ptr :pointer))
     (ensure-ok
      (sb-sys:with-pinned-objects (iid)
@@ -122,31 +122,31 @@ vst3-c-api:+steinberg-k-out-of-memory+
     (make-instance (gethash iid vst3-walk::*iid-class-map*)
                    :ptr (cffi:mem-ref ptr :pointer))))
 
-(defmethod .category ((self vst3-c-api:steinberg-p-class-info))
+(defmethod .category ((self sb:p-class-info))
   (cffi:foreign-string-to-lisp
-   (vst3-c-api::steinberg-p-class-info.category[]& self)
+   (sb:p-class-info.category[]& self)
    :max-chars 32))
 
-(defmethod .category ((self vst3-c-api:steinberg-p-class-info2))
+(defmethod .category ((self sb:p-class-info2))
   (cffi:foreign-string-to-lisp
-   (vst3-c-api::steinberg-p-class-info2.category[]& self)
+   (sb:p-class-info2.category[]& self)
    :max-chars 32))
 
-(defmethod .category ((self vst3-c-api:steinberg-p-class-info-w))
+(defmethod .category ((self sb:p-class-info-w))
   (cffi:foreign-string-to-lisp
-   (vst3-c-api::steinberg-p-class-info-w.category[]& self)
+   (sb:p-class-info-w.category[]& self)
    :max-chars 32))
 
-(defmethod .cid ((self vst3-c-api:steinberg-p-class-info))
-  (vst3-c-api::steinberg-p-class-info.cid& self))
+(defmethod .cid ((self sb:p-class-info))
+  (sb:p-class-info.cid& self))
 
-(defmethod .cid ((self vst3-c-api:steinberg-p-class-info2))
-  (vst3-c-api::steinberg-p-class-info2.cid& self))
+(defmethod .cid ((self sb:p-class-info2))
+  (sb:p-class-info2.cid& self))
 
-(defmethod .cid ((self vst3-c-api:steinberg-p-class-info-w))
-  (vst3-c-api::steinberg-p-class-info-w.cid& self))
+(defmethod .cid ((self sb:p-class-info-w))
+  (sb:p-class-info-w.cid& self))
 
-(defmethod get-controller-class-id ((self vst3-ffi::steinberg-vst-icomponent))
+(defmethod get-controller-class-id ((self vst3-ffi::vst-icomponent))
   (let ((id (make-array 16 :element-type '(unsigned-byte 8))))
     (ensure-ok (vst3-ffi::get-controller-class-id self id))
     id))
@@ -157,24 +157,24 @@ vst3-c-api:+steinberg-k-out-of-memory+
         for file-write-date = (file-write-date path)
         unless (uiop:directory-pathname-p path)
           nconc (let* ((factory (vst3::get-plugin-factory path)))
-                  (autowrap:with-alloc (%class-info '(:struct (vst3-c-api::steinberg-p-class-info)))
+                  (autowrap:with-alloc (%class-info '(:struct (sb:p-class-info)))
                     (loop for index below (vst3-ffi::count-classes factory)
                           for class-info = (progn (ensure-ok
                                                    (vst3-ffi::get-class-info
                                                     factory index (autowrap:ptr %class-info)))
-                                                  (vst3-c-api::make-steinberg-p-class-info
+                                                  (sb::make-p-class-info
                                                    :ptr (autowrap:ptr %class-info)))
                           if (equal (vst3::.category class-info) "Audio Module Class")
                             collect (make-instance
                                      'dgw::plugin-info-vst3
                                      :id (let ((cid (make-array 16 :element-type '(unsigned-byte 8)))
-                                               (p (vst3-c-api:steinberg-p-class-info.cid& class-info)))
+                                               (p (sb:p-class-info.cid& class-info)))
                                            (loop for i below 16 do
                                              (setf (aref cid i)
                                                    (autowrap:c-aref p i :unsigned-char)))
                                            cid)
                                      :name (cffi:foreign-string-to-lisp
-                                            (vst3-c-api:steinberg-p-class-info.name[]& class-info))
+                                            (sb:p-class-info.name[]& class-info))
                                      :path path
                                      :file-write-date file-write-date))))))
 #+nil

@@ -2,12 +2,12 @@
 
 (in-package :vst3-walk)
 
-(defvar *vst3-c-api-h* (asdf:system-relative-pathname :dgw "lib/vst3_c_api/vst3_c_api.h"))
+(defvar *vst3-c-api-h* (asdf:system-relative-pathname :vst3-c-api-autowrap "lib/vst3_c_api/vst3_c_api.h"))
 (defvar *h* (grovel::read-h *vst3-c-api-h*))
 
 
-(cffi:defctype steinberg-tresult :int32)
-(cffi:defctype steinberg-uint32 :int32)
+(cffi:defctype tresult :int32)
+(cffi:defctype uint32 :int32)
 
 
 (defun seek-to-interfaces (h)
@@ -38,20 +38,23 @@
 
 (defun lisp-name (symbol)
   (intern
-   (with-output-to-string (out)
-     (loop with suppress-hyphen = t
-           for c across (string symbol)
-           do (cond ((upper-case-p c)
-                     (unless suppress-hyphen
-                       (write-char #\- out))
-                     (setf suppress-hyphen t)
-                     (write-char (char-upcase c) out))
-                    ((eql #\_ c)
-                     (setf suppress-hyphen t)
-                     (write-char #\- out))
-                    (t
-                     (setf suppress-hyphen nil)
-                     (write-char (char-upcase c) out)))))))
+   (ppcre:regex-replace-all
+    "STEINBERG-"
+    (with-output-to-string (out)
+      (loop with suppress-hyphen = t
+            for c across (string symbol)
+            do (cond ((upper-case-p c)
+                      (unless suppress-hyphen
+                        (write-char #\- out))
+                      (setf suppress-hyphen t)
+                      (write-char (char-upcase c) out))
+                     ((eql #\_ c)
+                      (setf suppress-hyphen t)
+                      (write-char #\- out))
+                     (t
+                      (setf suppress-hyphen nil)
+                      (write-char (char-upcase c) out)))))
+    "")))
 
 (defun ffi-type (symbol)
   (cond ((string-equal symbol "double") :double)
@@ -60,8 +63,11 @@
         (t (autowrap:basic-foreign-type
             (autowrap:find-type
              (find-symbol
-              (autowrap:default-c-to-lisp (symbol-name symbol))
-              :vst3-c-api))))))
+              (ppcre:regex-replace-all
+               "STEINBERG-"
+               (autowrap:default-c-to-lisp (symbol-name symbol))
+               "")
+              :sb))))))
 
 (defun split-by-comma (list)
   (let ((ys ()))
@@ -93,10 +99,13 @@
 
 (defun find-vst3-c-api-symbol (class-name method-name)
   (find-symbol
-   (format nil "~a.LP-VTBL*.~a"
-           (autowrap:default-c-to-lisp (symbol-name class-name))
-           (autowrap:default-c-to-lisp (symbol-name method-name)))
-   :vst3-c-api))
+   (ppcre:regex-replace-all
+    "STEINBERG-"
+    (format nil "~a.LP-VTBL*.~a"
+            (autowrap:default-c-to-lisp (symbol-name class-name))
+            (autowrap:default-c-to-lisp (symbol-name method-name)))
+    "")
+   :sb))
 
 (defun parse-field-result-type (exp)
   (let ((xs (loop for x in exp
@@ -130,8 +139,8 @@
    (instance :reader .instance)))
 
 (defmethod initialize-instance :after ((self %funknown) &key ptr)
-  (let ((release (vst3-c-api::steinberg-f-unknown.lp-vtbl*.release
-                  (vst3-c-api::make-steinberg-f-unknown :ptr ptr)))
+  (let ((release (sb:f-unknown.lp-vtbl*.release
+                  (sb::make-f-unknown :ptr ptr)))
         (class (type-of self)))
     (sb-ext:finalize self
                      (lambda ()
@@ -152,7 +161,7 @@
                                                                (1+ (position #\" comment))
                                                                (position #\" comment :from-end t))))))
                     '(%funknown)))
-         (autowrap-lisp-class (autowrap:default-c-to-lisp (symbol-name c-class)))
+         (autowrap-lisp-class (ppcre:regex-replace-all "STEINBERG-" (autowrap:default-c-to-lisp (symbol-name c-class)) ""))
          (class-name (lisp-name c-class))
          (iid-symbol (intern (format nil "+~a+" (lisp-name (nth 3 iid))))))
     `(progn
@@ -167,8 +176,8 @@
          (setf (slot-value self 'instance)
                (,(find-symbol
                   (format nil "MAKE-~a" autowrap-lisp-class)
-                  :vst3-c-api) :ptr ptr)))
-       
+                  :sb) :ptr ptr)))
+
        ,@(loop for field in (cadddr vtbl)
                unless (eq :comment (and (consp field) (car field)))
                  collect (parse-field c-class field))
