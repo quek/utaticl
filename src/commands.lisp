@@ -52,7 +52,7 @@
 (defmethod execute ((self cmd-track-add))
   (setf (.tracks (.master-track *project*))
         (append (.tracks (.master-track *project*))
-                (list (make-instance 'track)))))
+                (list (make-instance 'track :name (track-name-new *project*))))))
 
 (defmethod undo ((self cmd-track-add))
   (setf (.tracks (.master-track *project*))

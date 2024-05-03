@@ -56,5 +56,14 @@
 (defmethod terminate ((self project))
   (terminate (.master-track self)))
 
+(defmethod track-name-new ((self project))
+  (labels ((f (track max)
+             (apply #'max (or (ppcre:register-groups-bind
+                                  ((#'parse-integer n)) ("^TRACK(\\d+)" (.name track))
+                                n)
+                              max)
+                    (mapcar (lambda (track) (f track max)) (.tracks track)))))
+    (format nil "TRACK~d" (1+ (f (.master-track self) 0)))))
+
 (defmethod unselect-all-tracks ((self project))
   (unselect-all-tracks (.master-track self)))
