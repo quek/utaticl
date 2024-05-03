@@ -1,8 +1,5 @@
 (in-package :dgw)
 
-(sb-ext:defglobal *done* nil)
-;;(setf *done* t)
-
 (defun gui-loop (app window gl-context e)
   (loop while (/= (sdl2-ffi.functions:sdl-poll-event e) 0)
         do (ig-backend::impl-sdl2-process-event (autowrap:ptr e))
@@ -18,6 +15,7 @@
   (ig-backend::impl-sdl2-new-frame)
   (ig::new-frame)
 
+  (ig:show-demo-window (cffi:null-pointer))
   (let ((*render-context* (make-instance 'render-context))
         (*theme* (make-instance 'theme)))
     (render app)
@@ -35,19 +33,18 @@
           (opengl:clear-color 0.45 0.55 0.60 1.0) ;TODO clearColor
           (opengl:clear :color-buffer-bit))
       (error (e)
-        (log:error "~a" e))))
-  (ig-backend::impl-opengl3-render-draw-data (autowrap:ptr (ig::get-draw-data)))
-  (sdl2:gl-swap-window window))
+        (log:error "~a" e)))
 
-(defvar *invoke-debugger-p* t)
+    (ig-backend::impl-opengl3-render-draw-data (autowrap:ptr (ig::get-draw-data)))
 
-(defun error-handler (e)
-  (log:error e)
-  (log:error (with-output-to-string (out)
-               (sb-debug:print-backtrace :stream out)))
-  (when *invoke-debugger-p*
-    (with-simple-restart (continue "Return from here.")
-      (invoke-debugger e))))
+    (when (logand (c-ref io ig:im-gui-io :config-flags) ig:+im-gui-config-flags-viewports-enable+)
+      (let ((backup-current-window (sdl2-ffi.functions:sdl-gl-get-current-window))
+            (backup-current-context (sdl2-ffi.functions:sdl-gl-get-current-context)))
+        (ig:update-platform-windows)
+        (ig:render-platform-windows-default (cffi:null-pointer) (cffi:null-pointer))
+        (sdl2:gl-make-current backup-current-window backup-current-context)))
+
+    (sdl2:gl-swap-window window)))
 
 (defun sdl2-main (app)
   "https://github.com/cimgui/cimgui/blob/docking_inter/backend_test/example_sdl_opengl3/main.c"
@@ -125,31 +122,3 @@
         (sdl2:gl-delete-context gl-context)
         (sdl2:destroy-window window)
         (sdl2:quit)))))
-
-#+nil
-(defun glfw-scratch-main ()
-  (glfw:initialize)
-
-  (let* ((window (glfw:create-window :width 1280 :height 720 :title "TITLE")))
-    (glfw::make-context-current window)
-    (glfw::swap-interval 1)             ;enable vsync
-    (let ((ctx (ig::create-context (cffi:null-pointer))))
-      ()
-      (loop with *done* = nil
-            until *done* do
-              (ig::new-frame)
-              (cffi:with-foreign-object (openp :bool)
-                (setf (cffi:mem-ref openp :bool) t)
-                (when (ig::begin "Hello" openp 0)
-                  (ig::text "World!")
-                  (cffi:with-foreign-object (size '(:struct ig::vec2))
-                    (setf (cffi:foreign-slot-value size '(:struct ig::vec2) 'ig::x) 40.0
-                          (cffi:foreign-slot-value size '(:struct ig::vec2) 'ig::y) 200.0)
-                    (when (ig::button "Exit" size)
-                      (setf *done* t)))))
-              (ig::end)
-              (ig::render)
-              (ig::get-draw-data))
-      (ig::destroy-context ctx))
-    (glfw::destroy-window window))
-  (glfw::terminate))

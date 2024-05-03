@@ -7,6 +7,10 @@
 (sb-ext:defglobal *app* nil)
 (sb-ext:defglobal *hwnd* nil)
 (sb-ext:defglobal *audio* nil)
+(sb-ext:defglobal *done* nil)
+;;(setf *done* t)
+(defparameter *invoke-debugger-p* t)
+
 
 (defvar *project*)
 
