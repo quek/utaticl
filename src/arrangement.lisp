@@ -1,10 +1,17 @@
 (in-package :dgw)
 
 (defmethod handle-mouse ((self arrangement))
-  (let* ((mouse-pos (ig:get-mouse-pos)))
+  (let* ((io (ig:get-io))
+         (mouse-pos (ig:get-mouse-pos)))
     (cond ((ig:is-mouse-double-clicked ig:+im-gui-mouse-button-left+)
            (multiple-value-bind (time lane) (world-pos-to-time-lane self mouse-pos)
-             (cmd-add *project* 'cmd-clip-add :time time :lane-id (.neko-id lane)))))))
+             (cmd-add *project* 'cmd-clip-add :time time :lane-id (.neko-id lane))))
+          ((and (/= .0 (c-ref io ig:im-gui-io :mouse-wheel))
+                (ig:ensure-bool (c-ref io ig:im-gui-io :key-ctrl))
+                (ig:ensure-bool (c-ref io ig:im-gui-io :key-alt)))
+           (setf (.zoom-x self)
+                 (max (+ (.zoom-x self) (* (c-ref io ig:im-gui-io :mouse-wheel) .5))
+                      .1))))))
 
 (defmethod max-bar ((self arrangement))
   ;; TODO
@@ -86,17 +93,19 @@
 
 (defmethod render-clip ((self arrangement) (track track) (lane lane) (clip clip) y)
   (let* ((draw-list (ig:get-window-draw-list))
-         (x (time-to-local-x self (.time clip)))
+         (x1 (time-to-local-x self (.time clip)))
+         (x2 (time-to-local-x self (+ (.time clip) (.duration clip))))
          (scroll-pos (@ (ig:get-scroll-x) (ig:get-scroll-y)))
-         (pos1 (@ (+ x (.track-width self)) y))
-         (pos2 (@ (time-to-local-x self (+ (.time clip) (.duration clip)))
-                  (+ y (lane-height self lane))))
+         (pos1 (@ (+ x1 (.track-width self)) y))
+         (pos2 (@ (+ x2 (.track-width self)) (+ y (lane-height self lane))))
          (window-pos (ig:get-window-pos)))
     (ig:set-cursor-pos pos1)
     (ig:text (format nil "  ~a" (.name clip)))
 
-    (ig:add-rect-filled draw-list (@+ pos1 window-pos (@- scroll-pos))
-                        (@+ pos2 window-pos (@- scroll-pos)) (.color clip)
+    (ig:add-rect-filled draw-list
+                        (@+ pos1 window-pos (@- scroll-pos))
+                        (@+ pos2 window-pos (@- scroll-pos))
+                        (.color clip)
                         :rounding 3.0)))
 
 (defmethod render-time-ruler ((self arrangement))
