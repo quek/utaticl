@@ -2,8 +2,8 @@
 
 (defclass neko ()
   ((neko-id :initarg :neko-id :initform (uid) :accessor .neko-id)
-   (name :initarg :name :initform "" :accessor .name)
-   (color :initarg :color :initform nil :accessor .color)))
+   (name :initarg :name :initform "(noname)" :accessor .name)
+   (color :initarg :color :initform (color #x80 #x80 #x80 #x80) :accessor .color)))
 
 (defserialize neko neko-id name color)
 
@@ -30,7 +30,10 @@
   ())
 
 (defclass arrangement ()
-  ((track-width :initform 150.0 :accessor .track-width)
+  ((default-lane-height :allocation :class :initform 50.0 :accessor .default-lane-height)
+   (lane-height-map :initform (make-hash-table) :accessor .lane-height-map)
+   (track-width :initform 150.0 :accessor .track-width)
+   (time-ruler-height :initform 20.0 :accessor .time-ruler-height)
    (zoom-x :initform 50.0 :accessor .zoom-x)
    (zoom-y :initform 50.0 :accessor .zoom-y)))
 
@@ -46,7 +49,7 @@
    (query :initform "" :accessor .query)))
 
 (defclass track (neko)
-  ((clips :initarg :clips :initform nil :accessor .clips)
+  ((lanes :initarg :lanes :initform (list (make-instance 'lane)) :accessor .lanes)
    (event-in :accessor .event-in)
    (modules :initform nil :accessor .modules)
    (nbus-audio-in :initform 1 :accessor .nbus-audio-in)
@@ -56,13 +59,16 @@
    (process-data :accessor .process-data)
    (select-p :initform nil :accessor .select-p)
    (tracks :initform nil :accessor .tracks))
-  (:default-initargs :name "TRACK" :color (color #x33 #x33 #x33)
-                     :clips (list (make-instance 'clip-note)) ;TODO DELETE
-   ))
+  (:default-initargs :name "TRACK" :color (color #x33 #x33 #x33)))
 
 (defclass master-track (track)
   ()
   (:default-initargs :name "MASTER"))
+
+(defclass lane (neko)
+  ((clips :initarg :clips :initform nil :accessor .clips))
+  (:default-initargs :clips (list (make-instance 'clip-note)) ;TODO DELETE
+   ))
 
 (defclass time-thing (neko)
   ((time :initarg :time :initform 0.0d0 :accessor .time)
@@ -80,7 +86,8 @@
             (.duration self))))
 
 (defclass clip (time-thing)
-  ())
+  ()
+  (:default-initargs :name "CLIP"))
 
 (defclass clip-note (clip)
   ((notes :initform (list (make-instance 'note :key +c4+ :time 0.0d0 :duration 1.0d0)

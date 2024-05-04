@@ -7,10 +7,19 @@
   ;; TODO
   8)
 
+(defmethod lane-height ((self arrangement) (lane lane))
+  (sif (gethash lane (.lane-height-map self))
+       it
+       (setf it (+ (.default-lane-height self)
+                   (* (c-ref (ig:get-style) ig:im-gui-style :item-spacing :y)
+                      2)))))
+
 (defmethod render ((self arrangement))
   (when (ig:begin "##arrangement" (cffi:null-pointer) ig:+im-gui-window-flags-no-scrollbar+)
     (when (ig:begin-child "##canvas" :window-flags ig:+im-gui-window-flags-horizontal-scrollbar+)
+
       (render-time-ruler self)
+
       (let ((pos (ig:get-cursor-pos))
             (scroll-y (ig:get-scroll-y))
             (window-pos (ig:get-window-pos)))
@@ -31,11 +40,40 @@
         (when (ig:button "+" (@ (.track-width self) 0.0))
           (cmd-add *project* 'cmd-track-add)))
 
+      (render-clip self (.master-track *project*) nil nil (.time-ruler-height self))
+
       (handle-mouse self))
 
     (ig:end-child)
     (shortcut-common))
   (ig:end))
+
+(defmethod render-clip ((self arrangement) (track track) (lane null) (clip null) y)
+  (loop for lane in (.lanes track)
+        do (setf y (render-clip self track lane nil y)))
+  (loop for track in (.tracks track)
+        do (setf y (render-clip self track nil nil y)))
+  y)
+
+(defmethod render-clip ((self arrangement) (track track) (lane lane) (clip null) y)
+  (loop for clip in (.clips lane)
+        do (render-clip self track lane clip y))
+  ;; この 4.0 は意味わかんない
+  (+ y (lane-height self lane) 4.0))
+
+(defmethod render-clip ((self arrangement) (track track) (lane lane) (clip clip) y)
+  (let* ((draw-list (ig:get-window-draw-list))
+         (x (time-to-local-x self (.time clip)))
+         (pos1 (@ (+ x (.track-width self)) y))
+         (pos2 (@ (time-to-local-x self (+ (.time clip) (.duration clip)))
+                  (+ y (lane-height self lane))))
+         (window-pos (ig:get-window-pos)))
+    (ig:set-cursor-pos pos1)
+    (ig:text (format nil "  ~a" (.name clip)))
+
+    (ig:add-rect-filled draw-list (@+ pos1 window-pos)
+                        (@+ pos2 window-pos) (.color clip)
+                        :rounding 3.0)))
 
 (defmethod render-time-ruler ((self arrangement))
   (let* ((draw-list (ig:get-window-draw-list))
@@ -68,13 +106,16 @@
                                (color 0 0 0 0)))))
         (ig:with-button-color (color)
           (when (ig:button "##_" (@ (.track-width self)
-                                    (.track-height self track)))
+                                    (lane-height self (car (.lanes track)))))
             (let ((io (ig:get-io)))
               (when (zerop (c-ref io ig:im-gui-io :key-ctrl))
                 (unselect-all-tracks *project*))
               (setf (.select-p track) t))))))
     (loop for x in (.tracks track)
           do (render-track self x))))
+
+(defmethod time-to-local-x ((self arrangement) time)
+  (coerce (* time (.zoom-x self)) 'single-float))
 
 (defmethod .track-height ((self arrangement) track)
   ;; TODO
