@@ -78,7 +78,9 @@ sb:+k-out-of-memory+
   (let ((factory (or (query-interface self vst3-ffi::+iplugin-factory3-iid+)
                      (query-interface self vst3-ffi::+iplugin-factory2-iid+)
                      self)))
-    (%create-component factory)))
+    (prog1 (%create-component factory)
+      (vst3-ffi::release factory)
+      (sb-ext:cancel-finalization factory))))
 
 (defmethod %create-component ((self vst3-ffi::iplugin-factory))
   (autowrap:with-many-alloc ((%class-info '(:struct (sb:p-class-info))))

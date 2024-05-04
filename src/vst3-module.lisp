@@ -38,7 +38,9 @@
     (vst3::ensure-ok (vst3-ffi::get-state (.component self) (vst3-impl::ptr bstream)))
     (setf (vst3-impl::.cursor bstream) 0)
     (handler-case
-        (vst3::ensure-ok (vst3-ffi::set-component-state (.controller self) (vst3-impl::ptr bstream)))
+        (progn
+          (vst3::ensure-ok (vst3-ffi::set-component-state (.controller self) (vst3-impl::ptr bstream)))
+          (vst3-impl::release bstream))
       (vst3::not-implemented-error ()
         ;; 無視してだいじょうぶなやつ
         )))
@@ -115,6 +117,7 @@
       (when (and (.controller self) terminate-controller-p)
         (vst3-ffi::terminate (.controller self)))))
 
+  (log:debug (vst3-ffi::release (.factory self)))
   (vst3-impl::release (.host-applicaiton self))
   (vst3::unload-library (.library self)))
 

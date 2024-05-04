@@ -151,6 +151,13 @@
                          :pointer ptr
                          :uint32))))))
 
+(defmethod vst3-ffi::release :around ((self %funknown))
+  (let ((ret (call-next-method)))
+    (when (zerop ret)
+      (log:trace 'cancel-finalization self 'me)
+      (sb-ext:cancel-finalization self))
+    ret))
+
 (defun def-vst3-interface (comment vtbl interface iid)
   (let* ((c-class (caddr interface))
          (bases (or (last (loop for field in (cadddr vtbl)
