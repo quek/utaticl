@@ -34,7 +34,7 @@
    (lane-height-map :initform (make-hash-table) :accessor .lane-height-map)
    (track-width :initform 150.0 :accessor .track-width)
    (time-ruler-height :initform 20.0 :accessor .time-ruler-height)
-   (zoom-x :initform 50.0 :accessor .zoom-x)
+   (zoom-x :initform 25.0 :accessor .zoom-x)
    (zoom-y :initform 50.0 :accessor .zoom-y)))
 
 (defclass rack ()
@@ -72,7 +72,7 @@
 
 (defclass time-thing (neko)
   ((time :initarg :time :initform 0.0d0 :accessor .time)
-   (duration :initarg :duration :initform 4.0d0 :accessor .duration)))
+   (duration :initarg :duration :initform 16.0d0 :accessor .duration)))
 
 (defclass note (time-thing)
   ((key :initarg :key :initform +c4+ :accessor .key))

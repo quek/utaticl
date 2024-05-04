@@ -29,6 +29,12 @@
       (undo cmd)
       (push cmd (.cmd-redo-stack self)))))
 
+(defun find-lane (project lane-id)
+  (labels ((f (track)
+             (or (find lane-id (.lanes track) :test #'equal :key #'.neko-id)
+                 (some #'f (.tracks track)))))
+    (f (.master-track project))))
+
 (defun find-track (project track-id)
   (labels ((f (track)
              (if (equal track-id (.neko-id track))

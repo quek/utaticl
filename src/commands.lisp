@@ -11,6 +11,23 @@
 (defmethod redo ((self command))
   (execute self))
 
+(defcommand cmd-clip-add (command)
+  ((time :initarg :time :accessor .time)
+   (lane-id :initarg :lane-id :accessor .lane-id)
+   (clip-id :accessor .clip-id)))
+
+(defmethod execute ((self cmd-clip-add))
+  (let ((lane (find-lane *project* (.lane-id self)))
+        (clip (make-instance 'clip-note :time (.time self))))
+    (setf (.clip-id self) (.neko-id clip))
+    (clip-add lane clip)))
+
+(defmethod undo ((self cmd-clip-add))
+  (let* ((lane (find-lane *project* (.lane-id self)))
+         (clip (find (.clip-id self) (.clips lane)
+                     :key #'.neko-id :test #'equal)))
+    (clip-delete lane clip)))
+
 (defcommand cmd-module-add (command)
   ((track-id :initarg :track-id :accessor .track-id)
    (plugin-info :initarg :plugin-info :accessor .plugin-info)))

@@ -1,7 +1,10 @@
 (in-package :dgw)
 
 (defmethod handle-mouse ((self arrangement))
-  )
+  (let* ((mouse-pos (ig:get-mouse-pos)))
+    (cond ((ig:is-mouse-double-clicked ig:+im-gui-mouse-button-left+)
+           (multiple-value-bind (time lane) (world-pos-to-time-lane self mouse-pos)
+             (cmd-add *project* 'cmd-clip-add :time time :lane-id (.neko-id lane)))))))
 
 (defmethod max-bar ((self arrangement))
   ;; TODO
@@ -13,6 +16,26 @@
        (setf it (+ (.default-lane-height self)
                    (* (c-ref (ig:get-style) ig:im-gui-style :item-spacing :y)
                       2)))))
+
+(defmethod world-pos-to-time-lane ((self arrangement) pos)
+  (let* ((time (world-x-to-time self (.x pos)))
+         (lane (world-y-to-lane self (.y pos))))
+    (values time lane)))
+
+(defmethod world-x-to-time ((self arrangement) x)
+  (+ (/ (- x (.x (ig:get-window-pos)) (.track-width self))
+        (.zoom-x self))
+     (ig:get-scroll-x)))
+
+(defmethod world-y-to-lane ((self arrangement) y)
+  (let ((local-y (+ (- y (.y (ig:get-window-pos)) (.time-ruler-height self))
+                    (ig:get-scroll-y))))
+    (labels ((f (track height)
+               (or (loop for lane in (.lanes track)
+                           thereis (and (< local-y (incf height (lane-height self lane))) lane))
+                   (loop for track in (.tracks track)
+                           thereis (f track height)))))
+      (f (.master-track *project*) 0))))
 
 (defmethod render ((self arrangement))
   (when (ig:begin "##arrangement" (cffi:null-pointer) ig:+im-gui-window-flags-no-scrollbar+)
@@ -64,6 +87,7 @@
 (defmethod render-clip ((self arrangement) (track track) (lane lane) (clip clip) y)
   (let* ((draw-list (ig:get-window-draw-list))
          (x (time-to-local-x self (.time clip)))
+         (scroll-pos (@ (ig:get-scroll-x) (ig:get-scroll-y)))
          (pos1 (@ (+ x (.track-width self)) y))
          (pos2 (@ (time-to-local-x self (+ (.time clip) (.duration clip)))
                   (+ y (lane-height self lane))))
@@ -71,8 +95,8 @@
     (ig:set-cursor-pos pos1)
     (ig:text (format nil "  ~a" (.name clip)))
 
-    (ig:add-rect-filled draw-list (@+ pos1 window-pos)
-                        (@+ pos2 window-pos) (.color clip)
+    (ig:add-rect-filled draw-list (@+ pos1 window-pos (@- scroll-pos))
+                        (@+ pos2 window-pos (@- scroll-pos)) (.color clip)
                         :rounding 3.0)))
 
 (defmethod render-time-ruler ((self arrangement))
