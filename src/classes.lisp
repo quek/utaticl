@@ -66,9 +66,7 @@
   (:default-initargs :name "MASTER"))
 
 (defclass lane (neko)
-  ((clips :initarg :clips :initform nil :accessor .clips))
-  (:default-initargs :clips (list (make-instance 'clip-note)) ;TODO DELETE
-   ))
+  ((clips :initarg :clips :initform nil :accessor .clips)))
 
 (defclass time-thing (neko)
   ((time :initarg :time :initform 0.0d0 :accessor .time)
@@ -94,7 +92,8 @@
                           (make-instance 'note :key +e4+ :time 1.0d0 :duration 1.0d0)
                           (make-instance 'note :key +g4+ :time 2.0d0 :duration 1.0d0)
                           (make-instance 'note :key +c5+ :time 3.0d0 :duration 1.0d0))
-          :accessor .notes)))
+          :accessor .notes))
+  (:default-initargs :color (color #x00 #x80 #x80 #x80)))
 
 (defclass plugin-info ()
   ((id :initarg :id :accessor .id)
