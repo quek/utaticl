@@ -6,7 +6,14 @@
      ,@(when class-options `(, class-options))))
 
 (defclass command ()
-  ((undo-p :initarg :undo-p :initform t :accessor .undo-p)))
+  ((undo-p :initarg :undo-p :initform t :accessor .undo-p)
+   (execute-after :initarg :execute-after :initform nil :accessor .execute-after)))
+
+(defmethod execute :after ((self command))
+  (let ((f (.execute-after self)))
+    (when f
+      (setf (.execute-after self) nil)
+      (funcall f self))))
 
 (defmethod redo ((self command))
   (execute self))
@@ -26,7 +33,10 @@
   (let* ((lane (find-lane *project* (.lane-id self)))
          (clip (find (.clip-id self) (.clips lane)
                      :key #'.neko-id :test #'equal)))
-    (clip-delete lane clip)))
+    (clip-delete lane clip)
+    (swhen (.piano-roll *project*)
+      (when (and it (eq clip (.clip it)))
+        (setf it nil)))))
 
 (defcommand cmd-module-add (command)
   ((track-id :initarg :track-id :accessor .track-id)

@@ -57,6 +57,7 @@
    (:file "rack")
    (:file "track")
    (:file "lane")
+   (:file "clip")
    (:file "piano-roll")
    (:file "show-mixin")
    (:file "commander")

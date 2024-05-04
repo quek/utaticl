@@ -1,7 +1,7 @@
 (in-package :dgw)
 
 (defmethod render ((self rack))
-  (when (ig:begin "##rack" (cffi:null-pointer) ig:+im-gui-window-flags-no-scrollbar+)
+  (when (ig:begin "##rack" :flags ig:+im-gui-window-flags-no-scrollbar+)
     (when (ig:begin-child "##canvas" :window-flags ig:+im-gui-window-flags-horizontal-scrollbar+)
 
       (loop for module in (.modules (.target-track *project*))

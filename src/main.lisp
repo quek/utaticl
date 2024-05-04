@@ -7,7 +7,6 @@
        (setf *app* (make-instance 'app))
        (with-audio
          (start-audio)
-         ;; (sdl2-main *app*)
          (vulkan-backend::vulkan-backend-main *app*)
          (stop-audio)
          (terminate *app*))))

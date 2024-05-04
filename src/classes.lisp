@@ -15,6 +15,7 @@
 
 (defclass project (neko)
   ((arrangement :initform (make-instance 'arrangement) :accessor .arrangement)
+   (piano-roll :initform nil :accessor .piano-roll)
    (commander :initform (make-instance 'commander) :accessor .commander)
    (rack :initform (make-instance 'rack) :accessor .rack)
    (bpm :initform 128.0 :accessor .bpm)
@@ -26,10 +27,17 @@
    (transposer :initform (make-instance 'transposer) :accessor .transposer)
    (target-track :initform :nil :accessor .target-track)))
 
-(defclass transposer ()
+
+(defclass show-mixin ()
+  ((show-p :initarg :show-p :initform nil :accessor .show-p)))
+
+(defclass view ()
   ())
 
-(defclass arrangement ()
+(defclass transposer (view)
+  ())
+
+(defclass arrangement (view)
   ((default-lane-height :allocation :class :initform 50.0 :accessor .default-lane-height)
    (lane-height-map :initform (make-hash-table) :accessor .lane-height-map)
    (track-width :initform 150.0 :accessor .track-width)
@@ -37,12 +45,12 @@
    (zoom-x :initform 25.0 :accessor .zoom-x)
    (zoom-y :initform 50.0 :accessor .zoom-y)))
 
-(defclass rack ()
+(defclass piano-roll (view)
+  ((clip :initarg :clip :accessor .clip)))
+
+(defclass rack (view)
   ((plugin-selector :initform (make-instance 'plugin-selector)
                     :accessor .plugin-selector)) )
-
-(defclass show-mixin ()
-  ((show-p :initarg :show-p :initform nil :accessor .show-p)))
 
 (defclass plugin-selector ()
   ((plugin-infos :accessor .plugin-infos)
@@ -95,6 +103,9 @@
           :accessor .notes))
   (:default-initargs :color (color #x00 #x80 #x80 #x80)))
 
+(defclass sequence-note (time-thing)
+  ())
+
 (defclass plugin-info ()
   ((id :initarg :id :accessor .id)
    (name :initarg :name :accessor .name)
@@ -128,9 +139,6 @@
    (connection-controller :initform nil :accessor .connection-controller)
    (parameter-changes-in :initform (make-instance 'vst3-impl::parameter-changes)
                          :accessor .parameter-changes-in)))
-
-(defclass piano-roll ()
-  ())
 
 (defclass commander (show-mixin)
   ((query :initform "" :accessor .query)))

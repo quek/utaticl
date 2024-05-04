@@ -5,7 +5,11 @@
          (mouse-pos (ig:get-mouse-pos)))
     (cond ((ig:is-mouse-double-clicked ig:+im-gui-mouse-button-left+)
            (multiple-value-bind (time lane) (world-pos-to-time-lane self mouse-pos)
-             (cmd-add *project* 'cmd-clip-add :time time :lane-id (.neko-id lane))))
+             (when (and (not (minusp  time)) lane)
+               (cmd-add *project* 'cmd-clip-add
+                        :time time :lane-id (.neko-id lane)
+                        :execute-after (lambda (cmd)
+                                         (edit (find-neko (.clip-id cmd))))))))
           ((and (/= .0 (c-ref io ig:im-gui-io :mouse-wheel))
                 (ig:ensure-bool (c-ref io ig:im-gui-io :key-ctrl))
                 (ig:ensure-bool (c-ref io ig:im-gui-io :key-alt)))
@@ -45,7 +49,7 @@
       (f (.master-track *project*) 0))))
 
 (defmethod render ((self arrangement))
-  (when (ig:begin "##arrangement" (cffi:null-pointer) ig:+im-gui-window-flags-no-scrollbar+)
+  (when (ig:begin "##arrangement" :flags ig:+im-gui-window-flags-no-scrollbar+)
     (when (ig:begin-child "##canvas" :window-flags ig:+im-gui-window-flags-horizontal-scrollbar+)
 
       (render-time-ruler self)
