@@ -49,16 +49,7 @@ sb:+k-out-of-memory+
          (t (error (make-condition 'unknown-error :code ,result)))))))
 
 (defun get-plugin-factory (vst3-path)
-  ;; TODO どこかで library を close-foreign-library する
-  ;; cffi:foreign-symbol-pointer の library 引数が使われない
-  ;; (let ((library (cffi:load-foreign-library vst3-path)))
-  ;;   (cffi:foreign-funcall-pointer
-  ;;    (cffi:foreign-symbol-pointer "InitDll" :library library) ())
-  ;;   (let ((plugin-factory (cffi:foreign-funcall-pointer
-  ;;                          (cffi:foreign-symbol-pointer "GetPluginFactory" :library library) ()
-  ;;                          :pointer)))
-  ;;     (make-instance 'vst3-ffi::iplugin-factory :ptr plugin-factory)))
-  
+  ;; cffi:foreign-symbol-pointer の library 引数が使われないので LoadLibraryA を使う
   (let* ((lib (cffi:foreign-funcall "LoadLibraryA" :string vst3-path :pointer))
          (init-dll (cffi:foreign-funcall "GetProcAddress" :pointer lib :string "InitDll" :pointer)))
     (unless (cffi:foreign-funcall-pointer init-dll () :bool)
@@ -69,7 +60,13 @@ sb:+k-out-of-memory+
       (let ((plugin-factory (cffi:foreign-funcall-pointer get-plugin-factory () :pointer)))
         (when (cffi:null-pointer-p plugin-factory)
           (error "GetPluginFactory Failed! ~a" vst3-path))
-        (make-instance 'vst3-ffi::iplugin-factory :ptr plugin-factory)))))
+        (values (make-instance 'vst3-ffi::iplugin-factory :ptr plugin-factory)
+                lib)))))
+
+(defun unload-library (library)
+  (let ((exit-dll (cffi:foreign-funcall "GetProcAddress" :pointer library :string "ExitDll" :pointer)))
+    (cffi:foreign-funcall-pointer exit-dll () :bool))
+  (cffi:foreign-funcall "FreeLibrary" :pointer library :int))
 
 (defmethod query-interface (self iid)
   (cffi:with-foreign-object (obj :pointer)
@@ -156,27 +153,31 @@ sb:+k-out-of-memory+
         for path = (namestring %path)
         for file-write-date = (file-write-date path)
         unless (uiop:directory-pathname-p path)
-          nconc (let* ((factory (vst3::get-plugin-factory path)))
-                  (autowrap:with-alloc (%class-info '(:struct (sb:p-class-info)))
-                    (loop for index below (vst3-ffi::count-classes factory)
-                          for class-info = (progn (ensure-ok
-                                                   (vst3-ffi::get-class-info
-                                                    factory index (autowrap:ptr %class-info)))
-                                                  (sb::make-p-class-info
-                                                   :ptr (autowrap:ptr %class-info)))
-                          if (equal (vst3::.category class-info) "Audio Module Class")
-                            collect (make-instance
-                                     'dgw::plugin-info-vst3
-                                     :id (let ((cid (make-array 16 :element-type '(unsigned-byte 8)))
-                                               (p (sb:p-class-info.cid& class-info)))
-                                           (loop for i below 16 do
-                                             (setf (aref cid i)
-                                                   (autowrap:c-aref p i :unsigned-char)))
-                                           cid)
-                                     :name (cffi:foreign-string-to-lisp
-                                            (sb:p-class-info.name[]& class-info))
-                                     :path path
-                                     :file-write-date file-write-date))))))
+          nconc (multiple-value-bind (factory library) (vst3::get-plugin-factory path)
+                  (unwind-protect
+                       (autowrap:with-alloc (%class-info '(:struct (sb:p-class-info)))
+                         (loop for index below (vst3-ffi::count-classes factory)
+                               for class-info = (progn (ensure-ok
+                                                        (vst3-ffi::get-class-info
+                                                         factory index (autowrap:ptr %class-info)))
+                                                       (sb::make-p-class-info
+                                                        :ptr (autowrap:ptr %class-info)))
+                               if (equal (vst3::.category class-info) "Audio Module Class")
+                                 collect (make-instance
+                                          'dgw::plugin-info-vst3
+                                          :id (let ((cid (make-array 16 :element-type '(unsigned-byte 8)))
+                                                    (p (sb:p-class-info.cid& class-info)))
+                                                (loop for i below 16 do
+                                                  (setf (aref cid i)
+                                                        (autowrap:c-aref p i :unsigned-char)))
+                                                cid)
+                                          :name (cffi:foreign-string-to-lisp
+                                                 (sb:p-class-info.name[]& class-info))
+                                          :path path
+                                          :file-write-date file-write-date)))
+                    (vst3-ffi::release factory)
+                    (sb-ext:cancel-finalization factory)
+                    (vst3::unload-library library)))))
 #+nil
 (sb-int:with-float-traps-masked (:invalid :inexact :overflow :divide-by-zero)
   (plugin-scan-vst3))

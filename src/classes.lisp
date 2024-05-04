@@ -105,7 +105,8 @@
    (editor-open-p :initform nil :accessor .editor-open-p)))
 
 (defclass vst3-module (module)
-  ((host-applicaiton :reader .host-applicaiton)
+  ((library :initarg :library :accessor .library)
+   (host-applicaiton :reader .host-applicaiton)
    (factory :initarg :factory :reader .factory)
    (component :initarg :conponent :initform nil :reader .component)
    (controller :initarg :controller :initform nil :reader .controller)
@@ -117,6 +118,8 @@
    (event-output-bus-count :accessor .event-output-bus-count)
    (view :initform :nil :accessor .view)
    (hwnd :initform :nil :accessor .hwnd)
+   (connection-component :initform nil :accessor .connection-component)
+   (connection-controller :initform nil :accessor .connection-controller)
    (parameter-changes-in :initform (make-instance 'vst3-impl::parameter-changes)
                          :accessor .parameter-changes-in)))
 

@@ -8,22 +8,23 @@
     (setf (slot-value self 'host-applicaiton) host-applicaiton)))
 
 (defun vst3-module-load (path)
-  (let* ((factory (vst3::get-plugin-factory path))
-         (component (vst3::create-component factory))
-         (single-component-p t)
-         (controller (labels ((f ()
-                                (setf single-component-p nil)
-                                (vst3::create-instance factory
-                                                       (vst3::get-controller-class-id component)
-                                                       vst3-ffi::+vst-iedit-controller-iid+)))
-                       (handler-case (vst3::query-interface component vst3-ffi::+vst-iedit-controller-iid+)
-                         (vst3::no-interface-error () (f))
-                         (vst3::false-error () (f))))))
-    (make-instance 'vst3-module
-                   :factory factory
-                   :conponent component
-                   :controller controller
-                   :single-component-p single-component-p)))
+  (multiple-value-bind (factory library) (vst3::get-plugin-factory path)
+    (let* ((component (vst3::create-component factory))
+           (single-component-p t)
+           (controller (labels ((f ()
+                                  (setf single-component-p nil)
+                                  (vst3::create-instance factory
+                                                         (vst3::get-controller-class-id component)
+                                                         vst3-ffi::+vst-iedit-controller-iid+)))
+                         (handler-case (vst3::query-interface component vst3-ffi::+vst-iedit-controller-iid+)
+                           (vst3::no-interface-error () (f))
+                           (vst3::false-error () (f))))))
+      (make-instance 'vst3-module
+                     :library library
+                     :factory factory
+                     :conponent component
+                     :controller controller
+                     :single-component-p single-component-p))))
 
 (defmethod initialize ((self vst3-module))
   (vst3-ffi::initialize (.component self)
@@ -113,29 +114,40 @@
       (vst3-ffi::terminate (.component self))
       (when (and (.controller self) terminate-controller-p)
         (vst3-ffi::terminate (.controller self)))))
-  
-  (vst3-impl::release (.host-applicaiton self)))
+
+  (vst3-impl::release (.host-applicaiton self))
+  (vst3::unload-library (.library self)))
 
 (defmethod connect-componet-controller ((self vst3-module))
   (unless (.single-component-p self)
     (handler-case
-        (let ((c1 (vst3::query-interface (.component self)
-                                         vst3-ffi::+vst-iconnection-point-iid+))
-              (c2 (vst3::query-interface (.controller self)
-                                         vst3-ffi::+vst-iconnection-point-iid+)))
-          (vst3-ffi::connect c1 (vst3-walk::.ptr c2))
-          (vst3-ffi::connect c2 (vst3-walk::.ptr c1)))
+        (progn
+          (setf (.connection-component self)
+                (vst3::query-interface (.component self)
+                                       vst3-ffi::+vst-iconnection-point-iid+))
+          (setf (.connection-controller self)
+                (vst3::query-interface (.controller self)
+                                       vst3-ffi::+vst-iconnection-point-iid+))
+          (vst3-ffi::connect (.connection-component self)
+                             (vst3-walk::.ptr (.connection-controller self)))
+          (vst3-ffi::connect (.connection-controller self)
+                             (vst3-walk::.ptr(.connection-component self))))
       (vst3::no-interface-error ()))))
 
 (defmethod disconnect-componet-controller ((self vst3-module))
   (unless (.single-component-p self)
     (handler-case
-        (let ((c1 (vst3::query-interface (.component self)
-                                         vst3-ffi::+vst-iconnection-point-iid+))
-              (c2 (vst3::query-interface (.controller self)
-                                         vst3-ffi::+vst-iconnection-point-iid+)))
-          (vst3-ffi::disconnect c1 (vst3-walk::.ptr c2))
-          (vst3-ffi::disconnect c2 (vst3-walk::.ptr c1)))
+        (progn
+          (vst3-ffi::disconnect (.connection-component self)
+                                (vst3-walk::.ptr (.connection-controller self)))
+          (vst3-ffi::disconnect (.connection-controller self)
+                                (vst3-walk::.ptr(.connection-component self)))
+          (vst3-ffi::release (.connection-component self))
+          (sb-ext:cancel-finalization (.connection-component self))
+          (setf (.connection-component self) nil)
+          (vst3-ffi::release (.connection-controller self))
+          (sb-ext:cancel-finalization (.connection-controller self))
+          (setf (.connection-controller self) nil))
       (vst3::no-interface-error ()))))
 
 (defmethod begin-edit ((self vst3-module) id)
