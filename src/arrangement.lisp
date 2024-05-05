@@ -91,8 +91,8 @@
          (x1 (time-to-local-x self (.time clip)))
          (x2 (time-to-local-x self (+ (.time clip) (.duration clip))))
          (scroll-pos (@ (ig:get-scroll-x) (ig:get-scroll-y)))
-         (pos1 (@ (+ x1 (.offset-x self)) y))
-         (pos2 (@ (+ x2 (.offset-x self)) (+ y (lane-height self lane))))
+         (pos1 (@ x1 y))
+         (pos2 (@ x2 (+ y (lane-height self lane))))
          (window-pos (ig:get-window-pos)))
     (ig:set-cursor-pos pos1)
     (ig:text (format nil "  ~a" (.name clip)))
@@ -122,9 +122,6 @@
               (setf (.select-p track) t))))))
     (loop for x in (.tracks track)
           do (render-track self x))))
-
-(defmethod time-to-local-x ((self arrangement) time)
-  (coerce (* time (.zoom-x self)) 'single-float))
 
 (defmethod .track-height ((self arrangement) track)
   ;; TODO

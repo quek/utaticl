@@ -65,6 +65,8 @@
    (:file "show-mixin")
    (:file "time-ruler-mixin")
    (:file "zoom-mixin")
+   (:file "scroll-mixin")
+   (:file "offset-mixin")
    (:file "commander")
    (:file "plugin-selector")
    (:file "app")

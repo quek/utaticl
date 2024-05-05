@@ -11,6 +11,9 @@
     (zoom-x-update self io)
     (zoom-y-update self io)))
 
+(defmethod key-to-local-y ((self piano-roll) key)
+  (- (* (.zoom-y self) (- 128 key)) (ig:get-scroll-y)))
+
 (defmethod render ((self piano-roll))
   (when (ig:begin "##piano-roll" :flags ig:+im-gui-window-flags-no-scrollbar+)
     (ig:text (.name (.clip self)))
@@ -39,7 +42,7 @@
         for pos2 = (@+ pos1 (@ (.offset-x self) key-height))
         do (ig:add-rect-filled draw-list pos1 pos2 bg-color)
            (ig:add-line draw-list pos1 (@+ pos1 (@ window-width .0)) (.color-line *theme*))
-           (when (> key-height 18.0)
+           (when (text-show-p self)
              (ig:set-cursor-pos (@- pos1 window-pos (@ .0 (- scroll-y))))
              (ig:with-button-color ((color 0 0 0 0))
                (ig:push-style-color-u32 ig:+im-gui-col-text+ text-color)
@@ -48,8 +51,24 @@
 
 (defmethod render-notes ((self piano-roll))
   (ig:set-cursor-pos (@ 20.0 20.0))         ;TODO DELETE
-  (loop for note in (.notes (.seq (.clip self)))
-        do (ig:button (.name note))))
+  (loop with clip = (.clip self)
+        with draw-list = (ig:get-window-draw-list)
+        with window-pos = (ig:get-window-pos)
+        with key-height = (.zoom-y self)
+        with scroll-y = (ig:get-scroll-y)
+        for note in (.notes (.seq clip))
+        for x = (time-to-local-x self (.time note))
+        for y = (key-to-local-y self (.key note))
+        for pos1 = (@+ (@ x y) window-pos)
+        for pos2 = (@+ pos1 (@ (coerce (* (.duration note) (.zoom-x self)) 'single-float)
+                               key-height))
+        do (ig:with-id (note)
+             (ig:add-rect-filled draw-list pos1 pos2 (.color note) :rounding 1.0)
+             (when (text-show-p self)
+               (ig:add-text draw-list (@+ pos1 (@ 4.0 2.0)) (.color-text *theme*) (.name note))))))
+
+(defmethod text-show-p ((self piano-roll))
+  (> (.zoom-y self) (.threshold-text-hide self)))
 
 (defmethod world-pos-to-time-key ((self piano-roll) pos)
   (let* ((time (world-x-to-time self (.x pos)))
@@ -64,4 +83,4 @@
 (defmethod world-y-to-key ((self piano-roll) y)
   (let ((local-y (+ (- y (.y (ig:get-window-pos)) (.offset-y self))
                     (ig:get-scroll-y))))
-    (floor (/ local-y (.zoom-y self)))))
+    (- 127 (floor (/ local-y (.zoom-y self))))))

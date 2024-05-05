@@ -40,23 +40,30 @@
    (zoom-y :initarg :zoom-y :initform 50.0 :accessor .zoom-y)
    (zoom-y-factor :initarg :zoom-y-factor :initform .5 :accessor .zoom-y-factor)))
 
+(defclass scroll-mixin ()
+  ())
+
+(defclass offset-mixin ()
+  ())
+
 (defclass view ()
   ())
 
 (defclass transposer (view)
   ())
 
-(defclass arrangement (time-ruler-mixin zoom-mixin view)
+(defclass arrangement (time-ruler-mixin offset-mixin scroll-mixin zoom-mixin view)
   ((default-lane-height :allocation :class :initform 50.0 :accessor .default-lane-height)
    (lane-height-map :initform (make-hash-table) :accessor .lane-height-map)
    (offset-x :initform 150.0 :accessor .offset-x)
    (time-ruler-height :initform 20.0 :accessor .time-ruler-height))
   (:default-initargs :zoom-x 25.0 :zoom-y 50.0 :zoom-x-factor .5 :zoom-y-factor .5))
 
-(defclass piano-roll (time-ruler-mixin zoom-mixin view)
+(defclass piano-roll (time-ruler-mixin offset-mixin scroll-mixin zoom-mixin view)
   ((clip :initarg :clip :accessor .clip)
    (offset-x :initform 30.0 :accessor .offset-x)
-   (offset-y :initform 25.0 :accessor .offset-y))
+   (offset-y :initform 25.0 :accessor .offset-y)
+   (threshold-text-hide :initform 18.0 :accessor .threshold-text-hide))
   (:default-initargs :zoom-x 25.0 :zoom-y 25.0 :zoom-x-factor .5 :zoom-y-factor .5))
 
 (defclass rack (view)
@@ -93,7 +100,7 @@
 
 (defclass note (time-thing)
   ((key :initarg :key :initform +c4+ :accessor .key))
-  (:default-initargs :duration 1.0d0))
+  (:default-initargs :duration 1.0d0 :color (color #x30 #xc0 #x30 #x80)))
 
 (defmethod print-object ((self note) stream)
   (print-unreadable-object (self stream :type t :identity t)
@@ -160,4 +167,5 @@
 
 (defclass app ()
   ((mutex :initform (sb-thread:make-mutex :name "APP") :accessor .mutex)
-   (projects :initform (list (make-instance 'project)) :accessor .projects)))
+   (projects :initform (list (make-instance 'project)) :accessor .projects)
+   (window :accessor .window)))

@@ -355,7 +355,8 @@
                                                        sdl2-ffi:+sdl-window-allow-highdpi+)))
                   #1#)))
 
-    (sdl2:raise-window window)
+    (setf (dgw::.window app) window)
+    ;; (sdl2:raise-window window) 効果ない・・・
 
     (autowrap:with-alloc (wm-info 'sdl2-ffi:sdl-syswm-info)
       (sdl2-ffi.functions:sdl-get-version (plus-c:c-ref wm-info sdl2-ffi:sdl-syswm-info :version plus-c:&))
