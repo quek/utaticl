@@ -47,6 +47,23 @@
         (module (plugin-load (.plugin-info self))))
     (module-add track module)))
 
+(defcommand cmd-note-add (command)
+  ((clip-id :initarg :clip-id :accessor .clip-id)
+   (time :initarg :time :accessor .time)
+   (key :initarg :key :accessor .key)
+   (note-id :accessor .note-id)))
+
+(defmethod execute ((self cmd-note-add))
+  (let ((clip (find-neko (.clip-id self)))
+        (note (make-instance 'note :time (.time self) :key (.key self))))
+    (setf (.note-id self) (.neko-id note))
+    (note-add clip note)))
+
+(defmethod undo ((self cmd-note-add))
+  (let* ((clip (find-neko (.clip-id self)))
+         (note (find-neko (.note-id self))))
+    (note-delete clip note)))
+
 (defcommand cmd-module-delete (command)
   ((track-id :initarg :track-id :accessor .track-id)
    (module-id :initarg :module-id :accessor .module-id)))

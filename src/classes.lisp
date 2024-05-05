@@ -31,28 +31,39 @@
 (defclass show-mixin ()
   ((show-p :initarg :show-p :initform nil :accessor .show-p)))
 
+(defclass time-ruler-mixin ()
+  ())
+
+(defclass zoom-mixin ()
+  ((zoom-x :initarg :zoom-x :initform 25.0 :accessor .zoom-x)
+   (zoom-x-factor :initarg :zoom-x-factor :initform .5 :accessor .zoom-x-factor)
+   (zoom-y :initarg :zoom-y :initform 50.0 :accessor .zoom-y)
+   (zoom-y-factor :initarg :zoom-y-factor :initform .5 :accessor .zoom-y-factor)))
+
 (defclass view ()
   ())
 
 (defclass transposer (view)
   ())
 
-(defclass arrangement (view)
+(defclass arrangement (time-ruler-mixin zoom-mixin view)
   ((default-lane-height :allocation :class :initform 50.0 :accessor .default-lane-height)
    (lane-height-map :initform (make-hash-table) :accessor .lane-height-map)
-   (track-width :initform 150.0 :accessor .track-width)
-   (time-ruler-height :initform 20.0 :accessor .time-ruler-height)
-   (zoom-x :initform 25.0 :accessor .zoom-x)
-   (zoom-y :initform 50.0 :accessor .zoom-y)))
+   (offset-x :initform 150.0 :accessor .offset-x)
+   (time-ruler-height :initform 20.0 :accessor .time-ruler-height))
+  (:default-initargs :zoom-x 25.0 :zoom-y 50.0 :zoom-x-factor .5 :zoom-y-factor .5))
 
-(defclass piano-roll (view)
-  ((clip :initarg :clip :accessor .clip)))
+(defclass piano-roll (time-ruler-mixin zoom-mixin view)
+  ((clip :initarg :clip :accessor .clip)
+   (offset-x :initform 100.0 :accessor .offset-x)
+   (offset-y :initform 50.0 :accessor .offset-y))
+  (:default-initargs :zoom-x 25.0 :zoom-y 50.0 :zoom-x-factor .5 :zoom-y-factor .5))
 
 (defclass rack (view)
   ((plugin-selector :initform (make-instance 'plugin-selector)
                     :accessor .plugin-selector)) )
 
-(defclass plugin-selector ()
+(defclass plugin-selector (view)
   ((plugin-infos :accessor .plugin-infos)
    (query :initform "" :accessor .query)))
 
@@ -96,15 +107,20 @@
   (:default-initargs :name "CLIP"))
 
 (defclass clip-note (clip)
-  ((notes :initform (list (make-instance 'note :key +c4+ :time 0.0d0 :duration 1.0d0)
-                          (make-instance 'note :key +e4+ :time 1.0d0 :duration 1.0d0)
-                          (make-instance 'note :key +g4+ :time 2.0d0 :duration 1.0d0)
-                          (make-instance 'note :key +c5+ :time 3.0d0 :duration 1.0d0))
-          :accessor .notes))
+  ((sequence-note :initarg :sequence-note
+                  :initform (make-instance 'sequence-note)
+                  :accessor .sequence-note))
   (:default-initargs :color (color #x00 #x80 #x80 #x80)))
 
 (defclass sequence-note (time-thing)
-  ())
+  ((notes :initarg :notes
+          :initform
+          ;; TODO REPLACE TO NIL
+          (list (make-instance 'note :key +c4+ :time 0.0d0 :duration 1.0d0)
+                          (make-instance 'note :key +e4+ :time 1.0d0 :duration 1.0d0)
+                          (make-instance 'note :key +g4+ :time 2.0d0 :duration 1.0d0)
+                          (make-instance 'note :key +c5+ :time 3.0d0 :duration 1.0d0))
+          :accessor .notes)))
 
 (defclass plugin-info ()
   ((id :initarg :id :accessor .id)

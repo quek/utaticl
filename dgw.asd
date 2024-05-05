@@ -60,6 +60,8 @@
    (:file "clip")
    (:file "piano-roll")
    (:file "show-mixin")
+   (:file "time-ruler-mixin")
+   (:file "zoom-mixin")
    (:file "commander")
    (:file "plugin-selector")
    (:file "app")
