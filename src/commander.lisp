@@ -3,13 +3,13 @@
 (defmethod render ((self commander))
   (when (.show-p self)
     (ig:open-popup "Commander"))
-  
+
   (ig:set-next-window-size-constraints (@ 300.0 200.0) (@ ig:+flt-max+ ig:+flt-max+))
-  
+
   (when (ig:begin-popup-modal "Commander" :open-p (.show-p self))
     (when (ig:is-window-appearing)
       (ig:set-keyboard-focus-here))
-    
+
     (let ((run (ig:input-text "##query" (.query self)
                               :flags (logior  ig:+im-gui-input-text-flags-auto-select-all+
                                               ig:+im-gui-input-text-flags-enter-returns-true+))))
@@ -24,8 +24,8 @@
                             (hide self))
                        (when (ig:button class-name)
                          #1#)))))
-    
+
     (when (ig:is-key-pressed ig:+im-gui-key-escape+)
       (hide self))
-    
+
     (ig:end-popup)))
