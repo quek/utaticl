@@ -21,9 +21,11 @@
       (render-time-ruler self)
       (render-keyboard self)
       (render-notes self)
-      (handle-mouse self))
-    (ig:end-child))
-  (ig:end))
+      (swhen (.render-first-p self)
+        (setf it (view-fit self)))
+      (handle-mouse self)
+      (ig:end-child))
+    (ig:end)))
 
 (defmethod render-keyboard ((self piano-roll))
   (setf (.offset-x self) 30.0)
@@ -43,14 +45,15 @@
         do (ig:add-rect-filled draw-list pos1 pos2 bg-color)
            (ig:add-line draw-list pos1 (@+ pos1 (@ window-width .0)) (.color-line *theme*))
            (when (text-show-p self)
-             (ig:set-cursor-pos (@- pos1 window-pos (@ .0 (- scroll-y))))
+             (let ((pos (@- pos1 window-pos (@ .0 (- scroll-y)))))
+               (when (and (plusp (.x pos)) (plusp (.y pos)))
+                (ig:set-cursor-pos pos)))
              (ig:with-button-color ((color 0 0 0 0))
                (ig:push-style-color-u32 ig:+im-gui-col-text+ text-color)
                (ig:button name)
                (ig:pop-style-color 1)))))
 
 (defmethod render-notes ((self piano-roll))
-  (ig:set-cursor-pos (@ 20.0 20.0))         ;TODO DELETE
   (loop with clip = (.clip self)
         with draw-list = (ig:get-window-draw-list)
         with window-pos = (ig:get-window-pos)
@@ -69,6 +72,30 @@
 
 (defmethod text-show-p ((self piano-roll))
   (> (.zoom-y self) (.threshold-text-hide self)))
+
+(defmethod view-fit ((self piano-roll))
+  (let ((notes (.notes (.seq (.clip self)))))
+    (if notes
+        (multiple-value-bind (key-max key-min)
+            (loop for note in notes
+                  for key = (.key note)
+                  maximize key into max
+                  minimize key into min
+                  finally (return (values max min)))
+          (let* ((zoom-y (/ (- (ig:get-window-height) (.offset-x self))
+                           (+ (- key-max key-min) 2.0))))
+            (if (/= (.zoom-y self) zoom-y)
+                (progn
+                  (log:debug zoom-y)
+                  (setf (.zoom-y self) zoom-y)
+                  t)
+                (let ((scroll-y (key-to-local-y self (floor (/ (- key-max key-min) 2)))))
+                  (log:debug scroll-y zoom-y)
+                  (ig:set-scroll-y-float scroll-y)
+                  nil))))
+        (progn
+          (ig:set-scroll-y-float (key-to-local-y self +c4+))
+          nil))))
 
 (defmethod world-pos-to-time-key ((self piano-roll) pos)
   (let* ((time (world-x-to-time self (.x pos)))
