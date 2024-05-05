@@ -56,8 +56,8 @@
 (defclass piano-roll (time-ruler-mixin zoom-mixin view)
   ((clip :initarg :clip :accessor .clip)
    (offset-x :initform 100.0 :accessor .offset-x)
-   (offset-y :initform 50.0 :accessor .offset-y))
-  (:default-initargs :zoom-x 25.0 :zoom-y 50.0 :zoom-x-factor .5 :zoom-y-factor .5))
+   (offset-y :initform 25.0 :accessor .offset-y))
+  (:default-initargs :zoom-x 25.0 :zoom-y 25.0 :zoom-x-factor .5 :zoom-y-factor .5))
 
 (defclass rack (view)
   ((plugin-selector :initform (make-instance 'plugin-selector)

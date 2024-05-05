@@ -22,8 +22,22 @@
   (ig:end))
 
 (defmethod render-keyboard ((self piano-roll))
-  (loop for key from +g9+ downto +c-1+
-        do (ig:text (midi-key-name key))))
+  (loop with draw-list = (ig:get-window-draw-list)
+        with window-pos = (ig:get-window-pos)
+        with scroll-y = (ig:get-scroll-y)
+        for key from +g9+ downto +c-1+
+        for name = (midi-key-name key)
+        for black = (or (alexandria:ends-with #\# name)
+                        (alexandria:ends-with #\b name))
+        for text-color = (if black (color #xff #xff #xff) (color #x00 #x00 #x00))
+        for bg-color = (if black (color #x00 #x00 #x00) (color #xff #xff #xff))
+        with key-height = (.zoom-y self)
+        for pos1 = (@+ window-pos (@ 0.0 (- (.offset-y self) scroll-y))) then (@+ pos1 (@ .0 key-height))
+        for pos2 = (@+ pos1 (@ (.offset-x self) key-height))
+        do (ig:add-rect-filled draw-list pos1 pos2 bg-color )
+           (ig:set-cursor-pos (@- pos1 window-pos (@ .0 (- scroll-y))))
+           (ig:with-button-color ((color 0 0 0 0))
+             (ig:button name))))
 
 (defmethod world-pos-to-time-key ((self piano-roll) pos)
   (let* ((time (world-x-to-time self (.x pos)))
