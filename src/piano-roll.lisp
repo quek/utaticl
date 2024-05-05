@@ -17,6 +17,7 @@
     (when (ig:begin-child "##canvas" :window-flags ig:+im-gui-window-flags-horizontal-scrollbar+)
       (render-time-ruler self)
       (render-keyboard self)
+      (render-notes self)
       (handle-mouse self))
     (ig:end-child))
   (ig:end))
@@ -25,6 +26,7 @@
   (setf (.offset-x self) 30.0)
   (loop with draw-list = (ig:get-window-draw-list)
         with window-pos = (ig:get-window-pos)
+        with window-width = (ig:get-window-width)
         with key-height = (.zoom-y self)
         with scroll-y = (ig:get-scroll-y)
         for key from +g9+ downto +c-1+
@@ -35,13 +37,19 @@
         for bg-color = (if black (color #x00 #x00 #x00 #xc0) (color #xff #xff #xff #xc0))
         for pos1 = (@+ window-pos (@ 0.0 (- (.offset-y self) scroll-y))) then (@+ pos1 (@ .0 key-height))
         for pos2 = (@+ pos1 (@ (.offset-x self) key-height))
-        do (ig:add-rect-filled draw-list pos1 pos2 bg-color )
+        do (ig:add-rect-filled draw-list pos1 pos2 bg-color)
+           (ig:add-line draw-list pos1 (@+ pos1 (@ window-width .0)) (.color-line *theme*))
            (when (> key-height 18.0)
              (ig:set-cursor-pos (@- pos1 window-pos (@ .0 (- scroll-y))))
              (ig:with-button-color ((color 0 0 0 0))
                (ig:push-style-color-u32 ig:+im-gui-col-text+ text-color)
                (ig:button name)
                (ig:pop-style-color 1)))))
+
+(defmethod render-notes ((self piano-roll))
+  (ig:set-cursor-pos (@ 20.0 20.0))         ;TODO DELETE
+  (loop for note in (.notes (.seq (.clip self)))
+        do (ig:button (.name note))))
 
 (defmethod world-pos-to-time-key ((self piano-roll) pos)
   (let* ((time (world-x-to-time self (.x pos)))
@@ -54,6 +62,6 @@
      (ig:get-scroll-x)))
 
 (defmethod world-y-to-key ((self piano-roll) y)
-  (let ((local-y (+ (- y (.y (ig:get-window-pos)) (.time-ruler-height self))
+  (let ((local-y (+ (- y (.y (ig:get-window-pos)) (.offset-y self))
                     (ig:get-scroll-y))))
     (floor (/ local-y (.zoom-y self)))))

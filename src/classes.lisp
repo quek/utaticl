@@ -103,24 +103,23 @@
             (.duration self))))
 
 (defclass clip (time-thing)
-  ()
-  (:default-initargs :name "CLIP"))
+  ((seq :initarg :seq :accessor .seq)))
 
 (defclass clip-note (clip)
-  ((sequence-note :initarg :sequence-note
-                  :initform (make-instance 'sequence-note)
-                  :accessor .sequence-note))
-  (:default-initargs :color (color #x00 #x80 #x80 #x80)))
+  ()
+  (:default-initargs :name nil :color nil
+   :seq (make-instance 'seq-note)))
 
-(defclass sequence-note (time-thing)
+(defclass seq-note (time-thing)
   ((notes :initarg :notes
           :initform
           ;; TODO REPLACE TO NIL
           (list (make-instance 'note :key +c4+ :time 0.0d0 :duration 1.0d0)
-                          (make-instance 'note :key +e4+ :time 1.0d0 :duration 1.0d0)
-                          (make-instance 'note :key +g4+ :time 2.0d0 :duration 1.0d0)
-                          (make-instance 'note :key +c5+ :time 3.0d0 :duration 1.0d0))
-          :accessor .notes)))
+                (make-instance 'note :key +e4+ :time 1.0d0 :duration 1.0d0)
+                (make-instance 'note :key +g4+ :time 2.0d0 :duration 1.0d0)
+                (make-instance 'note :key +c5+ :time 3.0d0 :duration 1.0d0))
+          :accessor .notes))
+  (:default-initargs :name "NOTES" :color (color #x30 #xc0 #x30 #x80)))
 
 (defclass plugin-info ()
   ((id :initarg :id :accessor .id)
