@@ -1,8 +1,8 @@
 (in-package :dgw)
 
 (defmethod render ((self rack))
-  (when (ig:begin "##rack" :flags ig:+im-gui-window-flags-no-scrollbar+)
-    (when (ig:begin-child "##canvas" :window-flags ig:+im-gui-window-flags-horizontal-scrollbar+)
+  (ig:with-begin ("##rack" :flags ig:+im-gui-window-flags-no-scrollbar+)
+    (ig:with-begin-child ("##canvas" :window-flags ig:+im-gui-window-flags-horizontal-scrollbar+)
 
       (loop for module in (.modules (.target-track *project*))
             do (ig:begin-group)
@@ -23,6 +23,4 @@
         (open-plugin-selector (.plugin-selector self)))
       (render (.plugin-selector self))
 
-      (ig:end-child)
-      (shortcut-common))
-    (ig:end)))
+      (shortcut-common))))

@@ -40,8 +40,8 @@
       (f (.master-track *project*) 0))))
 
 (defmethod render ((self arrangement))
-  (when (ig:begin "##arrangement" :flags ig:+im-gui-window-flags-no-scrollbar+)
-    (when (ig:begin-child "##canvas" :window-flags ig:+im-gui-window-flags-horizontal-scrollbar+)
+  (ig:with-begin ("##arrangement" :flags ig:+im-gui-window-flags-no-scrollbar+)
+    (ig:with-begin-child ("##canvas" :window-flags ig:+im-gui-window-flags-horizontal-scrollbar+)
 
       (render-time-ruler self)
 
@@ -68,10 +68,7 @@
       (render-clip self (.master-track *project*) nil nil (.time-ruler-height self))
 
       (handle-mouse self))
-
-    (ig:end-child)
-    (shortcut-common))
-  (ig:end))
+    (shortcut-common)))
 
 (defmethod render-clip ((self arrangement) (track track) (lane null) (clip null) y)
   (loop for lane in (.lanes track)
