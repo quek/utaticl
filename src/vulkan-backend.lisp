@@ -505,6 +505,7 @@
 
   (ig:show-demo-window (cffi:null-pointer))
   (let ((dgw::*render-context* (make-instance 'dgw::render-context))
+        ;; FIXME 毎回 make-instance はちょっと
         (dgw::*theme* (make-instance 'dgw::theme)))
     (dgw::render app)
     (sb-thread:with-mutex ((dgw::.mutex app))

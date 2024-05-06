@@ -48,18 +48,23 @@
 (defclass offset-mixin ()
   ())
 
+(defclass grid-mixin ()
+  ((grid-snap-p :initarg :grid-snap-p :initform t :accessor .grid-snap-p)
+   (grid-unit :initarg :grid-unit :initform +grid-beat+ :accessor .grid-unit)))
+
 (defclass view ()
   ())
 
 (defclass transposer (view)
   ())
 
-(defclass arrangement (time-ruler-mixin offset-mixin scroll-mixin zoom-mixin view)
+(defclass arrangement (time-ruler-mixin grid-mixin offset-mixin scroll-mixin zoom-mixin view)
   ((default-lane-height :allocation :class :initform 50.0 :accessor .default-lane-height)
    (lane-height-map :initform (make-hash-table) :accessor .lane-height-map)
    (offset-x :initform 150.0 :accessor .offset-x)
    (time-ruler-height :initform 20.0 :accessor .time-ruler-height))
-  (:default-initargs :zoom-x 25.0 :zoom-y 50.0 :zoom-x-factor .5 :zoom-y-factor .5))
+  (:default-initargs :zoom-x 25.0 :zoom-y 50.0 :zoom-x-factor .5 :zoom-y-factor .5
+                     :grid-unit +grid-bar+))
 
 (defclass piano-roll (time-ruler-mixin offset-mixin scroll-mixin zoom-mixin view)
   ((clip :initarg :clip :accessor .clip)
@@ -67,7 +72,8 @@
    (offset-y :initform 25.0 :accessor .offset-y)
    (render-first-p :initform t :accessor .render-first-p)
    (threshold-text-hide :initform 18.0 :accessor .threshold-text-hide))
-  (:default-initargs :zoom-x 25.0 :zoom-y 25.0 :zoom-x-factor .5 :zoom-y-factor .5 :zoom-y-min 5.0))
+  (:default-initargs :zoom-x 25.0 :zoom-y 25.0 :zoom-x-factor .5 :zoom-y-factor .5 :zoom-y-min 5.0
+                     :grid-unit +grid-beat+))
 
 (defclass rack (view)
   ((plugin-selector :initform (make-instance 'plugin-selector)

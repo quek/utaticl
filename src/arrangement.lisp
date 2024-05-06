@@ -41,6 +41,7 @@
 
 (defmethod render ((self arrangement))
   (ig:with-begin ("##arrangement" :flags ig:+im-gui-window-flags-no-scrollbar+)
+    (render-grid self)
     (ig:with-begin-child ("##canvas" :window-flags ig:+im-gui-window-flags-horizontal-scrollbar+)
 
       (render-time-ruler self)

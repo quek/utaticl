@@ -32,6 +32,13 @@
      (* g #x100)
      r))
 
+(defmacro button-toggle (label var)
+  `(ig:with-button-color ((if ,var
+                              (.color-button-toggle-on *theme*)
+                              (.color-button-toggle-off *theme*)))
+     (when (ig:button ,label)
+       (setf ,var (not ,var)))))
+
 (defun color+ (a b)
   (destructuring-bind (ar ag ab aa) (color-decode a)
     (destructuring-bind (br bg bb ba) (color-decode b)
