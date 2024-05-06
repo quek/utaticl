@@ -37,8 +37,10 @@
 (defclass zoom-mixin ()
   ((zoom-x :initarg :zoom-x :initform 25.0 :accessor .zoom-x)
    (zoom-x-factor :initarg :zoom-x-factor :initform .5 :accessor .zoom-x-factor)
+   (zoom-x-min :initarg :zoom-x-min :initform .1 :accessor .zoom-x-min)
    (zoom-y :initarg :zoom-y :initform 50.0 :accessor .zoom-y)
-   (zoom-y-factor :initarg :zoom-y-factor :initform .5 :accessor .zoom-y-factor)))
+   (zoom-y-factor :initarg :zoom-y-factor :initform .5 :accessor .zoom-y-factor)
+   (zoom-y-min :initarg :zoom-y-min :initform .1 :accessor .zoom-y-min)))
 
 (defclass scroll-mixin ()
   ())
@@ -65,7 +67,7 @@
    (offset-y :initform 25.0 :accessor .offset-y)
    (render-first-p :initform t :accessor .render-first-p)
    (threshold-text-hide :initform 18.0 :accessor .threshold-text-hide))
-  (:default-initargs :zoom-x 25.0 :zoom-y 25.0 :zoom-x-factor .5 :zoom-y-factor .5))
+  (:default-initargs :zoom-x 25.0 :zoom-y 25.0 :zoom-x-factor .5 :zoom-y-factor .5 :zoom-y-min 5.0))
 
 (defclass rack (view)
   ((plugin-selector :initform (make-instance 'plugin-selector)
