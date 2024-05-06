@@ -47,7 +47,7 @@
         for y-local = (key-to-local-y self key)
         for pos-local = (@ .0 y-local)
         for y-world = (key-to-world-y self key)
-        for pos1 = (@ .0 y-world)
+        for pos1 = (@ (.x window-pos) y-world)
         for pos2 = (@+ pos1 (@ (.offset-x self) key-height))
         do (ig:add-rect-filled draw-list pos1 pos2 bg-color)
            (ig:add-line draw-list pos1 (@+ pos1 (@ window-width .0)) (.color-line *theme*))
@@ -89,14 +89,15 @@
                   maximize key into max
                   minimize key into min
                   finally (return (values max min)))
-          (let* ((zoom-y (/ (- (ig:get-window-height) (.offset-x self))
-                           (+ (- key-max key-min) 2.0))))
+          (let* ((zoom-y (/ (- (ig:get-window-height) (.offset-y self))
+                            (+ (- key-max key-min) 3.0))))
             (if (/= (.zoom-y self) zoom-y)
                 (progn
                   (log:debug zoom-y)
                   (setf (.zoom-y self) zoom-y)
                   t)
-                (let ((scroll-y (key-to-local-y self (floor (/ (- key-max key-min) 2)))))
+                (let ((scroll-y (max .0
+                                     (- (key-to-local-y self (1+ key-max)) (.offset-y self)))))
                   (log:debug scroll-y zoom-y)
                   (ig:set-scroll-y-float scroll-y)
                   nil))))
