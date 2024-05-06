@@ -5,6 +5,7 @@
          (mouse-pos (ig:get-mouse-pos)))
     (cond ((ig:is-mouse-double-clicked ig:+im-gui-mouse-button-left+)
            (multiple-value-bind (time key) (world-pos-to-time-key self mouse-pos)
+             (setf time (time-grid-applied self time :floor))
              (when (and (not (minusp time)) key)
                (cmd-add *project* 'cmd-note-add
                         :clip-id (.neko-id (.clip self)) :time time :key key)))))

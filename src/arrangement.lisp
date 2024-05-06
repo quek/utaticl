@@ -5,6 +5,7 @@
          (mouse-pos (ig:get-mouse-pos)))
     (cond ((ig:is-mouse-double-clicked ig:+im-gui-mouse-button-left+)
            (multiple-value-bind (time lane) (world-pos-to-time-lane self mouse-pos)
+             (setf time (time-grid-applied self time :floor))
              (when (and (not (minusp time)) lane)
                (cmd-add *project* 'cmd-clip-add
                         :time time :lane-id (.neko-id lane)
