@@ -1,7 +1,5 @@
 (in-package :dgw)
 
-(defvar *process-data*)
-
 (defgeneric process (self))
 
 (defun swap-in-out (process-data)

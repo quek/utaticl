@@ -64,12 +64,38 @@
 (defmethod process ((self project))
   (when (.play-p self)
     (update-play-position self))
-  (process (.master-track self))
+  (prepare (.master-track self))
+
+  (loop with tracks = (track-all self)
+        while tracks
+        do (loop for track in tracks
+                 do (sb-concurrency:send-message
+                     *thread-pool*
+                     (lambda ()
+                       (let ((*project* self))
+                         (process track)
+                         (sb-concurrency:send-message
+                          (.mailbox self)
+                          (if (.process-done track)
+                              nil
+                              track))))))
+           (setf tracks
+                 (loop repeat (length tracks)
+                       for track = (sb-concurrency:receive-message
+                                    (.mailbox self))
+                       collect track)))
+
   (when (.play-p self)
     (setf (.play-start self) (.play-end self))))
 
 (defmethod terminate ((self project))
   (terminate (.master-track self)))
+
+(defmethod track-all ((self project))
+  (labels ((f (track)
+             (cons track (loop for x in (.tracks track)
+                               nconc (f track)))))
+    (f (.master-track self))))
 
 (defmethod track-name-new ((self project))
   (labels ((f (track max)
