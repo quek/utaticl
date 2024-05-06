@@ -29,6 +29,17 @@
       (undo cmd)
       (push cmd (.cmd-redo-stack self)))))
 
+(defmethod update-play-position ((self project))
+  (let ((delta-sec (/ *frames-per-buffer* *sample-rate*))
+        (sec-per-beat (/ 60.0d0 (.bpm self))))
+    (when (and (.loop-p self) (<= (.loop-end self) (.play-start self)))
+      (setf (.play-start self) (.loop-start self)))
+    (setf (.play-end self) (+ (/ delta-sec sec-per-beat) (.play-start self)))
+    (when (and (.loop-p self) (< (.loop-end self) (.play-end self)))
+      (setf (.play-end self)
+            (+ (.loop-start self) (- (.play-end self) (.loop-end self)))))))
+
+
 (defun find-lane (project lane-id)
   (labels ((f (track)
              (or (find lane-id (.lanes track) :test #'equal :key #'.neko-id)
@@ -51,7 +62,11 @@
     (render (.commander self))))
 
 (defmethod process ((self project))
-  (process (.master-track self)))
+  (when (.play-p self)
+    (update-play-position self))
+  (process (.master-track self))
+  (when (.play-p self)
+    (setf (.play-start self) (.play-end self))))
 
 (defmethod terminate ((self project))
   (terminate (.master-track self)))

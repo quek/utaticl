@@ -4,6 +4,14 @@
   ;; TODO
   8)
 
+(defmethod render-playhead ((self time-ruler-mixin))
+  (let* ((draw-list (ig:get-window-draw-list))
+         (window-pos (ig:get-window-pos))
+         (x (time-to-local-x self (.play-start *project*)))
+         (pos1 (@+ (@ x .0) window-pos))
+         (pos2 (@+ pos1 (@ .0 (ig:get-window-height)))))
+    (ig:add-line draw-list pos1 pos2 (.color-playhead *theme*))))
+
 (defmethod render-time-ruler ((self time-ruler-mixin))
   (let* ((draw-list (ig:get-window-draw-list))
          (max-bar (max-bar self))
@@ -21,4 +29,6 @@
                (let* ((p1 (@+ cursor-pos window-pos (@ (- scroll-x) (- scroll-y))))
                       (p2 (@+ p1 (@ 0.0 (.y window-size)))))
                  (when (<= (+ (.offset-x self) (.x window-pos)) (.x p1))
-                   (ig:add-line draw-list p1 p2 (.color-line *theme*))))))))
+                   (ig:add-line draw-list p1 p2 (.color-line *theme*))))))
+
+    (render-playhead self)))

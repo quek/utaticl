@@ -23,7 +23,12 @@
    (cmd-undo-stack :initform nil :accessor .cmd-undo-stack)
    (cmd-redo-stack :initform nil :accessor .cmd-redo-stack)
    (master-track :initform (make-instance 'master-track) :accessor .master-track)
-   (playing-p :initform nil :accessor .playing-p)
+   (play-p :initform nil :accessor .play-p)
+   (play-start :initarg :play-start :initform .0d0 :accessor .play-start)
+   (play-end :initarg :play-end :initform .0d0 :accessor .play-end)
+   (loop-start :initarg :loop-start :initform .0d0 :accessor .loop-start)
+   (loop-end :initarg :loop-end :initform 16.0d0 :accessor .loop-end)
+   (loop-p :initarg :loop-p :initform t :accessor .loop-p)
    (transposer :initform (make-instance 'transposer) :accessor .transposer)
    (target-track :initform :nil :accessor .target-track)))
 

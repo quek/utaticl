@@ -2,11 +2,9 @@
 
 (defmethod render ((self transposer))
   (when (ig:begin "##transponser")
-    (when (ig:button "▶")
-      (play self))
+    (button-toggle "▶" (.play-p *project*))
     (ig:same-line)
-    (when (ig:button "■")
-      (stop self))
+    (button-toggle "Loop" (.loop-p *project*))
     (ig:same-line)
     (ig:set-next-item-width (* (ig:get-font-size) 3))
     (ig:drag-float "BPM" (.bpm *project*) :format "%.2f")
@@ -16,10 +14,3 @@
            (ms (/ 1000.0  framerate)))
       (ig:text (format nil "~,3f ms/frame (~,1f FPS)" ms framerate))))
   (ig:end))
-
-
-(defmethod play ((self transposer))
-  (setf (.playing-p *project*) t))
-
-(defmethod stop ((self transposer))
-  (setf (.playing-p *project*) nil))
