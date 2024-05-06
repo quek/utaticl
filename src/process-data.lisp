@@ -1,5 +1,6 @@
 (in-package :dgw)
 
+(defmethod )
 (defmethod prepare ((self sb:vst-process-data))
   (setf (sb:vst-process-data.inputs*.silence-flags self)
         (1- (expt 2 (sb:vst-process-data.inputs*.num-channels self))))

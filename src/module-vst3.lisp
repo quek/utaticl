@@ -1,13 +1,13 @@
 (in-package :dgw)
 
-(defvar *hwnd-vst3-module-map* (make-hash-table))
+(defvar *hwnd-module-vst3-map* (make-hash-table))
 
-(defmethod initialize-instance :after ((self vst3-module) &key)
+(defmethod initialize-instance :after ((self module-vst3) &key)
   (let ((host-applicaiton (make-instance 'vst3-impl::host-application :module self)))
     (vst3-impl::add-ref host-applicaiton)
     (setf (slot-value self 'host-applicaiton) host-applicaiton)))
 
-(defun vst3-module-load (path)
+(defun module-vst3-load (path)
   (multiple-value-bind (factory library) (vst3::get-plugin-factory path)
     (let* ((component (vst3::create-component factory))
            (single-component-p t)
@@ -19,14 +19,14 @@
                          (handler-case (vst3::query-interface component vst3-ffi::+vst-iedit-controller-iid+)
                            (vst3::no-interface-error () (f))
                            (vst3::false-error () (f))))))
-      (make-instance 'vst3-module
+      (make-instance 'module-vst3
                      :library library
                      :factory factory
                      :conponent component
                      :controller controller
                      :single-component-p single-component-p))))
 
-(defmethod initialize ((self vst3-module))
+(defmethod initialize ((self module-vst3))
   (vst3-ffi::initialize (.component self)
                         (vst3-impl::ptr (.host-applicaiton self)))
   (vst3-ffi::initialize (.controller self)
@@ -104,7 +104,7 @@
   ;; prepareParameterInfo();
   )
 
-(defmethod terminate ((self vst3-module))
+(defmethod terminate ((self module-vst3))
   (when (.component self)
     (disconnect-componet-controller self)
     (let ((terminate-controller-p
@@ -121,7 +121,7 @@
   (vst3-impl::release (.host-applicaiton self))
   (vst3::unload-library (.library self)))
 
-(defmethod connect-componet-controller ((self vst3-module))
+(defmethod connect-componet-controller ((self module-vst3))
   (unless (.single-component-p self)
     (handler-case
         (progn
@@ -137,7 +137,7 @@
                              (vst3-walk::.ptr(.connection-component self))))
       (vst3::no-interface-error ()))))
 
-(defmethod disconnect-componet-controller ((self vst3-module))
+(defmethod disconnect-componet-controller ((self module-vst3))
   (unless (.single-component-p self)
     (handler-case
         (progn
@@ -153,31 +153,31 @@
           (setf (.connection-controller self) nil))
       (vst3::no-interface-error ()))))
 
-(defmethod begin-edit ((self vst3-module) id)
+(defmethod begin-edit ((self module-vst3) id)
   (declare (ignore id)))
 
-(defmethod perform-edit ((self vst3-module) id value-normalized)
+(defmethod perform-edit ((self module-vst3) id value-normalized)
   (declare (ignore id value-normalized)))
 
-(defmethod end-edit ((self vst3-module) id)
+(defmethod end-edit ((self module-vst3) id)
   (declare (ignore id)))
 
-(defmethod restart-component ((self vst3-module) flags)
+(defmethod restart-component ((self module-vst3) flags)
   (declare (ignore flags)))
 
-(defmethod start ((self vst3-module))
+(defmethod start ((self module-vst3))
   (unless (.start-p self)
     (vst3-ffi::set-active (.component self) 1)
     (vst3-ffi::set-processing (.audio-processor self) 1)
     (call-next-method)))
 
-(defmethod stop ((self vst3-module))
+(defmethod stop ((self module-vst3))
   (when (.start-p self)
     (vst3-ffi::set-processing (.audio-processor self) 0)
     (vst3-ffi::set-active (.component self) 0)
     (call-next-method)))
 
-(defmethod editor-open ((self vst3-module))
+(defmethod editor-open ((self module-vst3))
   (unless (.editor-open-p self)
     (let* ((view-ptr (vst3-ffi::create-view (.controller self)
                                             vst3-ffi::+vst-view-type-k-editor+))
@@ -194,23 +194,23 @@
                           (sb:view-rect.top size)))
                (hwnd (win32::make-window width height resizable)))
           (setf (.hwnd self) hwnd)
-          (setf (gethash (cffi:pointer-address hwnd) *hwnd-vst3-module-map*) self)
+          (setf (gethash (cffi:pointer-address hwnd) *hwnd-module-vst3-map*) self)
           (vst3::ensure-ok (vst3-ffi::attached view hwnd vst3-ffi::+k-platform-type-hwnd+)))))
     (call-next-method)))
 
-(defmethod editor-close ((self vst3-module))
+(defmethod editor-close ((self module-vst3))
   (when (.editor-open-p self)
     (when (.view self)
       (vst3-ffi::removed (.view self))
       (vst3-ffi::release (.view self))
       (sb-ext:cancel-finalization (.view self))
       (setf (.view self) nil)
-      (remhash (cffi:pointer-address (.hwnd self)) *hwnd-vst3-module-map*)
+      (remhash (cffi:pointer-address (.hwnd self)) *hwnd-module-vst3-map*)
       (ftw:destroy-window (.hwnd self))
       (setf (.hwnd self) nil))
     (call-next-method)))
 
-(defmethod on-resize ((self vst3-module) width height)
+(defmethod on-resize ((self module-vst3) width height)
   (when (.editor-open-p self)
     (let ((view (.view self)))
       (autowrap:with-calloc (rect '(:struct (sb:view-rect)))
@@ -229,11 +229,11 @@
   #+nil
   (log:debug (loop for i below 10
                    collect (autowrap:c-aref (car (.buffer-out self)) i :float) ))
-  )
+  (call-next-method))
 
 #+nil
 (sb-int:with-float-traps-masked (:invalid :inexact :overflow :divide-by-zero)
- (let ((module (vst3-module-load
+ (let ((module (module-vst3-load
                 "c:/Program Files/Common Files/VST3/Dexed.vst3"
                 ;;"c:/Program Files/Common Files/VST3/DS Thorn.vst3"
                 ;;"c:/Program Files/Common Files/VST3/MeldaProduction/MSoundFactory.vst3"

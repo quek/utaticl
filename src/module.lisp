@@ -11,8 +11,7 @@
   )
 
 (defmethod process ((self module))
-  ;; TODO
-  )
+  (setf (.process-done self) t))
 
 (defmethod start ((self module))
   (setf (.start-p self) t))

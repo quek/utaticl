@@ -159,9 +159,10 @@
 (defclass module (neko)
   ((start-p :initform nil :accessor .start-p)
    (editor-open-p :initform nil :accessor .editor-open-p)
+   (params :initform (make-hash-table) :accessor .params)
    (process-done :initform nil :accessor .process-done)))
 
-(defclass vst3-module (module)
+(defclass module-vst3 (module)
   ((library :initarg :library :accessor .library)
    (host-applicaiton :reader .host-applicaiton)
    (factory :initarg :factory :reader .factory)
@@ -179,6 +180,19 @@
    (connection-controller :initform nil :accessor .connection-controller)
    (parameter-changes-in :initform (make-instance 'vst3-impl::parameter-changes)
                          :accessor .parameter-changes-in)))
+
+(defclass module-builtin (module)
+  ())
+
+(defclass module-fader (module-builtin)
+  ())
+
+(defclass module-gain (module-builtin)
+  ())
+
+(defclass param (neko)
+  ((id :initarg :id :initform nil :accessor .id)
+   (value :initarg :value :initform .0d0 :accessor .value)))
 
 (defclass commander (show-mixin)
   ((query :initform "" :accessor .query)))

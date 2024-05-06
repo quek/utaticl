@@ -8,7 +8,7 @@
 
 
 (ftw:defwndproc wnd-proc (hwnd msg wparam lparam)
-  (let ((module (gethash (cffi:pointer-address hwnd) dgw::*hwnd-vst3-module-map*)))
+  (let ((module (gethash (cffi:pointer-address hwnd) dgw::*hwnd-module-vst3-map*)))
     (when module
       (ftw:switch msg
         (ftw::+wm-size+
