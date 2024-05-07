@@ -508,8 +508,7 @@
         ;; FIXME 毎回 make-instance はちょっと
         (dgw::*theme* (make-instance 'dgw::theme)))
     (dgw::render app)
-    (sb-thread:with-mutex ((dgw::.mutex app))
-      (dgw::cmd-run app)))
+    (dgw::cmd-run app))
 
   (ig::render)
 

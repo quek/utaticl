@@ -218,7 +218,7 @@
         (setf (sb:view-rect.bottom rect) height)
         (vst3-ffi::on-size view (autowrap:ptr rect))))))
 
-(defmethod process ((self module))
+(defmethod process ((self module-vst3))
   (setf (sb:vst-process-data.input-parameter-changes *process-data*)
         (vst3-impl::ptr (.parameter-changes-in self)))
   (setf (sb:vst-process-data.output-parameter-changes *process-data*)

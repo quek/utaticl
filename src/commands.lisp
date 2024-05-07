@@ -91,16 +91,25 @@
   (cmd-redo *project*))
 
 (defcommand cmd-track-add (command)
-  ())
+  ((track-id-before :initarg :track-id-before
+                    :initform nil
+                    :accessor .track-id-before)
+   (track-id-new :accessor .track-id-new)
+   (track-id-parent :initarg :track-id-parent
+                    :accessor .track-id-parent)))
 
 (defmethod execute ((self cmd-track-add))
-  (setf (.tracks (.master-track *project*))
-        (append (.tracks (.master-track *project*))
-                (list (make-instance 'track :name (track-name-new *project*))))))
+  (let ((track-before (find-neko (.track-id-before self)))
+        (track-new (make-instance 'track :name (track-name-new *project*)))
+        (track-parent (find-neko (.track-id-parent self))))
+    (setf (.track-id-new self) (.neko-id track-new))
+    (track-add track-parent track-new :track-before track-before)))
 
 (defmethod undo ((self cmd-track-add))
-  (setf (.tracks (.master-track *project*))
-        (butlast (.tracks (.master-track *project*)))))
+  (let ((track-new (find-neko (.track-id-new self)))
+        (track-parent (find-neko (.track-id-parent self))))
+    (track-delete track-parent track-new))
+  )
 
 (defcommand cmd-undo (command)
   ()

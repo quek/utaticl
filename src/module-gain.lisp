@@ -1,12 +1,9 @@
 (in-package :dgw)
 
-(defmethod initialize-instance :after ((self module-fader) &key)
-  (param-add self 'mute "Mute" .0d0)
-  (param-add self 'pan "Pan" .5d0)
-  (param-add self 'solo "Solo" .0d0)
+(defmethod initialize-instance :after ((self module-gain) &key)
   (param-add self 'volume "Volume" .8d0))
 
-(defmethod process ((self module-fader))
+(defmethod process ((self module-gain))
   (let ((input (sb:vst-process-data.inputs*.vst-audio-bus-buffers-channel-buffers32
                 *process-data*))
         (silent-p (= 1 (ldb (byte 1 0) (sb:vst-process-data.inputs*.silence-flags *process-data*))))
@@ -25,3 +22,4 @@
                                   (* (autowrap:c-aref input-channel i :float)
                                      volume-ratio)))))))
   (call-next-method))
+

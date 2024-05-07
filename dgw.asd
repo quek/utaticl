@@ -50,6 +50,7 @@
    (:file "module-clap")
    (:file "module-builtin")
    (:file "module-fader")
+   (:file "module-gain")
    (:file "param")
    (:file "midi")
    (:file "commands")

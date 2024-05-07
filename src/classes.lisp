@@ -92,14 +92,15 @@
 (defclass track (neko)
   ((lanes :initarg :lanes :initform (list (make-instance 'lane)) :accessor .lanes)
    (event-in :accessor .event-in)
-   (modules :initform nil :accessor .modules)
+   (modules :initform (list (make-instance 'module-gain-track)
+                            (make-instance 'module-fader-track))
+            :accessor .modules)
    (module-wait-for :initform nil :accessor .module-wait-for)
    (nbus-audio-in :initform 1 :accessor .nbus-audio-in)
    (nbus-audio-out :initform 1 :accessor .nbus-audio-out)
    (nbus-event-in :initform 1 :accessor .nbus-event-in)
    (nbus-event-out :initform 1 :accessor .nbus-event-out)
    (process-data :accessor .process-data)
-   (process-done :initform nil :accessor .process-done)
    (select-p :initform nil :accessor .select-p)
    (tracks :initform nil :accessor .tracks))
   (:default-initargs :name "TRACK" :color (color #x33 #x33 #x33)))
@@ -157,8 +158,9 @@
   ())
 
 (defclass module (neko)
-  ((start-p :initform nil :accessor .start-p)
+  ((connections :initform nil :accessor .connections)
    (editor-open-p :initform nil :accessor .editor-open-p)
+   (start-p :initform nil :accessor .start-p)
    (params :initform (make-hash-table) :accessor .params)
    (process-done :initform nil :accessor .process-done)))
 
@@ -185,10 +187,27 @@
   ())
 
 (defclass module-fader (module-builtin)
-  ())
+  ()
+  (:default-initargs :name "Fader"))
+
+(defclass module-track-mixin () ()
+  (:documentation "トラック備え付け"))
+
+(defclass module-fader-track (module-track-mixin module-fader)
+  ()
+  (:documentation "トラック備え付け"))
 
 (defclass module-gain (module-builtin)
-  ())
+  ()
+  (:default-initargs :name "Gain"))
+
+(defclass module-gain-track (module-track-mixin module-gain)
+  ()
+  (:documentation "トラック備え付け"))
+
+(defclass connection (neko)
+  ((from :initarg :from :accessor .from)
+   (to :initarg :to :accessor .to)))
 
 (defclass param (neko)
   ((id :initarg :id :initform nil :accessor .id)

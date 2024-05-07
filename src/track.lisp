@@ -57,9 +57,16 @@
         (setf (sb:vst-audio-bus-buffers.vst-audio-bus-buffers-channel-buffers32 outputs)
               channels)))))
 
+(defmethod fader ((self track))
+  (find-if (lambda (x) (typep x 'module-fader-track))
+           (.modules self)))
+
+(defmethod gain ((self track))
+  (find-if (lambda (x) (typep x 'module-gain-track))
+           (.modules self)))
+
 (defmethod prepare ((self track))
   (setf (.module-wait-for self) nil)
-  (setf (.process-done self) nil)
   (prepare (.process-data self))
   (loop for module in (.modules self)
         do (prepare module))
@@ -93,7 +100,10 @@
   (call-next-method))
 
 (defmethod module-add ((self track) module)
-  (setf (.modules self) (append (.modules self) (list module)))
+  (setf (.modules self)
+        (append (butlast (.modules self))
+                (list module)
+                (last (.modules self))))
   (initialize module)
   (start module)
   (when (zerop (c-ref (ig:get-io) ig:im-gui-io :key-shift))
@@ -129,6 +139,22 @@
       (free (sb:vst-process-data.outputs* process-data)))
 
     (autowrap:free process-data)))
+
+(defmethod track-add ((self track) track-new &key track-before)
+  (setf (.tracks self)
+        (if track-before
+            (loop for track in (.tracks self)
+                  if (eq track track-before)
+                    collect track-new
+                  collect track)
+            (append (.tracks self) (list track-new))))
+  (coneect (car (last (.modules track-new)))
+           (car (.modules self))))
+
+(defmethod track-delete ((self track) track-delete)
+  (setf (.tracks self) (delete track-delete (.tracks self)))
+  ;; TODO connection
+  )
 
 (defmethod unselect-all-tracks ((self track))
   (setf (.select-p self) nil)

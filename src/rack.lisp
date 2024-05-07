@@ -6,16 +6,12 @@
 
       (loop for module in (.modules (.target-track *project*))
             do (ig:begin-group)
-               (ig:push-id module)
-               (when (ig:button (.name module))
-                 (if (.editor-open-p module)
-                     (editor-close module)
-                     (editor-open module)))
-               (when (ig:button "x")
-                 (cmd-add *project* 'cmd-module-delete
-                          :track-id (.neko-id (.target-track *project*))
-                          :module-id (.neko-id module)))
-               (ig:pop-id)
+               (ig:with-id (module)
+                 (when (ig:button (.name module))
+                   (if (.editor-open-p module)
+                       (editor-close module)
+                       (editor-open module)))
+                 (render-module-delete-button self module))
                (ig:end-group)
                (ig:same-line))
 
@@ -24,3 +20,11 @@
       (render (.plugin-selector self))
 
       (shortcut-common))))
+
+(defmethod render-module-delete-button ((self rack) (module module-track-mixin)))
+
+(defmethod render-module-delete-button ((self rack) module)
+  (when (ig:button "x")
+    (cmd-add *project* 'cmd-module-delete
+             :track-id (.neko-id (.target-track *project*))
+             :module-id (.neko-id module))))

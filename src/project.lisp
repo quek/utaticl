@@ -16,7 +16,8 @@
 (defmethod cmd-run ((self project))
   (let ((*project* self))
     (loop for cmd in (nreverse (.cmd-queue self))
-          do (execute cmd)
+          do (sb-thread:with-mutex ((.mutex *app*))
+               (execute cmd))
              (when (.undo-p cmd)
                (setf (.cmd-redo-stack self) nil)
                (push cmd (.cmd-undo-stack self))))
@@ -69,24 +70,26 @@
   (loop with tracks = (track-all self)
         while tracks
         do (loop for track in tracks
-                 do (sb-concurrency:send-message
-                     *thread-pool*
-                     (lambda ()
-                       (let ((*project* self))
-                         (process track)
-                         (sb-concurrency:send-message
-                          (.mailbox self)
-                          (if (.process-done track)
-                              nil
-                              track))))))
-           (setf tracks
-                 (loop repeat (length tracks)
-                       for track = (sb-concurrency:receive-message
-                                    (.mailbox self))
-                       collect track)))
+                 do (process-send self tracks))
+           (setf tracks (process-receive self tracks)))
 
   (when (.play-p self)
     (setf (.play-start self) (.play-end self))))
+
+(defmethod process-send ((self project) tracks)
+  (loop for track in tracks
+        do (sb-concurrency:send-message
+            *thread-pool*
+            (lambda ()
+              (let ((*project* self))
+                (sb-concurrency:send-message
+                 (.mailbox self) (process track)))))))
+
+(defmethod process-receive ((self project) tracks)
+  (loop repeat (length tracks)
+        for track = (sb-concurrency:receive-message (.mailbox self))
+        if track
+          collect track))
 
 (defmethod terminate ((self project))
   (terminate (.master-track self)))
@@ -94,7 +97,7 @@
 (defmethod track-all ((self project))
   (labels ((f (track)
              (cons track (loop for x in (.tracks track)
-                               nconc (f track)))))
+                               nconc (f x)))))
     (f (.master-track self))))
 
 (defmethod track-name-new ((self project))

@@ -65,7 +65,8 @@
         (ig:set-cursor-pos (@+ pos (@ (ig:get-scroll-x) 0.0)))
         (ig:set-next-item-shortcut (logior ig:+im-gui-mod-ctrl+ ig:+im-gui-key-t+))
         (when (ig:button "+" (@ (.offset-x self) 0.0))
-          (cmd-add *project* 'cmd-track-add)))
+          (cmd-add *project* 'cmd-track-add
+                   :track-id-parent (.neko-id (.master-track *project*)))))
 
       (render-clip self (.master-track *project*) nil nil (.time-ruler-height self))
 
