@@ -1,9 +1,12 @@
 (in-package :dgw)
 
-(defmethod connect ((from module) (to module))
+(defmethod connect ((from module) (to module)
+                    from-process-data to-process-data)
   (let ((connection (make-instance 'connection
                                    :from from
-                                   :to to)))
+                                   :to to
+                                   :from-process-data from-process-data
+                                   :to-process-data to-process-data)))
     (push connection (.connections from))
     (push connection (.connections to))))
 
@@ -27,8 +30,8 @@
   (setf (.process-done self) nil))
 
 (defmethod process-connection ((self module))
-  ;; TODO
-  )
+  (loop for connection-from in (connections-from self)
+        do (process connection-from)))
 
 (defmethod process ((self module))
   (setf (.process-done self) t))

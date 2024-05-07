@@ -148,8 +148,10 @@
                     collect track-new
                   collect track)
             (append (.tracks self) (list track-new))))
-  (coneect (car (last (.modules track-new)))
-           (car (.modules self))))
+  (connect (car (last (.modules track-new)))
+           (car (.modules self))
+           (.process-data track-new)
+           (.process-data self)))
 
 (defmethod track-delete ((self track) track-delete)
   (setf (.tracks self) (delete track-delete (.tracks self)))

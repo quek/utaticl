@@ -207,7 +207,9 @@
 
 (defclass connection (neko)
   ((from :initarg :from :accessor .from)
-   (to :initarg :to :accessor .to)))
+   (to :initarg :to :accessor .to)
+   (from-process-data :initarg :from-process-data :accessor .from-process-data)
+   (to-process-data :initarg :to-process-data :accessor .to-process-data)))
 
 (defclass param (neko)
   ((id :initarg :id :initform nil :accessor .id)
