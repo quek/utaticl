@@ -78,25 +78,29 @@
     (call-next-method)))
 
 (defmethod process ((self track))
-  (loop for module in (.modules self)
+  (loop with module-last = (car (last (.modules self)))
+        for module in (.modules self)
         for module-wait-for = (.module-wait-for self)
-        if (eq module-wait-for module)
-          do (setf (.module-wait-for self) nil)
-        if (and (null module-wait-for)
-                (.start-p module))
-          do (unless (.process-done module)
-               (when (wait-for-from-p module)
-                 (break "wait-for-from-p ~a" module)
-                 (setf (.module-wait-for self) module)
-                 (return-from process self))
-               (swap-in-out *process-data*)
-               (process-connection module)
-               (process module))
-             (when (wait-for-to-p module)
-               (break "wait-for-to-p ~a" module)
-               (setf (.module-wait-for self) module)
-               (return-from process self)))
-  nil)
+        do (cond ((not (.start-p module))) ;continue
+                 ((and module-wait-for
+                       (not (eq module-wait-for module)))) ;continue
+                 (t
+                  (when module-wait-for
+                    (setf (.module-wait-for self) nil))
+                  (unless (.process-done module)
+                    (when (wait-for-from-p module)
+                      (setf (.module-wait-for self) module)
+                      (loop-finish))
+                    (swap-in-out *process-data*)
+                    (process-connection module)
+                    (process module))
+                  (when (and (not (eq module module-last))
+                             (wait-for-to-p module))
+                    (setf (.module-wait-for self) module)
+                    (loop-finish)))))
+  (if (.module-wait-for self)
+      self
+      nil))
 
 (defmethod process ((self master-track))
   (call-next-method))
