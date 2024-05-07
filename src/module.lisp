@@ -51,7 +51,11 @@
 (defmethod terminate ((self module)))
 
 (defmethod wait-for-from-p ((self module))
-  (some (complement #'.process-done) (connections-from self)))
+  (some (lambda (connection)
+          (not (.process-done (.from connection))))
+        (connections-from self)))
 
 (defmethod wait-for-to-p ((self module))
-  (some (complement #'.process-done) (connections-to self)))
+  (some (lambda (connection)
+          (not (.process-done (.to connection))))
+        (connections-to self)))

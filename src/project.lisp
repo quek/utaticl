@@ -69,8 +69,7 @@
 
   (loop with tracks = (track-all self)
         while tracks
-        do (loop for track in tracks
-                 do (process-send self tracks))
+        do (process-send self tracks)
            (setf tracks (process-receive self tracks)))
 
   (when (.play-p self)
@@ -80,10 +79,11 @@
   (loop for track in tracks
         do (sb-concurrency:send-message
             *thread-pool*
-            (lambda ()
-              (let ((*project* self))
-                (sb-concurrency:send-message
-                 (.mailbox self) (process track)))))))
+            (list (lambda (project track)
+                    (let ((*project* project))
+                      (sb-concurrency:send-message
+                       (.mailbox project) (process track))))
+                  self track))))
 
 (defmethod process-receive ((self project) tracks)
   (loop repeat (length tracks)

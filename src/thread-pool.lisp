@@ -2,13 +2,13 @@
 
 (defun make-thread-pool ()
   (setf *thread-pool* (sb-concurrency:make-mailbox :name "DGW-THREAD-POOL"))
-  (loop for i from 1 to 12
+  (loop for i from 1 to 3               ;TODO 12
         do (sb-thread:make-thread
             (lambda ()
               (loop for message = (sb-concurrency:receive-message *thread-pool* :timeout 1)
                     until (eq message :quit)
                     if message
-                      do (funcall message))
+                      do (apply (car message) (cdr message)))
               (sb-concurrency:send-message *thread-pool* :quit))
             :name (format nil "DGW-WORKER-~d" i))))
 

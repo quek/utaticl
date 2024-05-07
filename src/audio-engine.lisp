@@ -138,6 +138,26 @@
                (setf (aref left i) 0.0
                      (aref right i) 0.0)))))
 
+(defun audio-loop ()
+  (sb-sys:without-gcing
+    (statistic-enter)
+    (process *app*)
+
+    ;; TODO かんぜんに暫定
+    (let ((master-track (.master-track (car (.projects *app*)))))
+      (let ((in (sb:vst-process-data.outputs*.vst-audio-bus-buffers-channel-buffers32
+                 (.process-data master-track)))
+            (out (.master-buffer *audio*)))
+        (loop for channel below 2
+              do (loop for i below *frames-per-buffer*
+                       for x = (nth channel out)
+                       for y = (autowrap:c-aref in channel :pointer)
+                       do (setf (aref x i)
+                                (autowrap:c-aref y i :float))))))
+  
+    (statistic-leave)))
+
+#+nil
 (defun process-thread-loop ()
   ;; TODO (declare (optimize (speed 3) (safety 0)))
   (let ((thread-mailbox (.process-thread-mailbox *audio*))
@@ -159,7 +179,7 @@
                            for y = (autowrap:c-aref in channel :pointer)
                            do (setf (aref x i)
                                     (autowrap:c-aref y i :float))))))
-        
+
         (statistic-leave))
       (sb-concurrency:send-message audio-mailbox t))))
 
@@ -172,6 +192,9 @@
   (declare (optimize (speed 3) (safety 0))
            (ignore input-buffer time-info status-flags user-data
                    frame-per-buffer))
+  (audio-loop)
+  (write-master-buffer output-buffer)
+  #+nil
   (let ((thread-mailbox (.process-thread-mailbox *audio*))
         (audio-mailbox (.audio-mailbox *audio*)))
     (sunless (.process-thread *audio*)
