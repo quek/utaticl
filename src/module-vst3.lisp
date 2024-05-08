@@ -226,6 +226,7 @@
 
   (vst3-ffi::process (.audio-processor self)
                      (autowrap:ptr *process-data*))
+
   #+nil
   (log:debug (loop for i below 10
                    collect (autowrap:c-aref (car (.buffer-out self)) i :float) ))
