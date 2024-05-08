@@ -68,28 +68,25 @@
   (prepare (.master-track self))
 
   (loop with tracks = (track-all self)
-        while tracks
-        do (process-send self tracks)
-           (setf tracks (process-receive self tracks)))
+        with tracks-lenght = (length tracks)
+          initially (loop for track in tracks
+                          do (process-send self track))
+        until (zerop tracks-lenght)
+        do (aif (sb-concurrency:receive-message (.mailbox self))
+                (process-send self it)
+                (decf tracks-lenght)))
 
   (when (.play-p self)
     (setf (.play-start self) (.play-end self))))
 
-(defmethod process-send ((self project) tracks)
-  (loop for track in tracks
-        do (sb-concurrency:send-message
-            *thread-pool*
-            (list (lambda (project track)
-                    (let ((*project* project))
-                      (sb-concurrency:send-message
-                       (.mailbox project) (process track))))
-                  self track))))
-
-(defmethod process-receive ((self project) tracks)
-  (loop repeat (length tracks)
-        for track = (sb-concurrency:receive-message (.mailbox self))
-        if track
-          collect track))
+(defmethod process-send ((self project) track)
+  (sb-concurrency:send-message
+   *thread-pool*
+   (list (lambda (project track)
+           (let ((*project* project))
+             (sb-concurrency:send-message
+              (.mailbox project) (process track))))
+         self track)))
 
 (defmethod terminate ((self project))
   (terminate (.master-track self)))

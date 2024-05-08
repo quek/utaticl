@@ -7,3 +7,19 @@
 (defmethod param ((self module-builtin) symbol)
   (gethash symbol (.params self)))
 
+(defmethod process ((self module-builtin))
+  (if (and (plusp (c-ref *process-data* (:struct (sb:vst-process-data)) :num-inputs))
+           (plusp (c-ref *process-data* (:struct (sb:vst-process-data)) :num-outputs)))
+      (loop for channel-index below 2
+            for input-channel = (inputs-channel *process-data* 0 channel-index)
+            for output-channel = (outputs-channel *process-data* 0 channel-index)
+            for input-silent-p = (inputs-silence-flags *process-data* 0 channel-index)
+            if input-silent-p
+              do (setf (outputs-silence-flags *process-data* 0 channel-index) t)
+            else
+              do (loop for i below *frames-per-buffer*
+                       do (setf (cffi:mem-aref output-channel :float i)
+                                (process-sample self (cffi:mem-aref input-channel :float i))))
+                 (setf (outputs-silence-flags *process-data* 0 channel-index) nil))
+      (setf (outputs-silence-flags *process-data* 0) (1- (ash 1 2))))
+  (call-next-method))

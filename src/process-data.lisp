@@ -13,22 +13,8 @@
     (f "in" (sb:vst-process-data.inputs* self) (sb:vst-process-data.num-inputs self))
     (f "out" (sb:vst-process-data.outputs* self) (sb:vst-process-data.num-outputs self))))
 
-(defmethod terminate ((self sb:vst-process-data))
-  (flet ((free (audio-bus-buffer nbuses)
-           (let ((ptr (sb:vst-audio-bus-buffers.vst-audio-bus-buffers-channel-buffers32 audio-bus-buffer)))
-             (unless (autowrap:wrapper-null-p ptr)
-               (loop for i below nbuses
-                     do (autowrap:free (autowrap:c-aref ptr i :pointer)))
-               (autowrap:free ptr)
-               (autowrap:free audio-bus-buffer)))))
-    (free (sb:vst-process-data.inputs* self)
-          (sb:vst-process-data.num-inputs self))
-    (free (sb:vst-process-data.outputs* self)
-          (sb:vst-process-data.num-outputs self))
-    (autowrap:free self)))
-
 (defmethod prepare ((self sb:vst-process-data))
-  ;; silence flag たてると process でもたったままになるのでバッファ初期化する
+  ;; silence flag たてると process 後もたったままなのでバッファ初期化する
   (flet ((f (audio-bus-buffers nbuses)
            (loop for bus-index below nbuses
                  for bus = (c-ref audio-bus-buffers (:struct (sb:vst-audio-bus-buffers)) bus-index)
@@ -44,6 +30,75 @@
   (setf (sb:vst-process-data.outputs*.silence-flags self)
         0)
 
-
   ;; TODO midi event
   )
+
+(defmethod inputs ((self sb:vst-process-data) bus-index)
+  (cffi:inc-pointer (c-ref self (:struct (sb:vst-process-data))
+                           :inputs)
+                    (* bus-index (autowrap:sizeof '(:struct (sb:vst-audio-bus-buffers))))))
+
+(defmethod inputs-channel ((self sb:vst-process-data) bus-index channel-index)
+  (cffi:mem-aref (c-ref (inputs self bus-index)
+                        (:struct (sb:vst-audio-bus-buffers))
+                        :vst-audio-bus-buffers-channel-buffers32)
+                 :pointer
+                 channel-index))
+
+(defmethod inputs-silence-flags ((self sb:vst-process-data) bus-index &optional channel-index)
+  (let ((silence-flags (c-ref (inputs self bus-index)
+              (:struct (sb:vst-audio-bus-buffers))
+              :silence-flags)))
+    (if channel-index
+        (= (ldb (byte 1 channel-index) silence-flags) 1)
+        silence-flags)))
+
+(defmethod (setf inputs-silence-flags) (value (self sb:vst-process-data) bus-index &optional channel-index)
+  (if channel-index
+      (setf (ldb (byte 1 channel-index) #1=(c-ref (inputs self bus-index)
+                                                  (:struct (sb:vst-audio-bus-buffers))
+                                                  :silence-flags))
+            (if value 1 0))
+      (setf #1# value)))
+
+(defmethod outputs ((self sb:vst-process-data) bus-index)
+  (cffi:inc-pointer (c-ref self (:struct (sb:vst-process-data))
+                           :outputs)
+                    (* bus-index (autowrap:sizeof '(:struct (sb:vst-audio-bus-buffers))))))
+
+(defmethod outputs-channel ((self sb:vst-process-data) bus-index channel-index)
+  (cffi:mem-aref (c-ref (outputs self bus-index)
+                        (:struct (sb:vst-audio-bus-buffers))
+                        :vst-audio-bus-buffers-channel-buffers32)
+                 :pointer
+                 channel-index))
+
+(defmethod outputs-silence-flags ((self sb:vst-process-data) bus-index &optional channel-index)
+  (let ((silence-flags (c-ref (outputs self bus-index)
+              (:struct (sb:vst-audio-bus-buffers))
+              :silence-flags)))
+    (if channel-index
+        (= (ldb (byte 1 channel-index) silence-flags) 1)
+        silence-flags)))
+
+(defmethod (setf outputs-silence-flags) (value (self sb:vst-process-data) bus-index &optional channel-index)
+  (if channel-index
+      (setf (ldb (byte 1 channel-index) #1=(c-ref (outputs self bus-index)
+                                                  (:struct (sb:vst-audio-bus-buffers))
+                                                  :silence-flags))
+            (if value 1 0))
+      (setf #1# value)))
+
+(defmethod terminate ((self sb:vst-process-data))
+  (flet ((free (audio-bus-buffer nbuses)
+           (let ((ptr (sb:vst-audio-bus-buffers.vst-audio-bus-buffers-channel-buffers32 audio-bus-buffer)))
+             (unless (autowrap:wrapper-null-p ptr)
+               (loop for i below nbuses
+                     do (autowrap:free (autowrap:c-aref ptr i :pointer)))
+               (autowrap:free ptr)
+               (autowrap:free audio-bus-buffer)))))
+    (free (sb:vst-process-data.inputs* self)
+          (sb:vst-process-data.num-inputs self))
+    (free (sb:vst-process-data.outputs* self)
+          (sb:vst-process-data.num-outputs self))
+    (autowrap:free self)))
