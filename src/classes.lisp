@@ -25,6 +25,7 @@
    (mailbox :initform (sb-concurrency:make-mailbox) :accessor .mailbox)
    (master-track :initform (make-instance 'master-track) :accessor .master-track)
    (play-p :initform nil :accessor .play-p)
+   (play-just-stop-p :initform nil :accessor .play-just-stop-p)
    (play-start :initarg :play-start :initform .0d0 :accessor .play-start)
    (play-end :initarg :play-end :initform .0d0 :accessor .play-end)
    (loop-start :initarg :loop-start :initform .0d0 :accessor .loop-start)

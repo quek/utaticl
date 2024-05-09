@@ -63,6 +63,7 @@
    (:file "arrangement")
    (:file "rack")
    (:file "track")
+   (:file "master-track")
    (:file "lane")
    (:file "clip")
    (:file "clip-note")

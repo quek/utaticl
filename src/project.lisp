@@ -62,10 +62,25 @@
     (render (.rack self))
     (render (.commander self))))
 
+(defmethod (setf .play-p) :after (value (self project))
+  (unless (.play-p self)
+    (setf (.play-just-stop-p self) t)))
+
 (defmethod process ((self project))
-  (when (.play-p self)
-    (update-play-position self))
   (prepare (.master-track self))
+
+  (when (.play-p self)
+    (update-play-position self)
+
+    (when (.play-just-stop-p *project*)
+      (all-note-off (.master-track self))
+      (setf (.play-just-stop-p *project*) nil))
+
+    (if (< (.play-end self) (.play-start self))
+        (progn
+          (prepare-event (.master-track self) (.play-start self) (.loop-end self) t)
+          (prepare-event (.master-track self) (.loop-start self) (.play-end self) nil))
+        (prepare-event (.master-track self) (.play-start self) (.play-end self) nil)))
 
   (loop with tracks = (track-all self)
         with tracks-lenght = (length tracks)

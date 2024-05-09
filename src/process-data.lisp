@@ -28,10 +28,7 @@
   (setf (sb:vst-process-data.inputs*.silence-flags self)
         0)
   (setf (sb:vst-process-data.outputs*.silence-flags self)
-        0)
-
-  ;; TODO midi event
-  )
+        0))
 
 (defmethod inputs ((self sb:vst-process-data) bus-index)
   (cffi:inc-pointer (c-ref self (:struct (sb:vst-process-data))

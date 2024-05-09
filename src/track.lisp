@@ -57,6 +57,13 @@
         (setf (sb:vst-audio-bus-buffers.vst-audio-bus-buffers-channel-buffers32 outputs)
               channels)))))
 
+(defmethod all-note-off ((self track))
+  ;; TODO
+  ;; TODO
+  ;; TODO
+  (loop for track in (.tracks self)
+        do (all-note-off track)))
+
 (defmethod fader ((self track))
   (find-if (lambda (x) (typep x 'module-fader-track))
            (.modules self)))
@@ -72,6 +79,13 @@
         do (prepare module))
   (loop for track in (.tracks self)
         do (prepare track)))
+
+(defmethod prepare-event ((self track) start end loop-p)
+  (let ((*process-data* (.process-data self)))
+    (loop for lane in (.lanes self)
+          do (prepare-event lane start end loop-p))
+    (loop for track in (.tracks self)
+          do (prepare-event track start end track))))
 
 (defmethod process :around ((self track))
   (let ((*process-data* (.process-data self)))
@@ -101,9 +115,6 @@
   (if (.module-wait-for self)
       self
       nil))
-
-(defmethod process ((self master-track))
-  (call-next-method))
 
 (defmethod module-add ((self track) module)
   (setf (.modules self)
