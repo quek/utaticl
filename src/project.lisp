@@ -1,7 +1,13 @@
 (in-package :dgw)
 
 (defmethod initialize-instance :after ((self project) &key)
+  (setf (.bpm self) 128.0)
   (setf (.target-track self) (.master-track self)))
+
+(defmethod (setf .bpm) :after (value (self project))
+  (setf (.sec-per-beat self) (/ 60.0d0 value))
+  (setf (.samples-per-beat self) (* (.sec-per-beat self) *sample-rate*)))
+
 
 (defun cmd-add (project cmd-class &rest args)
   (push (apply #'make-instance cmd-class args) (.cmd-queue project)))
@@ -105,6 +111,11 @@
 
 (defmethod terminate ((self project))
   (terminate (.master-track self)))
+
+(defmethod time-to-sample ((self project) time)
+  (declare (double-float time))
+  (round (* time (.samples-per-beat self))))
+
 
 (defmethod track-all ((self project))
   (labels ((f (track)

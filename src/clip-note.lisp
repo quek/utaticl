@@ -21,14 +21,27 @@
         for note-end = (+ note-start (.duration note))
         do (cond ((and (<= start note-start)
                        (< note-start end))
-                  ;; TODO note on
-                  )
+                  (note-on *process-data*
+                           (.key note)
+                           (.channel note)
+                           (.velocity note)
+                           (time-to-sample *project* (- note-start start))))
                  ((and (< start note-end)
                        (<= note-end end))
-                  ;; TODO note off
-                  )
+                  (note-off *process-data*
+                            (.key note)
+                            (.channel note)
+                            1.0
+                            (time-to-sample *project* (- note-end start))))
                  ((and loop-p
                        (< note-start end)
                        (<= end note-end))
-                  ;; TODO note off
-                  ))))
+                  ;; ノートの途中でループの折り返しなので note off する
+                  (note-off *process-data*
+                            (.key note)
+                            (.channel note)
+                            1.0
+                            (time-to-sample *project* (- end start))))
+                 ((<= end note-start)
+                  ;; note は time 順にソートされている
+                  (loop-finish)))))

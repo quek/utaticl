@@ -18,7 +18,9 @@
    (piano-roll :initform nil :accessor .piano-roll)
    (commander :initform (make-instance 'commander) :accessor .commander)
    (rack :initform (make-instance 'rack) :accessor .rack)
-   (bpm :initform 128.0 :accessor .bpm)
+   (bpm :accessor .bpm)
+   (sec-per-beat :accessor .sec-per-beat)
+   (samples-per-beat :accessor .samples-per-beat)
    (cmd-queue :initform nil :accessor .cmd-queue)
    (cmd-undo-stack :initform nil :accessor .cmd-undo-stack)
    (cmd-redo-stack :initform nil :accessor .cmd-redo-stack)
@@ -120,7 +122,9 @@
    (duration :initarg :duration :initform 16.0d0 :accessor .duration)))
 
 (defclass note (time-thing)
-  ((key :initarg :key :initform +c4+ :accessor .key))
+  ((key :initarg :key :initform +c4+ :accessor .key)
+   (channel :initarg :channel :initform 0 :accessor .channel)
+   (velocity :initarg :velocity :initform .8 :accessor .velocity))
   (:default-initargs :duration 1.0d0 :color (color #x30 #xc0 #x30 #x80)))
 
 (defmethod print-object ((self note) stream)

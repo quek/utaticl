@@ -58,6 +58,21 @@
             (if value 1 0))
       (setf #1# value)))
 
+(defmethod note-off ((self sb:vst-process-data) key channel velocity sample-offset)
+  (let ((event (autowrap:alloc 'sb:vst-event)))
+    (setf (sb:vst-event.bus-index event) 0) ;TODO
+    (setf (sb:vst-event.sample-offset event) sample-offset)
+    (setf (sb:vst-event.ppq-position event) 0) ;TODO
+    (setf (sb:vst-event.flags event) sb:+vst-event-event-flags-k-is-live+) ;TODO
+    (setf (sb:vst-event.type event) sb:+vst-event-event-types-k-note-off-event+)
+    (setf (sb:vst-event.vst-event-note-off.channel event) channel)
+    (setf (sb:vst-event.vst-event-note-off.pitch event) key)
+    (setf (sb:vst-event.vst-event-note-off.velocity event) velocity)
+    (setf (sb:vst-event.vst-event-note-off.note-id event) -1)
+    (setf (sb:vst-event.vst-event-note-off.tuning event) 0)
+    
+    ))
+
 (defmethod outputs ((self sb:vst-process-data) bus-index)
   (cffi:inc-pointer (c-ref self (:struct (sb:vst-process-data))
                            :outputs)
