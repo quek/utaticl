@@ -18,4 +18,4 @@
                     (< clip-start end))
                (and (< start clip-end)
                     (<= clip-end end)))
-          do (prepare-event start end loop-p)))
+          do (prepare-event clip start end loop-p)))

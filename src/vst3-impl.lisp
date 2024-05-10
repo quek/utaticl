@@ -697,7 +697,7 @@
   :vst3-c-api-class sb:i-plug-frame)
 
 (def-vst3-impl parameter-changes (unknown)
-  ()
+  ((changes :initform nil :accessor .changes))
   ((get-parameter-count ()
                         :int
                         ;; TODO
@@ -713,6 +713,14 @@
                        (cffi:null-pointer)))
   :iid vst3-ffi::+vst-iparameter-changes-iid+
   :vst3-c-api-class sb:vst-i-parameter-changes)
+
+(defmethod dgw::prepare ((self parameter-changes))
+  (loop for change in (.changes self)
+        do (autowrap:free change)))
+
+(defmethod release :around ((self parameter-changes))
+  (when (zerop (call-next-method))
+    (dgw::prepare self)))
 
 (def-vst3-impl event-list (unknown)
   ((events :initform nil :accessor .events))
@@ -735,3 +743,11 @@
               sb:+k-result-ok+))
   :iid vst3-ffi::+vst-ievent-list-iid+
   :vst3-c-api-class sb:vst-i-event-list)
+
+(defmethod dgw::prepare ((self event-list))
+  (loop for event in (.events self)
+        do (autowrap:free event)))
+
+(defmethod release :around ((self event-list))
+  (when (zerop (call-next-method))
+    (dgw::prepare self)))

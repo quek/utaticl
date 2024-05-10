@@ -79,7 +79,7 @@
     (update-play-position self)
 
     (when (.play-just-stop-p *project*)
-      (all-note-off (.master-track self))
+      (note-off-all (.master-track self))
       (setf (.play-just-stop-p *project*) nil))
 
     (if (< (.play-end self) (.play-start self))

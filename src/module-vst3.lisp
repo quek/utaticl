@@ -219,17 +219,10 @@
         (vst3-ffi::on-size view (autowrap:ptr rect))))))
 
 (defmethod process ((self module-vst3))
-  (setf (sb:vst-process-data.input-parameter-changes *process-data*)
-        (vst3-impl::ptr (.parameter-changes-in self)))
-  (setf (sb:vst-process-data.output-parameter-changes *process-data*)
-        (cffi:null-pointer))          ;TODO
 
   (vst3-ffi::process (.audio-processor self)
-                     (autowrap:ptr *process-data*))
+                     (autowrap:ptr (.wrap *process-data*)))
 
-  #+nil
-  (log:debug (loop for i below 10
-                   collect (autowrap:c-aref (car (.buffer-out self)) i :float) ))
   (call-next-method))
 
 #+nil

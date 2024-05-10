@@ -70,6 +70,7 @@
    (:file "seq-note")
    (:file "note")
    (:file "process-data")
+   (:file "audio-bus-buffers")
    (:file "piano-roll")
    (:file "show-mixin")
    (:file "time-ruler-mixin")

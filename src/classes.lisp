@@ -224,10 +224,17 @@
 
 (defclass process-data ()
   ((wrap  :accessor .wrap)
+   (inputs :accessor .inputs)
+   (outputs :accessor .outputs)
    (input-events :accessor .input-events)
    (output-events :accessor .output-events)
    (input-parameter-changes :accessor .input-parameter-changes)
-   (output-parameter-changes :accessor .output-parameter-changes)))
+   (output-parameter-changes :accessor .output-parameter-changes)
+   (notes-on :initform nil :accessor .notes-on)))
+
+(defclass audio-bus-buffers ()
+  ((ptr :accessor .ptr)
+   (nbuses :initarg :nbuses :initform 1 :accessor .nbuses)))
 
 (defclass commander (show-mixin)
   ((query :initform "" :accessor .query)))

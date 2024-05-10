@@ -145,9 +145,9 @@
 
     ;; TODO かんぜんに暫定
     (let ((master-track (.master-track (car (.projects *app*)))))
-      (loop for channel below 2
-            for in = (outputs-channel (.process-data master-track) 0 channel)
-            for out = (nth channel (.master-buffer *audio*))
+      (loop for channel-index below 2
+            for in = (buffer (.inputs (.process-data master-track)) 0 channel-index)
+            for out = (nth channel-index (.master-buffer *audio*))
             do (loop for i below *frames-per-buffer*
                      do (setf (aref out i)
                               (cffi:mem-aref in :float i)))))
