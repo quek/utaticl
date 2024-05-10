@@ -1,5 +1,27 @@
 (in-package :dgw)
 
+(defmethod initialize-instance :after ((self process-data) &key)
+  (let ((wrap (autowrap:alloc 'sb:vst-process-data))
+        (input-events (make-instance 'vst3-impl::event-list))
+        (output-events (make-instance 'vst3-impl::event-list))
+        (input-parameter-changes (make-instance 'vst3-impl::parameter-changes))
+        (output-parameter-changes (make-instance 'vst3-impl::parameter-changes)))
+    (setf (.wrap self) wrap)
+
+    (setf (.input-events self) input-events)
+    (setf (sb:vst-process-data.input-events wrap) (vst3-impl::ptr input-events))
+    (setf (.output-events self) output-events)
+    (setf (sb:vst-process-data.output-events wrap) (vst3-impl::ptr output-events))
+
+    (setf (.input-parameter-changes self) input-parameter-changes)
+    (setf (sb:vst-process-data.input-parameter-changes wrap) (vst3-impl::ptr input-parameter-changes))
+    (setf (.output-parameter-changes self) output-parameter-changes)
+    (setf (sb:vst-process-data.output-parameter-changes wrap) (vst3-impl::ptr output-parameter-changes))
+
+    (sb-ext:finalize self (lambda ()
+                            (log:trace "finalize free" wrap)
+                            (autowrap:free wrap)))))
+
 (defmethod p ((self sb:vst-process-data))
   (flet ((f (label audio-bus-buffer nbuses)
            (let ((ptr (sb:vst-audio-bus-buffers.vst-audio-bus-buffers-channel-buffers32 audio-bus-buffer)))
@@ -59,7 +81,7 @@
       (setf #1# value)))
 
 (defmethod note-off ((self sb:vst-process-data) key channel velocity sample-offset)
-  (let ((event (autowrap:alloc 'sb:vst-event)))
+  (let ((event (autowrap:alloc '(:struct (sb:vst-event)))))
     (setf (sb:vst-event.bus-index event) 0) ;TODO
     (setf (sb:vst-event.sample-offset event) sample-offset)
     (setf (sb:vst-event.ppq-position event) 0) ;TODO

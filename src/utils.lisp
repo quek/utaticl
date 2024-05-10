@@ -10,5 +10,10 @@
                 thereis (and (char= (char-downcase xc) yc)
                              (= (incf yi) end))))))
 
+(cffi:defcfun ("memcpy" memcpy) :pointer
+  (dst :pointer)
+  (src :pointer)
+  (size :size))
+
 (defun uid ()
   (random-uuid:to-string (random-uuid:make-uuid)))

@@ -222,6 +222,13 @@
   ((id :initarg :id :initform nil :accessor .id)
    (value :initarg :value :initform .0d0 :accessor .value)))
 
+(defclass process-data ()
+  ((wrap  :accessor .wrap)
+   (input-events :accessor .input-events)
+   (output-events :accessor .output-events)
+   (input-parameter-changes :accessor .input-parameter-changes)
+   (output-parameter-changes :accessor .output-parameter-changes)))
+
 (defclass commander (show-mixin)
   ((query :initform "" :accessor .query)))
 

@@ -715,19 +715,23 @@
   :vst3-c-api-class sb:vst-i-parameter-changes)
 
 (def-vst3-impl event-list (unknown)
-  ()
+  ((events :initform nil :accessor .events))
   ((get-event-count ()
                     :int
-                    ;; TODO
-                    0)
+                    (length (.events self)))
    (get-event ((index :int)
                (e :pointer))
               sb:tresult
-              ;; TODO
+              (dgw::memcpy e
+                           (autowrap:ptr (nth index (.events self)))
+                           (autowrap:sizeof '(:struct (sb:vst-event))))
               sb:+k-result-ok+)
    (add-event ((e :pointer))
               sb:tresult
-              ;; TODO
+              (let ((event (autowrap:alloc '(:struct (sb:vst-event)))))
+                (dgw::memcpy (autowrap:ptr event)
+                             e
+                             (autowrap:sizeof '(:struct (sb:vst-event)))))
               sb:+k-result-ok+))
   :iid vst3-ffi::+vst-ievent-list-iid+
   :vst3-c-api-class sb:vst-i-event-list)
