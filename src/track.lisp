@@ -27,12 +27,12 @@
   (loop for track in (.tracks self)
         do (prepare track)))
 
-(defmethod prepare-event ((self track) start end loop-p)
+(defmethod prepare-event ((self track) start end loop-p offset-samples)
   (let ((*process-data* (.process-data self)))
     (loop for lane in (.lanes self)
-          do (prepare-event lane start end loop-p))
+          do (prepare-event lane start end loop-p offset-samples))
     (loop for track in (.tracks self)
-          do (prepare-event track start end track))))
+          do (prepare-event track start end loop-p offset-samples))))
 
 (defmethod process :around ((self track))
   (let ((*process-data* (.process-data self)))

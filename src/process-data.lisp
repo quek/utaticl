@@ -83,7 +83,8 @@
     (setf (sb:vst-event.vst-event-note-off.note-id event) -1)
     (setf (sb:vst-event.vst-event-note-off.tuning event) .0)
     (vst3-impl::add-event (.input-events self) (autowrap:ptr event)))
-  (setf (.notes-on self) (delete key (.notes-on self) :test #'equal)))
+  (setf (.notes-on self) (delete key (.notes-on self) :test #'equal))
+  (values))
 
 (defmethod note-off-all ((self process-data))
   (loop for (key . channel) in (.notes-on self)
@@ -104,7 +105,8 @@
     (setf (sb:vst-event.vst-event-note-on.note-id event) -1)
     (setf (sb:vst-event.vst-event-note-on.length event) 0)
     (vst3-impl::add-event (.input-events self) (autowrap:ptr event)))
-  (pushnew (cons key channel) (.notes-on self) :test #'equal))
+  (pushnew (cons key channel) (.notes-on self) :test #'equal)
+  (values))
 
 (defmethod swap-in-out ((self process-data))
   (let ((wrap (.wrap self)))

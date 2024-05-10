@@ -10,10 +10,10 @@
   (setf (.clips self)
         (delete clip (.clips self))))
 
-(defmethod prepare-event ((self lane) start end loop-p)
+(defmethod prepare-event ((self lane) start end loop-p offset-samples)
   (loop for clip in (.clips self)
         for clip-start = (.time clip)
         for clip-end = (+ clip-start (.duration clip))
         if (and (< clip-start end)
                 (< start clip-end))
-          do (prepare-event clip start end loop-p)))
+          do (prepare-event clip start end loop-p offset-samples)))

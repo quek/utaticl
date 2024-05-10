@@ -15,7 +15,7 @@
 (defmethod .notes ((self clip-note))
   (.notes (.seq self)))
 
-(defmethod prepare-event ((self clip-note) start end loop-p)
+(defmethod prepare-event ((self clip-note) start end loop-p offset-samples)
   (loop for note in (.notes self)
         for note-start = (+ (.time note) (.time self))
         for note-end = (+ note-start (.duration note))
@@ -25,14 +25,14 @@
                            (.key note)
                            (.channel note)
                            (.velocity note)
-                           (time-to-sample *project* (- note-start start))))
+                           (+ offset-samples (time-to-sample *project* (- note-start start)))))
                  ((and (< start note-end)
                        (<= note-end end))
                   (note-off *process-data*
                             (.key note)
                             (.channel note)
                             1.0
-                            (time-to-sample *project* (- note-end start))))
+                            (+ offset-samples (time-to-sample *project* (- note-end start)))))
                  ((and loop-p
                        (< note-start end)
                        (<= end note-end))
@@ -41,7 +41,7 @@
                             (.key note)
                             (.channel note)
                             1.0
-                            (time-to-sample *project* (- end start))))
+                            (+ offset-samples (time-to-sample *project* (- end start)))))
                  ((<= end note-start)
                   ;; note は time 順にソートされている
                   (loop-finish)))))

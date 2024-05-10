@@ -88,9 +88,10 @@
 
     (if (< (.play-end self) (.play-start self))
         (progn
-          (prepare-event (.master-track self) (.play-start self) (.loop-end self) t)
-          (prepare-event (.master-track self) (.loop-start self) (.play-end self) nil))
-        (prepare-event (.master-track self) (.play-start self) (.play-end self) nil)))
+          (prepare-event (.master-track self) (.play-start self) (.loop-end self) t 0)
+          (prepare-event (.master-track self) (.loop-start self) (.play-end self) nil
+                         (time-to-sample *project* (- (.loop-end self) (.play-start self)))))
+        (prepare-event (.master-track self) (.play-start self) (.play-end self) nil 0)))
 
   (loop with tracks = (track-all self)
         with tracks-lenght = (length tracks)
