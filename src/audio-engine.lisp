@@ -86,15 +86,6 @@
   (current-time pa::pa-time)
   (output-buffer-dac-time pa::pa-time))
 
-(defun sec-per-line ()
-  ;; (/ 60.0 (.bpm (.sequencer *audio*)) (.lpb (.sequencer *audio*)))
-  (/ 60.0 128.0 4))
-
-(defun sec-per-frame ()
-  (/ 1.0 *sample-rate*))
-(defun frames-per-line ()
-  (/ (sec-per-line) (sec-per-frame)))
-
 (defun start-audio ()
   (unless (.processing *audio*)
     (setf (.processing *audio*) t)
@@ -154,31 +145,6 @@
 
     (statistic-leave)))
 
-#+nil
-(defun process-thread-loop ()
-  ;; TODO (declare (optimize (speed 3) (safety 0)))
-  (let ((thread-mailbox (.process-thread-mailbox *audio*))
-        (audio-mailbox (.audio-mailbox *audio*)))
-    (loop
-      (sb-concurrency:receive-message thread-mailbox)
-      (sb-sys:without-gcing
-        (statistic-enter)
-        (process *app*)
-
-        ;; TODO かんぜんに暫定
-        (let ((master-track (.master-track (car (.projects *app*)))))
-          (let ((in (sb:vst-process-data.outputs*.vst-audio-bus-buffers-channel-buffers32
-                     (.process-data master-track)))
-                (out (.master-buffer *audio*)))
-            (loop for channel below 2
-                  do (loop for i below *frames-per-buffer*
-                           for x = (nth channel out)
-                           for y = (autowrap:c-aref in channel :pointer)
-                           do (setf (aref x i)
-                                    (autowrap:c-aref y i :float))))))
-
-        (statistic-leave))
-      (sb-concurrency:send-message audio-mailbox t))))
 
 (cffi:defcallback audio-callback :int ((input-buffer :pointer)
                                        (output-buffer :pointer)
@@ -191,16 +157,6 @@
                    frame-per-buffer))
   (audio-loop)
   (write-master-buffer output-buffer)
-  #+nil
-  (let ((thread-mailbox (.process-thread-mailbox *audio*))
-        (audio-mailbox (.audio-mailbox *audio*)))
-    (sunless (.process-thread *audio*)
-             (setf it (sb-thread:make-thread #'process-thread-loop
-                                             :name "CoLiTrSynth process-thread-loop"))
-             (sb-concurrency:send-message thread-mailbox t))
-    (sb-concurrency:receive-message audio-mailbox)
-    (write-master-buffer output-buffer)
-    (sb-concurrency:send-message thread-mailbox t))
   0)
 
 (defun statistic-enter ()

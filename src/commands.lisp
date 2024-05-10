@@ -18,6 +18,20 @@
 (defmethod redo ((self command))
   (execute self))
 
+(defcommand cmd-audio-engine-start (command)
+  ()
+  (:default-initargs :undo-p nil))
+
+(defmethod execute ((self cmd-audio-engine-start))
+  (start-audio))
+
+(defcommand cmd-audio-engine-stop (command)
+  ()
+  (:default-initargs :undo-p nil))
+
+(defmethod execute ((self cmd-audio-engine-stop))
+  (stop-audio))
+
 (defcommand cmd-clip-add (command)
   ((time :initarg :time :accessor .time)
    (lane-id :initarg :lane-id :accessor .lane-id)
