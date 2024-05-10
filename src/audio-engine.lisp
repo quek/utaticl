@@ -130,20 +130,19 @@
                      (aref right i) 0.0)))))
 
 (defun audio-loop ()
-  (sb-sys:without-gcing
-    (statistic-enter)
-    (process *app*)
+  (statistic-enter)
+  (process *app*)
 
-    ;; TODO かんぜんに暫定
-    (let ((master-track (.master-track (car (.projects *app*)))))
-      (loop for channel-index below 2
-            for in = (buffer (.inputs (.process-data master-track)) 0 channel-index)
-            for out = (nth channel-index (.master-buffer *audio*))
-            do (loop for i below *frames-per-buffer*
-                     do (setf (aref out i)
-                              (cffi:mem-aref in :float i)))))
+  ;; TODO かんぜんに暫定
+  (let ((master-track (.master-track (car (.projects *app*)))))
+    (loop for channel-index below 2
+          for in = (buffer (.inputs (.process-data master-track)) 0 channel-index)
+          for out = (nth channel-index (.master-buffer *audio*))
+          do (loop for i below *frames-per-buffer*
+                   do (setf (aref out i)
+                            (cffi:mem-aref in :float i)))))
 
-    (statistic-leave)))
+  (statistic-leave))
 
 
 (cffi:defcallback audio-callback :int ((input-buffer :pointer)
@@ -155,9 +154,10 @@
   (declare (optimize (speed 3) (safety 0))
            (ignore input-buffer time-info status-flags user-data
                    frame-per-buffer))
-  (audio-loop)
-  (write-master-buffer output-buffer)
-  0)
+  (sb-sys:without-gcing
+    (audio-loop)
+    (write-master-buffer output-buffer)
+    0))
 
 (defun statistic-enter ()
   (let* ((now (get-internal-real-time))
