@@ -74,14 +74,14 @@
   (autowrap:with-alloc (event '(:struct (sb:vst-event)))
     (setf (sb:vst-event.bus-index event) 0) ;TODO
     (setf (sb:vst-event.sample-offset event) sample-offset)
-    (setf (sb:vst-event.ppq-position event) 0) ;TODO
+    (setf (sb:vst-event.ppq-position event) .0d0) ;TODO
     (setf (sb:vst-event.flags event) sb:+vst-event-event-flags-k-is-live+) ;TODO
     (setf (sb:vst-event.type event) sb:+vst-event-event-types-k-note-off-event+)
     (setf (sb:vst-event.vst-event-note-off.channel event) channel)
     (setf (sb:vst-event.vst-event-note-off.pitch event) key)
     (setf (sb:vst-event.vst-event-note-off.velocity event) velocity)
     (setf (sb:vst-event.vst-event-note-off.note-id event) -1)
-    (setf (sb:vst-event.vst-event-note-off.tuning event) 0)
+    (setf (sb:vst-event.vst-event-note-off.tuning event) .0)
     (vst3-impl::add-event (.input-events self) (autowrap:ptr event)))
   (setf (.notes-on self) (delete key (.notes-on self) :test #'equal)))
 
@@ -94,12 +94,12 @@
   (autowrap:with-alloc (event '(:struct (sb:vst-event)))
     (setf (sb:vst-event.bus-index event) 0) ;TODO
     (setf (sb:vst-event.sample-offset event) sample-offset)
-    (setf (sb:vst-event.ppq-position event) 0) ;TODO
+    (setf (sb:vst-event.ppq-position event) .0d0) ;TODO
     (setf (sb:vst-event.flags event) sb:+vst-event-event-flags-k-is-live+) ;TODO
     (setf (sb:vst-event.type event) sb:+vst-event-event-types-k-note-on-event+)
     (setf (sb:vst-event.vst-event-note-on.channel event) channel)
     (setf (sb:vst-event.vst-event-note-on.pitch event) key)
-    (setf (sb:vst-event.vst-event-note-on.tuning event) 0)
+    (setf (sb:vst-event.vst-event-note-on.tuning event) .0)
     (setf (sb:vst-event.vst-event-note-on.velocity event) velocity)
     (setf (sb:vst-event.vst-event-note-on.note-id event) -1)
     (setf (sb:vst-event.vst-event-note-on.length event) 0)

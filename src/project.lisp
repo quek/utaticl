@@ -72,15 +72,19 @@
   (unless (.play-p self)
     (setf (.play-just-stop-p self) t)))
 
+(defmethod process :around ((self project))
+  (let ((*project* self))
+    (call-next-method)))
+
 (defmethod process ((self project))
   (prepare (.master-track self))
 
   (when (.play-p self)
     (update-play-position self)
 
-    (when (.play-just-stop-p *project*)
+    (when (.play-just-stop-p self)
       (note-off-all (.master-track self))
-      (setf (.play-just-stop-p *project*) nil))
+      (setf (.play-just-stop-p self) nil))
 
     (if (< (.play-end self) (.play-start self))
         (progn
