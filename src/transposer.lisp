@@ -2,6 +2,12 @@
 
 (defmethod render ((self transposer))
   (when (ig:begin "##transponser")
+    (if (.dirty-p *project*)
+        (ig:text "* ")
+        (ig:same-line))
+    (awhen (.path *project*)
+      (ig:text  (file-namestring it))
+      (ig:same-line))
     (button-toggle "▶" (.play-p *project*))
     (ig:same-line)
     (button-toggle "Loop" (.loop-p *project*))

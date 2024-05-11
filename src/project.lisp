@@ -22,8 +22,10 @@
 (defmethod cmd-run ((self project))
   (let ((*project* self))
     (loop for cmd in (nreverse (.cmd-queue self))
-          do (sb-thread:with-mutex ((.mutex *app*))
-               (execute cmd))
+          do (if (.with-mutex-p cmd)
+                 (sb-thread:with-mutex ((.mutex *app*))
+                   (execute cmd))
+                 (execute cmd))
              (when (.undo-p cmd)
                (setf (.cmd-redo-stack self) nil)
                (push cmd (.cmd-undo-stack self))
@@ -61,13 +63,23 @@
                  (some #'f (.tracks track)))))
     (f (.master-track project))))
 
-(defmethod render ((self project))
-  (let ((*project* self))
-    (render (.transposer self))
-    (render (.arrangement self))
-    (render (.piano-roll self))
-    (render (.rack self))
-    (render (.commander self))))
+(defmethod open-project ((self project))
+  (stop-audio)
+  (multiple-value-bind (ok path)
+      (ftw:get-open-file-name
+       :initial-dir (substitute #\\ #\/
+                                (namestring
+                                 (ensure-directories-exist
+                                  (merge-pathnames "user/project/" *working-directory*))))
+       :filters '(("Lisp" "*.lisp") ("All" "*.*")))
+    (when ok
+      (with-open-file (in (car path) :direction :input)
+        (let ((project (deserialize (read in))))
+          (setf (.path project) path)
+          (terminate self)
+          (setf (.projects *app*)
+                (cons project (delete self (.projects *app*))))))))
+  (start-audio))
 
 (defmethod (setf .play-p) :after (value (self project))
   (unless (.play-p self)
@@ -114,6 +126,14 @@
              (sb-concurrency:send-message
               (.mailbox project) (process track))))
          self track)))
+
+(defmethod render ((self project))
+  (let ((*project* self))
+    (render (.transposer self))
+    (render (.arrangement self))
+    (render (.piano-roll self))
+    (render (.rack self))
+    (render (.commander self))))
 
 (defmethod save ((self project))
   (if (.path self)

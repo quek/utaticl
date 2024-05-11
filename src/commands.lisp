@@ -7,7 +7,8 @@
 
 (defclass command ()
   ((undo-p :initarg :undo-p :initform t :accessor .undo-p)
-   (execute-after :initarg :execute-after :initform nil :accessor .execute-after)))
+   (execute-after :initarg :execute-after :initform nil :accessor .execute-after)
+   (with-mutex-p :initarg :with-mutex-p :initform t :accessor .with-mutex-p)))
 
 (defmethod execute :after ((self command))
   (let ((f (.execute-after self)))
@@ -107,6 +108,13 @@
         (module (find (.module-id self) (.modules track) :key #'.neko-id)))
     (module-delete track module)))
 
+(defcommand cmd-open (command)
+  ()
+  (:default-initargs :undo-p nil))
+
+(defmethod execute ((self cmd-open))
+  (open-project *project*))
+
 (defcommand cmd-plugin-scan (command)
   ())
 
@@ -126,10 +134,17 @@
 
 (defcommand cmd-save (command)
   ()
-  (:default-initargs :undo-p nil))
+  (:default-initargs :undo-p nil :with-mutex-p nil))
 
 (defmethod execute ((self cmd-save))
   (save *project*))
+
+(defcommand cmd-save-as (command)
+  ()
+  (:default-initargs :undo-p nil :with-mutex-p nil))
+
+(defmethod execute ((self cmd-save-as))
+  (save-as *project*))
 
 (defcommand cmd-track-add (command)
   ((track-id-before :initarg :track-id-before
