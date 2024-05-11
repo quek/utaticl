@@ -348,7 +348,9 @@
   (let ((window (progn
                   ;; FIXMI なぜか初回の sdl2:create-window だと窓が表示されない・・・
                   (sdl2:destroy-window
-                   #1=(sdl2:create-window :title "DGW" :w 1600 :h 900
+                   #1=(sdl2:create-window :title "DGW"
+                                          :x 10 :y 40
+                                          :w 1600 :h 900
                                           :flags (list sdl2-ffi:+sdl-window-shown+
                                                        sdl2-ffi:+sdl-window-vulkan+
                                                        sdl2-ffi:+sdl-window-resizable+
