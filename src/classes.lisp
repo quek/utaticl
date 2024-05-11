@@ -68,7 +68,8 @@
   ())
 
 (defclass arrangement (time-ruler-mixin grid-mixin offset-mixin scroll-mixin zoom-mixin view)
-  ((default-lane-height :allocation :class :initform 50.0 :accessor .default-lane-height)
+  ((clip-at-mouse :initform nil :accessor .clip-at-mouse)
+   (default-lane-height :allocation :class :initform 50.0 :accessor .default-lane-height)
    (lane-height-map :initform (make-hash-table) :accessor .lane-height-map)
    (offset-x :initform 150.0 :accessor .offset-x)
    (time-ruler-height :initform 20.0 :accessor .time-ruler-height))
@@ -121,11 +122,15 @@
   ((time :initarg :time :initform 0.0d0 :accessor .time)
    (duration :initarg :duration :initform 16.0d0 :accessor .duration)))
 
+(defserialize time-thing time duration)
+
 (defclass note (time-thing)
   ((key :initarg :key :initform +c4+ :accessor .key)
    (channel :initarg :channel :initform 0 :accessor .channel)
    (velocity :initarg :velocity :initform .8 :accessor .velocity))
   (:default-initargs :duration 1.0d0 :color (color #x30 #xc0 #x30 #x80)))
+
+(defserialize note key channel velocity)
 
 (defmethod print-object ((self note) stream)
   (print-unreadable-object (self stream :type t :identity t)
@@ -137,10 +142,14 @@
 (defclass clip (time-thing)
   ((seq :initarg :seq :accessor .seq)))
 
+(defserialize clip seq)
+
 (defclass clip-note (clip)
   ()
   (:default-initargs :name nil :color nil
-   :seq (make-instance 'seq-note)))
+                     :seq (make-instance 'seq-note)))
+
+(defserialize clip-note)
 
 (defclass seq-note (time-thing)
   ((notes :initarg :notes
@@ -155,6 +164,8 @@
                 (make-instance 'note :key +b4+ :time 12.0d0 :duration 4.0d0))
           :accessor .notes))
   (:default-initargs :name "NOTES" :color (color #x30 #xc0 #x30 #x80)))
+
+(defserialize seq-note notes)
 
 (defclass plugin-info ()
   ((id :initarg :id :accessor .id)

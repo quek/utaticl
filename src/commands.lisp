@@ -52,6 +52,26 @@
       (when (and it (eq clip (.clip it)))
         (setf it nil)))))
 
+(defcommand cmd-clip-delete (command)
+  ((clip :accessor .clip)
+   (clip-id :initarg :clip-id :accessor .clip-id)
+   (lane-id :accessor .lane-id)))
+
+(defmethod execute ((self cmd-clip-delete))
+  (let* ((clip (find-neko (.clip-id self)))
+         (lane (lane clip)))
+    (setf (.clip self) (serialize clip))
+    (setf (.lane-id self) (.neko-id lane))
+    (clip-delete lane clip)
+    (swhen (.piano-roll *project*)
+      (when (and it (eq clip (.clip it)))
+        (setf it nil)))))
+
+(defmethod undo ((self cmd-clip-delete))
+  (let* ((clip (deserialize (.clip self)))
+         (lane (find-neko (.lane-id self))))
+    (clip-add lane clip)))
+
 (defcommand cmd-module-add (command)
   ((track-id :initarg :track-id :accessor .track-id)
    (plugin-info :initarg :plugin-info :accessor .plugin-info)))

@@ -2,15 +2,18 @@
 
 (defmethod handle-mouse ((self arrangement))
   (let* ((io (ig:get-io))
-         (mouse-pos (ig:get-mouse-pos)))
+         (mouse-pos (ig:get-mouse-pos))
+         (clip-at-mouse (.clip-at-mouse self)))
     (cond ((ig:is-mouse-double-clicked ig:+im-gui-mouse-button-left+)
-           (multiple-value-bind (time lane) (world-pos-to-time-lane self mouse-pos)
-             (setf time (time-grid-applied self time :floor))
-             (when (and (not (minusp time)) lane)
-               (cmd-add *project* 'cmd-clip-add
-                        :time time :lane-id (.neko-id lane)
-                        :execute-after (lambda (cmd)
-                                         (edit (find-neko (.clip-id cmd)))))))))
+           (if clip-at-mouse
+               (cmd-add *project* 'cmd-clip-delete :clip-id (.neko-id clip-at-mouse))
+               (multiple-value-bind (time lane) (world-pos-to-time-lane self mouse-pos)
+                 (setf time (time-grid-applied self time :floor))
+                 (when (and (not (minusp time)) lane)
+                   (cmd-add *project* 'cmd-clip-add
+                            :time time :lane-id (.neko-id lane)
+                            :execute-after (lambda (cmd)
+                                             (edit (find-neko (.clip-id cmd))))))))))
     (zoom-x-update self io)))
 
 (defmethod lane-height ((self arrangement) (lane lane))
@@ -20,27 +23,9 @@
                    (* (c-ref (ig:get-style) ig:im-gui-style :item-spacing :y)
                       2)))))
 
-(defmethod world-pos-to-time-lane ((self arrangement) pos)
-  (let* ((time (world-x-to-time self (.x pos)))
-         (lane (world-y-to-lane self (.y pos))))
-    (values time lane)))
-
-(defmethod world-x-to-time ((self arrangement) x)
-  (+ (/ (- x (.x (ig:get-window-pos)) (.offset-x self))
-        (.zoom-x self))
-     (ig:get-scroll-x)))
-
-(defmethod world-y-to-lane ((self arrangement) y)
-  (let ((local-y (+ (- y (.y (ig:get-window-pos)) (.time-ruler-height self))
-                    (ig:get-scroll-y))))
-    (labels ((f (track height)
-               (or (loop for lane in (.lanes track)
-                           thereis (and (< local-y (incf height (lane-height self lane))) lane))
-                   (loop for track in (.tracks track)
-                           thereis (f track height)))))
-      (f (.master-track *project*) 0))))
-
 (defmethod render ((self arrangement))
+  (setf (.clip-at-mouse self) nil)
+
   (ig:with-begin ("##arrangement" :flags ig:+im-gui-window-flags-no-scrollbar+)
     (render-grid self)
     (ig:with-begin-child ("##canvas" :window-flags ig:+im-gui-window-flags-horizontal-scrollbar+)
@@ -93,15 +78,20 @@
          (scroll-pos (@ (ig:get-scroll-x) (ig:get-scroll-y)))
          (pos1 (@ x1 y))
          (pos2 (@ x2 (+ y (lane-height self lane))))
-         (window-pos (ig:get-window-pos)))
+         (window-pos (ig:get-window-pos))
+         (mouse-pos (ig:get-mouse-pos)))
     (ig:set-cursor-pos pos1)
     (ig:text (format nil "  ~a" (.name clip)))
 
-    (ig:add-rect-filled draw-list
-                        (@+ pos1 window-pos (@- scroll-pos))
-                        (@+ pos2 window-pos (@- scroll-pos))
-                        (.color clip)
-                        :rounding 3.0)))
+    (let ((pos1 (@+ pos1 window-pos (@- scroll-pos)))
+          (pos2 (@+ pos2 window-pos (@- scroll-pos))))
+      (ig:add-rect-filled draw-list
+                          pos1
+                          (@+ pos2 (@ .0 -1.0))
+                          (.color clip)
+                          :rounding 3.0)
+      (when (contain-p mouse-pos pos1 pos2)
+        (setf (.clip-at-mouse self) clip)))))
 
 (defmethod render-track ((self arrangement) track)
   (ig:with-id (track)
@@ -126,3 +116,23 @@
 (defmethod .track-height ((self arrangement) track)
   ;; TODO
   60.0)
+
+(defmethod world-pos-to-time-lane ((self arrangement) pos)
+  (let* ((time (world-x-to-time self (.x pos)))
+         (lane (world-y-to-lane self (.y pos))))
+    (values time lane)))
+
+(defmethod world-x-to-time ((self arrangement) x)
+  (+ (/ (- x (.x (ig:get-window-pos)) (.offset-x self))
+        (.zoom-x self))
+     (ig:get-scroll-x)))
+
+(defmethod world-y-to-lane ((self arrangement) y)
+  (let ((local-y (+ (- y (.y (ig:get-window-pos)) (.time-ruler-height self))
+                    (ig:get-scroll-y))))
+    (labels ((f (track height)
+               (or (loop for lane in (.lanes track)
+                           thereis (and (< local-y (incf height (lane-height self lane))) lane))
+                   (loop for track in (.tracks track)
+                           thereis (f track height)))))
+      (f (.master-track *project*) 0))))

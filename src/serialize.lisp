@@ -2,16 +2,37 @@
 
 (defmacro defserialize (class &rest slots)
   `(progn
-     (defmethod serialize ((self ,class))
-       (list (class-name (class-of self))
-             ,@(loop for slot in slots
-                     nconc `(',slot (slot-value self ',slot)))))
-     (defmethod deserialize-slots ((self ,class) sexp)
-       (loop for (slot value) on sexp by #'cddr
-             ,@(loop for slot in slots
-                     nconc `(if (eq slot ',slot)
-                                do (setf (slot-value self ',slot) value))))
-       self)))
+     (defmethod serialize-slots ((self ,class))
+       `(,,@(loop for slot in slots
+                  nconc `(',slot (serialize (slot-value self ',slot))))
+         ,@(call-next-method)))
+     (defmethod deserialize-slots ((self ,class) slot value)
+       (if (member slot ',slots)
+           (setf (slot-value self slot) value)
+           (call-next-method)))))
 
 (defmethod deserialize (sexp)
-  (deserialize-slots (make-instance (car sexp)) (cdr sexp)))
+  (cond ((atom sexp)
+         sexp)
+        ((eq 'list (car sexp))
+         (loop for x in (cdr sexp)
+               collect (deserialize x)))
+        (t
+         (let ((self (make-instance (car sexp))))
+           (loop for (slot value) on (cdr sexp) by #'cddr
+                 do (deserialize-slots self slot (deserialize value)))
+           self))))
+
+(defmethod serialize ((self t))
+  self)
+
+(defmethod serialize ((self standard-object))
+  `(,(class-name (class-of self))
+    ,@(serialize-slots self)))
+
+(defmethod serialize ((self list))
+  `(list ,@(loop for x in self
+                 collect (serialize x))))
+
+(defmethod serialize-slots ((self t))
+  nil)

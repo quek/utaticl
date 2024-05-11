@@ -39,6 +39,10 @@
      (when (ig:button ,label)
        (setf ,var (not ,var)))))
 
+(defun contain-p (pos pos-min pos-max)
+  (and (<= (.x pos-min) (.x pos) (.x pos-max))
+       (<= (.y pos-min) (.y pos) (.y pos-max))))
+
 (defun color+ (a b)
   (destructuring-bind (ar ag ab aa) (color-decode a)
     (destructuring-bind (br bg bb ba) (color-decode b)
