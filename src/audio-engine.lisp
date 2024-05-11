@@ -154,7 +154,7 @@
   (declare (optimize (speed 3) (safety 0))
            (ignore input-buffer time-info status-flags user-data
                    frame-per-buffer))
-  (sb-sys:without-gcing
+  (progn ;; sb-sys:without-gcing しなくてもたいして変わらない
     (audio-loop)
     (write-master-buffer output-buffer)
     0))

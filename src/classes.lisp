@@ -149,7 +149,10 @@
           (list (make-instance 'note :key +c4+ :time 0.0d0 :duration 1.0d0)
                 (make-instance 'note :key +e4+ :time 1.0d0 :duration 1.0d0)
                 (make-instance 'note :key +g4+ :time 2.0d0 :duration 1.0d0)
-                (make-instance 'note :key +c5+ :time 3.0d0 :duration 1.0d0))
+                (make-instance 'note :key +c5+ :time 3.0d0 :duration 1.0d0)
+                (make-instance 'note :key +d5+ :time 4.0d0 :duration 4.0d0)
+                (make-instance 'note :key +c4+ :time 8.0d0 :duration 4.0d0)
+                (make-instance 'note :key +b4+ :time 12.0d0 :duration 4.0d0))
           :accessor .notes))
   (:default-initargs :name "NOTES" :color (color #x30 #xc0 #x30 #x80)))
 
