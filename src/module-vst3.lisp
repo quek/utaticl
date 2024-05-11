@@ -219,6 +219,21 @@
         (vst3-ffi::on-size view (autowrap:ptr rect))))))
 
 (defmethod process ((self module-vst3))
+  (let ((context (.context *process-data*))
+        (bpm (.bpm *project*))
+        (play-time (.play-start *project*)))
+    (setf (sb:vst-process-context.state context)
+          (logand (if (.play-p *project*) sb:+vst-process-context-states-and-flags-k-playing+ 0)
+                  sb:+vst-process-context-states-and-flags-k-tempo-valid+
+                  sb:+vst-process-context-states-and-flags-k-project-time-music-valid+
+                  sb:+vst-process-context-states-and-flags-k-bar-position-valid+))
+    (setf (sb:vst-process-context.tempo context) (coerce bpm 'double-float))
+    (setf (sb:vst-process-context.project-time-music context) play-time)
+    (setf (sb:vst-process-context.bar-position-music context)
+          (coerce (floor (/ play-time 4)) 'double-float))
+    (setf (sb:vst-process-context.project-time-samples context)
+          ;; TODO これあってる？
+          (floor (* (/ play-time (/ bpm 60.0)) *sample-rate*))))
 
   (vst3-ffi::process (.audio-processor self)
                      (autowrap:ptr (.wrap *process-data*)))

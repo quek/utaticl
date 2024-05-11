@@ -230,6 +230,7 @@
    (output-events :accessor .output-events)
    (input-parameter-changes :accessor .input-parameter-changes)
    (output-parameter-changes :accessor .output-parameter-changes)
+   (context :accessor .context)
    (notes-on :initform nil :accessor .notes-on)))
 
 (defclass audio-bus-buffers ()

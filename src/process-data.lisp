@@ -7,7 +7,8 @@
         (input-events (make-instance 'vst3-impl::event-list))
         (output-events (make-instance 'vst3-impl::event-list))
         (input-parameter-changes (make-instance 'vst3-impl::parameter-changes))
-        (output-parameter-changes (make-instance 'vst3-impl::parameter-changes)))
+        (output-parameter-changes (make-instance 'vst3-impl::parameter-changes))
+        (context (autowrap:calloc '(:struct (sb:vst-process-context)))))
     (setf (.wrap self) wrap)
     (setf (sb:vst-process-data.process-mode wrap)
           sb:+vst-process-modes-k-realtime+)
@@ -37,11 +38,16 @@
     (vst3-impl::add-ref output-parameter-changes)
     (setf (sb:vst-process-data.output-parameter-changes wrap) (vst3-impl::ptr output-parameter-changes))
 
-    (setf (sb:vst-process-data.process-context wrap)
-          (cffi:null-pointer))          ;TODO
+    (setf (.context self) context)
+    (setf (sb:vst-process-data.process-context wrap) (autowrap:ptr context))
+    (setf (sb:vst-process-context.state context) 0)
+    (setf (sb:vst-process-context.sample-rate context) *sample-rate*)
+    (setf (sb:vst-process-context.time-sig-numerator context) 4)
+    (setf (sb:vst-process-context.time-sig-denominator context) 4)
 
     (sb-ext:finalize self (lambda ()
                             (log:trace "finalize free" wrap)
+                            (autowrap:free context)
                             (autowrap:free wrap)
                             (vst3-impl::release input-events)
                             (vst3-impl::release output-events)

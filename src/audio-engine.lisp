@@ -2,7 +2,7 @@
 
 ;;(portaudio::print-devices)
 
-(defparameter *sample-rate* 48000.0)
+(defparameter *sample-rate* 48000.0d0)
 (defparameter *frames-per-buffer* 1024)
 
 (defclass audio-engine ()
@@ -20,7 +20,7 @@
    (sample-rate
     :initarg :sample-rate
     :initform *sample-rate*
-    :type single-float
+    :type double-float
     :accessor .sample-rate)
    (frames-per-buffer
     :initarg frames-per-buffer
@@ -233,7 +233,7 @@
                           handle
                           nil
                           output-parameters
-                          (coerce *sample-rate* 'double-float)
+                          *sample-rate*
                           (.frames-per-buffer *audio*)
                           0
                           (cffi:callback audio-callback)
