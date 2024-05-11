@@ -2,7 +2,7 @@
 
 (defclass neko ()
   ((neko-id :initarg :neko-id :initform (uid) :accessor .neko-id)
-   (name :initarg :name :initform "(noname)" :accessor .name)
+   (name :initarg :name :initform "noname" :accessor .name)
    (color :initarg :color :initform (color #x80 #x80 #x80 #x80) :accessor .color)))
 
 (defserialize neko neko-id name color)
@@ -15,6 +15,7 @@
 
 (defclass project (neko)
   ((arrangement :initform (make-instance 'arrangement) :accessor .arrangement)
+   (dirty-p :initform nil :accessor .dirty-p)
    (piano-roll :initform nil :accessor .piano-roll)
    (commander :initform (make-instance 'commander) :accessor .commander)
    (rack :initform (make-instance 'rack) :accessor .rack)
@@ -26,6 +27,7 @@
    (cmd-redo-stack :initform nil :accessor .cmd-redo-stack)
    (mailbox :initform (sb-concurrency:make-mailbox) :accessor .mailbox)
    (master-track :initform (make-instance 'master-track) :accessor .master-track)
+   (path :initform nil :accessor .path)
    (play-p :initform nil :accessor .play-p)
    (play-just-stop-p :initform nil :accessor .play-just-stop-p)
    (play-start :initarg :play-start :initform .0d0 :accessor .play-start)
@@ -36,6 +38,7 @@
    (transposer :initform (make-instance 'transposer) :accessor .transposer)
    (target-track :initform :nil :accessor .target-track)))
 
+(defserialize project bpm master-track loop-start loop-end loop-p)
 
 (defclass show-mixin ()
   ((show-p :initarg :show-p :initform nil :accessor .show-p)))
@@ -111,12 +114,16 @@
    (tracks :initform nil :accessor .tracks))
   (:default-initargs :name "TRACK" :color (color #x33 #x33 #x33)))
 
+(defserialize track lanes modules tracks)
+
 (defclass master-track (track)
   ()
   (:default-initargs :name "MASTER"))
 
 (defclass lane (neko)
   ((clips :initarg :clips :initform nil :accessor .clips)))
+
+(defserialize lane clips)
 
 (defclass time-thing (neko)
   ((time :initarg :time :initform 0.0d0 :accessor .time)

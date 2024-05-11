@@ -26,7 +26,8 @@
                (execute cmd))
              (when (.undo-p cmd)
                (setf (.cmd-redo-stack self) nil)
-               (push cmd (.cmd-undo-stack self))))
+               (push cmd (.cmd-undo-stack self))
+               (setf (.dirty-p self) t)))
     (setf (.cmd-queue self) nil)))
 
 (defmethod cmd-undo ((self project))
@@ -113,6 +114,30 @@
              (sb-concurrency:send-message
               (.mailbox project) (process track))))
          self track)))
+
+(defmethod save ((self project))
+  (if (.path self)
+      (progn
+        (with-open-file (out (.path self) :direction :output :if-exists :supersede)
+          (write (serialize self) :stream out))
+        (setf (.dirty-p self) nil))
+      (save-as self)))
+
+(defmethod save-as ((self project))
+  (multiple-value-bind (ok path)
+      (ftw:get-save-file-name
+       :initial-dir (substitute #\\ #\/
+                                (namestring
+                                 (ensure-directories-exist
+                                  (merge-pathnames "user/project/" *working-directory*))))
+       :filters '(("Lisp" "*.lisp") ("All" "*.*"))
+       :file (multiple-value-bind (sec min h d m y)
+                 (decode-universal-time (get-universal-time))
+               (declare (ignore sec min h))
+               (format nil "~d~2,'0d~2,'0d.lisp" y m d)))
+    (when ok
+      (setf (.path self) (car path))
+      (save self))))
 
 (defmethod terminate ((self project))
   (terminate (.master-track self)))

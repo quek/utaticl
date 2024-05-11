@@ -124,6 +124,13 @@
 (defmethod execute ((self cmd-redo))
   (cmd-redo *project*))
 
+(defcommand cmd-save (command)
+  ()
+  (:default-initargs :undo-p nil))
+
+(defmethod execute ((self cmd-save))
+  (save *project*))
+
 (defcommand cmd-track-add (command)
   ((track-id-before :initarg :track-id-before
                     :initform nil
