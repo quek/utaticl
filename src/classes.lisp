@@ -192,6 +192,8 @@
    (params :initform (make-hash-table) :accessor .params)
    (process-done :initform nil :accessor .process-done)))
 
+(defserialize module connections params)
+
 (defclass module-vst3 (module)
   ((library :initarg :library :accessor .library)
    (host-applicaiton :reader .host-applicaiton)
@@ -236,12 +238,18 @@
 (defclass connection (neko)
   ((from :initarg :from :accessor .from)
    (to :initarg :to :accessor .to)
+   (from-bus-index :initarg :from-bus-index :initform 0 :accessor .from-bus-index)
+   (to-bus-index :initarg :to-bus-index :initform 0 :accessor .to-bus-index)
    (from-process-data :initarg :from-process-data :accessor .from-process-data)
    (to-process-data :initarg :to-process-data :accessor .to-process-data)))
+
+(defserialize connection from to from-bus-index to-bus-index)
 
 (defclass param (neko)
   ((id :initarg :id :initform nil :accessor .id)
    (value :initarg :value :initform .0d0 :accessor .value)))
+
+(defserialize param id value)
 
 (defclass process-data ()
   ((wrap  :accessor .wrap)

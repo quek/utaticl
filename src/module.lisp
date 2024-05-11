@@ -5,6 +5,8 @@
   (let ((connection (make-instance 'connection
                                    :from from
                                    :to to
+                                   :from-bus-index 0
+                                   :to-bus-index 0
                                    :from-process-data from-process-data
                                    :to-process-data to-process-data)))
     (push connection (.connections from))

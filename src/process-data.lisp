@@ -46,7 +46,7 @@
     (setf (sb:vst-process-context.time-sig-denominator context) 4)
 
     (sb-ext:finalize self (lambda ()
-                            (log:trace "finalize free" wrap)
+                            (log:trace "process-data finalize free" wrap)
                             (autowrap:free context)
                             (autowrap:free wrap)
                             (vst3-impl::release input-events)

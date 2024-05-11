@@ -25,7 +25,7 @@
     (sb-ext:finalize
      self
      (lambda ()
-       (log:trace "finalize free" ptr)
+       (log:trace "audio-bus-buffers finalize free" ptr)
        (loop for bus below nbuses
              for p = (cffi:inc-pointer ptr (* (autowrap:sizeof '(:struct (sb:vst-audio-bus-buffers)))
                                               bus))
