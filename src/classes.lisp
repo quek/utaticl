@@ -186,7 +186,8 @@
   ())
 
 (defclass module (neko)
-  ((connections :initform nil :accessor .connections)
+  ((id :initarg :id :accessor .id)
+   (connections :initform nil :accessor .connections)
    (editor-open-p :initform nil :accessor .editor-open-p)
    (start-p :initform nil :accessor .start-p)
    (params :initform (make-hash-table) :accessor .params)
@@ -218,22 +219,30 @@
 
 (defclass module-fader (module-builtin)
   ()
-  (:default-initargs :name "Fader"))
+  (:default-initargs :id 'module-fader :name "Fader"))
 
 (defclass module-track-mixin () ()
   (:documentation "トラック備え付け"))
 
 (defclass module-fader-track (module-track-mixin module-fader)
   ()
-  (:documentation "トラック備え付け"))
+  (:documentation "トラック備え付け")
+  (:default-initargs :id 'module-fader-track))
 
 (defclass module-gain (module-builtin)
   ()
-  (:default-initargs :name "Gain"))
+  (:default-initargs :id 'module-gain :name "Gain"))
 
 (defclass module-gain-track (module-track-mixin module-gain)
   ()
-  (:documentation "トラック備え付け"))
+  (:documentation "トラック備え付け")
+  (:default-initargs :id 'module-gain-track))
+
+(defclass preset () ())
+
+(defclass preset-vst3 (preset)
+  ((buffer :initform (make-instance 'vst3-impl::bstream)
+           :accessor .buffer)))
 
 (defclass connection (neko)
   ((from :initarg :from :accessor .from)

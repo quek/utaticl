@@ -78,36 +78,45 @@ sb:+k-out-of-memory+
   (let ((factory (or (query-interface self vst3-ffi::+iplugin-factory3-iid+)
                      (query-interface self vst3-ffi::+iplugin-factory2-iid+)
                      self)))
-    (prog1 (%create-component factory)
+    (destructuring-bind (instance cid) (%create-component factory)
       (vst3-ffi::release factory)
-      (sb-ext:cancel-finalization factory))))
+      (sb-ext:cancel-finalization factory)
+      (values instance cid))))
 
-(defmethod %create-component ((self vst3-ffi::iplugin-factory))
-  (autowrap:with-many-alloc ((%class-info '(:struct (sb:p-class-info))))
-    (loop for index below (vst3-ffi::count-classes self)
-          for class-info = (progn (ensure-ok
-                                   (vst3-ffi::get-class-info self index (autowrap:ptr %class-info)))
-                                  (sb::make-p-class-info :ptr (autowrap:ptr %class-info)))
-            thereis (and (equal (vst3::.category class-info) "Audio Module Class")
-                         (create-instance self (vst3::.cid class-info) vst3-ffi::+vst-icomponent-iid+)))))
+(flet ((%create-instance (self class-info)
+         (if (equal (vst3::.category class-info) "Audio Module Class")
+             (let ((instance (create-instance self (vst3::.cid class-info) vst3-ffi::+vst-icomponent-iid+)))
+               (if instance
+                   (list instance
+                         (let ((cid (make-array 16 :element-type '(unsigned-byte 8))))
+                           (loop for i below 16
+                                 do (setf (aref cid i)
+                                          (cffi:mem-aref (vst3::.cid class-info) :unsigned-char i)))
+                           cid)))))))
 
-(defmethod %create-component ((self vst3-ffi::iplugin-factory2))
-  (autowrap:with-many-alloc ((%class-info '(:struct (sb:p-class-info2))))
-    (loop for index below (vst3-ffi::count-classes self)
-          for class-info = (progn (ensure-ok
-                                   (vst3-ffi::get-class-info2 self index (autowrap:ptr %class-info)))
-                                  (sb::make-p-class-info2 :ptr (autowrap:ptr %class-info)))
-            thereis (and (equal (vst3::.category class-info) "Audio Module Class")
-                         (create-instance self (vst3::.cid class-info) vst3-ffi::+vst-icomponent-iid+)))))
+  (defmethod %create-component ((self vst3-ffi::iplugin-factory))
+    (autowrap:with-many-alloc ((%class-info '(:struct (sb:p-class-info))))
+      (loop for index below (vst3-ffi::count-classes self)
+            for class-info = (progn (ensure-ok
+                                     (vst3-ffi::get-class-info self index (autowrap:ptr %class-info)))
+                                    (sb::make-p-class-info :ptr (autowrap:ptr %class-info)))
+              thereis (%create-instance self class-info))))
 
-(defmethod %create-component ((self vst3-ffi::iplugin-factory3))
-  (autowrap:with-many-alloc ((%class-info '(:struct (sb:p-class-info-w))))
-    (loop for index below (vst3-ffi::count-classes self)
-          for class-info = (progn (ensure-ok
-                                   (vst3-ffi::get-class-info-unicode self index (autowrap:ptr %class-info)))
-                                  (sb::make-p-class-info-w :ptr (autowrap:ptr %class-info)))
-            thereis (and (equal (vst3::.category class-info) "Audio Module Class")
-                         (create-instance self (vst3::.cid class-info) vst3-ffi::+vst-icomponent-iid+)))))
+  (defmethod %create-component ((self vst3-ffi::iplugin-factory2))
+    (autowrap:with-many-alloc ((%class-info '(:struct (sb:p-class-info2))))
+      (loop for index below (vst3-ffi::count-classes self)
+            for class-info = (progn (ensure-ok
+                                     (vst3-ffi::get-class-info2 self index (autowrap:ptr %class-info)))
+                                    (sb::make-p-class-info2 :ptr (autowrap:ptr %class-info)))
+              thereis (%create-instance self class-info))))
+
+  (defmethod %create-component ((self vst3-ffi::iplugin-factory3))
+    (autowrap:with-many-alloc ((%class-info '(:struct (sb:p-class-info-w))))
+      (loop for index below (vst3-ffi::count-classes self)
+            for class-info = (progn (ensure-ok
+                                     (vst3-ffi::get-class-info-unicode self index (autowrap:ptr %class-info)))
+                                    (sb::make-p-class-info-w :ptr (autowrap:ptr %class-info)))
+              thereis (%create-instance self class-info)))))
 
 (defmethod create-instance ((self vst3-ffi::iplugin-factory) (cid simple-array) iid)
   (sb-sys:with-pinned-objects (cid)

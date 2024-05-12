@@ -94,7 +94,7 @@
 
 (defmethod note-off-all ((self process-data))
   (loop for (key . channel) in (.notes-on self)
-        do (note-off self key channel 1 0))
+        do (note-off self key channel 1.0 0))
   (setf (.notes-on self) nil))
 
 (defmethod note-on ((self process-data) key channel velocity sample-offset)

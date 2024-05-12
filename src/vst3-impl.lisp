@@ -20,6 +20,49 @@
   (format t "~2,'0X" (cffi:mem-ref ptr :uint8 14))
   (format t "~2,'0X" (cffi:mem-ref ptr :uint8 15)))
 
+(defmacro def-vst3-impl (name super-classes slots methods
+                         &key iid vst3-c-api-class)
+  (labels ((sym (format &rest args)
+             (find-symbol (ppcre:regex-replace-all "\\$"
+                                                   (apply #'format nil format args)
+                                                   "")
+                          :sb)))
+    `(progn
+       (defclass ,name ,super-classes
+         ,slots)
+
+       (defmethod query-interface ((self ,name) iid obj)
+         (%query-interface self ,iid iid obj
+                           (call-next-method)))
+
+       (defmethod initialize-instance :before ((self ,name) &key)
+         (unless (slot-boundp self 'wrap)
+           (let ((vtbl (autowrap:alloc ',(sym "~a-VTBL" vst3-c-api-class)))
+                 (wrap (autowrap:alloc ',vst3-c-api-class)))
+             (setf (,(sym "~a.LP-VTBL" vst3-c-api-class) wrap)
+                   (autowrap:ptr vtbl))
+             (setf (slot-value self 'wrap) wrap)
+             (setf (slot-value self 'vtbl) vtbl)))
+
+         (let ((vtbl (if (typep (.vtbl self) ',(sym "~a-VTBL" vst3-c-api-class))
+                         (.vtbl self)
+                         (,(sym "MAKE-~a-VTBL" vst3-c-api-class)
+                          :ptr (autowrap:ptr (.vtbl self))))))
+           ,@(loop for method in methods
+                   for method-name = (car method)
+                   collect `(setf (,(sym "~a-VTBL.~a" vst3-c-api-class method-name) vtbl)
+                                  (autowrap:callback ',method-name)))))
+
+       ,@(loop for method in methods
+               for (method-name method-args result-type . body) = method
+               collect `(defmethod ,method-name ((self ,name) ,@(mapcar #'car method-args))
+                          ,@body)
+               collect `(autowrap:defcallback ,method-name ,result-type
+                            ((this-interface :pointer)
+                             ,@method-args)
+                          (,method-name (gethash (cffi:pointer-address this-interface) *ptr-object-map*)
+                                        ,@(mapcar #'car method-args)))))))
+
 (defclass unknown ()
   ((wrap :reader .wrap)
    (vtbl :reader .vtbl)
@@ -143,8 +186,17 @@
 (defmethod initialize-instance :after ((self host-application) &key module)
   (setf (slot-value self 'component-handler)
         (make-instance 'component-handler2 :module module))
+  (add-ref (slot-value self 'component-handler))
   (setf (slot-value self 'plug-frame)
-        (make-instance 'plug-frame :module module)))
+        (make-instance 'plug-frame :module module))
+  (add-ref (slot-value self 'plug-frame)))
+
+(defmethod release :around ((self host-application))
+  (let ((ref-count (call-next-method)))
+    (when (zerop (call-next-method))
+      (release (slot-value self 'component-handler))
+      (release (slot-value self 'plug-frame)))
+    ref-count))
 
 (defmethod query-interface ((self host-application) iid obj)
   (%query-interface
@@ -321,102 +373,76 @@
     ((this-interface :pointer))
   (finish-group-edit (gethash (cffi:pointer-address this-interface) *ptr-object-map*)))
 
-(defclass bstream (unknown)
-  ((buffer :initform (make-array 1024 :element-type '(unsigned-byte 8) :adjustable t :fill-pointer 0)
-           :reader .buffer)
-   (cursor :initform 0 :accessor .cursor)))
+(def-vst3-impl bstream (unknown)
+  ((buffer :initform (make-array 1024 :element-type '(unsigned-byte 8))
+           :accessor .buffer)
+   (tail :initform 0 :accessor .tail)
+   (cursor :initform 0 :accessor .cursor))
+  ((read$ ((buffer :pointer)
+           (num-bytes :int)
+           (num-bytes-read :pointer)) sb:tresult
+          (let ((len (min (- (.tail self) (.cursor self))
+                          num-bytes)))
+            (loop for i below len
+                  do (setf (cffi:mem-ref buffer :uchar i)
+                           (aref (.buffer self) (+ i (.cursor self)))))
+            (when (and num-bytes-read (not (cffi:null-pointer-p num-bytes-read)))
+              (setf (cffi:mem-ref num-bytes-read :int32) len))
+            (incf (.cursor self) len)
+            sb:+k-result-ok+))
+   (write$ ((buffer :pointer)
+            (num-bytes :int)
+            (num-bytes-written :pointer)) sb:tresult
+           (ensure-buffer-size self num-bytes)
+           (loop for i below num-bytes
+                 do (setf (aref (.buffer self) (+ i (.cursor self)))
+                          (cffi:mem-ref buffer :uchar i)))
+           (when (and num-bytes-written (not (cffi:null-pointer-p num-bytes-written)))
+             (setf (cffi:mem-ref num-bytes-written :int32) num-bytes))
+           (incf (.cursor self) num-bytes)
+           sb:+k-result-ok+)
+   (seek ((pos :long-long)
+          (mod :int)
+          (result :pointer)) sb:tresult
+         (setf (.cursor self)
+               (case mod
+                 (#.sb:+ib-stream-i-stream-seek-mode-k-ib-seek-set+
+                  (max pos (length (.buffer self))))
+                 (#.sb:+ib-stream-i-stream-seek-mode-k-ib-seek-cur+
+                  (max (+ pos (.cursor self)) (length (.buffer self))))
+                 (#.sb:+ib-stream-i-stream-seek-mode-k-ib-seek-end+
+                  (min 0 (- (length (.buffer self)) pos)))))
+         (setf (cffi:mem-ref result :int64) (.cursor self))
+         sb:+k-result-ok+)
+   (tell ((pos :pointer)) sb:tresult
+         (setf (cffi:mem-ref pos :int64) (.cursor self))
+         sb:+k-result-ok+))
+  :iid vst3-ffi::+ibstream-iid+
+  :vst3-c-api-class sb:ib-stream)
 
-(defmethod initialize-instance :before ((self bstream) &key)
-  (unless (slot-boundp self 'wrap)
-    (let ((vtbl (autowrap:alloc 'sb:ib-stream-vtbl))
-          (wrap (autowrap:alloc 'sb:ib-stream)))
-      (setf (sb:ib-stream.lp-vtbl wrap)
-            (autowrap:ptr vtbl))
-      (setf (slot-value self 'wrap) wrap)
-      (setf (slot-value self 'vtbl) vtbl)))
+(defmethod (setf .cursor) :after (value (self bstream))
+  (setf (.tail self) (max (.tail self) value)))
 
-  (let ((vtbl (if (typep (.vtbl self) 'sb:ib-stream-vtbl)
-                  (.vtbl self)
-                  (sb::make-ib-stream-vtbl
-                   :ptr (autowrap:ptr (.vtbl self))))))
-    (setf (sb:ib-stream-vtbl.read vtbl)
-          (autowrap:callback '.read))
-    (setf (sb:ib-stream-vtbl.write vtbl)
-          (autowrap:callback '.write))
-    (setf (sb:ib-stream-vtbl.seek vtbl)
-          (autowrap:callback 'seek))
-    (setf (sb:ib-stream-vtbl.tell vtbl)
-          (autowrap:callback 'tell))))
+(defmethod ensure-buffer-size ((self bstream) size)
+  (when (< (length (.buffer self)) (+ (.cursor self) size))
+    (let ((buffer-new (make-array (max (* (length (.buffer self)) 2)
+                                       (+ (.cursor self) size))
+                                  :element-type '(unsigned-byte 8))))
+      (loop for i below (.tail self)
+            do (setf (aref buffer-new i) (aref (.buffer self) i)))
+      (setf (.buffer self) buffer-new))))
 
-(defmethod .read ((self bstream) buffer num-bytes num-bytes-read)
-  (let ((len (min (- (length (.buffer self)) (.cursor self))
-                  num-bytes)))
-    (loop for i below len
-          do (setf (cffi:mem-ref buffer :uchar i)
-                   (aref (.buffer self) (+ i (.cursor self)))))
-    (unless (cffi:null-pointer-p num-bytes-read)
-      (setf (cffi:mem-ref num-bytes-read :int32) len))
-    (incf (.cursor self) len)
-    sb:+k-result-ok+))
+(defmethod write-byte$ ((self bstream) byte)
+  (ensure-buffer-size self 1)
+  (setf (aref (.buffer self) (incf (.cursor self))) byte))
 
-(autowrap:defcallback .read sb:tresult
-    ((this-interface :pointer)
-     (buffer :pointer)
-     (num-bytes :int)
-     (num-bytes-read :pointer))
-  (.read (gethash (cffi:pointer-address this-interface) *ptr-object-map*)
-         buffer num-bytes num-bytes-read))
+(defmethod write-integer ((self bstream) integer size)
+  (loop for i below size
+        do (write-byte$ self (ldb (byte 8 i) integer))))
 
-(defmethod .write ((self bstream) buffer num-bytes num-bytes-written)
-  (loop for i below num-bytes
-        if (< (+ i (.cursor self)) (length (.buffer self)))
-          do (setf (aref (.buffer self) (+ i (.cursor self)))
-                   (cffi:mem-ref buffer :uchar i))
-        else
-          do (vector-push-extend (cffi:mem-ref buffer :uchar i)
-                                 (.buffer self)))
-  (incf (.cursor self) num-bytes)
-  (unless (cffi:null-pointer-p num-bytes-written)
-    (setf (cffi:mem-ref num-bytes-written :int32) num-bytes))
-  sb:+k-result-ok+)
-
-(autowrap:defcallback .write sb:tresult
-    ((this-interface :pointer)
-     (buffer :pointer)
-     (num-bytes :int)
-     (num-bytes-written :pointer))
-  (.write (gethash (cffi:pointer-address this-interface) *ptr-object-map*)
-          buffer num-bytes num-bytes-written))
-
-(defmethod seek ((self bstream) pos mod result)
-  (setf (.cursor self)
-        (case mod
-          (#.sb:+ib-stream-i-stream-seek-mode-k-ib-seek-set+
-           (max pos (length (.buffer self))))
-          (#.sb:+ib-stream-i-stream-seek-mode-k-ib-seek-cur+
-           (max (+ pos (.cursor self)) (length (.buffer self))))
-          (#.sb:+ib-stream-i-stream-seek-mode-k-ib-seek-end+
-           (min 0 (- (length (.buffer self)) pos)))))
-  (setf (cffi:mem-ref result :int64) (.cursor self))
-  sb:+k-result-ok+)
-
-(autowrap:defcallback seek sb:tresult
-    ((this-interface :pointer)
-     (pos :long-long)
-     (mod :int)
-     (result :pointer))
-  (seek (gethash (cffi:pointer-address this-interface) *ptr-object-map*)
-          pos mod result))
-
-(defmethod tell ((self bstream) pos)
-  (setf (cffi:mem-ref pos :int64) (.cursor self))
-  sb:+k-result-ok+)
-
-(autowrap:defcallback tell sb:tresult
-    ((this-interface :pointer)
-     (pos :pointer))
-  (tell (gethash (cffi:pointer-address this-interface) *ptr-object-map*)
-        pos))
+(defmethod write-string$ ((self bstream) string)
+  (loop for c across (sb-ext:string-to-octets string :external-format :utf-8)
+        do (write-byte$ self c)))
 
 (defclass message (unknown)
   ((message-id :initform nil :accessor .message-id)
@@ -637,48 +663,6 @@
   (get-binary (gethash (cffi:pointer-address this-interface) *ptr-object-map*)
            id data size-in-bytes))
 
-
-(defmacro def-vst3-impl (name super-classes slots methods
-                         &key iid vst3-c-api-class)
-  (labels ((sym (format &rest args)
-             (find-symbol (apply #'format nil format args) :sb)))
-    `(progn
-       (defclass ,name ,super-classes
-         ,slots)
-
-       (defmethod query-interface ((self ,name) iid obj)
-         (%query-interface self ,iid iid obj
-                           (call-next-method)))
-
-       (defmethod initialize-instance :before ((self ,name) &key)
-         (unless (slot-boundp self 'wrap)
-           (let ((vtbl (autowrap:alloc ',(sym "~a-VTBL" vst3-c-api-class)))
-                 (wrap (autowrap:alloc ',vst3-c-api-class)))
-             (setf (,(sym "~a.LP-VTBL" vst3-c-api-class) wrap)
-                   (autowrap:ptr vtbl))
-             (setf (slot-value self 'wrap) wrap)
-             (setf (slot-value self 'vtbl) vtbl)))
-
-         (let ((vtbl (if (typep (.vtbl self) ',(sym "~a-VTBL" vst3-c-api-class))
-                         (.vtbl self)
-                         (,(sym "MAKE-~a-VTBL" vst3-c-api-class)
-                          :ptr (autowrap:ptr (.vtbl self))))))
-           ,@(loop for method in methods
-                   for method-name = (car method)
-                   collect `(setf (,(sym "~a-VTBL.~a" vst3-c-api-class method-name) vtbl)
-                                  (autowrap:callback ',method-name)))))
-
-       ,@(loop for method in methods
-               for (method-name method-args result-type . body) = method
-               collect `(defmethod ,method-name ((self ,name) ,@(mapcar #'car method-args))
-                          ,@body)
-               collect `(autowrap:defcallback ,method-name ,result-type
-                            ((this-interface :pointer)
-                             ,@method-args)
-                          (,method-name (gethash (cffi:pointer-address this-interface) *ptr-object-map*)
-                                        ,@(mapcar #'car method-args)))))))
-
-
 (def-vst3-impl plug-frame (unknown)
   ((module :initarg :module :accessor .module))
   ((resize-view ((view (:pointer sb:i-plug-view))
@@ -720,8 +704,10 @@
   (setf (.changes self) nil))
 
 (defmethod release :around ((self parameter-changes))
-  (when (zerop (call-next-method))
-    (dgw::prepare self)))
+  (let ((ref-count (call-next-method)))
+    (when (zerop ref-count)
+      (dgw::prepare self))
+    ref-count))
 
 (def-vst3-impl event-list (unknown)
   ((events :initform nil :accessor .events))
@@ -752,5 +738,7 @@
   (setf (.events self) nil))
 
 (defmethod release :around ((self event-list))
-  (when (zerop (call-next-method))
-    (dgw::prepare self)))
+  (let ((ref-count (call-next-method)))
+    (when (zerop ref-count)
+      (dgw::prepare self))
+    ref-count))

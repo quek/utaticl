@@ -9,22 +9,23 @@
 
 (defun module-vst3-load (path)
   (multiple-value-bind (factory library) (vst3::get-plugin-factory path)
-    (let* ((component (vst3::create-component factory))
-           (single-component-p t)
-           (controller (labels ((f ()
-                                  (setf single-component-p nil)
-                                  (vst3::create-instance factory
-                                                         (vst3::get-controller-class-id component)
-                                                         vst3-ffi::+vst-iedit-controller-iid+)))
-                         (handler-case (vst3::query-interface component vst3-ffi::+vst-iedit-controller-iid+)
-                           (vst3::no-interface-error () (f))
-                           (vst3::false-error () (f))))))
-      (make-instance 'module-vst3
-                     :library library
-                     :factory factory
-                     :conponent component
-                     :controller controller
-                     :single-component-p single-component-p))))
+    (multiple-value-bind (component id) (vst3::create-component factory)
+      (let* ((single-component-p t)
+             (controller (labels ((f ()
+                                    (setf single-component-p nil)
+                                    (vst3::create-instance factory
+                                                           (vst3::get-controller-class-id component)
+                                                           vst3-ffi::+vst-iedit-controller-iid+)))
+                           (handler-case (vst3::query-interface component vst3-ffi::+vst-iedit-controller-iid+)
+                             (vst3::no-interface-error () (f))
+                             (vst3::false-error () (f))))))
+        (make-instance 'module-vst3
+                       :id id
+                       :library library
+                       :factory factory
+                       :conponent component
+                       :controller controller
+                       :single-component-p single-component-p)))))
 
 (defmethod initialize ((self module-vst3))
   (vst3-ffi::initialize (.component self)

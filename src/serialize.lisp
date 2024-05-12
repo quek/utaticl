@@ -17,6 +17,11 @@
         ((eq 'list (car sexp))
          (loop for x in (cdr sexp)
                collect (deserialize x)))
+        ((eq 'hash-table (car sexp))
+         (let ((map (make-hash-table :test (cadr sexp))))
+           (loop for (key value) on (cddr sexp) by #'cddr
+                 do (setf (gethash (deserialize key) map)
+                          (deserialize value)))))
         (t
          (let ((self (make-instance (car sexp))))
            (loop for (slot value) on (cdr sexp) by #'cddr
@@ -33,6 +38,12 @@
 (defmethod serialize ((self list))
   `(list ,@(loop for x in self
                  collect (serialize x))))
+
+(defmethod serialize ((self hash-table))
+  `(hash-table ',(hash-table-test self)
+               ,@(maphash (lambda (key value)
+                            (list (serialize key) (serialize value)))
+                          self)))
 
 (defmethod serialize-slots ((self t))
   nil)
