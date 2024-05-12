@@ -412,7 +412,8 @@
                   (max (+ pos (.cursor self)) (length (.buffer self))))
                  (#.sb:+ib-stream-i-stream-seek-mode-k-ib-seek-end+
                   (min 0 (- (length (.buffer self)) pos)))))
-         (setf (cffi:mem-ref result :int64) (.cursor self))
+         (when (and result (not (cffi:null-pointer-p result)))
+           (setf (cffi:mem-ref result :int64) (.cursor self)))
          sb:+k-result-ok+)
    (tell ((pos :pointer)) sb:tresult
          (setf (cffi:mem-ref pos :int64) (.cursor self))

@@ -33,33 +33,43 @@ EOF +---------------------------+
 |#
 
 (defconstant +preset-vst3-version+ 1)
-
-(defun preset-write-string (string buffer)
-  (loop for c across (sb-ext:string-to-octets string :external-format :utf-8)
-        do (vector-push-extend c buffer)))
-
-(defun preset-write-integer (integer size buffer)
-  (loop for i below size
-        do (vector-push-extend (ldb (byte 8 i) integer) buffer)))
+(defconstant +preset-vst3-list-offset-pos+ 40)
 
 (defmethod preset-save ((self preset-vst3) module)
-  (let ((buffer (.buffer self)))
-    (setf (fill-pointer buffer) 0)
+  (let ((buffer (.buffer self))
+        (chunks nil))
+    (setf (vst3-impl::.cursor buffer) 0)
     ;; HEAD
-    (preset-write-string "VST3" buffer)
-    (preset-write-integer +preset-vst3-version+ 4 buffer)
-    (preset-write-string (with-output-to-string (out)
-                           (loop for i across (.id module)
-                                 do (format out "~2,'0X" i)))
-                         buffer)
-    (preset-write-integer 0 8 buffer)
+    (vst3-impl::write-string$ buffer "VST3")
+    (vst3-impl::write-integer buffer +preset-vst3-version+ 4)
+    (vst3-impl::write-string$ buffer
+                              (with-output-to-string (out)
+                                (loop for i across (.id module)
+                                      do (format out "~2,'0X" i))))
+    (vst3-impl::write-integer buffer 0 8)
     ;; Component State
-    
-))
+    (push (list "Comp" (vst3-impl::.cursor buffer)
+                (vst3-ffi::get-state (.component module) (vst3-impl::ptr buffer))
+                (vst3-impl::.cursor buffer))
+          chunks)
+    ;; Controller State
+    (push (list "Cont" (vst3-impl::.cursor buffer)
+                (vst3-ffi::get-state (.controller module) (vst3-impl::ptr buffer))
+                (vst3-impl::.cursor buffer))
+          chunks)
+    ;; offset to chunk list
+    (let ((pos (vst3-impl::.cursor buffer)))
+      (setf (vst3-impl::.cursor buffer) +preset-vst3-list-offset-pos+)
+      (vst3-impl::write-integer buffer pos 64)
+      (setf (vst3-impl::.cursor buffer) pos))
+    (vst3-impl::write-string$ buffer "List")
+    (vst3-impl::write-integer buffer (length chunks) 4)
+    (loop for (id offset size) in chunks
+          do (vst3-impl::write-string$ buffer id)
+             (vst3-impl::write-integer buffer offset 8)
+             (vst3-impl::write-integer buffer size 8))))
 
 #+nil
 (let ((x (make-instance 'preset-vst3 )))
   (preset-save x (module-vst3-load "c:/Program Files/Common Files/VST3/Dexed.vst3"))
-  (.buffer x))
-;;⇒ #(86 83 84 51 1 0 0 0 48 49 69 70 67 68 65 66 56 50 57 49 69 66 70 65 52 52 52
-;;     55 53 51 52 50 52 52 54 53 55 56 54 52 0 0 0 0 0 0 0 0)
+  (vst3-impl::.buffer (.buffer x)))
