@@ -21,7 +21,7 @@
                "anaphora"
                "log4cl"
                "random-uuid"
-               "4qbase64")
+               "qbase64")
   :serial t
   :pathname "src"
   :components
