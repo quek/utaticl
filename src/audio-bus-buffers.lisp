@@ -31,7 +31,7 @@
                                               bus))
              for buffer-ptr = (c-ref p (:struct (sb:vst-audio-bus-buffers))
                                      :vst-audio-bus-buffers-channel-buffers32)
-             do (loop for channel in num-channels
+             do (loop for channel below num-channels
                       do (autowrap:free (cffi:mem-aref buffer-ptr '(:pointer :float) channel)))
                 (autowrap:free buffer-ptr))
        (autowrap:free ptr)))))

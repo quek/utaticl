@@ -2,7 +2,7 @@
 
 (defclass neko ()
   ((neko-id :initarg :neko-id :initform (uid) :accessor .neko-id)
-   (name :initarg :name :initform "noname" :accessor .name)
+   (name :initarg :name :initform "" :accessor .name)
    (color :initarg :color :initform (color #x80 #x80 #x80 #x80) :accessor .color)))
 
 (defserialize neko neko-id name color)

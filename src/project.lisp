@@ -39,16 +39,8 @@
       (undo cmd)
       (push cmd (.cmd-redo-stack self)))))
 
-(defmethod update-play-position ((self project))
-  (let ((delta-sec (/ *frames-per-buffer* *sample-rate*))
-        (sec-per-beat (/ 60.0d0 (.bpm self))))
-    (when (and (.loop-p self) (<= (.loop-end self) (.play-start self)))
-      (setf (.play-start self) (.loop-start self)))
-    (setf (.play-end self) (+ (/ delta-sec sec-per-beat) (.play-start self)))
-    (when (and (.loop-p self) (< (.loop-end self) (.play-end self)))
-      (setf (.play-end self)
-            (+ (.loop-start self) (- (.play-end self) (.loop-end self)))))))
-
+(defmethod deserialize-after ((self project))
+  (setf (.target-track self) (.master-track self)))
 
 (defun find-lane (project lane-id)
   (labels ((f (track)
@@ -185,3 +177,13 @@
 
 (defmethod unselect-all-tracks ((self project))
   (unselect-all-tracks (.master-track self)))
+
+(defmethod update-play-position ((self project))
+  (let ((delta-sec (/ *frames-per-buffer* *sample-rate*))
+        (sec-per-beat (/ 60.0d0 (.bpm self))))
+    (when (and (.loop-p self) (<= (.loop-end self) (.play-start self)))
+      (setf (.play-start self) (.loop-start self)))
+    (setf (.play-end self) (+ (/ delta-sec sec-per-beat) (.play-start self)))
+    (when (and (.loop-p self) (< (.loop-end self) (.play-end self)))
+      (setf (.play-end self)
+            (+ (.loop-start self) (- (.play-end self) (.loop-end self)))))))

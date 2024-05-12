@@ -22,6 +22,9 @@
         if (eq (.from connection) self)
           collect connection))
 
+(defmethod deserialize-after ((self module))
+  (start self))
+
 (defmethod editor-open ((self module))
   (setf (.editor-open-p self) t))
 

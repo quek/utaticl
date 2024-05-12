@@ -39,5 +39,5 @@
   (loop for (id value) in state
         do (setf (.value (param self id)) value)))
 
-(defmethod deserialize-slots ((self module-vst3) (slot (eql 'state)) value)
+(defmethod deserialize-slots ((self module-builtin) (slot (eql 'state)) value)
   (setf (state self) value))

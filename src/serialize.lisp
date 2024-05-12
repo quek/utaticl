@@ -12,21 +12,26 @@
            (call-next-method)))))
 
 (defmethod deserialize (sexp)
-  (cond ((atom sexp)
-         sexp)
-        ((eq 'list (car sexp))
-         (loop for x in (cdr sexp)
-               collect (deserialize x)))
-        ((eq 'hash-table (car sexp))
-         (let ((map (make-hash-table :test (cadr sexp))))
-           (loop for (key value) on (cddr sexp) by #'cddr
-                 do (setf (gethash (deserialize key) map)
-                          (deserialize value)))))
-        (t
-         (let ((self (make-instance (car sexp))))
-           (loop for (slot value) on (cdr sexp) by #'cddr
-                 do (deserialize-slots self slot value))
-           self))))
+  (aprog1 (cond ((atom sexp)
+                 sexp)
+                ((eq 'list (car sexp))
+                 (loop for x in (cdr sexp)
+                       collect (deserialize x)))
+                ((eq 'hash-table (car sexp))
+                 (let ((map (make-hash-table :test (cadr sexp))))
+                   (loop for (key value) on (cddr sexp) by #'cddr
+                         do (setf (gethash (deserialize key) map)
+                                  (deserialize value)))))
+                (t
+                 (let ((self (make-instance (car sexp))))
+                   (loop for (slot value) on (cdr sexp) by #'cddr
+                         do (deserialize-slots self slot value))
+                   self)))
+    (deserialize-after it)))
+
+(defmethod deserialize-after (self))
+
+(defmethod deserialize-slots ((self t) slot value))
 
 (defmethod serialize ((self t))
   self)

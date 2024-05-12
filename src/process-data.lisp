@@ -55,7 +55,7 @@
                             (vst3-impl::release output-parameter-changes)))))
 
 
-(defmethod p ((self sb:vst-process-data))
+(defmethod p ((self process-data))
   (flet ((f (label audio-bus-buffer nbuses)
            (let ((ptr (sb:vst-audio-bus-buffers.vst-audio-bus-buffers-channel-buffers32 audio-bus-buffer)))
              (unless (autowrap:wrapper-null-p ptr)
@@ -65,8 +65,8 @@
                               with p = (autowrap:c-aref ptr i :pointer)
                               do (format t " ~2f" (autowrap:c-aref p j :float)))
                         (terpri))))))
-    (f "in" (sb:vst-process-data.inputs* self) (sb:vst-process-data.num-inputs self))
-    (f "out" (sb:vst-process-data.outputs* self) (sb:vst-process-data.num-outputs self))))
+    (f "in" (sb:vst-process-data.inputs* (.wrap self)) (sb:vst-process-data.num-inputs (.wrap self)))
+    (f "out" (sb:vst-process-data.outputs* (.wrap self)) (sb:vst-process-data.num-outputs (.wrap self)))))
 
 (defmethod prepare ((self process-data))
   (prepare (.inputs self))
