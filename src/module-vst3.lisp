@@ -241,6 +241,20 @@
 
   (call-next-method))
 
+(defmethod serialize ((self module-vst3))
+  `(,(class-name (class-of self))
+    ,@(serialize-slots self)
+    state ,(state self)))
+
+(defmethod deserialize-slots ((self module-vst3) (slot (eql 'state)) value)
+  (let ((preset (preset-vst3-to-base64 value)))
+    (preset-load preset self)))
+
+(defmethod state ((self module-vst3))
+  (let ((preset (make-instance 'preset-vst3)))
+    (preset-save preset self)
+    (preset-vst3-to-base64 preset)))
+
 #+nil
 (sb-int:with-float-traps-masked (:invalid :inexact :overflow :divide-by-zero)
  (let ((module (module-vst3-load

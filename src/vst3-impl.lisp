@@ -374,7 +374,8 @@
   (finish-group-edit (gethash (cffi:pointer-address this-interface) *ptr-object-map*)))
 
 (def-vst3-impl bstream (unknown)
-  ((buffer :initform (make-array 1024 :element-type '(unsigned-byte 8))
+  ((buffer :initarg :buffer
+           :initform (make-array 1024 :element-type '(unsigned-byte 8))
            :accessor .buffer)
    (tail :initform 0 :accessor .tail)
    (cursor :initform 0 :accessor .cursor))
@@ -432,6 +433,22 @@
       (loop for i below (.tail self)
             do (setf (aref buffer-new i) (aref (.buffer self) i)))
       (setf (.buffer self) buffer-new))))
+
+(defmethod read-byte$ ((self bstream))
+  (prog1 (aref (.buffer self) (.cursor self))
+    (incf (.cursor self))))
+
+(defmethod read-integer ((self bstream) size)
+  (loop for i below size
+        with n = 0
+        do (setf (ldb (byte 8 i) n) (read-byte$ self))
+        finally (return n)))
+
+(defmethod read-string ((self bstream) size)
+  (let ((vec (make-array size :element-type '(unsigned-byte 8))))
+    (loop for i below size
+          do (setf (aref vec i) (read-byte (.buffer self))))
+    (sb-ext:octets-to-string vec :external-format :utf-8)))
 
 (defmethod write-byte$ ((self bstream) byte)
   (ensure-buffer-size self 1)

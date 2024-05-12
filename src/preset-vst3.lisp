@@ -35,6 +35,16 @@ EOF +---------------------------+
 (defconstant +preset-vst3-version+ 1)
 (defconstant +preset-vst3-list-offset-pos+ 40)
 
+(defmethod preset-vst3-from-base64 (base64)
+  (let* ((vec (qbase64:decode-string base64))
+         (bstream (make-instance 'vst3-impl::bstream :buffer vec)))
+    (make-instance 'preset-vst3 :buffer bstream)))
+
+(defmethod preset-vst3-to-base64 ((self preset-vst3))
+  (let ((vec (vst3-impl::.buffer (.buffer self))))
+    (qbase64:encode-bytes (subseq vec 0
+                                  (vst3-impl::.tail (.buffer self))))))
+
 (defmethod preset-save ((self preset-vst3) module)
   (let ((buffer (.buffer self))
         (chunks nil))
@@ -60,7 +70,7 @@ EOF +---------------------------+
     ;; offset to chunk list
     (let ((pos (vst3-impl::.cursor buffer)))
       (setf (vst3-impl::.cursor buffer) +preset-vst3-list-offset-pos+)
-      (vst3-impl::write-integer buffer pos 64)
+      (vst3-impl::write-integer buffer pos 8)
       (setf (vst3-impl::.cursor buffer) pos))
     (vst3-impl::write-string$ buffer "List")
     (vst3-impl::write-integer buffer (length chunks) 4)
@@ -69,7 +79,28 @@ EOF +---------------------------+
              (vst3-impl::write-integer buffer offset 8)
              (vst3-impl::write-integer buffer size 8))))
 
-#+nil
-(let ((x (make-instance 'preset-vst3 )))
-  (preset-save x (module-vst3-load "c:/Program Files/Common Files/VST3/Dexed.vst3"))
-  (vst3-impl::.buffer (.buffer x)))
+(defmethod preset-load ((self preset-vst3) module)
+  (let ((buffer (.buffer self))
+        (pos 0)
+        (chunks nil))
+    (setf (vst3-impl::.cursor buffer) +preset-vst3-list-offset-pos+)
+    (setf pos (vst3-impl::read-integer buffer 8))
+    (setf (vst3-impl::.cursor buffer) (+ pos 4))
+    (loop repeat (vst3-impl::read-integer buffer 4)
+          do (push (list (vst3-impl::read-string buffer 4)
+                         (vst3-impl::read-integer buffer 8)
+                         (vst3-impl::read-integer buffer 8))
+                   chunks))
+    (let ((chunk (find "Comp" chunks :key #'car :test #'string=)))
+      (when chunk
+        (setf (vst3-impl::.cursor buffer) (cadr chunk))
+        (setf (vst3-impl::.tail buffer) (+ (cadr chunk) (caddr chunk)))
+        (vst3-ffi::set-state (.component module) buffer)
+        (setf (vst3-impl::.cursor buffer) (cadr chunk))
+        (setf (vst3-impl::.tail buffer) (+ (cadr chunk) (caddr chunk)))
+        (vst3-ffi::set-component-state (.controller module) buffer)))
+    (let ((chunk (find "Cont" chunks :key #'car :test #'string=)))
+      (when chunk
+        (setf (vst3-impl::.cursor buffer) (cadr chunk))
+        (setf (vst3-impl::.tail buffer) (+ (cadr chunk) (caddr chunk)))
+        (vst3-ffi::set-state (.controller module) buffer)))))

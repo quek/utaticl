@@ -23,3 +23,21 @@
                  (setf (silence-flags (.outputs *process-data*) 0 channel-index) nil))
       (setf (silence-flags (.outputs *process-data*) 0) (1- (ash 1 2))))
   (call-next-method))
+
+(defmethod serialize ((self module-builtin))
+  (append (call-next-method)
+          `(state ,(state self))))
+
+(defmethod state ((self module-builtin))
+  (let ((state nil))
+    (maphash (lambda (key value)
+               (push (list key value) state))
+             (.params self))
+    state))
+
+(defmethod (setf state) (state (self module-builtin))
+  (loop for (id value) in state
+        do (setf (.value (param self id)) value)))
+
+(defmethod deserialize-slots ((self module-vst3) (slot (eql 'state)) value)
+  (setf (state self) value))

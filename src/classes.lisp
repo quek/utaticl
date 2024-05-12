@@ -193,7 +193,7 @@
    (params :initform (make-hash-table) :accessor .params)
    (process-done :initform nil :accessor .process-done)))
 
-(defserialize module connections params)
+(defserialize module connections)
 
 (defclass module-vst3 (module)
   ((library :initarg :library :accessor .library)
@@ -241,7 +241,8 @@
 (defclass preset () ())
 
 (defclass preset-vst3 (preset)
-  ((buffer :initform (make-instance 'vst3-impl::bstream)
+  ((buffer :initarg :buffer
+           :initform (make-instance 'vst3-impl::bstream)
            :accessor .buffer)))
 
 (defclass connection (neko)
