@@ -6,7 +6,7 @@
       (ig:text "* ")
       (ig:same-line))
     (awhen (.path *project*)
-      (ig:text  (file-namestring it))
+      (ig:text (file-namestring it))
       (ig:same-line))
     (button-toggle "▶" (.play-p *project*))
     (ig:same-line)

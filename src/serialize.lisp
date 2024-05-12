@@ -8,7 +8,7 @@
          ,@(call-next-method)))
      (defmethod deserialize-slots ((self ,class) slot value)
        (if (member slot ',slots)
-           (setf (slot-value self slot) value)
+           (setf (slot-value self slot) (deserialize value))
            (call-next-method)))))
 
 (defmethod deserialize (sexp)
@@ -25,7 +25,7 @@
         (t
          (let ((self (make-instance (car sexp))))
            (loop for (slot value) on (cdr sexp) by #'cddr
-                 do (deserialize-slots self slot (deserialize value)))
+                 do (deserialize-slots self slot value))
            self))))
 
 (defmethod serialize ((self t))
