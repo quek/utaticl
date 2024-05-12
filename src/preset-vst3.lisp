@@ -33,7 +33,18 @@ EOF +---------------------------+
 |#
 
 (defconstant +preset-vst3-version+ 1)
+(defconstant +preset-vst3-cid-pos+ 8)
 (defconstant +preset-vst3-list-offset-pos+ 40)
+
+(defmethod cid ((self preset-vst3))
+  (let ((buffer (.buffer self))
+        (cid (make-array 32 :element-type '(unsigned-byte 8))))
+    (setf (vst3-impl::.cursor buffer) +preset-vst3-cid-pos+)
+    (loop with n = (parse-integer (vst3-impl::read-string buffer 32) :radix 16)
+          for i below 32
+          do (setf (aref cid i)
+                   (ldb (byte 8 i) n)))
+    cid))
 
 (defmethod preset-vst3-from-base64 (base64)
   (let* ((vec (qbase64:decode-string base64))

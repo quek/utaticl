@@ -1,16 +1,11 @@
 (in-package :dgw)
 
 (defun open-plugin-selector (self)
-  (let ((path (merge-pathnames "user/config/plugins.lisp" *working-directory*)))
-    (when (probe-file path)
-      (let ((plugin-infos (with-open-file (in path)
-                            (loop for sexp = (read in nil nil)
-                                  while sexp
-                                  collect (deserialize sexp)))))
-        (setf (.plugin-infos self)
-              (sort plugin-infos (lambda (x y)
-                                   (string< (string-upcase (.name x))
-                                            (string-upcase (.name y)))))))))
+  (let ((plugin-infos (plugin-info-load-all)))
+    (setf (.plugin-infos self)
+          (sort plugin-infos (lambda (x y)
+                               (string< (string-upcase (.name x))
+                                        (string-upcase (.name y)))))))
 
   (ig:open-popup "Plugin Selector"))
 

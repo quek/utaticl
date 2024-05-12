@@ -447,12 +447,13 @@
 (defmethod read-string ((self bstream) size)
   (let ((vec (make-array size :element-type '(unsigned-byte 8))))
     (loop for i below size
-          do (setf (aref vec i) (read-byte (.buffer self))))
+          do (setf (aref vec i) (read-byte$ self)))
     (sb-ext:octets-to-string vec :external-format :utf-8)))
 
 (defmethod write-byte$ ((self bstream) byte)
   (ensure-buffer-size self 1)
-  (setf (aref (.buffer self) (incf (.cursor self))) byte))
+  (setf (aref (.buffer self) (.cursor self)) byte)
+  (incf (.cursor self)))
 
 (defmethod write-integer ((self bstream) integer size)
   (loop for i below size

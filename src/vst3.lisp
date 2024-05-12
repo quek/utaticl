@@ -75,13 +75,19 @@ sb:+k-out-of-memory+
                    :ptr (cffi:mem-ref obj :pointer))))
 
 (defmethod create-component ((self vst3-ffi::iplugin-factory))
-  (let ((factory (or (query-interface self vst3-ffi::+iplugin-factory3-iid+)
-                     (query-interface self vst3-ffi::+iplugin-factory2-iid+)
-                     self)))
-    (destructuring-bind (instance cid) (%create-component factory)
-      (vst3-ffi::release factory)
-      (sb-ext:cancel-finalization factory)
-      (values instance cid))))
+  (destructuring-bind (instance cid) (%create-component self)
+    (values instance cid)))
+
+(defmethod create-component-by-id ((self vst3-ffi::iplugin-factory) id)
+  (autowrap:with-many-alloc ((%class-info '(:struct (sb:p-class-info))))
+    (loop for index below (vst3-ffi::count-classes self)
+          for class-info = (progn (ensure-ok
+                                   (vst3-ffi::get-class-info self index (autowrap:ptr %class-info)))
+                                  (sb::make-p-class-info :ptr (autowrap:ptr %class-info)))
+            thereis (and (loop for i below 32
+                               always (= (aref id i)
+                                         (cffi:mem-aref (vst3::.cid class-info) :unsigned-char  i)))
+                         (create-instance self (vst3::.cid class-info) vst3-ffi::+vst-icomponent-iid+)))))
 
 (flet ((%create-instance (self class-info)
          (if (equal (vst3::.category class-info) "Audio Module Class")

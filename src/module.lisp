@@ -25,6 +25,9 @@
 (defmethod deserialize-after ((self module))
   (start self))
 
+(defmethod deserialize-slots ((self module) (slot (eql 'state)) value)
+  (setf (state self) value))
+
 (defmethod editor-open ((self module))
   (setf (.editor-open-p self) t))
 
@@ -40,6 +43,10 @@
 
 (defmethod process ((self module))
   (setf (.process-done self) t))
+
+(defmethod serialize ((self module))
+  (append (call-next-method)
+          `(state ,(state self))))
 
 (defmethod start ((self module))
   (setf (.start-p self) t))
@@ -64,3 +71,4 @@
   (some (lambda (connection)
           (not (.process-done (.to connection))))
         (connections-to self)))
+

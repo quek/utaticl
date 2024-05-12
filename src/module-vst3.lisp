@@ -211,6 +211,27 @@
       (setf (.hwnd self) nil))
     (call-next-method)))
 
+(defmethod load-by-id ((self module-vst3) id)
+  (let* ((plugin-info (plugin-info-find id))
+         (path (.path plugin-info)))
+    (multiple-value-bind (factory library) (vst3::get-plugin-factory path)
+      (let* ((component (vst3::create-component-by-id factory id))
+             (single-component-p t)
+             (controller (labels ((f ()
+                                    (setf single-component-p nil)
+                                    (vst3::create-instance factory
+                                                           (vst3::get-controller-class-id component)
+                                                           vst3-ffi::+vst-iedit-controller-iid+)))
+                           (handler-case (vst3::query-interface component vst3-ffi::+vst-iedit-controller-iid+)
+                             (vst3::no-interface-error () (f))
+                             (vst3::false-error () (f))))))
+        (setf (.id self) id)
+        (setf (.library self) library)
+        (setf (.factory self) factory)
+        (setf (.component self) component)
+        (setf (.controller self) controller)
+        (setf (.single-component-p self) single-component-p)))))
+
 (defmethod on-resize ((self module-vst3) width height)
   (when (.editor-open-p self)
     (let ((view (.view self)))
@@ -247,7 +268,9 @@
     (preset-vst3-to-base64 preset)))
 
 (defmethod (setf state) (state (self module-vst3))
-  (let ((preset (preset-vst3-from-base64 state)))
+  (let* ((preset (preset-vst3-from-base64 state))
+         (id (cid preset)))
+    (load-by-id self id)
     (preset-load preset self)))
 
 

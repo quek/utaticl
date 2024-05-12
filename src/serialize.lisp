@@ -55,3 +55,7 @@
 
 (defmethod serialize-slots ((self t))
   nil)
+
+#+nil
+(with-open-file (in (merge-pathnames "user/project/20240511.lisp" *working-directory*))
+  (deserialize (read in)))
