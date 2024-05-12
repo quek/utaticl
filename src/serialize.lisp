@@ -41,9 +41,12 @@
 
 (defmethod serialize ((self hash-table))
   `(hash-table ',(hash-table-test self)
-               ,@(maphash (lambda (key value)
-                            (list (serialize key) (serialize value)))
-                          self)))
+               ,@ (let (xs)
+                    (maphash (lambda (key value)
+                               (push (list (serialize key) (serialize value))
+                                     xs))
+                             self)
+                    xs)))
 
 (defmethod serialize-slots ((self t))
   nil)

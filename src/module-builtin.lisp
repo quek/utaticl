@@ -31,7 +31,7 @@
 (defmethod state ((self module-builtin))
   (let ((state nil))
     (maphash (lambda (key value)
-               (push (list key value) state))
+               (push (list key (.value value)) state))
              (.params self))
     state))
 
