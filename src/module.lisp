@@ -23,6 +23,7 @@
           collect connection))
 
 (defmethod deserialize-after ((self module))
+  (initialize self)
   (start self))
 
 (defmethod deserialize-slots ((self module) (slot (eql 'state)) value)
@@ -33,6 +34,8 @@
 
 (defmethod editor-close ((self module))
   (setf (.editor-open-p self) nil))
+
+(defmethod initialize ((self module)))
 
 (defmethod prepare ((self module))
   (setf (.process-done self) nil))

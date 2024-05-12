@@ -57,5 +57,6 @@
   nil)
 
 #+nil
-(with-open-file (in (merge-pathnames "user/project/20240511.lisp" *working-directory*))
-  (deserialize (read in)))
+(sb-int:with-float-traps-masked (:invalid :inexact :overflow :divide-by-zero)
+  (with-open-file (in (merge-pathnames "user/project/20240511.lisp" *working-directory*))
+    (deserialize (read in))))

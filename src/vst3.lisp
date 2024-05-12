@@ -84,7 +84,7 @@ sb:+k-out-of-memory+
           for class-info = (progn (ensure-ok
                                    (vst3-ffi::get-class-info self index (autowrap:ptr %class-info)))
                                   (sb::make-p-class-info :ptr (autowrap:ptr %class-info)))
-            thereis (and (loop for i below 32
+            thereis (and (loop for i below 16
                                always (= (aref id i)
                                          (cffi:mem-aref (vst3::.cid class-info) :unsigned-char  i)))
                          (create-instance self (vst3::.cid class-info) vst3-ffi::+vst-icomponent-iid+)))))
