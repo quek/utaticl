@@ -1,6 +1,6 @@
 (in-package :dgw)
 
-(defvar *hwnd-module-vst3-map* (make-hash-table))
+(sb-ext:defglobal *hwnd-module-vst3-map* (make-hash-table :weakness :value))
 
 (defmethod initialize-instance :after ((self module-vst3) &key)
   (let ((host-applicaiton (make-instance 'vst3-impl::host-application :module self)))

@@ -6,8 +6,8 @@
   (b-menu :boolean)
   (dw-ex-style :uint32))
 
-
 (ftw:defwndproc wnd-proc (hwnd msg wparam lparam)
+  (log:trace 'wnd-proc hwnd msg wparam lparam)
   (let ((module (gethash (cffi:pointer-address hwnd) dgw::*hwnd-module-vst3-map*)))
     (when module
       (ftw:switch msg
@@ -21,7 +21,7 @@
          (dgw::editor-close module)))))
   (ftw:default-window-proc hwnd msg wparam lparam))
 
-(defvar *registered-class* nil)
+(sb-ext:defglobal *registered-class* nil)
 
 (defun make-window (width height resizable)
   (unless *registered-class*
