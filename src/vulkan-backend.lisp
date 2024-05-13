@@ -463,7 +463,6 @@
         (vk:device-wait-idle *device*)
         (imgui-impl-vulkan-shutdown)
         (ig-backend::impl-sdl2-shutdown)
-        (ig:log-finish)
         (ig:destroy-context (cffi:null-pointer))
         (cleanup-vulkan-window)
         (cleanup-vulkan)))))

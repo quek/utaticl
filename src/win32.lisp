@@ -7,7 +7,6 @@
   (dw-ex-style :uint32))
 
 (ftw:defwndproc wnd-proc (hwnd msg wparam lparam)
-  (log:trace 'wnd-proc hwnd msg wparam lparam)
   (let ((module (gethash (cffi:pointer-address hwnd) dgw::*hwnd-module-vst3-map*)))
     (when module
       (ftw:switch msg
