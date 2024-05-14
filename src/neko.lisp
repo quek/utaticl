@@ -17,5 +17,8 @@
       (setf (gethash value *neko-map*) self)
       (remhash neko-id-old *neko-map*))))
 
+(defmethod .neko-id ((self list))
+  (mapcar #'.neko-id self))
+
 (defmethod ig:push-id ((self neko))
   (ig:push-id (.neko-id self)))

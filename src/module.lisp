@@ -26,7 +26,7 @@
   (initialize self)
   (start self))
 
-(defmethod deserialize-slots ((self module) (slot (eql 'state)) value)
+(defmethod deserialize-slot ((self module) (slot (eql 'state)) value)
   (setf (state self) value))
 
 (defmethod editor-open ((self module))

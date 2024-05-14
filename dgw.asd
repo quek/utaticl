@@ -30,7 +30,7 @@
    (:file "utils")
    (:file "thread-pool")
    (:file "grid")
-   (:file "macro")
+   (:file "macro-serialize")
    (:file "classes")
    (:file "serialize")
    (:file "process")

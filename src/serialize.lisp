@@ -1,10 +1,11 @@
 (in-package :dgw)
 
-(defvar *serialize-context*)
-(defconstant +neko-ref+ '+neko-ref+)
-
 (defclass serialize-context ()
-  ((map :initform (make-hash-table) :accessor .map)))
+  ((afters :initform nil :accessor .afters)
+   (map :initform (make-hash-table) :accessor .map)))
+
+(defmethod after-add ((self serialize-context) f)
+  (push f (.afters self)))
 
 (defmethod serialize-did-p ((self serialize-context) x)
   (multiple-value-bind (value present-p) (gethash x (.map self))
@@ -14,6 +15,9 @@
 (defmethod serialize-did ((self serialize-context) x)
   (setf (gethash x (.map self)) x))
 
+(defun serialize-context-finalize ()
+  (loop for f in (.afters *serialize-context*)
+        do (funcall f)))
 
 (defmethod deserialize (sexp)
   (aprog1 (cond ((atom sexp)
@@ -21,6 +25,8 @@
                 ((eq 'list (car sexp))
                  (loop for x in (cdr sexp)
                        collect (deserialize x)))
+                ((eq +neko-ref+ (car sexp))
+                 (cadr sexp))
                 ((eq 'hash-table (car sexp))
                  (let ((map (make-hash-table :test (cadr sexp))))
                    (loop for (key value) on (cddr sexp) by #'cddr
@@ -29,13 +35,13 @@
                 (t
                  (let ((self (make-instance (car sexp))))
                    (loop for (slot value) on (cdr sexp) by #'cddr
-                         do (deserialize-slots self slot value))
+                         do (deserialize-slot self slot value))
                    self)))
     (deserialize-after it)))
 
 (defmethod deserialize-after (self))
 
-(defmethod deserialize-slots ((self t) slot value))
+(defmethod deserialize-slot ((self t) slot value))
 
 (defmethod serialize :around ((self neko))
   (if (serialize-did-p *serialize-context* self)
