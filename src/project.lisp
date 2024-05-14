@@ -130,9 +130,9 @@
 
 (defmethod save ((self project))
   (if (.path self)
-      (progn
+      (let ((sexp (with-serialize-context (serialize self))))
         (with-open-file (out (.path self) :direction :output :if-exists :supersede)
-          (write (serialize self) :stream out))
+          (write sexp :stream out))
         (setf (.dirty-p self) nil))
       (save-as self)))
 

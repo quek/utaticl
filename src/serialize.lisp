@@ -1,15 +1,19 @@
 (in-package :dgw)
 
-(defmacro defserialize (class &rest slots)
-  `(progn
-     (defmethod serialize-slots ((self ,class))
-       `(,,@(loop for slot in slots
-                  nconc `(',slot (serialize (slot-value self ',slot))))
-         ,@(call-next-method)))
-     (defmethod deserialize-slots ((self ,class) slot value)
-       (if (member slot ',slots)
-           (setf (slot-value self slot) (deserialize value))
-           (call-next-method)))))
+(defvar *serialize-context*)
+(defconstant +neko-ref+ '+neko-ref+)
+
+(defclass serialize-context ()
+  ((map :initform (make-hash-table) :accessor .map)))
+
+(defmethod serialize-did-p ((self serialize-context) x)
+  (multiple-value-bind (value present-p) (gethash x (.map self))
+    (declare (ignore value))
+    present-p))
+
+(defmethod serialize-did ((self serialize-context) x)
+  (setf (gethash x (.map self)) x))
+
 
 (defmethod deserialize (sexp)
   (aprog1 (cond ((atom sexp)
@@ -32,6 +36,13 @@
 (defmethod deserialize-after (self))
 
 (defmethod deserialize-slots ((self t) slot value))
+
+(defmethod serialize :around ((self neko))
+  (if (serialize-did-p *serialize-context* self)
+      `(+neko-ref+ ,(.neko-id self))
+      (progn
+        (serialize-did *serialize-context* self)
+        (call-next-method))))
 
 (defmethod serialize ((self t))
   self)
