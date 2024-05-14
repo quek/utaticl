@@ -154,7 +154,7 @@
 (defmethod vst3-ffi::release :around ((self %funknown))
   (let ((ret (call-next-method)))
     (when (zerop ret)
-      (log:trace 'cancel-finalization self 'me)
+      (log:trace 'cancel-finalization self '%funknown)
       (sb-ext:cancel-finalization self))
     ret))
 
