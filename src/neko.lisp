@@ -6,10 +6,7 @@
   (gethash neko-id *neko-map*))
 
 (defmethod initialize-instance :after ((self neko) &key)
-  (loop for neko-id = (.neko-id self) then (uid)
-        unless (gethash neko-id *neko-map*)
-          do (setf (gethash (.neko-id self) *neko-map*) self)
-             (loop-finish)))
+  (setf (gethash (.neko-id self) *neko-map*) self))
 
 (defmethod (setf .neko-id) :around (value (self neko))
   (let ((neko-id-old (.neko-id self)))
