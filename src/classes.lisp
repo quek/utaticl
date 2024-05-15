@@ -250,8 +250,7 @@
    (to :initarg :to :accessor .to)
    (from-bus-index :initarg :from-bus-index :initform 0 :accessor .from-bus-index)
    (to-bus-index :initarg :to-bus-index :initform 0 :accessor .to-bus-index)
-   (from-process-data :initarg :from-process-data :accessor .from-process-data)
-   (to-process-data :initarg :to-process-data :accessor .to-process-data)))
+   (from-process-data :accessor .from-process-data)))
 
 (defserialize connection (:ref from) (:ref to) from-bus-index to-bus-index)
 

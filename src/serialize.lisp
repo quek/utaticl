@@ -23,8 +23,19 @@
   (aprog1 (cond ((atom sexp)
                  sexp)
                 ((eq 'list (car sexp))
-                 (loop for x in (cdr sexp)
-                       collect (deserialize x)))
+                 (let ((list (loop repeat (length (cdr sexp))
+                                   collect nil)))
+                   (loop for x in (cdr sexp)
+                         for i from 0
+                         if (and (consp x) (eq :ref (car x)))
+                           do (after-add *serialize-context*
+                                         (let ((i i)
+                                               (neko-id (cadr x)))
+                                           (lambda ()
+                                             (setf (nth i list) (find-neko neko-id)))))
+                         else
+                           do (setf (nth i list) (deserialize x)))
+                   list))
                 ((eq 'hash-table (car sexp))
                  (let ((map (make-hash-table :test (cadr sexp))))
                    (loop for (key value) on (cddr sexp) by #'cddr
@@ -74,4 +85,5 @@
 #+nil
 (sb-int:with-float-traps-masked (:invalid :inexact :overflow :divide-by-zero)
   (with-open-file (in (merge-pathnames "user/project/20240511.lisp" *working-directory*))
-    (deserialize (read in))))
+    (with-serialize-context
+      (deserialize (read in)))))

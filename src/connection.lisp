@@ -4,7 +4,7 @@
   (when (.start-p (.from self))
     (let* ((from-process-data (.from-process-data self))
            (from-buses (.outputs from-process-data))
-           (to-process-data (.to-process-data self))
+           (to-process-data *process-data*)
            (to-buses (.inputs to-process-data))
            (from-bus-index (.from-bus-index self))
            (to-bus-index (.to-bus-index self)))

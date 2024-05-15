@@ -1,16 +1,13 @@
 (in-package :dgw)
 
-(defmethod connect ((from module) (to module)
-                    from-process-data to-process-data)
-  (loop for module in (list from to)
-        for connection = (make-instance 'connection
+(defmethod connect ((from module) (to module))
+  (let ((connection (make-instance 'connection
                                         :from from
                                         :to to
                                         :from-bus-index 0
-                                        :to-bus-index 0
-                                        :from-process-data from-process-data
-                                        :to-process-data to-process-data)
-        do (push connection (.connections module))))
+                                        :to-bus-index 0)))
+    (push connection (.connections from))
+    (push connection (.connections to))))
 
 (defmethod connections-from ((self module))
   (loop for connection in (.connections self)
@@ -45,6 +42,8 @@
         do (process connection-from)))
 
 (defmethod process ((self module))
+  (loop for connection in (connections-to self)
+        do (setf (.from-process-data connection) *process-data*))
   (setf (.process-done self) t))
 
 (defmethod serialize ((self module))
