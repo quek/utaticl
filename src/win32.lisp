@@ -78,5 +78,36 @@
                                 (- (ftw:rect-right rect) (ftw:rect-left rect))
                                 (- (ftw:rect-bottom rect) (ftw:rect-top rect))
                                 '(:no-move :no-copy-bits :no-activate))))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;; nphysical-cpus
+(cffi:defcstruct system-logical-processor-information
+  (processor-mask :pointer)
+  (relationship :int32)
+  (reserved :unsigned-long-long :count 2))
+
+(cffi:defcfun ("GetLogicalProcessorInformation" get-logical-processor-information) :bool
+  (buffer :pointer)
+  (size :pointer))
+
+(defun nphysical-cpus ()
+  (cffi:with-foreign-object (size :int32)
+    (setf (cffi:mem-ref size :int32) 0)
+    (get-logical-processor-information (cffi:null-pointer) size)
+    (let* ((sizeof (cffi:foreign-type-size
+                    '(:struct system-logical-processor-information)))
+           (count (floor (/ (cffi:mem-ref size :int32) sizeof))))
+      (cffi:with-foreign-object (buffer
+                                 '(:struct system-logical-processor-information)
+                                 count)
+        (setf (cffi:mem-ref size :int32) (* sizeof count))
+        (get-logical-processor-information buffer size)
+        (loop for i below count
+              count (zerop (getf (cffi:mem-aref
+                                  buffer
+                                  '(:struct system-logical-processor-information)
+                                  i)
+                                 'relationship)))))))
 #+nil
-(make-window 1024 760 t)
+(nphysical-cpus)
+

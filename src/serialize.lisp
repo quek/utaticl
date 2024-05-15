@@ -25,8 +25,6 @@
                 ((eq 'list (car sexp))
                  (loop for x in (cdr sexp)
                        collect (deserialize x)))
-                ((eq +neko-ref+ (car sexp))
-                 (cadr sexp))
                 ((eq 'hash-table (car sexp))
                  (let ((map (make-hash-table :test (cadr sexp))))
                    (loop for (key value) on (cddr sexp) by #'cddr
@@ -45,7 +43,7 @@
 
 (defmethod serialize :around ((self neko))
   (if (serialize-did-p *serialize-context* self)
-      `(+neko-ref+ ,(.neko-id self))
+      `(:ref ,(.neko-id self))
       (progn
         (serialize-did *serialize-context* self)
         (call-next-method))))

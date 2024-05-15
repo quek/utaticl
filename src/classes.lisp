@@ -253,7 +253,7 @@
    (from-process-data :initarg :from-process-data :accessor .from-process-data)
    (to-process-data :initarg :to-process-data :accessor .to-process-data)))
 
-(defserialize connection (+neko-ref+ from) (+neko-ref+ to) from-bus-index to-bus-index)
+(defserialize connection (:ref from) (:ref to) from-bus-index to-bus-index)
 
 (defclass param (neko)
   ((id :initarg :id :initform nil :accessor .id)

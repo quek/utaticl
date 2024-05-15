@@ -1,6 +1,6 @@
 (in-package :dgw)
 
-(defvar *neko-map* (make-hash-table :weakness :value))
+(defvar *neko-map* (make-hash-table :weakness :value :test 'equal))
 
 (defun find-neko (neko-id)
   (gethash neko-id *neko-map*))

@@ -67,7 +67,7 @@
     (when ok
       (let ((path (car path)))
        (with-open-file (in path :direction :input)
-         (let ((project (deserialize (read in))))
+         (let ((project (with-serialize-context (deserialize (read in)))))
            (setf (.path project) path)
            (terminate self)
            (setf (.projects *app*)
