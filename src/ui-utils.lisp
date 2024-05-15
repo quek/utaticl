@@ -84,6 +84,8 @@
       (invoke-debugger e))))
 
 (defun shortcut-common ()
+  (defshortcut (ig:+im-gui-key-space+)
+    (setf (.play-p *project*) (not (.play-p *project*))))
   (defshortcut (ig:+im-gui-key-semicolon+)
     (show (.commander *project*)))
   (defshortcut (ig:+im-gui-mod-ctrl+ ig:+im-gui-key-s+)
