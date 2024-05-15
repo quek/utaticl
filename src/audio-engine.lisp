@@ -17,23 +17,11 @@
     ;; :initform "FL Studio ASIO"
     ;; :initform "Realtek Digital Output (Realtek"
     :accessor .device-name)
-   (sample-rate
-    :initarg :sample-rate
-    :initform *sample-rate*
-    :type double-float
-    :accessor .sample-rate)
-   (frames-per-buffer
-    :initarg frames-per-buffer
-    :initform *frames-per-buffer*
-    :accessor .frames-per-buffer)
    (sample-format
     :initarg sample-format
     :initform :float
     :accessor .sample-format)
    (processing :initform nil :accessor .processing)
-   (playing :initform nil :accessor .playing)
-   (played :initform nil :accessor .played)
-   (request-stop :initform nil :accessor .request-stop)
    (stream
     :initform nil
     :accessor .stream)
@@ -47,15 +35,9 @@
     :initform 2
     :type fixnum
     :accessor .output-channels)
-   (sequencer :initarg :sequencer :accessor .sequencer)
    (master-buffer :initform (list (make-array 1024 :element-type 'single-float :initial-element 0.0)
                                   (make-array 1024 :element-type 'single-float :initial-element 0.0))
                   :accessor .master-buffer)
-   (process-thread :initform nil :accessor .process-thread)
-   (process-thread-mailbox :accessor .process-thread-mailbox
-                           :initform (sb-concurrency:make-mailbox))
-   (audio-mailbox :accessor .audio-mailbox
-                  :initform (sb-concurrency:make-mailbox))
    (statistic-enter-time :initform (get-internal-real-time)
                          :accessor .statistic-enter-time)
    (statistic-leave-time :initform (get-internal-real-time)
@@ -81,33 +63,15 @@
   (:output-overflow #x00000008)
   (:priming-output #x00000010))
 
-(cffi:defcstruct pa-stream-callback-time-info
-  (input-buffer-adc-time pa::pa-time)
-  (current-time pa::pa-time)
-  (output-buffer-dac-time pa::pa-time))
-
 (defun start-audio ()
   (unless (.processing *audio*)
     (setf (.processing *audio*) t)
-    (setf (.request-stop *audio*) nil)
     (pa:start-stream (.stream *audio*))))
 
 (defun stop-audio ()
   (when (.processing *audio*)
     (setf (.processing *audio*) nil)
-    (pa::stop-stream (.stream *audio*)))
-  (swhen (.process-thread *audio*)
-         (sb-thread:terminate-thread it)
-         (setf it nil)))
-
-(defun playing ()
-  (.playing *audio*))
-
-(defun played ()
-  (.played *audio*))
-
-(defun request-stop ()
-  (setf (.request-stop *audio*) t))
+    (pa::stop-stream (.stream *audio*))))
 
 (defun write-master-buffer (buffer)
   (flet ((limit (value)
@@ -148,7 +112,7 @@
 (cffi:defcallback audio-callback :int ((input-buffer :pointer)
                                        (output-buffer :pointer)
                                        (frame-per-buffer :unsigned-long)
-                                       (time-info (:pointer (:struct pa-stream-callback-time-info)))
+                                       (time-info :pointer)
                                        (status-flags pa-stream-callback-flags)
                                        (user-data :pointer))
   (declare (optimize (speed 3) (safety 0))
@@ -206,7 +170,7 @@
       (setf (.statistic-min-interval-time *audio*) most-positive-fixnum)
       (setf (.statistic-max-interval-time *audio*) 0)
       (setf (.statistic-count *audio*) 0))))
-
+ 
 (defmacro with-audio (&body body)
   `(progn
      (setf *audio* (make-instance 'audio-engine))

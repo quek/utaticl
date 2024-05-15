@@ -31,6 +31,7 @@
    (:file "thread-pool")
    (:file "grid")
    (:file "macro-serialize")
+   (:file "config")
    (:file "classes")
    (:file "serialize")
    (:file "process")
