@@ -5,56 +5,11 @@
 (defparameter *sample-rate* 48000.0d0)
 (defparameter *frames-per-buffer* 1024)
 
-(defclass audio-engine ()
-  ((device-api
-    :initarg :device-api
-    :initform "ASIO"
-    ;; :initform "MME"
-    :accessor .device-api)
-   (device-name
-    :initarg :device-name
-    :initform "Prism Sound USB Audio Class 2.0"
-    ;; :initform "FL Studio ASIO"
-    ;; :initform "Realtek Digital Output (Realtek"
-    :accessor .device-name)
-   (sample-format
-    :initarg sample-format
-    :initform :float
-    :accessor .sample-format)
-   (processing :initform nil :accessor .processing)
-   (stream
-    :initform nil
-    :accessor .stream)
-   (input-channels
-    :initarg :input-channels
-    :initform 0
-    :type fixnum
-    :accessor .input-channels)
-   (output-channels
-    :initarg :output-channels
-    :initform 2
-    :type fixnum
-    :accessor .output-channels)
-   (master-buffer :initform (list (make-array 1024 :element-type 'single-float :initial-element 0.0)
-                                  (make-array 1024 :element-type 'single-float :initial-element 0.0))
-                  :accessor .master-buffer)
-   (statistic-enter-time :initform (get-internal-real-time)
-                         :accessor .statistic-enter-time)
-   (statistic-leave-time :initform (get-internal-real-time)
-                         :accessor .statistic-leave-time)
-   (statistic-count :initform 0 :accessor .statistic-count)
-   (statistic-total-process-time :initform 0
-                                 :accessor .statistic-total-process-time)
-   (statistic-min-process-time :initform most-positive-fixnum
-                               :accessor .statistic-min-process-time)
-   (statistic-max-process-time :initform 0
-                               :accessor .statistic-max-process-time)
-   (statistic-total-interval-time :initform 0
-                                  :accessor .statistic-total-interval-time)
-   (statistic-min-interval-time :initform most-positive-fixnum
-                                :accessor .statistic-min-interval-time)
-   (statistic-max-interval-time :initform 0
-                                :accessor .statistic-max-interval-time)))
+(defmethod initialize-instance :after ((self audio-device) &key)
+  (let ((handle (.handle self)))
+    (sb-ext:finalize self
+                     (lambda ()
+                       (cffi:foreign-free handle)))))
 
 (cffi:defbitfield (pa-stream-callback-flags :unsigned-long)
   (:input-underflow #x00000001)
@@ -63,15 +18,69 @@
   (:output-overflow #x00000008)
   (:priming-output #x00000010))
 
-(defun start-audio ()
-  (unless (.processing *audio*)
-    (setf (.processing *audio*) t)
-    (pa:start-stream (.stream *audio*))))
+(defmethod open-audio-device ((self audio-device))
+  (if (and (.audio-device-api *config*)
+           (.audio-device-name *config*))
+      (let* ((output-parameters (pa::make-stream-parameters))
+             (device-index
+               (loop for i of-type fixnum below (pa:get-device-count)
+                     for device-info = (pa:get-device-info i)
+                       thereis (and
+                                (equal (pa:host-api-info-name
+                                        (pa:get-host-api-info (pa:device-info-host-api device-info)))
+                                       (.audio-device-api *config*))
+                                (equal (pa:device-info-name device-info)
+                                       (.audio-device-name *config*))
+                                i))))
+        (if device-index
+            (progn
+              (setf (pa::stream-parameters-device output-parameters) device-index)
+              (setf (pa:stream-parameters-channel-count output-parameters) (.output-channels self)
+                    (pa:stream-parameters-sample-format output-parameters) (.sample-format self)
+                    (pa::stream-parameters-suggested-latency output-parameters) 0.0d0) ;TODO
+              (setf (.stream self)
+                    (progn
+                      (pa::raise-if-error
+                       (pa::%open-stream
+                        (.handle self)
+                        nil
+                        output-parameters
+                        *sample-rate*
+                        *frames-per-buffer*
+                        0
+                        (cffi:callback audio-callback)
+                        (cffi:null-pointer)))
+                      (make-instance
+                       'pa:pa-stream
+                       :handle (cffi:mem-ref (.handle self) :pointer)
+                       :input-sample-format (.sample-format self)
+                       :input-channels (if (zerop (the fixnum (.input-channels self)))
+                                           nil
+                                           (.input-channels self))
+                       :output-sample-format (.sample-format self)
+                       :output-channels (if (zerop (the fixnum (.output-channels self)))
+                                            nil
+                                            (.output-channels self))
+                       :frames-per-buffer *frames-per-buffer*)))
+              t)
+            nil))
+      nil))
 
-(defun stop-audio ()
-  (when (.processing *audio*)
-    (setf (.processing *audio*) nil)
-    (pa::stop-stream (.stream *audio*))))
+(defmethod close-audio-device ((self audio-device))
+  (stop-audio-device self)
+  (when (.stream self)
+    (pa:close-stream (.stream self))
+    (setf (.stream self) nil)))
+
+(defmethod start-audio-device ((self audio-device))
+  (unless (.processing self)
+    (setf (.processing self) t)
+    (pa:start-stream (.stream self))))
+
+(defmethod stop-audio-device ((self audio-device))
+  (when (.processing self)
+    (setf (.processing self) nil)
+    (pa::stop-stream (.stream self))))
 
 (defun write-master-buffer (buffer)
   (flet ((limit (value)
@@ -170,10 +179,12 @@
       (setf (.statistic-min-interval-time *audio*) most-positive-fixnum)
       (setf (.statistic-max-interval-time *audio*) 0)
       (setf (.statistic-count *audio*) 0))))
- 
+
+;;; TODO DELETE
+#+nil
 (defmacro with-audio (&body body)
   `(progn
-     (setf *audio* (make-instance 'audio-engine))
+     (setf *audio* (make-instance 'audio-device))
      (portaudio:with-audio
        (cffi:with-foreign-objects ((handle :pointer))
          (unwind-protect

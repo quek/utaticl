@@ -499,9 +499,7 @@
   (ig::new-frame)
 
   (ig:show-demo-window (cffi:null-pointer))
-  (let ((dgw::*render-context* (make-instance 'dgw::render-context))
-        ;; FIXME 毎回 make-instance はちょっと
-        (dgw::*theme* (make-instance 'dgw::theme)))
+  (let ((dgw::*render-context* (make-instance 'dgw::render-context)))
     (dgw::render app)
     (dgw::cmd-run app))
 

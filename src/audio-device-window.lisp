@@ -1,0 +1,32 @@
+(in-package :dgw)
+
+(defmethod render :before ((self audio-device-window))
+  (unless (.host-apis self)
+    (setf (.host-apis self)
+          (loop for i below (pa:get-host-api-count)
+                collect (pa:get-host-api-info i))))
+  (unless (.device-infos self)
+    (setf (.device-infos self)
+          (loop for i of-type fixnum below (pa:get-device-count)
+                collect (pa:get-device-info i)))))
+
+(defmethod render ((self audio-device-window))
+  (ig:with-begin ("Audio Device Config")
+    (when (ig:is-window-appearing)
+      (setf (.api self) (.audio-device-api *config*))
+      (setf (.name self) (.audio-device-name *config*)))
+
+    (ig:combo "API" (.api self) (mapcar #'pa:host-api-info-name (.host-apis self)))
+    (ig:combo "Device" (.name self) (loop for device-info in (.device-infos self)
+                                          if (equal (position (.api self) (.host-apis self)
+                                                              :key #'pa:host-api-info-name)
+                                                    (pa:device-info-host-api device-info))
+                                            collect (pa:device-info-name device-info)))
+
+    (ig:separator)
+    (when (ig:button "Ok")
+      ;; TODO
+      (setf (.audio-device-api *config*) "ASIO")
+      (setf (.audio-device-name *config*) "Prism Sound USB Audio Class 2.0")
+      (config-save *config*)
+      (setf (.audio-device-configured-p *app*) t))))

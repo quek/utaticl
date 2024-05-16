@@ -275,10 +275,62 @@
   ((ptr :accessor .ptr)
    (nbuses :initarg :nbuses :initform 1 :accessor .nbuses)))
 
+(defclass audio-device-window (view)
+  ((api :initform nil :accessor .api)
+   (name :initform nil :accessor .name)
+   (host-apis :initform nil :accessor .host-apis)
+   (device-infos :initform nil :accessor .device-infos)))
+
 (defclass commander (show-mixin)
   ((query :initform "" :accessor .query)))
 
+(defclass audio-device ()
+  ((device-api :initarg :device-api
+               :initform "ASIO"
+               :accessor .device-api)
+   (device-name :initarg :device-name
+                :initform "Prism Sound USB Audio Class 2.0"
+                :accessor .device-name)
+   (handle :initform (cffi:foreign-alloc :pointer) :accessor .handle)
+   (sample-format :initarg sample-format
+                  :initform :float
+                  :accessor .sample-format)
+   (processing :initform nil :accessor .processing)
+   (stream :initform nil :accessor .stream)
+   (input-channels :initarg :input-channels
+                   :initform 0
+                   :type fixnum
+                   :accessor .input-channels)
+   (output-channels :initarg :output-channels
+                    :initform 2
+                    :type fixnum
+                    :accessor .output-channels)
+   (master-buffer :initform (list (make-array 1024 :element-type 'single-float :initial-element 0.0)
+                                  (make-array 1024 :element-type 'single-float :initial-element 0.0))
+                  :accessor .master-buffer)
+   (statistic-enter-time :initform (get-internal-real-time)
+                         :accessor .statistic-enter-time)
+   (statistic-leave-time :initform (get-internal-real-time)
+                         :accessor .statistic-leave-time)
+   (statistic-count :initform 0 :accessor .statistic-count)
+   (statistic-total-process-time :initform 0
+                                 :accessor .statistic-total-process-time)
+   (statistic-min-process-time :initform most-positive-fixnum
+                               :accessor .statistic-min-process-time)
+   (statistic-max-process-time :initform 0
+                               :accessor .statistic-max-process-time)
+   (statistic-total-interval-time :initform 0
+                                  :accessor .statistic-total-interval-time)
+   (statistic-min-interval-time :initform most-positive-fixnum
+                                :accessor .statistic-min-interval-time)
+   (statistic-max-interval-time :initform 0
+                                :accessor .statistic-max-interval-time)))
+
 (defclass app ()
-  ((mutex :initform (sb-thread:make-mutex :name "APP") :accessor .mutex)
+  ((audio-device :initform nil :accessor .audio-device)
+   (audio-device-configured-p :initform nil :accessor .audio-device-configured-p)
+   (audio-device-window :initform (make-instance 'audio-device-window)
+                        :accessor .audio-device-window)
+   (mutex :initform (sb-thread:make-mutex :name "APP") :accessor .mutex)
    (projects :initform (list (make-instance 'project)) :accessor .projects)
    (window :accessor .window)))
