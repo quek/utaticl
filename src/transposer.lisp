@@ -18,5 +18,6 @@
     (let* ((io (ig:get-io))
            (framerate (c-ref io ig:im-gui-io :framerate))
            (ms (/ 1000.0  framerate)))
-      (ig:text (format nil "~,3f ms/frame (~,1f FPS)" ms framerate))))
+      (ig:text (format nil "~,3f ms/frame (~,1f FPS)" ms framerate)))
+    (shortcut-common))
   (ig:end))

@@ -1,6 +1,6 @@
 (in-package :dgw)
 
-(defvar *config*)
+(sb-ext:defglobal *config* nil)
 
 (defclass config-mixin ()
   ((name :initarg :name :accessor .name)))

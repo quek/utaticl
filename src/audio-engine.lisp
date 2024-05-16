@@ -198,7 +198,7 @@
                           nil
                           output-parameters
                           *sample-rate*
-                          (.frames-per-buffer *audio*)
+                          *frames-per-buffer*
                           0
                           (cffi:callback audio-callback)
                           (cffi:null-pointer)))
@@ -213,7 +213,7 @@
                          :output-channels (if (zerop (the fixnum (.output-channels *audio*)))
                                               nil
                                               (.output-channels *audio*))
-                         :frames-per-buffer (.frames-per-buffer *audio*))))
+                         :frames-per-buffer *frames-per-buffer*)))
                 ,@body)
            (when (.stream *audio*)
              (stop-audio)
