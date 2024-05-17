@@ -82,7 +82,7 @@
     (setf (.processing self) nil)
     (pa::stop-stream (.stream self))))
 
-(defun write-master-buffer (buffer)
+(defun write-master-buffer (self buffer)
   (flet ((limit (value)
            (cond ((< 1.0 value)
                   (warn "音大きすぎ ~a" value)
@@ -91,8 +91,8 @@
                   (warn "音大きすぎ ~a" value)
                   -1.0)
                  (t value))))
-    (let* ((left (car (.master-buffer *audio*)))
-           (right (cadr (.master-buffer *audio*)))
+    (let* ((left (car (.master-buffer self)))
+           (right (cadr (.master-buffer self)))
            (volume 1.0))
       (loop for i below *frames-per-buffer*
             do (setf (cffi:mem-aref buffer :float (* i 2))
@@ -103,19 +103,20 @@
                      (aref right i) 0.0)))))
 
 (defun audio-loop ()
-  (statistic-enter)
-  (process *app*)
+  (let ((audio-device (.audio-device *app*)))
+   (statistic-enter audio-device)
+   (process *app*)
 
-  ;; TODO かんぜんに暫定
-  (let ((master-track (.master-track (car (.projects *app*)))))
-    (loop for channel-index below 2
-          for in = (buffer (.inputs (.process-data master-track)) 0 channel-index)
-          for out = (nth channel-index (.master-buffer *audio*))
-          do (loop for i below *frames-per-buffer*
-                   do (setf (aref out i)
-                            (cffi:mem-aref in :float i)))))
+   ;; TODO かんぜんに暫定
+   (let ((master-track (.master-track (car (.projects *app*)))))
+     (loop for channel-index below 2
+           for in = (buffer (.inputs (.process-data master-track)) 0 channel-index)
+           for out = (nth channel-index (.master-buffer audio-device))
+           do (loop for i below *frames-per-buffer*
+                    do (setf (aref out i)
+                             (cffi:mem-aref in :float i)))))
 
-  (statistic-leave))
+   (statistic-leave audio-device)))
 
 
 (cffi:defcallback audio-callback :int ((input-buffer :pointer)
@@ -129,105 +130,56 @@
                    frame-per-buffer))
   (progn ;; sb-sys:without-gcing しなくてもたいして変わらない
     (audio-loop)
-    (write-master-buffer output-buffer)
+    (write-master-buffer (.audio-device *app*) output-buffer)
     0))
 
-(defun statistic-enter ()
+(defun statistic-enter (self)
   (let* ((now (get-internal-real-time))
-         (delta (- now (.statistic-leave-time *audio*))))
-    (setf (.statistic-enter-time *audio*) now)
-    (incf (.statistic-total-interval-time *audio*) delta)
-    (setf (.statistic-min-interval-time *audio*)
-          (min (.statistic-min-interval-time *audio*) delta))
-    (setf (.statistic-max-interval-time *audio*)
-          (max (.statistic-max-interval-time *audio*) delta))))
+         (delta (- now (.statistic-leave-time self))))
+    (setf (.statistic-enter-time self) now)
+    (incf (.statistic-total-interval-time self) delta)
+    (setf (.statistic-min-interval-time self)
+          (min (.statistic-min-interval-time self) delta))
+    (setf (.statistic-max-interval-time self)
+          (max (.statistic-max-interval-time self) delta))))
 
-(defun statistic-leave ()
+(defun statistic-leave (self)
   (let* ((now (get-internal-real-time))
-         (delta (- now (.statistic-enter-time *audio*))))
-    (setf (.statistic-leave-time *audio*) now)
-    (incf (.statistic-total-process-time *audio*) delta)
-    (setf (.statistic-min-process-time *audio*)
-          (min (.statistic-min-process-time *audio*) delta))
-    (setf (.statistic-max-process-time *audio*)
-          (max (.statistic-max-process-time *audio*) delta))
+         (delta (- now (.statistic-enter-time self))))
+    (setf (.statistic-leave-time self) now)
+    (incf (.statistic-total-process-time self) delta)
+    (setf (.statistic-min-process-time self)
+          (min (.statistic-min-process-time self) delta))
+    (setf (.statistic-max-process-time self)
+          (max (.statistic-max-process-time self) delta))
     (when (<= (* (/ *sample-rate* *frames-per-buffer*) 10)
-              (incf (.statistic-count *audio*)))
-      (let ((cpu (* (/ (.statistic-total-process-time *audio*)
-                       (+ (.statistic-total-process-time *audio*)
-                          (.statistic-total-interval-time *audio*)))
+              (incf (.statistic-count self)))
+      (let ((cpu (* (/ (.statistic-total-process-time self)
+                       (+ (.statistic-total-process-time self)
+                          (.statistic-total-interval-time self)))
                     100))
-            (process-avg (/ (.statistic-total-process-time *audio*)
-                            (.statistic-count *audio*)
+            (process-avg (/ (.statistic-total-process-time self)
+                            (.statistic-count self)
                             internal-time-units-per-second))
-            (process-min (/ (.statistic-min-process-time *audio*) internal-time-units-per-second))
-            (process-max (/ (.statistic-max-process-time *audio*) internal-time-units-per-second))
-            (interval-avg (/ (.statistic-total-interval-time *audio*)
-                             (.statistic-count *audio*)
+            (process-min (/ (.statistic-min-process-time self) internal-time-units-per-second))
+            (process-max (/ (.statistic-max-process-time self) internal-time-units-per-second))
+            (interval-avg (/ (.statistic-total-interval-time self)
+                             (.statistic-count self)
                              internal-time-units-per-second))
-            (interval-min (/ (.statistic-min-interval-time *audio*) internal-time-units-per-second))
-            (interval-max (/ (.statistic-max-interval-time *audio*) internal-time-units-per-second)))
-        (format t "~&AUDIO CPU ~f% PROCESS ~fs ~fs ~fs INTERVAL ~fs ~fs ~fs FRAME ~,4fs "
-                cpu
-                process-avg process-min process-max
-                interval-avg interval-min interval-max
-                (/ *frames-per-buffer* *sample-rate*)))
-      (setf (.statistic-total-process-time *audio*) 0)
-      (setf (.statistic-min-process-time *audio*) most-positive-fixnum)
-      (setf (.statistic-max-process-time *audio*) 0)
-      (setf (.statistic-total-interval-time *audio*) 0)
-      (setf (.statistic-min-interval-time *audio*) most-positive-fixnum)
-      (setf (.statistic-max-interval-time *audio*) 0)
-      (setf (.statistic-count *audio*) 0))))
-
-;;; TODO DELETE
-#+nil
-(defmacro with-audio (&body body)
-  `(progn
-     (setf *audio* (make-instance 'audio-device))
-     (portaudio:with-audio
-       (cffi:with-foreign-objects ((handle :pointer))
-         (unwind-protect
-              (let* ((output-parameters (pa::make-stream-parameters)))
-                (setf (pa:stream-parameters-channel-count output-parameters) (.output-channels *audio*)
-                      (pa:stream-parameters-sample-format output-parameters) (.sample-format *audio*)
-                      (pa::stream-parameters-suggested-latency output-parameters) 0.0d0) ;TODO
-                (loop for i of-type fixnum below (pa:get-device-count)
-                      for device-info = (pa:get-device-info i)
-                      if (and
-                          (equal (pa:host-api-info-name
-                                  (pa:get-host-api-info (pa:device-info-host-api device-info)))
-                                 (.device-api *audio*))
-                          (equal (pa:device-info-name device-info) (.device-name *audio*)))
-                        do (setf (pa::stream-parameters-device output-parameters) i)
-                           (loop-finish))
-                (setf (.stream *audio*)
-                      (progn
-                        (pa::raise-if-error
-                         (pa::%open-stream
-                          handle
-                          nil
-                          output-parameters
-                          *sample-rate*
-                          *frames-per-buffer*
-                          0
-                          (cffi:callback audio-callback)
-                          (cffi:null-pointer)))
-                        (make-instance
-                         'pa:pa-stream
-                         :handle (cffi:mem-ref handle :pointer)
-                         :input-sample-format (.sample-format *audio*)
-                         :input-channels (if (zerop (the fixnum (.input-channels *audio*)))
-                                             nil
-                                             (.input-channels *audio*))
-                         :output-sample-format (.sample-format *audio*)
-                         :output-channels (if (zerop (the fixnum (.output-channels *audio*)))
-                                              nil
-                                              (.output-channels *audio*))
-                         :frames-per-buffer *frames-per-buffer*)))
-                ,@body)
-           (when (.stream *audio*)
-             (stop-audio)
-             (pa:close-stream (.stream *audio*))))))))
+            (interval-min (/ (.statistic-min-interval-time self) internal-time-units-per-second))
+            (interval-max (/ (.statistic-max-interval-time self) internal-time-units-per-second)))
+        (setf (.statistic-summary self)
+              (format nil "~&AUDIO CPU ~f% PROCESS ~fs ~fs ~fs INTERVAL ~fs ~fs ~fs FRAME ~,4fs "
+                      cpu
+                      process-avg process-min process-max
+                      interval-avg interval-min interval-max
+                      (/ *frames-per-buffer* *sample-rate*))))
+      (setf (.statistic-total-process-time self) 0)
+      (setf (.statistic-min-process-time self) most-positive-fixnum)
+      (setf (.statistic-max-process-time self) 0)
+      (setf (.statistic-total-interval-time self) 0)
+      (setf (.statistic-min-interval-time self) most-positive-fixnum)
+      (setf (.statistic-max-interval-time self) 0)
+      (setf (.statistic-count self) 0))))
 
 

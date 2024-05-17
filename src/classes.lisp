@@ -324,7 +324,9 @@
    (statistic-min-interval-time :initform most-positive-fixnum
                                 :accessor .statistic-min-interval-time)
    (statistic-max-interval-time :initform 0
-                                :accessor .statistic-max-interval-time)))
+                                :accessor .statistic-max-interval-time)
+   (statistic-summary :initform ""
+                      :accessor .statistic-summary)))
 
 (defclass app ()
   ((audio-device :initform nil :accessor .audio-device)
