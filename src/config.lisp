@@ -9,7 +9,7 @@
   (when (probe-file (config-path self))
     (loop with slot-definitions = (sb-mop:class-direct-slots (class-of self))
           for (name value) in (with-open-file (in (config-path self))
-                                (read in))
+                                (read in nil nil))
           for slot-definition = (find name slot-definitions :key #'sb-mop:slot-definition-name)
           if slot-definition
             do (funcall

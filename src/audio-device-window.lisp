@@ -4,12 +4,15 @@
 
 (defun supported-standard-sample-reates (input-parameters output-parameters)
   (loop for sample-rate in *standard-sample-reates*
-        if (zerop (cffi:foreign-funcall "Pa_IsFormatSupported"
-                                        pa::p-stream-parameters input-parameters
-                                        pa::p-stream-parameters output-parameters
-                                        :double sample-rate
-                                        :int))
-          collect sample-rate))
+        if (ignore-errors (pa::is-format-supported input-parameters
+                                                   output-parameters
+                                                   sample-rate)
+                          t)
+          collect sample-rate
+        else
+          do (describe (pa::get-last-host-error-info))))
+
+
 
 (defmethod render :before ((self audio-device-window))
   (unless (.host-apis self)
@@ -59,37 +62,44 @@
                                                               :key #'pa:host-api-info-name)
                                                     (pa:device-info-host-api device-info))
                                             collect (pa:device-info-name device-info)))
-    (ig:combo "Sample Rate"
-              (.sample-rate self)
-              (nth (position (.name self) (.device-infos self)
-                             :key #'pa:device-info-name :test #'equal)
-                   (.supported-standard-sample-reates self))
-              :item-display-function (lambda (sample-rate) (format nil "~f" sample-rate)))
+
+    (let ((device-index (position (.name self) (.device-infos self)
+                                  :key #'pa:device-info-name :test #'equal)))
+      (when device-index
+        (when (ig:combo "Sample Rate"
+                        (.sample-rate self)
+                        (nth device-index
+                             (.supported-standard-sample-reates self))
+                        :item-display-function (lambda (sample-rate) (format nil "~f" sample-rate)))
+          (when (equal (.api self) "ASIO")
+            (setf (.frames-per-buffer *config*)
+                  (preferred-buffer-size device-index))))
+
+        (ig:text (format nil "Buffer Size ~d" (.frames-per-buffer *config*)))))
+
     (ig:separator)
+
     (when (ig:button "Ok")
       (setf (.audio-device-api *config*) (.api self))
       (setf (.audio-device-name *config*) (.name self))
       (setf (.sample-rate *config*) (.sample-rate self))
 
-      (cffi:with-foreign-objects ((min-size :long)
-                                  (max-size :long)
-                                  (preferred-size :long)
-                                  (granularity :long))
-        ;; https://files.portaudio.com/docs/v19-doxydocs/pa__asio_8h.html
-        (cffi:foreign-funcall "PaAsio_GetAvailableBufferSizes"
-                              :int (nth (position (.name self) (.device-infos self)
-                                                  :key #'pa:device-info-name :test #'equal)
-                                        (.supported-standard-sample-reates self))
-                              :pointer min-size
-                              :pointer max-size
-                              :pointer preferred-size
-                              :pointer granularity
-                              :int)
-        (setf (.frames-per-buffer *config*)
-              (cffi:mem-ref preferred-size :long)))
-
       (config-save *config*))))
 
+(defun preferred-buffer-size (device-index)
+  (cffi:with-foreign-objects ((min-size :long)
+                              (max-size :long)
+                              (preferred-size :long)
+                              (granularity :long))
+    ;; https://files.portaudio.com/docs/v19-doxydocs/pa__asio_8h.html
+    (cffi:foreign-funcall "PaAsio_GetAvailableBufferSizes"
+                          :int device-index
+                          :pointer min-size
+                          :pointer max-size
+                          :pointer preferred-size
+                          :pointer granularity
+                          :int)
+    (cffi:mem-ref preferred-size :long)))
 
 ;; https://files.portaudio.com/docs/v19-doxydocs/pa__asio_8h.html
 ;; PaAsio_ShowControlPanel
