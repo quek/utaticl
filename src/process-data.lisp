@@ -15,7 +15,7 @@
     (setf (sb:vst-process-data.symbolic-sample-size wrap)
           sb:+vst-symbolic-sample-sizes-k-sample32+)
     (setf (sb:vst-process-data.num-samples wrap)
-          *frames-per-buffer*)
+          (.frames-per-buffer *config*))
 
     (setf (.inputs self) inputs)
     (setf (sb:vst-process-data.num-inputs wrap) num-inputs)
@@ -41,7 +41,7 @@
     (setf (.context self) context)
     (setf (sb:vst-process-data.process-context wrap) (autowrap:ptr context))
     (setf (sb:vst-process-context.state context) 0)
-    (setf (sb:vst-process-context.sample-rate context) *sample-rate*)
+    (setf (sb:vst-process-context.sample-rate context) (.sample-rate *config*))
     (setf (sb:vst-process-context.time-sig-numerator context) 4)
     (setf (sb:vst-process-context.time-sig-denominator context) 4)
 

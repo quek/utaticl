@@ -1,6 +1,6 @@
 (in-package :dgw)
 
-(defmethod initialize-instance :after ((self app) &key)
+(defmethod initialize-instance :before ((self app) &key)
   (setf *config* (make-instance 'config))
   (config-load *config*)
   (setf *theme* (make-instance 'theme))

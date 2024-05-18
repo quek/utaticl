@@ -255,7 +255,7 @@
           (coerce (floor (/ play-time 4)) 'double-float))
     (setf (sb:vst-process-context.project-time-samples context)
           ;; TODO これあってる？
-          (floor (* (/ play-time (/ bpm 60.0)) *sample-rate*))))
+          (floor (* (/ play-time (/ bpm 60.0)) (.sample-rate *config*)))))
 
   (vst3-ffi::process (.audio-processor self)
                      (autowrap:ptr (.wrap *process-data*)))

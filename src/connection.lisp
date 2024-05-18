@@ -14,7 +14,7 @@
             for from-silent-p = (silence-flags from-buses from-bus-index channel-index)
             for to-silent-p = (silence-flags to-buses to-bus-index channel-index)
             unless from-silent-p
-              do (loop for i below *frames-per-buffer*
+              do (loop for i below (.frames-per-buffer *config*)
                        do (setf (cffi:mem-aref to-channel :float i)
                                 (if to-silent-p
                                     (cffi:mem-aref from-channel :float i)

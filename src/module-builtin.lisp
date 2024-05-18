@@ -17,7 +17,7 @@
             if input-silent-p
               do (setf (silence-flags (.outputs *process-data*) 0 channel-index) t)
             else
-              do (loop for i below *frames-per-buffer*
+              do (loop for i below (.frames-per-buffer *config*)
                        do (setf (cffi:mem-aref output-channel :float i)
                                 (process-sample self (cffi:mem-aref input-channel :float i))))
                  (setf (silence-flags (.outputs *process-data*) 0 channel-index) nil))

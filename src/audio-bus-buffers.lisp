@@ -9,7 +9,7 @@
           for bus = (bus self bus-index)
           for buffer-ptr = (autowrap:alloc '(:pointer :float) num-channels)
           for buffers = (loop repeat num-channels
-                              collect (autowrap:calloc :float *frames-per-buffer*))
+                              collect (autowrap:calloc :float (.frames-per-buffer *config*)))
           do (let ()
                (setf (c-ref bus (:struct (sb:vst-audio-bus-buffers)) :num-channels)
                      num-channels)
@@ -54,7 +54,7 @@
         ;; silence flag たてると process 後もたったままなのでバッファ初期化する
         do (loop for channel-index below num-channels
                  for buffer = (buffer self bus-index channel-index)
-                 do (loop for i below *frames-per-buffer*
+                 do (loop for i below (.frames-per-buffer *config*)
                           do (setf (cffi:mem-aref buffer :float i) .0)))
            (setf (silence-flags self bus-index) 0)))
 

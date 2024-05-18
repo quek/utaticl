@@ -2,9 +2,6 @@
 
 ;;(portaudio::print-devices)
 
-(defparameter *sample-rate* 48000.0d0)
-(defparameter *frames-per-buffer* 1024)
-
 (defmethod initialize-instance :after ((self audio-device) &key)
   (let ((handle (.handle self)))
     (sb-ext:finalize self
@@ -45,8 +42,8 @@
                         (.handle self)
                         nil
                         output-parameters
-                        *sample-rate*
-                        *frames-per-buffer*
+                        (.sample-rate *config*)
+                        (.frames-per-buffer *config*)
                         0
                         (cffi:callback audio-callback)
                         (cffi:null-pointer)))
@@ -61,7 +58,7 @@
                        :output-channels (if (zerop (the fixnum (.output-channels self)))
                                             nil
                                             (.output-channels self))
-                       :frames-per-buffer *frames-per-buffer*)))
+                       :frames-per-buffer (.frames-per-buffer *config*))))
               t)
             nil))
       nil))
@@ -94,7 +91,7 @@
     (let* ((left (car (.master-buffer self)))
            (right (cadr (.master-buffer self)))
            (volume 1.0))
-      (loop for i below *frames-per-buffer*
+      (loop for i below (.frames-per-buffer *config*)
             do (setf (cffi:mem-aref buffer :float (* i 2))
                      (limit (* (aref left i) volume)))
                (setf  (cffi:mem-aref buffer :float (1+ (* i 2)))
@@ -112,7 +109,7 @@
      (loop for channel-index below 2
            for in = (buffer (.inputs (.process-data master-track)) 0 channel-index)
            for out = (nth channel-index (.master-buffer audio-device))
-           do (loop for i below *frames-per-buffer*
+           do (loop for i below (.frames-per-buffer *config*)
                     do (setf (aref out i)
                              (cffi:mem-aref in :float i)))))
 
@@ -129,11 +126,9 @@
            (ignore input-buffer time-info status-flags user-data
                    frame-per-buffer))
   ;; sb-sys:without-gcing しなくてもたいして変わらない
-  (let ((*sample-rate* (.sample-rate *config*))
-        (*frames-per-buffer* (.frames-per-buffer *config*)))
-    (audio-loop)
-    (write-master-buffer (.audio-device *app*) output-buffer)
-    0))
+  (audio-loop)
+  (write-master-buffer (.audio-device *app*) output-buffer)
+  0)
 
 (defun statistic-enter (self)
   (let* ((now (get-internal-real-time))
@@ -154,7 +149,7 @@
           (min (.statistic-min-process-time self) delta))
     (setf (.statistic-max-process-time self)
           (max (.statistic-max-process-time self) delta))
-    (when (<= (* (/ *sample-rate* *frames-per-buffer*) 10)
+    (when (<= (* (/ (.sample-rate *config*) (.frames-per-buffer *config*)) 10)
               (incf (.statistic-count self)))
       (let ((cpu (* (/ (.statistic-total-process-time self)
                        (+ (.statistic-total-process-time self)
@@ -175,7 +170,7 @@
                       cpu
                       process-avg process-min process-max
                       interval-avg interval-min interval-max
-                      (/ *frames-per-buffer* *sample-rate*))))
+                      (/ (.frames-per-buffer *config*) (.sample-rate *config*)))))
       (setf (.statistic-total-process-time self) 0)
       (setf (.statistic-min-process-time self) most-positive-fixnum)
       (setf (.statistic-max-process-time self) 0)

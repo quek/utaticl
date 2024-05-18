@@ -499,9 +499,7 @@
   (ig::new-frame)
 
   (ig:show-demo-window (cffi:null-pointer))
-  (let ((dgw::*render-context* (make-instance 'dgw::render-context))
-        (dgw::*sample-rate* (dgw::.sample-rate dgw::*config*))
-        (dgw::*frames-per-buffer* (dgw::.frames-per-buffer dgw::*config*)))
+  (let ((dgw::*render-context* (make-instance 'dgw::render-context)))
     (dgw::render app)
     (dgw::cmd-run app))
 

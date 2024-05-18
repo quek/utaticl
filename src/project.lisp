@@ -6,7 +6,7 @@
 
 (defmethod (setf .bpm) :after (value (self project))
   (setf (.sec-per-beat self) (/ 60.0d0 value))
-  (setf (.samples-per-beat self) (* (.sec-per-beat self) *sample-rate*)))
+  (setf (.samples-per-beat self) (* (.sec-per-beat self) (.sample-rate *config*))))
 
 
 (defun cmd-add (project cmd-class &rest args)
@@ -179,7 +179,7 @@
   (unselect-all-tracks (.master-track self)))
 
 (defmethod update-play-position ((self project))
-  (let ((delta-sec (/ *frames-per-buffer* *sample-rate*))
+  (let ((delta-sec (/ (.frames-per-buffer *config*) (.sample-rate *config*)))
         (sec-per-beat (/ 60.0d0 (.bpm self))))
     (when (and (.loop-p self) (<= (.loop-end self) (.play-start self)))
       (setf (.play-start self) (.loop-start self)))
