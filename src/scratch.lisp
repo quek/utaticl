@@ -1,45 +1,51 @@
 (in-package :dgw)
 
-(let* ((factory (vst3::get-plugin-factory "c:/Program Files/Common Files/VST3/Dexed.vst3")))
-  (vst3::create-component factory))
-;;⇒ #<VST3-FFI::STEINBERG-VST-ICOMPONENT {1005053A93}>
+(pa:initialize)
 
-(sb-int:with-float-traps-masked (:invalid :inexact :overflow :divide-by-zero)
-  (let* ((module (module-vst3-load
-                  ;;"c:/Program Files/Common Files/VST3/Vital.vst3"
-                  ;;"c:/Program Files/Common Files/VST3/DS Thorn.vst3"
-                  ;;"c:/Program Files/Common Files/VST3/Dexed.vst3"
-                  ;;"c:/Program Files/Common Files/VST3/USYNTH.vst3"
-                  "c:/Program Files/Common Files/VST3/MeldaProduction/MSoundFactory.vst3"
-                  )))
-    (initialize module)
-    (vst3-ffi::create-view (.controller module) "editor")))
+(pa:print-devices)
+(let* ((i 29)
+       (device-info (pa:get-device-info i))
+       (output-parameters (pa:make-stream-parameters)))
+  (describe device-info)
+  (describe (pa:get-host-api-info (pa:device-info-host-api device-info)))
+  (setf (pa:stream-parameters-device output-parameters) i)
+  (setf (pa:stream-parameters-channel-count output-parameters)
+         (pa:device-info-max-output-channels device-info))
+  (setf (pa:stream-parameters-sample-format output-parameters) :float)
+  (setf (pa:stream-parameters-suggested-latency output-parameters)
+        (pa:device-info-default-low-output-latency device-info))
+  (let ((stream (pa:open-stream nil
+                                output-parameters
+                                48000.0d0
+                                1024
+                                0)))
+    (unwind-protect
+         (progn
+           ;;(describe stream)
+           (describe (pa:get-stream-info stream))
+           )
+      (pa:close-stream stream))))
 
-(let* ((factory (vst3::get-plugin-factory "c:/Program Files/Common Files/VST3/MeldaProduction/MSoundFactory.vst3")))
-  (vst3::create-component factory))
 
-(let* ((factory (vst3::get-plugin-factory "c:/Program Files/Common Files/VST3/Kilohearts/Phase Plant.vst3")))
-  (vst3::create-component factory))
+(cffi:with-foreign-objects ((min-size :long)
+                            (max-size :long)
+                            (preferred-size :long)
+                            (granularity :long))
+  ;; https://files.portaudio.com/docs/v19-doxydocs/pa__asio_8h.html
+  (cffi:foreign-funcall "PaAsio_GetAvailableBufferSizes"
+                        :int 29
+                        :pointer min-size
+                        :pointer max-size
+                        :pointer preferred-size
+                        :pointer granularity
+                        :int)
+  (values (cffi:mem-ref min-size :long)
+          (cffi:mem-ref max-size :long)
+          (cffi:mem-ref preferred-size :long)
+          (cffi:mem-ref granularity :long)))
+;;⇒ 1024
+;;   1024
+;;   1024
+;;   1
 
 
-(let* ((path "c:/Program Files/Common Files/VST3/MeldaProduction/MSoundFactory.vst3")
-       ;;(path "c:/Program Files/Common Files/VST3/Dexed.vst3")
-       ;;p(path "c:/Program Files/Common Files/VST3/F-em (64 bit).vst3")
-       ;;(path "c:/Program Files/Common Files/VST3/Kilohearts/Phase Plant.vst3")
-       ;;(path "c:/Program Files/Common Files/VST3/DS Thorn.vst3")
-       (path "c:/Program Files/Common Files/VST3/Vital.vst3")
-       (factory (vst3::get-plugin-factory path))
-       (component (autowrap:with-alloc (%class-info '(:struct (sb:p-class-info)))
-                    (loop for index below (vst3-ffi::count-classes factory)
-                          for class-info = (progn
-                                             (vst3-ffi::get-class-info factory index (autowrap:ptr %class-info))
-                                             (sb::make-p-class-info :ptr (autowrap:ptr %class-info)))
-                            thereis (and (equal (vst3::.category class-info) "Audio Module Class")
-                                         (cffi:with-foreign-object (obj :pointer)
-                                           (vst3-ffi::create-instance factory
-                                                                      (sb:p-class-info.cid& class-info)
-                                                                      (sb-sys:vector-sap vst3-ffi::+vst-icomponent-iid+)
-                                                                      obj)
-                                           (sb::make-vst-i-component :ptr (cffi:mem-ref obj :pointer))))))))
-  component)
-;;⇒ #<SB:VST-I-COMPONENT {#X00129360}>

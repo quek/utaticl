@@ -70,4 +70,26 @@
       (setf (.audio-device-api *config*) (.api self))
       (setf (.audio-device-name *config*) (.name self))
       (setf (.sample-rate *config*) (.sample-rate self))
+
+      (cffi:with-foreign-objects ((min-size :long)
+                                  (max-size :long)
+                                  (preferred-size :long)
+                                  (granularity :long))
+        ;; https://files.portaudio.com/docs/v19-doxydocs/pa__asio_8h.html
+        (cffi:foreign-funcall "PaAsio_GetAvailableBufferSizes"
+                              :int (nth (position (.name self) (.device-infos self)
+                                                  :key #'pa:device-info-name :test #'equal)
+                                        (.supported-standard-sample-reates self))
+                              :pointer min-size
+                              :pointer max-size
+                              :pointer preferred-size
+                              :pointer granularity
+                              :int)
+        (setf (.frames-per-buffer *config*)
+              (cffi:mem-ref preferred-size :long)))
+
       (config-save *config*))))
+
+
+;; https://files.portaudio.com/docs/v19-doxydocs/pa__asio_8h.html
+;; PaAsio_ShowControlPanel

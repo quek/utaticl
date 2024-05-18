@@ -19,6 +19,7 @@
   (if (and (.audio-device-api *config*)
            (.audio-device-name *config*))
       (let* ((output-parameters (pa::make-stream-parameters))
+             (latency .0d0)
              (device-index
                (loop for i of-type fixnum below (pa:get-device-count)
                      for device-info = (pa:get-device-info i)
@@ -28,13 +29,14 @@
                                        (.audio-device-api *config*))
                                 (equal (pa:device-info-name device-info)
                                        (.audio-device-name *config*))
+                                (setf latency (pa:device-info-default-low-output-latency device-info))
                                 i))))
         (if device-index
             (progn
               (setf (pa::stream-parameters-device output-parameters) device-index)
               (setf (pa:stream-parameters-channel-count output-parameters) (.output-channels self)
                     (pa:stream-parameters-sample-format output-parameters) (.sample-format self)
-                    (pa::stream-parameters-suggested-latency output-parameters) 0.0d0) ;TODO
+                    (pa::stream-parameters-suggested-latency output-parameters) latency)
               (setf (.stream self)
                     (progn
                       (pa::raise-if-error
