@@ -279,7 +279,10 @@
   ((api :initform nil :accessor .api)
    (name :initform nil :accessor .name)
    (host-apis :initform nil :accessor .host-apis)
-   (device-infos :initform nil :accessor .device-infos)))
+   (device-infos :initform nil :accessor .device-infos)
+   (sample-rate :initform nil :accessor .sample-rate)
+   (supported-standard-sample-reates :initform nil
+                                     :accessor .supported-standard-sample-reates)))
 
 (defclass commander (show-mixin)
   ((query :initform "" :accessor .query)))

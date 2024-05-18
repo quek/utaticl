@@ -13,7 +13,8 @@
 (defmethod render :around ((self app))
   (if (null (.audio-device self))
       (if (or (null (.audio-device-api *config*))
-              (null (.audio-device-name *config*)))
+              (null (.audio-device-name *config*))
+              (null (.sample-rate *config*)))
           (render (.audio-device-window self))
           (progn
             (setf (.audio-device self) (make-instance 'audio-device))
@@ -26,7 +27,8 @@
         do (render project)))
 
 (defmethod terminate ((self app))
-  (close-audio-device (.audio-device self))
+  (when (.audio-device self)
+    (close-audio-device (.audio-device self)))
   (loop for project in (.projects self)
         do (terminate project)))
 

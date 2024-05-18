@@ -28,7 +28,9 @@
            :stream out)))
 
 (defclass config (config-mixin)
-  ((audio-device-api :initform "ASIO" :accessor .audio-device-api)
-   (audio-device-name :initform nil :accessor .audio-device-name))
+  ((audio-device-api :initform nil :accessor .audio-device-api)
+   (audio-device-name :initform nil :accessor .audio-device-name)
+   (frames-per-buffer :initarg 1024 :accessor .frames-per-buffer)
+   (sample-rate :initform nil :accessor .sample-rate))
   (:default-initargs :name "config.lisp"))
 

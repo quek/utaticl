@@ -128,7 +128,9 @@
   (declare (optimize (speed 3) (safety 0))
            (ignore input-buffer time-info status-flags user-data
                    frame-per-buffer))
-  (progn ;; sb-sys:without-gcing しなくてもたいして変わらない
+  ;; sb-sys:without-gcing しなくてもたいして変わらない
+  (let ((*sample-rate* (.sample-rate *config*))
+        (*frames-per-buffer* (.frames-per-buffer *config*)))
     (audio-loop)
     (write-master-buffer (.audio-device *app*) output-buffer)
     0))
