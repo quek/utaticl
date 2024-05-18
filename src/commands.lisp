@@ -24,14 +24,14 @@
   (:default-initargs :undo-p nil))
 
 (defmethod execute ((self cmd-audio-engine-start))
-  (start-audio))
+  (start-audio-device (.audio-device *app*)))
 
 (defcommand cmd-audio-engine-stop (command)
   ()
   (:default-initargs :undo-p nil))
 
 (defmethod execute ((self cmd-audio-engine-stop))
-  (stop-audio))
+  (stop-audio-device (.audio-device *app*)))
 
 (defcommand cmd-clip-add (command)
   ((time :initarg :time :accessor .time)
