@@ -4,10 +4,11 @@
 
 (defun supported-standard-sample-reates (input-parameters output-parameters)
   (loop for sample-rate in *standard-sample-reates*
-        if (ignore-errors (pa::is-format-supported input-parameters
-                                                   output-parameters
-                                                   sample-rate)
-                          t)
+        if (ignore-errors
+            (pa::is-format-supported input-parameters
+                                     output-parameters
+                                     sample-rate)
+            t)
           collect sample-rate
         else
           do (describe (pa::get-last-host-error-info))))

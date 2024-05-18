@@ -456,9 +456,10 @@
                    (imgui-impl-vulkan-init init-info))))
 
              (setf dgw::*done* nil)
-             (sdl2:with-sdl-event (e)
-               (loop until dgw::*done* do
-                 (vulkan-ui-loop app window e))))
+             (pa:with-audio
+               (sdl2:with-sdl-event (e)
+                 (loop until dgw::*done* do
+                   (vulkan-ui-loop app window e)))))
 
         (vk:device-wait-idle *device*)
         (imgui-impl-vulkan-shutdown)
