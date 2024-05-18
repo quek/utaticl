@@ -330,7 +330,6 @@
 
 (defclass app ()
   ((audio-device :initform nil :accessor .audio-device)
-   (audio-device-configured-p :initform nil :accessor .audio-device-configured-p)
    (audio-device-window :initform (make-instance 'audio-device-window)
                         :accessor .audio-device-window)
    (mutex :initform (sb-thread:make-mutex :name "APP") :accessor .mutex)

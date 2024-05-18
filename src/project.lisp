@@ -56,7 +56,7 @@
     (f (.master-track project))))
 
 (defmethod open-project ((self project))
-  (stop-audio)
+  (stop-audio-device (.audio-device *app*))
   (multiple-value-bind (ok path)
       (ftw:get-open-file-name
        :initial-dir (substitute #\\ #\/
@@ -72,7 +72,7 @@
            (terminate self)
            (setf (.projects *app*)
                  (cons project (delete self (.projects *app*)))))))))
-  (start-audio))
+  (start-audio-device (.audio-device *app*) ))
 
 (defmethod (setf .play-p) :after (value (self project))
   (unless (.play-p self)

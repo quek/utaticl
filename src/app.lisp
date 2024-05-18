@@ -13,8 +13,7 @@
 (defmethod render :around ((self app))
   (if (null (.audio-device self))
       (if (or (null (.audio-device-api *config*))
-              (null (.audio-device-name *config*))
-              (not (.audio-device-configured-p self)))
+              (null (.audio-device-name *config*)))
           (render (.audio-device-window self))
           (progn
             (setf (.audio-device self) (make-instance 'audio-device))

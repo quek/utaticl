@@ -25,8 +25,6 @@
 
     (ig:separator)
     (when (ig:button "Ok")
-      ;; TODO
       (setf (.audio-device-api *config*) "ASIO")
       (setf (.audio-device-name *config*) "Prism Sound USB Audio Class 2.0")
-      (config-save *config*)
-      (setf (.audio-device-configured-p *app*) t))))
+      (config-save *config*))))
