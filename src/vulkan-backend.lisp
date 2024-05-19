@@ -347,7 +347,7 @@
   (sdl2:with-init (:video)
     (sdl2:with-window (window :title "DGW"
                               :x 10 :y 40
-                              :w 1600 :h 900
+                              :w 1600 :h 1200
                               :flags '(:vulkan :resizable))
       ;; 一度 hide しないと表示されない
       (sdl2:hide-window window)

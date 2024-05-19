@@ -83,7 +83,11 @@
         for pos2 = (@+ pos1 (@ (coerce (* (.duration note) (.zoom-x self)) 'single-float)
                                key-height))
         do (ig:with-id (note)
-             (ig:add-rect-filled draw-list pos1 pos2 (.color note) :rounding 1.0)
+             (ig:add-rect-filled draw-list
+                                 (@+ pos1 (@ .0 2.0))
+                                 (@- pos2 (@ .0 1.0))
+                                 (.color note)
+                                 :rounding 2.5)
              (when (text-show-p self)
                (ig:add-text draw-list (@+ pos1 (@ 4.0 2.0)) (.color-text *theme*) (.name note))))))
 
