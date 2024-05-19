@@ -22,14 +22,36 @@
                                     (edit (find-neko (.clip-id cmd)))))))))
 
 (defmethod handle-dragging ((self arrangement))
-  ;; TODO 移動や複製
-  )
+  (if (ig:is-mouse-released ig:+im-gui-mouse-button-left+)
+      (progn
+        ;; TODO 移動 or 複製 command
+        (multiple-value-bind (time lane) (world-pos-to-time-lane self (ig:get-mouse-pos))
+          (let ((delta-time (- time (.time (.clip-target self))))
+                (delta-lane (diff lane (gethash (.clip-target self) (.clip-lane-map self)))))
+            (handle-dragging-move self delta-time delta-lane)))
+        (loop for clip in (.clips-dragging self)
+              for lane = (gethash clip (.clip-lane-map self))
+              do (clip-delete self clip))
+        (setf (.clips-dragging self) nil))
+      (progn
+        )))
+
+(defmethod handle-dragging-move ((self arrangement) delta-time delta-lane)
+  (loop for clip in (.clips-dragging self)
+        for lane-from = (gethash clip (.clip-lane-map self))
+        for lane-to = (relative-at lane-from delta-lane)
+        do (move clip delta-time lane-from lane-to)))
 
 (defmethod handle-drag-start ((self arrangement) clip-at-mouse)
   (if (and (null (.clips-selected self)) clip-at-mouse)
       (progn
         ;; ノートの移動 or 長さ変更
-        )
+        (setf (.clip-target self) clip-at-mouse)
+        (setf (.clips-dragging self) (mapcar #'copy (.clips-selected self)))
+        (loop for clip in (.clips-dragging self)
+              for src-clip in (.clips-selected self)
+              for lane = (gethash src-clip (.clip-lane-map self))
+              do (clip-add lane clip)))
       ;; 範囲選択
       (setf (.range-selecting-p self) t)))
 
@@ -67,6 +89,7 @@
 
 (defmethod render ((self arrangement))
   (setf (.clip-at-mouse self) nil)
+  (clrhash (.clip-lane-map self))
 
   (ig:with-begin ("##arrangement" :flags ig:+im-gui-window-flags-no-scrollbar+)
     (render-grid self)
@@ -114,6 +137,7 @@
   (+ y (lane-height self lane) 4.0))
 
 (defmethod render-clip ((self arrangement) (track track) (lane lane) (clip clip) y)
+  (setf (gethash clip (.clip-lane-map self)) lane)
   (let* ((draw-list (ig:get-window-draw-list))
          (x1 (time-to-local-x self (.time clip)))
          (x2 (time-to-local-x self (+ (.time clip) (.duration clip))))
@@ -134,6 +158,7 @@
                           color
                           :rounding 3.0)
       (when (contain-p mouse-pos pos1 pos2)
+        (setf (.lane-at-mouse self) lane)
         (setf (.clip-at-mouse self) clip)))))
 
 (defmethod render-track ((self arrangement) track)

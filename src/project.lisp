@@ -55,6 +55,16 @@
                  (some #'f (.tracks track)))))
     (f (.master-track project))))
 
+(defmethod lane-all ((self project))
+  (let ((lanes nil))
+    (labels ((f (track)
+               (loop for lane in (.lanes track)
+                     do (push lane lanes))
+               (loop for x in (.tracks track)
+                     do (f x))))
+      (f (.master-track self)))
+    (nreverse lanes)))
+
 (defmethod open-project ((self project))
   (stop-audio-device (.audio-device *app*))
   (multiple-value-bind (ok path)
