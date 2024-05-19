@@ -16,11 +16,12 @@
                          thereis (f x)))))
     (f (.master-track *project*))))
 
-(defmethod move ((self clip) delta-time lane-from lane-to)
-  (incf (.time self) delta-time)
-  (unless (eq lane-from lane-to)
-    (clip-delete lane-from self)
-    (clip-add lane-to self)))
+(defmethod move ((self clip) time lane-to)
+  (incf (.time self) time)
+  (let ((lane-from (lane self)))
+    (unless (eq lane-from lane-to)
+      (clip-delete lane-from self)
+      (clip-add lane-to self))))
 
 (defmethod .name :around ((self clip))
   (or (call-next-method)

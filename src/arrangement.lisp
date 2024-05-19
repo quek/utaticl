@@ -23,27 +23,23 @@
 
 (defmethod handle-dragging ((self arrangement))
   (if (ig:is-mouse-released ig:+im-gui-mouse-button-left+)
+      ;; TODO 移動 or 複製 command
       (progn
-        ;; TODO 移動 or 複製 command
-        (multiple-value-bind (time lane) (world-pos-to-time-lane self (ig:get-mouse-pos))
-          (let ((delta-time (- time (.time (.clip-target self))))
-                (delta-lane (diff lane (gethash (.clip-target self) (.clip-lane-map self)))))
-            (handle-dragging-move self delta-time delta-lane)))
         (loop for clip in (.clips-dragging self)
               for lane = (gethash clip (.clip-lane-map self))
               do (clip-delete lane clip))
         (setf (.clips-dragging self) nil))
-      (progn
-        )))
-
-(defmethod handle-dragging-move ((self arrangement) delta-time delta-lane)
-  (loop for clip in (.clips-dragging self)
-        for lane-from = (gethash clip (.clip-lane-map self))
-        for lane-to = (relative-at lane-from delta-lane)
-        do (move clip delta-time lane-from lane-to)))
+      ;; ドラッグ中の表示
+      (multiple-value-bind (time lane) (world-pos-to-time-lane self (ig:get-mouse-pos))
+        (let ((delta-time (- time (.time (.clip-target self))))
+              (delta-lane (diff lane (gethash (.clip-target self) (.clip-lane-map self)))))
+          (loop for dragging in (.clips-dragging self)
+                for selected in (.clips-selected self)
+                for time = (+ (.time selected) delta-time)
+                for lane = (relative-at (gethash selected (.clip-lane-map self)) delta-lane)
+                do (move dragging time lane))))))
 
 (defmethod handle-drag-start ((self arrangement) clip-at-mouse)
-  (print (.clips-selected self))
   (if (and (.clips-selected self) clip-at-mouse)
       (progn
         ;; ノートの移動 or 長さ変更
