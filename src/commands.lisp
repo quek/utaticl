@@ -61,7 +61,7 @@
 (defmethod execute ((self cmd-clip-delete))
   (let* ((clip (find-neko (.clip-id self)))
          (lane (lane clip)))
-    (setf (.clip self) (serialize clip))
+    (setf (.clip self) (with-serialize-context (serialize clip)))
     (setf (.lane-id self) (.neko-id lane))
     (clip-delete lane clip)
     (swhen (.piano-roll *project*)
