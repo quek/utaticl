@@ -2,7 +2,7 @@
 
 (defmethod handle-click ((self arrangement) clip-at-mouse)
   (if clip-at-mouse
-      (if (print (key-ctrl-p))
+      (if (key-ctrl-p)
           (if (member clip-at-mouse (.clips-selected self))
               (setf (.clips-selected self)
                     (print (delete clip-at-mouse (.clips-selected self))))
@@ -31,7 +31,7 @@
             (handle-dragging-move self delta-time delta-lane)))
         (loop for clip in (.clips-dragging self)
               for lane = (gethash clip (.clip-lane-map self))
-              do (clip-delete self clip))
+              do (clip-delete lane clip))
         (setf (.clips-dragging self) nil))
       (progn
         )))
@@ -43,7 +43,8 @@
         do (move clip delta-time lane-from lane-to)))
 
 (defmethod handle-drag-start ((self arrangement) clip-at-mouse)
-  (if (and (null (.clips-selected self)) clip-at-mouse)
+  (print (.clips-selected self))
+  (if (and (.clips-selected self) clip-at-mouse)
       (progn
         ;; ノートの移動 or 長さ変更
         (setf (.clip-target self) clip-at-mouse)
