@@ -41,6 +41,7 @@
 (defmethod execute ((self cmd-clip-add))
   (let ((lane (find-lane *project* (.lane-id self)))
         (clip (make-instance 'clip-note :time (.time self))))
+    (setf (.name (.seq clip)) (seq-note-name-new *project*))
     (setf (.clip-id self) (.neko-id clip))
     (clip-add lane clip)))
 

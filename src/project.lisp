@@ -152,6 +152,24 @@
       (setf (.path self) (car path))
       (save self))))
 
+(defmethod seq-note-name-new ((self project))
+  (let ((max 0))
+    (labels
+        ((f (track)
+           (loop for lane in (.lanes track)
+                 do (loop for clip in (.clips lane)
+                          for seq = (.seq clip)
+                          if (typep seq 'seq-note)
+                            do (setf max
+                                     (max (or (ppcre:register-groups-bind
+                                                  ((#'parse-integer n)) ("^SEQ(\\d+)" (.name seq))
+                                                n)
+                                              max)))))
+           (loop for x in (.tracks track)
+                 do (f x))))
+      (f (.master-track self))
+      (format nil "SEQ~d" (1+ max)))))
+
 (defmethod terminate ((self project))
   (terminate (.master-track self)))
 
