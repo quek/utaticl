@@ -17,7 +17,7 @@
     (f (.master-track *project*))))
 
 (defmethod move ((self clip) time lane-to)
-  (incf (.time self) time)
+  (setf (.time self) time)
   (let ((lane-from (lane self)))
     (unless (eq lane-from lane-to)
       (clip-delete lane-from self)

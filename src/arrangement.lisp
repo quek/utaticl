@@ -31,6 +31,7 @@
         (setf (.clips-dragging self) nil))
       ;; ドラッグ中の表示
       (multiple-value-bind (time lane) (world-pos-to-time-lane self (ig:get-mouse-pos))
+        (setf time (max (time-grid-applied self time :floor) .0d0))
         (let ((delta-time (- time (.time (.clip-target self))))
               (delta-lane (diff lane (gethash (.clip-target self) (.clip-lane-map self)))))
           (loop for dragging in (.clips-dragging self)
@@ -190,10 +191,13 @@
 
 (defmethod world-y-to-lane ((self arrangement) y)
   (let ((local-y (+ (- y (.y (ig:get-window-pos)) (.time-ruler-height self))
-                    (ig:get-scroll-y))))
+                    (ig:get-scroll-y)))
+        (last-lane nil))
     (labels ((f (track height)
                (or (loop for lane in (.lanes track)
+                         do (setf last-lane lane)
                            thereis (and (< local-y (incf height (lane-height self lane))) lane))
                    (loop for track in (.tracks track)
                            thereis (f track height)))))
-      (f (.master-track *project*) 0))))
+      (or (f (.master-track *project*) 0)
+          last-lane))))
