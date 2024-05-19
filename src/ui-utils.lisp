@@ -57,6 +57,11 @@
         (ldb (byte 8 16) c)
         (ldb (byte 8 24) c)))
 
+(defun color-selected (c &optional (selected t))
+  (if selected
+      (color+ c (color #x30 #x30 #x30 #x00))
+      c))
+
 (defmacro defshortcut ((&rest key-chord) &body body)
   (let ((code (gensym)))
     `(let ((,code (logior ,@key-chord)))
@@ -82,6 +87,15 @@
   (when *invoke-debugger-p*
     (with-simple-restart (continue "Return from here.")
       (invoke-debugger e))))
+
+(defun key-alt-p ()
+  (ig:ensure-to-bool (c-ref (ig:get-io) ig:im-gui-io :key-alt)))
+
+(defun key-ctrl-p ()
+  (ig:ensure-to-bool (c-ref (ig:get-io) ig:im-gui-io :key-ctrl)))
+
+(defun key-shift-p ()
+  (ig:ensure-to-bool (c-ref (ig:get-io) ig:im-gui-io :key-shift)))
 
 (defun shortcut-common ()
   (defshortcut (ig:+im-gui-key-space+)

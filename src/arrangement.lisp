@@ -1,20 +1,57 @@
 (in-package :dgw)
 
+(defmethod handle-click ((self arrangement) clip-at-mouse)
+  (if clip-at-mouse
+      (if (print (key-ctrl-p))
+          (if (member clip-at-mouse (.clips-selected self))
+              (setf (.clips-selected self)
+                    (print (delete clip-at-mouse (.clips-selected self))))
+              (push clip-at-mouse (.clips-selected self)))
+          (setf (.clips-selected self) (list clip-at-mouse)))
+      (setf (.clips-selected self) nil)))
+
+(defmethod handle-double-click ((self arrangement) clip-at-mouse)
+  (if clip-at-mouse
+      (cmd-add *project* 'cmd-clip-delete :clip-id (.neko-id clip-at-mouse))
+      (multiple-value-bind (time lane) (world-pos-to-time-lane self (ig:get-mouse-pos))
+        (setf time (time-grid-applied self time :floor))
+        (when (and (not (minusp time)) lane)
+          (cmd-add *project* 'cmd-clip-add
+                   :time time :lane-id (.neko-id lane)
+                   :execute-after (lambda (cmd)
+                                    (edit (find-neko (.clip-id cmd)))))))))
+
+(defmethod handle-dragging ((self arrangement))
+  ;; TODO 移動や複製
+  )
+
+(defmethod handle-drag-start ((self arrangement) clip-at-mouse)
+  (if (and (null (.clips-selected self)) clip-at-mouse)
+      (progn
+        ;; ノートの移動 or 長さ変更
+        )
+      ;; 範囲選択
+      (setf (.range-selecting-p self) t)))
+
 (defmethod handle-mouse ((self arrangement))
   (let* ((io (ig:get-io))
-         (mouse-pos (ig:get-mouse-pos))
          (clip-at-mouse (.clip-at-mouse self)))
-    (cond ((ig:is-mouse-double-clicked ig:+im-gui-mouse-button-left+)
-           (if clip-at-mouse
-               (cmd-add *project* 'cmd-clip-delete :clip-id (.neko-id clip-at-mouse))
-               (multiple-value-bind (time lane) (world-pos-to-time-lane self mouse-pos)
-                 (setf time (time-grid-applied self time :floor))
-                 (when (and (not (minusp time)) lane)
-                   (cmd-add *project* 'cmd-clip-add
-                            :time time :lane-id (.neko-id lane)
-                            :execute-after (lambda (cmd)
-                                             (edit (find-neko (.clip-id cmd))))))))))
+    (cond ((.clips-dragging self)
+           (handle-dragging self))
+          ((.range-selecting-p self)
+           (handle-range-selecting self))
+          ((ig:is-mouse-dragging ig:+im-gui-mouse-button-left+ 0.1)
+           (handle-drag-start self clip-at-mouse))
+          ((ig:is-mouse-double-clicked ig:+im-gui-mouse-button-left+)
+           (handle-double-click self clip-at-mouse))
+          ((ig:is-mouse-clicked ig:+im-gui-mouse-button-left+)
+           (handle-click self clip-at-mouse))
+          ((ig:is-mouse-released ig:+im-gui-mouse-button-left+)
+           (handle-mouse-released self clip-at-mouse)))
     (zoom-x-update self io)))
+
+(defmethod handle-mouse-released ((self arrangement) clip-at-mouse)
+)
 
 (defmethod lane-height ((self arrangement) (lane lane))
   (sif (gethash lane (.lane-height-map self))
@@ -22,6 +59,11 @@
        (setf it (+ (.default-lane-height self)
                    (* (c-ref (ig:get-style) ig:im-gui-style :item-spacing :y)
                       2)))))
+
+(defmethod handle-range-selecting ((self arrangement))
+  ;; TODO
+  (when (ig:is-mouse-released ig:+im-gui-mouse-button-left+)
+    (setf (.range-selecting-p self) nil)))
 
 (defmethod render ((self arrangement))
   (setf (.clip-at-mouse self) nil)
@@ -84,11 +126,12 @@
     (ig:text (format nil "  ~a" (.name clip)))
 
     (let ((pos1 (@+ pos1 window-pos (@- scroll-pos)))
-          (pos2 (@+ pos2 window-pos (@- scroll-pos))))
+          (pos2 (@+ pos2 window-pos (@- scroll-pos)))
+          (color (color-selected (.color clip) (member clip (.clips-selected self)))))
       (ig:add-rect-filled draw-list
                           pos1
                           (@+ pos2 (@ .0 -1.0))
-                          (.color clip)
+                          color
                           :rounding 3.0)
       (when (contain-p mouse-pos pos1 pos2)
         (setf (.clip-at-mouse self) clip)))))
@@ -99,17 +142,13 @@
     (let ((pos (ig:get-cursor-pos)))
       (ig:text (format nil "  ~a" (.name track)))
       (ig:set-cursor-pos pos)
-      (let ((color (color+ (.color track)
-                           (if (.select-p track)
-                               (color #x30 #x30 #x30 #x00)
-                               (color 0 0 0 0)))))
+      (let ((color (color-selected (.color track) (.select-p track))))
         (ig:with-button-color (color)
           (when (ig:button "##_" (@ (.offset-x self)
                                     (lane-height self (car (.lanes track)))))
-            (let ((io (ig:get-io)))
-              (when (zerop (c-ref io ig:im-gui-io :key-ctrl))
-                (unselect-all-tracks *project*))
-              (setf (.select-p track) t))))))
+            (unless (key-ctrl-p)
+              (unselect-all-tracks *project*))
+            (setf (.select-p track) t)))))
     (loop for x in (.tracks track)
           do (render-track self x))))
 
