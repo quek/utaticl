@@ -339,7 +339,7 @@
   (vk:destroy-device *device*)
   (vk:destroy-instance *instance*))
 
-(defun vulkan-backend-main (app)
+(defun vulkan-backend-main ()
 
   (loop for i below (cffi:foreign-type-size '(:struct imgui-impl-vulkan-h-window))
         do (setf (cffi:mem-ref *main-window-data* :char i) 0))
@@ -353,8 +353,6 @@
       (sdl2:hide-window window)
       (sdl2:show-window window)
       ;; (sdl2:raise-window window) 効果ない・・・
-
-      (setf (dgw::.window app) window)
 
       (autowrap:with-alloc (wm-info 'sdl2-ffi:sdl-syswm-info)
         (sdl2-ffi.functions:sdl-get-version (plus-c:c-ref wm-info sdl2-ffi:sdl-syswm-info :version plus-c:&))
@@ -457,9 +455,12 @@
 
              (setf dgw::*done* nil)
              (pa:with-audio
-               (sdl2:with-sdl-event (e)
-                 (loop until dgw::*done* do
-                   (vulkan-ui-loop app window e)))))
+               (setf dgw::*app* (make-instance 'dgw::app :window window))
+               (unwind-protect
+                    (sdl2:with-sdl-event (e)
+                      (loop until dgw::*done* do
+                        (vulkan-ui-loop dgw::*app* window e)))
+                 (dgw::terminate dgw::*app*))))
 
         (vk:device-wait-idle *device*)
         (imgui-impl-vulkan-shutdown)

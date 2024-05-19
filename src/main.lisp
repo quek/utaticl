@@ -5,7 +5,5 @@
    (lambda ()
      (sb-int:with-float-traps-masked (:invalid :inexact :overflow :divide-by-zero)
        (with-thraed-pool
-         (setf *app* (make-instance 'app))
-         (vulkan-backend::vulkan-backend-main *app*)
-         (terminate *app*))))
+         (vulkan-backend::vulkan-backend-main))))
    :name "DGW"))

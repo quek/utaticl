@@ -337,4 +337,4 @@
                         :accessor .audio-device-window)
    (mutex :initform (sb-thread:make-mutex :name "APP") :accessor .mutex)
    (projects :initform nil :accessor .projects)
-   (window :accessor .window)))
+   (window :initarg :window :accessor .window)))

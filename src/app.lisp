@@ -17,11 +17,12 @@
               (null (.sample-rate *config*)))
           (render (.audio-device-window self))
           (progn
+            ;; サンプルレートとバッファサイズが決まったのでプロジェクトが作れる
+            (push (make-instance 'project) (.projects self))
+            ;; オーディオデバイスを開いてオーディオイベントループを開始
             (setf (.audio-device self) (make-instance 'audio-device))
             (open-audio-device (.audio-device self))
-            (start-audio-device (.audio-device self))
-            ;; サンプルレートとバッファサイズが決まったのでプロジェクトが作れる
-            (push (make-instance 'project) (.projects self))))
+            (start-audio-device (.audio-device self))))
       (call-next-method)))
 
 (defmethod render ((self app))
