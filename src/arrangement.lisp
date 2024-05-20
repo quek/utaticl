@@ -23,8 +23,20 @@
 
 (defmethod handle-dragging ((self arrangement))
   (if (ig:is-mouse-released ig:+im-gui-mouse-button-left+)
-      ;; TODO 移動 or 複製 command
       (progn
+        ;; TODO 移動 or 複製 command
+        (if (key-ctrl-p)
+            (cmd-add *project* 'cmd-clips-d&d-copy
+                     :clips (.clips-dragging self)
+                     :lane-ids (loop for clip in (.clips-dragging self)
+                                     collect (.neko-id (gethash clip (.clip-lane-map self)))))
+            (cmd-add *project* 'cmd-clips-d&d-move
+                     :clips (.clips-selected self)
+                     :lane-ids (loop for clip in (.clips-selected self)
+                                     collect (.neko-id (gethash clip (.clip-lane-map self))))
+                     :times-to (mapcar #'.time (.clips-dragging self))
+                     :lane-ids-to (mapcar #'(lambda (clip) (gethash clip (.clip-lane-map self)))
+                                          (.clips-dragging self))))
         (loop for clip in (.clips-dragging self)
               for lane = (gethash clip (.clip-lane-map self))
               do (clip-delete lane clip))
