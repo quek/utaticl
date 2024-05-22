@@ -2,12 +2,9 @@
 
 (defmethod handle-click ((self arrangement) clip-at-mouse)
   (if clip-at-mouse
-      (if (key-ctrl-p)
-          (if (member clip-at-mouse (.clips-selected self))
-              (setf (.clips-selected self)
-                    (print (delete clip-at-mouse (.clips-selected self))))
-              (push clip-at-mouse (.clips-selected self)))
-          (setf (.clips-selected self) (list clip-at-mouse)))
+      (when (and (not (member clip-at-mouse (.clips-selected self)))
+                 (not (key-ctrl-p)))
+        (setf (.clips-selected self) (list clip-at-mouse)))
       (setf (.clips-selected self) nil)))
 
 (defmethod handle-double-click ((self arrangement) clip-at-mouse)
@@ -85,7 +82,14 @@
     (zoom-x-update self io)))
 
 (defmethod handle-mouse-released ((self arrangement) clip-at-mouse)
-)
+  (if clip-at-mouse
+      (if (member clip-at-mouse (.clips-selected self))
+          (if (key-ctrl-p)
+              (setf (.clips-selected self)
+                    (delete clip-at-mouse (.clips-selected self)))
+              (setf (.clips-selected self) (list clip-at-mouse)))
+          (if (key-ctrl-p)
+              (push clip-at-mouse (.clips-selected self))))))
 
 (defmethod lane-height ((self arrangement) (lane lane))
   (sif (gethash lane (.lane-height-map self))
