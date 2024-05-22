@@ -30,16 +30,18 @@
                      :clips (.clips-dragging self)
                      :lane-ids (loop for clip in (.clips-dragging self)
                                      collect (.neko-id (gethash clip (.clip-lane-map self)))))
-            (cmd-add *project* 'cmd-clips-d&d-move
-                     :clips (.clips-selected self)
-                     :lane-ids (loop for clip in (.clips-selected self)
-                                     collect (.neko-id (gethash clip (.clip-lane-map self))))
-                     :times-to (mapcar #'.time (.clips-dragging self))
-                     :lane-ids-to (mapcar #'(lambda (clip) (gethash clip (.clip-lane-map self)))
-                                          (.clips-dragging self))))
-        (loop for clip in (.clips-dragging self)
-              for lane = (gethash clip (.clip-lane-map self))
-              do (clip-delete lane clip))
+            (progn
+              (cmd-add *project* 'cmd-clips-d&d-move
+                       :clips (.clips-selected self)
+                       :lane-ids (loop for clip in (.clips-selected self)
+                                       collect (.neko-id (gethash clip (.clip-lane-map self))))
+                       :times-to (mapcar #'.time (.clips-dragging self))
+                       :lane-ids-to (mapcar #'(lambda (clip)
+                                                (.neko-id (gethash clip (.clip-lane-map self))))
+                                            (.clips-dragging self)))
+              (loop for clip in (.clips-dragging self)
+                    for lane = (gethash clip (.clip-lane-map self))
+                    do (clip-delete lane clip))))
         (setf (.clips-dragging self) nil))
       ;; ドラッグ中の表示
       (multiple-value-bind (time lane) (world-pos-to-time-lane self (ig:get-mouse-pos))
