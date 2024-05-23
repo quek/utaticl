@@ -88,8 +88,14 @@
 
 (defclass piano-roll (time-ruler-mixin grid-mixin offset-mixin scroll-mixin zoom-mixin view)
   ((clip :initarg :clip :accessor .clip)
+   (note-drag-offset :initform .0 :accessor .note-drag-offset)
+   (note-target :initform nil :accessor .note-target)
+   (notes-selected :initform nil :accessor .notes-selected)
+   (notes-dragging :initform nil :accessor .notes-dragging)
+   (note-at-mouse :initform nil :accessor .note-at-mouse)
    (offset-x :initform 30.0 :accessor .offset-x)
    (offset-y :initform 25.0 :accessor .offset-y)
+   (range-selecting-p :initform nil :accessor .range-selecting-p)
    (render-first-p :initform t :accessor .render-first-p)
    (threshold-text-hide :initform 18.0 :accessor .threshold-text-hide))
   (:default-initargs :zoom-x 25.0 :zoom-y 30.0 :zoom-x-factor .5 :zoom-y-factor .5 :zoom-y-min 5.0

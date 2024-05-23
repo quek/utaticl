@@ -164,6 +164,25 @@
          (note (find-neko (.note-id self))))
     (note-delete clip note)))
 
+(defcommand cmd-note-delete (command)
+  ((clip-id :initarg :clip-id :accessor .clip-id)
+   (note-id :accessor .note-id)
+   (note :initarg :note :accessor .note)))
+
+(defmethod initialize-instance :after ((self cmd-note-delete) &key note)
+  (setf (.note-id self) (.neko-id note))
+  (setf (.note self) (with-serialize-context (serialize note))))
+
+(defmethod execute ((self cmd-note-delete))
+  (let ((clip (find-neko (.clip-id self)))
+        (note (find-neko (.note-id self))))
+    (note-delete clip note)))
+
+(defmethod undo ((self cmd-note-delete))
+  (let* ((clip (find-neko (.clip-id self)))
+         (note (with-serialize-context (deserialize (.note self)))))
+    (note-delete clip note)))
+
 (defcommand cmd-module-delete (command)
   ((track-id :initarg :track-id :accessor .track-id)
    (module-id :initarg :module-id :accessor .module-id)))
