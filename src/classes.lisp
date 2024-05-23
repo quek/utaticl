@@ -72,6 +72,7 @@
 
 (defclass arrangement (time-ruler-mixin grid-mixin offset-mixin scroll-mixin zoom-mixin view)
   ((clip-at-mouse :initform nil :accessor .clip-at-mouse)
+   (clip-drag-offset :initform .0 :accessor .clip-drag-offset)
    (clip-lane-map :initform (make-hash-table) :accessor .clip-lane-map)
    (clip-target :initform nil :accessor .clip-target)
    (clips-selected :initform nil :accessor .clips-selected)

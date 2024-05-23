@@ -20,13 +20,15 @@
 
 (defmethod handle-dragging ((self arrangement))
   (if (ig:is-mouse-released ig:+im-gui-mouse-button-left+)
+      ;; ドラッグの終了
       (progn
-        ;; TODO 移動 or 複製 command
         (if (key-ctrl-p)
+            ;; 複製
             (cmd-add *project* 'cmd-clips-d&d-copy
                      :clips (.clips-dragging self)
                      :lane-ids (loop for clip in (.clips-dragging self)
                                      collect (.neko-id (gethash clip (.clip-lane-map self)))))
+            ;; 移動
             (progn
               (cmd-add *project* 'cmd-clips-d&d-move
                        :clips (.clips-selected self)
@@ -41,7 +43,10 @@
                     do (clip-delete lane clip))))
         (setf (.clips-dragging self) nil))
       ;; ドラッグ中の表示
-      (multiple-value-bind (time lane) (world-pos-to-time-lane self (ig:get-mouse-pos))
+      (multiple-value-bind (time lane)
+          (world-pos-to-time-lane self
+                                  (@- (ig:get-mouse-pos)
+                                      (@ (.clip-drag-offset self) .0)))
         (setf time (max (time-grid-applied self time :floor) .0d0))
         (let ((delta-time (- time (.time (.clip-target self))))
               (delta-lane (diff lane (gethash (.clip-target self) (.clip-lane-map self)))))
@@ -56,6 +61,8 @@
       (progn
         ;; ノートの移動 or 長さ変更
         (setf (.clip-target self) clip-at-mouse)
+        (setf (.clip-drag-offset self) (- (.x (ig:get-mouse-pos))
+                                          (time-to-world-x self (.time clip-at-mouse))))
         (setf (.clips-dragging self) (mapcar #'copy (.clips-selected self)))
         (loop for clip in (.clips-dragging self)
               for src-clip in (.clips-selected self)
