@@ -38,7 +38,9 @@
       (progn
         (if (key-ctrl-p)
             ;; 複製
-            (cmd-add *project* 'cmd-notes-d&d-copy :notes (.notes-dragging self))
+            (cmd-add *project* 'cmd-notes-d&d-copy
+                     :notes (.notes-dragging self)
+                     :clip-id (.neko-id (.clip self)))
             ;; 移動
             (progn
               (cmd-add *project* 'cmd-notes-d&d-move

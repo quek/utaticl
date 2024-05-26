@@ -183,6 +183,58 @@
          (note (with-serialize-context (deserialize (.note self)))))
     (note-delete clip note)))
 
+(defcommand cmd-notes-d&d-copy (command)
+  ((notes :initarg :notes :accessor .notes)
+   (note-ids :accessor .note-ids)
+   (clip-id :initarg :clip-id :accessor .clip-id)))
+
+(defmethod initialize-instance :after ((self cmd-notes-d&d-copy) &key notes)
+  (setf (.note-ids self) (mapcar #'.neko-id notes))
+  (setf (.notes self) (with-serialize-context (serialize notes))))
+
+(defmethod execute ((self cmd-notes-d&d-copy))
+  ;; ドラッグ中の表示が確定されるだけなので、何もしない。
+  )
+
+(defmethod undo ((self cmd-notes-d&d-copy))
+  (loop with clip = (find-neko (.clip-id self))
+        for note-id in (.note-ids self)
+        for note = (find-neko note-id)
+        do (note-delete clip note)))
+
+(defmethod redo ((self cmd-notes-d&d-copy))
+  (loop with clip = (find-neko (.clip-id self))
+        for note in (with-serialize-context (deserialize (.notes self)))
+        do (note-add clip note)))
+
+(defcommand cmd-notes-d&d-move (command)
+  ((note-ids :initarg :notes :accessor .note-ids)
+   (times-from :accessor .times-from)
+   (times-to :initarg :times-to :accessor .times-to)
+   (keys-from :accessor .keys-from)
+   (keys-to :initarg :keys-to :accessor .keys-to)))
+
+(defmethod initialize-instance :after ((self cmd-notes-d&d-move) &key notes)
+  (setf (.times-from self) (mapcar #'.time notes))
+  (setf (.keys-from self) (mapcar #'.key notes))
+  (setf (.note-ids self) (mapcar #'.neko-id notes)))
+
+(defmethod execute ((self cmd-notes-d&d-move))
+  (loop for note-id in (.note-ids self)
+        for note = (find-neko note-id)
+        for time-to in (.times-to self)
+        for key-to in (.keys-to self)
+        do (setf (.time note) time-to)
+           (setf (.key note) key-to)))
+
+(defmethod undo ((self cmd-notes-d&d-move))
+  (loop for note-id in (.note-ids self)
+        for note = (find-neko note-id)
+        for time-from in (.times-from self)
+        for key-from in (.keys-from self)
+        do (setf (.time note) time-from)
+           (setf (.key note) key-from)))
+
 (defcommand cmd-module-delete (command)
   ((track-id :initarg :track-id :accessor .track-id)
    (module-id :initarg :module-id :accessor .module-id)))
