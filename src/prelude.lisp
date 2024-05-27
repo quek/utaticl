@@ -14,3 +14,5 @@
 
 (defvar *project*)
 (defvar *process-data*)
+
+(defconstant +side-threshold+ 5.0)

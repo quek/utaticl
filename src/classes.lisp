@@ -88,10 +88,14 @@
 
 (defclass piano-roll (time-ruler-mixin grid-mixin offset-mixin scroll-mixin zoom-mixin view)
   ((clip :initarg :clip :accessor .clip)
+   (drag-part :initform :middle :accessor .drag-part
+               :type (member :left :middle :right))
    (note-drag-offset :initform .0 :accessor .note-drag-offset)
    (note-target :initform nil :accessor .note-target)
    (notes-selected :initform nil :accessor .notes-selected)
    (notes-dragging :initform nil :accessor .notes-dragging)
+   (notes-dragging-time :initform nil :accessor .notes-dragging-time)
+   (notes-dragging-duration :initform nil :accessor .notes-dragging-duration)
    (note-at-mouse :initform nil :accessor .note-at-mouse)
    (offset-x :initform 30.0 :accessor .offset-x)
    (offset-y :initform 25.0 :accessor .offset-y)
