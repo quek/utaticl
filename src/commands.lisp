@@ -235,6 +235,46 @@
         do (setf (.time note) time-from)
            (setf (.key note) key-from)))
 
+(defcommand cmd-notes-end-change (command)
+  ((notes-id :initarg :notes :accessor .notes-id)
+   (delta :initarg :delta :accessor .delta)))
+
+(defmethod initialize-instance :after ((self cmd-notes-end-change) &key notes)
+  (setf (.notes-id self) (mapcar #'.neko-id notes)))
+
+(defmethod execute ((self cmd-notes-end-change))
+  (loop with delta = (.delta self)
+        for note-id in (.notes-id self)
+        for note = (find-neko note-id)
+        do (incf (.duration note) delta)))
+
+(defmethod undo ((self cmd-notes-end-change))
+  (loop with delta = (.delta self)
+        for note-id in (.notes-id self)
+        for note = (find-neko note-id)
+        do (decf (.duration note) delta)))
+
+(defcommand cmd-notes-start-change (command)
+  ((notes-id :initarg :notes :accessor .notes-id)
+   (delta :initarg :delta :accessor .delta)))
+
+(defmethod initialize-instance :after ((self cmd-notes-start-change) &key notes)
+  (setf (.notes-id self) (mapcar #'.neko-id notes)))
+
+(defmethod execute ((self cmd-notes-start-change))
+  (loop with delta = (.delta self)
+        for note-id in (.notes-id self)
+        for note = (find-neko note-id)
+        do (decf (.time note) delta)
+           (incf (.duration note) delta)))
+
+(defmethod undo ((self cmd-notes-start-change))
+  (loop with delta = (.delta self)
+        for note-id in (.notes-id self)
+        for note = (find-neko note-id)
+        do (incf (.time note) delta)
+           (decf (.duration note) delta)))
+
 (defcommand cmd-module-delete (command)
   ((track-id :initarg :track-id :accessor .track-id)
    (module-id :initarg :module-id :accessor .module-id)))

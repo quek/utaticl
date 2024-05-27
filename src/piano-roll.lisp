@@ -22,15 +22,15 @@
   (if (and (.notes-selected self) (.note-at-mouse self))
       (progn
         (setf (.note-target self) (.note-at-mouse self))
-        (ecase (.drag-part self)
-          (:middle
+        (ecase (.drag-mode self)
+          (:move
            (setf (.note-drag-offset self) (- (.x (ig:get-mouse-pos))
                                              (time-to-world-x self (.time (.note-at-mouse self)))))
            (setf (.notes-dragging self) (mapcar #'copy (.notes-selected self)))
            (loop for note in (.notes-dragging self)
                  for src-note in (.notes-selected self)
                  do (note-add (.clip self) note)))
-          ((:left :right)
+          ((:start :end)
            (setf (.notes-dragging self) (.notes-selected self))
            (setf (.notes-dragging-time self) (mapcar #'.time (.notes-selected self)))
            (setf (.notes-dragging-duration self) (mapcar #'.duration (.notes-selected self))))))
@@ -47,8 +47,8 @@
     (if (ig:is-mouse-released ig:+im-gui-mouse-button-left+)
         ;; ドラッグの終了
         (progn
-          (ecase (.drag-part self)
-            (:middle
+          (ecase (.drag-mode self)
+            (:move
              (if (key-ctrl-p)
                  ;; 複製
                  (cmd-add *project* 'cmd-notes-d&d-copy
@@ -62,16 +62,27 @@
                             :keys-to (mapcar #'.key (.notes-dragging self)))
                    (loop for note in (.notes-dragging self)
                          do (note-delete (.clip self) note)))))
-            (:left
-             ;; TODO
-             )
-            (:right
-             ;; TODO
-             ))
+            (:start
+             (let ((delta (- (.duration (car (.notes-dragging self)))
+                             (car (.notes-dragging-duration self)))))
+               (loop for note in (.notes-dragging self)
+                     do (incf (.time note) delta)
+                        (decf (.duration note) delta))
+               (cmd-add *project* 'cmd-notes-start-change
+                        :notes (.notes-dragging self)
+                        :delta delta)))
+            (:end
+             (let ((delta (- (.duration (car (.notes-dragging self)))
+                             (car (.notes-dragging-duration self)))))
+               (loop for note in (.notes-dragging self)
+                     do (decf (.duration note) delta))
+               (cmd-add *project* 'cmd-notes-end-change
+                        :notes (.notes-dragging self)
+                        :delta delta))))
           (setf (.notes-dragging self) nil))
         ;; ドラッグ中の表示
-        (ecase (.drag-part self)
-          (:middle
+        (ecase (.drag-mode self)
+          (:move
            (multiple-value-bind (time key)
                (world-pos-to-time-key self (@- (ig:get-mouse-pos)
                                                (@ (.note-drag-offset self) .0)))
@@ -83,7 +94,7 @@
                      for time = (+ (.time selected) delta-time)
                      for key = (+ (.key selected) delta-key)
                      do (move dragging time key)))))
-          (:left
+          (:start
            (let* ((delta (- (%time) (.time (.note-target self)))))
              (when (every (lambda (note)
                             (plusp (- (.duration note) delta)))
@@ -91,7 +102,7 @@
                (loop for note in (.notes-dragging self)
                      do (incf (.time note) delta)
                         (decf (.duration note) delta)))))
-          (:right
+          (:end
            (let* ((note (.note-target self))
                   (delta (- (%time) (+ (.time note) (.duration note)))))
              (when (every (lambda (note)
@@ -101,7 +112,7 @@
                      do (incf (.duration note) delta)))))))))
 
 (defmethod handle-mouse ((self piano-roll))
-    (let* ((io (ig:get-io)))
+  (let* ((io (ig:get-io)))
     (cond ((.notes-dragging self)
            (handle-dragging self))
           ((.range-selecting-p self)
@@ -114,8 +125,8 @@
            (handle-click self))
           ((ig:is-mouse-released ig:+im-gui-mouse-button-left+)
            (handle-mouse-released self)))
-      (zoom-x-update self io)
-      (zoom-y-update self io)))
+    (zoom-x-update self io)
+    (zoom-y-update self io)))
 
 (defmethod handle-mouse-released ((self piano-roll))
   (if (.note-at-mouse self)
@@ -175,7 +186,7 @@
         for key from +g9+ downto +c-1+
         for name = (midi-key-name key)
         for black-p = (or (alexandria:ends-with #\# name)
-                        (alexandria:ends-with #\b name))
+                          (alexandria:ends-with #\b name))
         for text-color = (if black-p (color #xff #xff #xff #xc0) (color #x00 #x00 #x00 #xc0))
         for bg-color = (if black-p (color #x00 #x00 #x00 #xc0) (color #xff #xff #xff #xc0))
         for y-world = (key-to-world-y self key)
@@ -185,12 +196,12 @@
            (ig:add-line draw-list pos1 (@+ pos1 (@ window-width .0)) (.color-line *theme*))
            (when (text-show-p self)
              (let ((pos-text (@ (ig:get-scroll-x) (key-to-local-y self key))))
-              (when (and (<= .0 (.x pos-text)) (<= .0 (.y pos-text)))
-                (ig:set-cursor-pos pos-text)
-                (ig:with-button-color ((color 0 0 0 0))
-                  (ig:push-style-color-u32 ig:+im-gui-col-text+ text-color)
-                  (ig:button name)
-                  (ig:pop-style-color 1)))))
+               (when (and (<= .0 (.x pos-text)) (<= .0 (.y pos-text)))
+                 (ig:set-cursor-pos pos-text)
+                 (ig:with-button-color ((color 0 0 0 0))
+                   (ig:push-style-color-u32 ig:+im-gui-col-text+ text-color)
+                   (ig:button name)
+                   (ig:pop-style-color 1)))))
         finally (progn                  ;height 確保のために
                   (ig:set-cursor-pos (@- pos2 window-pos))
                   (ig:text ""))))
@@ -217,15 +228,15 @@
              (when (contain-p mouse-pos pos1 pos2)
                (setf (.note-at-mouse self) note)
                (unless (.notes-dragging self)
-                 (setf (.drag-part self)
+                 (setf (.drag-mode self)
                        (cond ((or (< (- (.x pos2) (.x pos1)) (* +side-threshold+ 2))
                                   (< (+ (.x pos1) +side-threshold+)
                                      (.x mouse-pos)
                                      (- (.x pos2) +side-threshold+)))
-                              :middle)
+                              :move)
                              ((<= (.x mouse-pos) (+ (.x pos1) +side-threshold+))
-                              :left)
-                             (t :right))))))))
+                              :start)
+                             (t :end))))))))
 
 (defmethod text-show-p ((self piano-roll))
   (> (.zoom-y self) (.threshold-text-hide self)))
