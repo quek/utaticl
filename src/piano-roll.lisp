@@ -173,7 +173,7 @@
              (ig:add-rect-filled draw-list
                                  (@+ pos1 (@ .0 2.0))
                                  (@- pos2 (@ .0 1.0))
-                                 (.color note)
+                                 (color-selected (.color note) (member note (.notes-selected self)))
                                  :rounding 2.5)
              (when (text-show-p self)
                (ig:add-text draw-list (@+ pos1 (@ 4.0 2.0)) (.color-text *theme*) (.name note)))
