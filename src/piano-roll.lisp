@@ -1,10 +1,26 @@
 (in-package :dgw)
 
+(defmethod drag-mode ((self piano-roll) note)
+  (let* ((mouse-pos (ig:get-mouse-pos))
+         (x1 (time-to-world-x self (.time note)))
+         (x2 (time-to-world-x self (+ (.time note) (.duration note)))))
+    (cond ((or (< (- x2 x1) (* +side-threshold+ 2))
+               (< (+ x1 +side-threshold+)
+                  (.x mouse-pos)
+                  (- x2 +side-threshold+)))
+           :move)
+          ((<= (.x mouse-pos) (+ x1 +side-threshold+))
+           :start)
+          (t :end))))
+
 (defmethod handle-click ((self piano-roll))
   (if (.note-at-mouse self)
-      (when (and (not (member (.note-at-mouse self) (.notes-selected self)))
-                 (not (key-ctrl-p)))
-        (setf (.notes-selected self) (list (.note-at-mouse self))))
+      (let ((note-at-mouse (.note-at-mouse self)))
+        (when (and (not (member note-at-mouse (.notes-selected self)))
+                   (not (key-ctrl-p)))
+          (setf (.notes-selected self) (list note-at-mouse)))
+        (setf (.note-default-duration self) (.duration note-at-mouse))
+        (setf (.drag-mode self) (drag-mode self note-at-mouse)))
       (setf (.notes-selected self) nil)))
 
 (defmethod handle-double-click ((self piano-roll))
@@ -16,7 +32,16 @@
         (setf time (time-grid-applied self time :floor))
         (when (and (not (minusp time)) key)
           (cmd-add *project* 'cmd-note-add
-                   :clip-id (.neko-id (.clip self)) :time time :key key)))))
+                   :clip-id (.neko-id (.clip self))
+                   :time time
+                   :key key
+                   :duration (.note-default-duration self)
+                   :execute-after (lambda (cmd)
+                                    ;; そのままドラッグで長さを変えられる
+                                    (let ((note (find-neko (.note-id cmd))))
+                                      (setf (.note-target self) note)
+                                      (setf (.notes-selected self) (list note))
+                                      (setf (.drag-mode self) :end))))))))
 
 (defmethod handle-drag-start ((self piano-roll))
   (if (and (.notes-selected self) (.note-at-mouse self))
@@ -78,7 +103,10 @@
                      do (decf (.duration note) delta))
                (cmd-add *project* 'cmd-notes-end-change
                         :notes (.notes-dragging self)
-                        :delta delta))))
+                        :delta delta)
+               (setf (.note-default-duration self)
+                     (+ (.duration (.note-target self))
+                        delta)))))
           (setf (.notes-dragging self) nil))
         ;; ドラッグ中の表示
         (ecase (.drag-mode self)
@@ -126,7 +154,21 @@
           ((ig:is-mouse-released ig:+im-gui-mouse-button-left+)
            (handle-mouse-released self)))
     (zoom-x-update self io)
-    (zoom-y-update self io)))
+    (zoom-y-update self io))
+
+  (if (.notes-dragging self)
+      (ecase (.drag-mode self)
+        (:move
+         (ig:set-mouse-cursor ig:+im-gui-mouse-cursor-arrow+))
+        ((:start :end)
+         (ig:set-mouse-cursor ig:+im-gui-mouse-cursor-resize-ew+)))
+      (aif (.note-at-mouse self)
+           (ecase (drag-mode self it)
+             (:move
+              (ig:set-mouse-cursor ig:+im-gui-mouse-cursor-arrow+))
+             ((:start :end)
+              (ig:set-mouse-cursor ig:+im-gui-mouse-cursor-resize-ew+)))
+           (ig:set-mouse-cursor ig:+im-gui-mouse-cursor-arrow+))))
 
 (defmethod handle-mouse-released ((self piano-roll))
   (if (.note-at-mouse self)
@@ -226,17 +268,7 @@
              (when (text-show-p self)
                (ig:add-text draw-list (@+ pos1 (@ 4.0 2.0)) (.color-text *theme*) (.name note)))
              (when (contain-p mouse-pos pos1 pos2)
-               (setf (.note-at-mouse self) note)
-               (unless (.notes-dragging self)
-                 (setf (.drag-mode self)
-                       (cond ((or (< (- (.x pos2) (.x pos1)) (* +side-threshold+ 2))
-                                  (< (+ (.x pos1) +side-threshold+)
-                                     (.x mouse-pos)
-                                     (- (.x pos2) +side-threshold+)))
-                              :move)
-                             ((<= (.x mouse-pos) (+ (.x pos1) +side-threshold+))
-                              :start)
-                             (t :end))))))))
+               (setf (.note-at-mouse self) note)))))
 
 (defmethod text-show-p ((self piano-roll))
   (> (.zoom-y self) (.threshold-text-hide self)))
