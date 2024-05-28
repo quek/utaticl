@@ -59,7 +59,7 @@
 
 (defun color-selected (c &optional (selected t))
   (if selected
-      (color+ c (color #x30 #x30 #x30 #x00))
+      (color+ c (color #x30 #x30 #x30 #x30))
       c))
 
 (defmacro defshortcut ((&rest key-chord) &body body)

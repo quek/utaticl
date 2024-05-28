@@ -19,6 +19,7 @@
         (when (and (not (member note-at-mouse (.notes-selected self)))
                    (not (key-ctrl-p)))
           (setf (.notes-selected self) (list note-at-mouse)))
+        (setf (.note-target self) note-at-mouse)
         (setf (.note-default-duration self) (.duration note-at-mouse))
         (setf (.drag-mode self) (drag-mode self note-at-mouse)))
       (setf (.notes-selected self) nil)))
@@ -44,13 +45,12 @@
                                       (setf (.drag-mode self) :end))))))))
 
 (defmethod handle-drag-start ((self piano-roll))
-  (if (and (.notes-selected self) (.note-at-mouse self))
+  (if (.notes-selected self)
       (progn
-        (setf (.note-target self) (.note-at-mouse self))
         (ecase (.drag-mode self)
           (:move
            (setf (.note-drag-offset self) (- (.x (ig:get-mouse-pos))
-                                             (time-to-world-x self (.time (.note-at-mouse self)))))
+                                             (time-to-world-x self (.time (.note-target self)))))
            (setf (.notes-dragging self) (mapcar #'copy (.notes-selected self)))
            (loop for note in (.notes-dragging self)
                  for src-note in (.notes-selected self)
