@@ -60,7 +60,10 @@
            (setf (.notes-dragging-time self) (mapcar #'.time (.notes-selected self)))
            (setf (.notes-dragging-duration self) (mapcar #'.duration (.notes-selected self))))))
       ;; 範囲選択
-      (setf (.range-selecting-p self) t)))
+      (progn
+        (setf (.range-selecting-mode self)
+              (if (key-shift-p) :range :clip))
+        (setf (.range-selecting-pos self) (ig:get-mouse-pos)))))
 
 (defmethod handle-dragging ((self piano-roll))
   (labels ((%time ()
@@ -143,7 +146,7 @@
   (let* ((io (ig:get-io)))
     (cond ((.notes-dragging self)
            (handle-dragging self))
-          ((.range-selecting-p self)
+          ((.range-selecting-mode self)
            (handle-range-selecting self))
           ((ig:is-mouse-dragging ig:+im-gui-mouse-button-left+ 0.1)
            (handle-drag-start self))
@@ -182,8 +185,11 @@
 
 (defmethod handle-range-selecting ((self piano-roll))
   ;; TODO
-  (when (ig:is-mouse-released ig:+im-gui-mouse-button-left+)
-    (setf (.range-selecting-p self) nil)))
+  (if (ig:is-mouse-released ig:+im-gui-mouse-button-left+)
+      (setf (.range-selecting-mode self) nil)
+      (case (.range-selecting-mode self)
+        (:clip)
+        (:region))))
 
 (defmethod key-to-local-y ((self piano-roll) key)
   (+ (* (.zoom-y self) (- 127 key))

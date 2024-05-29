@@ -44,7 +44,7 @@
   ((show-p :initarg :show-p :initform nil :accessor .show-p)))
 
 (defclass time-ruler-mixin ()
-  ())
+  ((time-ruler-threshold :initform 50.0 :accessor .time-ruler-threshold)))
 
 (defclass zoom-mixin ()
   ((zoom-x :initarg :zoom-x :initform 25.0 :accessor .zoom-x)
@@ -100,7 +100,9 @@
    (notes-selected :initform nil :accessor .notes-selected)
    (offset-x :initform 30.0 :accessor .offset-x)
    (offset-y :initform 25.0 :accessor .offset-y)
-   (range-selecting-p :initform nil :accessor .range-selecting-p)
+   (range-selecting-mode :initform nil :accessor .range-selecting-mode
+                         :type (member :clip :region nil))
+   (range-selecting-pos :initform nil :accessor .range-selecting-pos)
    (render-first-p :initform t :accessor .render-first-p)
    (threshold-text-hide :initform 18.0 :accessor .threshold-text-hide))
   (:default-initargs :zoom-x 25.0 :zoom-y 30.0 :zoom-x-factor .5 :zoom-y-factor .5 :zoom-y-min 5.0
