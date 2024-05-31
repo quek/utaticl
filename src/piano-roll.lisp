@@ -189,7 +189,17 @@
       (setf (.range-selecting-mode self) nil)
       (case (.range-selecting-mode self)
         (:clip)
-        (:region))))
+        (:region
+         (multiple-value-bind (time key) (world-pos-to-time-key self (ig:get-mouse-pos))
+           (setf time (time-grid-applied self time :floor))
+           ;; TODO これ違う
+           (let* ((draw-list (ig:get-window-draw-list))
+                  (pos1 (@ (time-to-world-x self time)
+                           (key-to-world-y self key)))
+                  (pos2 (@ (+ (.x pos1) 50.0)
+                           (key-to-world-y self (max 0 (1- key))))))
+             (ig:add-rect-filled draw-list pos1 pos2
+                                 (.color-selected-region *theme*))))))))
 
 (defmethod key-to-local-y ((self piano-roll) key)
   (+ (* (.zoom-y self) (- 127 key))

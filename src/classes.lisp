@@ -44,7 +44,7 @@
   ((show-p :initarg :show-p :initform nil :accessor .show-p)))
 
 (defclass time-ruler-mixin ()
-  ((time-ruler-threshold :initform 50.0 :accessor .time-ruler-threshold)))
+  ((time-ruler-threshold :initform 25.0 :accessor .time-ruler-threshold)))
 
 (defclass zoom-mixin ()
   ((zoom-x :initarg :zoom-x :initform 25.0 :accessor .zoom-x)
