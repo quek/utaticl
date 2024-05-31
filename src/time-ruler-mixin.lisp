@@ -9,17 +9,26 @@
     (ig:add-line draw-list pos1 pos2 (.color-playhead *theme*))))
 
 (defun compute-time-x-delta (time-ruler-threshold zoom-x)
-  (let (%time-delta %x-delta)
-    (loop for i = 1 then (* i 2)
-          for delta = (* zoom-x i)
-          if (<= time-ruler-threshold delta)
-            do (setf %time-delta i
-                     %x-delta delta)
-               (loop-finish))
-    (values %time-delta %x-delta)))
+  (values-list
+   (if (<= zoom-x time-ruler-threshold)
+       (loop for time-delta = 1 then (* time-delta 2)
+             for x-delta = (* zoom-x time-delta)
+               thereis (and (<= time-ruler-threshold x-delta)
+                            (list time-delta x-delta)))
+       (loop for time-delta = 1 then (/ time-delta 2)
+             for x-delta = (* zoom-x time-delta)
+               thereis (and (> time-ruler-threshold x-delta)
+                            (list (* time-delta 2)
+                                  (* zoom-x (* time-delta 2))))))))
 
 #+nil
-(compute-time-x-delta 50.0 50.0)
+(compute-time-x-delta 25.0 100.0)
+;;⇒ 1/4
+;;   25.0
+#+nil
+(compute-time-x-delta 25.0 0.5)
+;;⇒ 64
+;;   32.0
 
 (defmethod render-time-ruler ((self time-ruler-mixin))
   (multiple-value-bind (time-delta x-delta)
