@@ -52,6 +52,9 @@
                     (let* ((p1 (@+ cursor-pos window-pos (@ (- scroll-x) (- scroll-y))))
                            (p2 (@+ p1 (@ 0.0 (.y window-size)))))
                       (when (<= (+ (.offset-x self) (.x window-pos)) (.x p1))
-                        (ig:add-line draw-list p1 p2 (.color-line *theme*))))))))
+                        (ig:add-line draw-list p1 p2
+                                     (if (zerop (mod (/ time 4) 1))
+                                         (.color-line *theme*)
+                                         (.color-line-sub *theme*)))))))))
 
   (render-playhead self))
