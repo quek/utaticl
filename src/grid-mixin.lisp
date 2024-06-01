@@ -7,12 +7,9 @@
   (button-toggle "Snap" (.grid-snap-p self)))
 
 
-(defmethod time-grid-applied ((self grid-mixin) time floor-or-round)
+(defmethod time-grid-applied ((self grid-mixin) time snap-function)
   (if (.grid-snap-p self)
       (let ((unit (.grid-unit self)))
-        (* (funcall (if (eq floor-or-round :floor)
-                        #'floor
-                        #'round)
-                    (/ time unit))
+        (* (funcall snap-function (/ time unit))
            unit))
       time))

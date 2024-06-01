@@ -38,8 +38,8 @@
           with window-size = (ig:get-window-size)
           with scroll-x = (ig:get-scroll-x)
           with scroll-y = (ig:get-scroll-y)
-          for time = 0 then (+ time time-delta)
-          for x = (.offset-x self) then (+ x x-delta)
+          for time from 0 by time-delta
+          for x from (.offset-x self) by x-delta
           for cursor-pos = (list x scroll-y)
           do (cond ((<= (+ scroll-x (.x window-size)) (.x cursor-pos))
                     (ig:set-cursor-pos (@+ cursor-pos (@ 100.0 .0)))

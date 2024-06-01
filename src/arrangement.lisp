@@ -11,7 +11,7 @@
   (if (.clip-at-mouse self)
       (cmd-add *project* 'cmd-clip-delete :clip-id (.neko-id (.clip-at-mouse self)))
       (multiple-value-bind (time lane) (world-pos-to-time-lane self (ig:get-mouse-pos))
-        (setf time (time-grid-applied self time :floor))
+        (setf time (time-grid-applied self time #'floor))
         (when (and (not (minusp time)) lane)
           (cmd-add *project* 'cmd-clip-add
                    :time time :lane-id (.neko-id lane)
@@ -47,7 +47,7 @@
           (world-pos-to-time-lane self
                                   (@- (ig:get-mouse-pos)
                                       (@ (.clip-drag-offset self) .0)))
-        (setf time (max (time-grid-applied self time :floor) .0d0))
+        (setf time (max (time-grid-applied self time #'floor) .0d0))
         (let ((delta-time (- time (.time (.clip-target self))))
               (delta-lane (diff lane (gethash (.clip-target self) (.clip-lane-map self)))))
           (loop for dragging in (.clips-dragging self)
