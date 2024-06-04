@@ -45,25 +45,36 @@
                                       (setf (.drag-mode self) :end))))))))
 
 (defmethod handle-drag-start ((self piano-roll))
-  (if (.notes-selected self)
-      (progn
-        (ecase (.drag-mode self)
-          (:move
-           (setf (.note-drag-offset self) (- (.x (ig:get-mouse-pos))
-                                             (time-to-world-x self (.time (.note-target self)))))
-           (setf (.notes-dragging self) (mapcar #'copy (.notes-selected self)))
-           (loop for note in (.notes-dragging self)
-                 for src-note in (.notes-selected self)
-                 do (note-add (.clip self) note)))
-          ((:start :end)
-           (setf (.notes-dragging self) (.notes-selected self))
-           (setf (.notes-dragging-time self) (mapcar #'.time (.notes-selected self)))
-           (setf (.notes-dragging-duration self) (mapcar #'.duration (.notes-selected self))))))
-      ;; 範囲選択
-      (progn
-        (setf (.range-selecting-mode self)
-              (if (key-shift-p) :region :clip))
-        (setf (.range-selecting-pos self) (ig:get-mouse-pos)))))
+  (cond ((and (eq :region (.range-selecting-mode self)))
+         (multiple-value-bind (time1 key1 time2 key2) (range-selecting-region-time-key self)
+           (setf (.notes-dragging self)
+                 (loop for note in (.notes (.seq (.clip self)))
+                       if (and (<= time1 (+ (.time note) (.duration note)))
+                               (< (.time note) time2)
+                               (<= key1 (.key self) key2))
+                         collect (let ((note (copy note)))
+                                   (note-add (.clip self) note)
+                                   note)))))
+        ((.notes-selected self)
+         (progn
+           (ecase (.drag-mode self)
+             (:move
+              (setf (.note-drag-offset self) (- (.x (ig:get-mouse-pos))
+                                                (time-to-world-x self (.time (.note-target self)))))
+              (setf (.notes-dragging self) (mapcar #'copy (.notes-selected self)))
+              (loop for note in (.notes-dragging self)
+                    for src-note in (.notes-selected self)
+                    do (note-add (.clip self) note)))
+             ((:start :end)
+              (setf (.notes-dragging self) (.notes-selected self))
+              (setf (.notes-dragging-time self) (mapcar #'.time (.notes-selected self)))
+              (setf (.notes-dragging-duration self) (mapcar #'.duration (.notes-selected self)))))))
+        (t
+         ;; 範囲選択
+         (progn
+           (setf (.range-selecting-mode self)
+                 (if (key-shift-p) :region :clip))
+           (setf (.range-selecting-pos self) (ig:get-mouse-pos))))))
 
 (defmethod handle-dragging ((self piano-roll))
   (labels ((%time ()
@@ -185,35 +196,16 @@
 (defmethod handle-range-selecting ((self piano-roll))
   (case (.range-selecting-mode self)
     (:clip
-     ;; TODO
-     )
+     ;; TODO 選択処理
+
+     (when (ig:is-mouse-released ig:+im-gui-mouse-button-left+)
+       (setf (.range-selecting-mode self) nil)))
     (:region
-     (let ((pos1 (.range-selecting-pos self))
-           (pos2 (ig:get-mouse-pos)))
-       (multiple-value-bind (time1 key1)
-           (world-pos-to-time-key self pos1)
-         (setf time1 (time-grid-applied self time1 (if (< (.x pos1)
-                                                          (.x pos2))
-                                                       #'floor
-                                                       #'ceiling)))
-         (multiple-value-bind (time2 key2) (world-pos-to-time-key self pos2)
-           (setf time2 (time-grid-applied self time2 (if (< (.x pos1)
-                                                            (.x pos2))
-                                                         #'ceiling
-                                                         #'floor)))
-           (let* ((draw-list (ig:get-window-draw-list))
-                  (x1 (time-to-world-x self (min time1 time2)))
-                  (y1 (key-to-world-y self (max key1 key2)))
-                  (x2 (time-to-world-x self (max time1 time2)))
-                  (y2 (key-to-world-y self (1- (min key1 key2))))
-                  (pos1 (@ x1 y1))
-                  (pos2 (@ x2 y2)))
-             (ig:add-rect-filled draw-list pos1 pos2
-                                 (.color-selected-region *theme*))))))))
-  (when (ig:is-mouse-released ig:+im-gui-mouse-button-left+)
-    (setf (.range-selecting-mode self) nil)))
-
-
+     (let ((draw-list (ig:get-window-draw-list)))
+       (multiple-value-bind (pos1 pos2)
+           (range-selecting-region self)
+         (ig:add-rect-filled draw-list pos1 pos2
+                             (.color-selected-region *theme*)))))))
 
 (defmethod key-to-local-y ((self piano-roll) key)
   (+ (* (.zoom-y self) (- 127 key))
@@ -223,6 +215,37 @@
   (+ (key-to-local-y self key)
      (.y (ig:get-window-pos))
      (- (ig:get-scroll-y))))
+
+(defmethod range-selecting-region-time-key ((self piano-roll))
+  (let ((pos1 (.range-selecting-pos self))
+        (pos2 (ig:get-mouse-pos)))
+    (multiple-value-bind (time1 key1)
+        (world-pos-to-time-key self pos1)
+      (setf time1 (time-grid-applied self time1 (if (< (.x pos1)
+                                                       (.x pos2))
+                                                    #'floor
+                                                    #'ceiling)))
+      (multiple-value-bind (time2 key2) (world-pos-to-time-key self pos2)
+        (setf time2 (time-grid-applied self time2 (if (< (.x pos1)
+                                                         (.x pos2))
+                                                      #'ceiling
+                                                      #'floor)))
+        (let ((time1 (min time1 time2))
+              (key1 (max key1 key2))
+              (time2 (max time1 time2))
+              (key2 (1- (min key1 key2))))
+          (values time1 key1 time2 key2))))))
+
+(defmethod range-selecting-region ((self piano-roll))
+  (multiple-value-bind (time1 key1 time2 key2)
+      (range-selecting-region-time-key self)
+    (let* ((x1 (time-to-world-x self time1))
+           (y1 (key-to-world-y self key1))
+           (x2 (time-to-world-x self time2))
+           (y2 (key-to-world-y self key2))
+           (pos1 (@ x1 y1))
+           (pos2 (@ x2 y2)))
+      (values pos1 pos2))))
 
 (defmethod render ((self piano-roll))
   (setf (.note-at-mouse self) nil)
