@@ -50,7 +50,8 @@
 
 (defmethod handle-drag-start ((self piano-roll))
   (cond ((and (.note-at-mouse self)
-              (.range-selecting-pos1 self))
+              (.range-selecting-pos1 self)
+              (.range-selecting-pos2 self))
          (multiple-value-bind (time1 key1 time2 key2)
              (range-selecting-region-time-key
               self
