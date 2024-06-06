@@ -67,6 +67,7 @@
    (:file "track")
    (:file "master-track")
    (:file "lane")
+   (:file "time-thing")
    (:file "clip")
    (:file "clip-note")
    (:file "seq-note")

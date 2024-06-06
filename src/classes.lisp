@@ -101,7 +101,7 @@
    (offset-x :initform 30.0 :accessor .offset-x)
    (offset-y :initform 25.0 :accessor .offset-y)
    (range-selecting-mode :initform nil :accessor .range-selecting-mode
-                         :type (member :clip :region nil))
+                         :type (member :note :region nil))
    (range-selecting-pos1 :initform nil :accessor .range-selecting-pos1)
    (range-selecting-pos2 :initform nil :accessor .range-selecting-pos2)
    (render-first-p :initform t :accessor .render-first-p)

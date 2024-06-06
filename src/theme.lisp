@@ -9,5 +9,7 @@
    (color-line-sub :initform (color #x80 #x80 #x80 #x80) :accessor .color-line-sub)
    (color-playhead :initform (color #x40 #xff #x40 #xff) :accessor .color-playhead)
    (color-selected-region :initform (color #x80 #x80 #x80 #x60) :accessor .color-selected-region)
+   (color-selecting-rect-border :initform (color #x00 #xff #x00 #x80)
+                                :accessor .color-selecting-rect-border)
    (color-text :initform (color #xc0 #xc0 #xc0 #xff) :accessor .color-text))
   (:default-initargs :name "theme.lisp"))

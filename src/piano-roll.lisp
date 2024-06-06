@@ -51,6 +51,7 @@
   (cond ((and (.note-at-mouse self)
               (.range-selecting-pos1 self)
               (.range-selecting-pos2 self))
+         ;; リージョンのドラッグ開始
          (multiple-value-bind (time1 key1 time2 key2)
              (range-selecting-region-time-key
               self
@@ -80,6 +81,7 @@
                                  (note-add (.clip self) note)
                                  note)))))
         ((.notes-selected self)
+         ;; 選択ノートのドラッグ開始
          (progn
            (ecase (.drag-mode self)
              (:move
@@ -94,10 +96,10 @@
               (setf (.notes-dragging-time self) (mapcar #'.time (.notes-selected self)))
               (setf (.notes-dragging-duration self) (mapcar #'.duration (.notes-selected self)))))))
         (t
-         ;; 範囲選択
+         ;; 範囲選択の開始
          (progn
            (setf (.range-selecting-mode self)
-                 (if (key-shift-p) :region :clip))
+                 (if (key-shift-p) :region :note))
            (setf (.range-selecting-pos1 self) (ig:get-mouse-pos))))))
 
 (defmethod handle-dragging ((self piano-roll))
@@ -242,9 +244,22 @@
 
 (defmethod handle-range-selecting ((self piano-roll))
   (case (.range-selecting-mode self)
-    (:clip
-     ;; TODO 選択処理
-     )
+    (:note
+     (let* ((draw-list (ig:get-window-draw-list))
+            (pos1 (.range-selecting-pos1 self))
+            (pos2 (ig:get-mouse-pos))
+            (time1 (world-x-to-time self (min (.x pos1) (.x pos2))))
+            (time2 (world-x-to-time self (max (.x pos1) (.x pos2))))
+            (key1 (world-y-to-key self (min (.y pos1) (.y pos2))))
+            (key2 (world-y-to-key self (max (.y pos1) (.y pos2)))))
+       (setf (.notes-selected self)
+             (loop for note in (.notes (.seq (.clip self)))
+                   if (and (< (.time note) time2)
+                           (< time1 (time-end note))
+                           (<= key2 (.key note) key1))
+                     collect note))
+       (ig:add-rect draw-list pos1 pos2
+                    (.color-selecting-rect-border *theme*))))
     (:region
      (setf (.range-selecting-pos2 self) (ig:get-mouse-pos))))
 
