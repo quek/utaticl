@@ -17,6 +17,7 @@
   (let ((note-at-mouse (.note-at-mouse self)))
     (if note-at-mouse
         (progn
+          (setf (.drag-mode self) (drag-mode self note-at-mouse))
           (setf (.note-target self) note-at-mouse)
           (unless (.range-selecting-pos1 self)
             (when (and (not (member note-at-mouse (.notes-selected self)))
