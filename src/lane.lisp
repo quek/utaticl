@@ -11,22 +11,22 @@
         (delete clip (.clips self))))
 
 (defmethod diff ((a lane) (b lane))
-  (if (eq a b)
-      0
-      (let ((diff nil))
-        (labels ((f (track)
-                   (loop for lane in (.lanes track)
-                         if (or (eq lane a)
-                                (eq lane b))
-                           do (if (and diff (plusp diff))
-                                  (return-from diff diff)
-                                  (setf diff 1))
-                         else
-                           do (and diff (incf diff)))
-                   (loop for x in (.tracks track)
-                         do (f x))))
-          (f (.master-track *project*)))
-        diff)))
+  (labels ((f (track lane)
+             (let ((pos (position lane (.lanes track))))
+               (if pos
+                   (values pos t)
+                   (let ((distance 0)
+                         (found nil))
+                     (loop for x in (.tracks track)
+                           until found
+                           do (multiple-value-bind (n fnd) (f x lane)
+                                (incf distance n)
+                                (when fnd
+                                  (setf found t))))
+                     (values (+ distance (length (.lanes track)))
+                             found))))))
+    (- (f (.master-track *project*) a)
+       (f (.master-track *project*) b))))
 
 (defmethod prepare-event ((self lane) start end loop-p offset-samples)
   (loop for clip in (.clips self)

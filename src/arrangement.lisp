@@ -53,7 +53,8 @@
           (loop for dragging in (.clips-dragging self)
                 for selected in (.clips-selected self)
                 for time = (+ (.time selected) delta-time)
-                for lane = (relative-at (gethash selected (.clip-lane-map self)) delta-lane)
+                for lane-selected = (gethash selected (.clip-lane-map self))
+                for lane = (relative-at lane-selected delta-lane)
                 do (move dragging time lane))))))
 
 (defmethod handle-drag-start ((self arrangement))
