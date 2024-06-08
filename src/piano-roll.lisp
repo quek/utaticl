@@ -268,6 +268,11 @@
     (setf (.range-selecting-mode self) nil)))
 
 (defmethod handle-shortcut ((self piano-roll))
+  (defshortcut (ig:+im-gui-key-delete+)
+    (when (.notes-selected self)
+      (cmd-add *project* 'cmd-notes-delete
+               :notes (.notes-selected self)
+               :clip (.clip self))))
   (defshortcut (ig:+im-gui-key-d+)
     (if (and (.range-selecting-pos1 self)
              (.range-selecting-pos2 self))
@@ -275,12 +280,13 @@
                  :pos1 (.range-selecting-pos1 self)
                  :pos2 (.range-selecting-pos2 self)
                  :notes (.notes-selected self))
-        (cmd-add *project* 'cmd-notes-duplicate
-                 :notes (.notes-selected self)
-                 :clip (.clip self)
-                 :execute-after (lambda (cmd)
-                                  (setf (.notes-selected self)
-                                        (.notes-undo cmd))))))
+        (when (.notes-selected self)
+          (cmd-add *project* 'cmd-notes-duplicate
+                   :notes (.notes-selected self)
+                   :clip (.clip self)
+                   :execute-after (lambda (cmd)
+                                    (setf (.notes-selected self)
+                                          (.notes-undo cmd)))))))
   (shortcut-common))
 
 (defmethod key-to-local-y ((self piano-roll) key)

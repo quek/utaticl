@@ -239,6 +239,25 @@
         do (setf (.time note) time-from)
            (setf (.key note) key-from)))
 
+(defcommand cmd-notes-delete (command)
+  ((notes :initarg :notes :accessor .notes)
+   (clip :initarg :clip :accessor .clip)
+   (notes-undo :accessor .notes-undo)))
+
+(defmethod execute ((self cmd-notes-delete))
+  (setf (.notes-undo self)
+        (with-serialize-context (serialize (.notes self))))
+  (loop with clip = (.clip self)
+        for note in (.notes self)
+        do (note-delete clip note)))
+
+(defmethod undo ((self cmd-notes-delete))
+  (setf (.notes self)
+        (with-serialize-context (deserialize (.notes-undo self))))
+  (loop with clip = (.clip self)
+        for note in (.notes self)
+        do (note-add clip note)))
+
 (defcommand cmd-notes-duplicate (command)
   ((notes :initarg :notes :accessor .notes)
    (clip :initarg :clip :accessor .clip)
