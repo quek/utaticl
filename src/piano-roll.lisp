@@ -267,6 +267,22 @@
   (when (ig:is-mouse-released ig:+im-gui-mouse-button-left+)
     (setf (.range-selecting-mode self) nil)))
 
+(defmethod handle-shortcut ((self piano-roll))
+  (defshortcut (ig:+im-gui-key-d+)
+    (if (and (.range-selecting-pos1 self)
+             (.range-selecting-pos2 self))
+        (cmd-add *project* 'cmd-notes-duplicate-region
+                 :pos1 (.range-selecting-pos1 self)
+                 :pos2 (.range-selecting-pos2 self)
+                 :notes (.notes-selected self))
+        (cmd-add *project* 'cmd-notes-duplicate
+                 :notes (.notes-selected self)
+                 :clip (.clip self)
+                 :execute-after (lambda (cmd)
+                                  (setf (.notes-selected self)
+                                        (.notes-undo cmd))))))
+  (shortcut-common))
+
 (defmethod key-to-local-y ((self piano-roll) key)
   (+ (* (.zoom-y self) (- 127 key))
      (.offset-y self)))
@@ -328,7 +344,7 @@
         (setf it (view-fit self)))
 
       (handle-mouse self))
-    (shortcut-common)))
+    (handle-shortcut self)))
 
 (defmethod render-keyboard ((self piano-roll))
   (setf (.offset-x self) 30.0)

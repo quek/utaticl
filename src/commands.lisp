@@ -239,6 +239,32 @@
         do (setf (.time note) time-from)
            (setf (.key note) key-from)))
 
+(defcommand cmd-notes-duplicate (command)
+  ((notes :initarg :notes :accessor .notes)
+   (clip :initarg :clip :accessor .clip)
+   (notes-undo :accessor .notes-undo)))
+
+(defmethod execute ((self cmd-notes-duplicate))
+  (let* ((time-min most-positive-double-float)
+         (time-max .0d0)
+         (notes (loop for note in (.notes self)
+                      if (< (.time note) time-min)
+                        do (setf time-min (.time note))
+                      if (< time-max (time-end note))
+                        do (setf time-max (time-end note))
+                      collect (copy note)))
+         (time-delta (- time-max time-min)))
+    (loop with clip = (.clip self)
+          for note in notes
+          do (incf (.time note) time-delta)
+             (note-add clip note))
+    (setf (.notes-undo self) notes)))
+
+(defmethod undo ((self cmd-notes-duplicate))
+  (loop with clip = (.clip self)
+        for note in (.notes-undo self)
+        do (note-delete clip note)))
+
 (defcommand cmd-notes-end-change (command)
   ((notes-id :initarg :notes :accessor .notes-id)
    (delta :initarg :delta :accessor .delta)))
