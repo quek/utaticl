@@ -105,12 +105,12 @@ EOF +---------------------------+
       (when chunk
         (setf (vst3-impl::.cursor buffer) (cadr chunk))
         (setf (vst3-impl::.tail buffer) (+ (cadr chunk) (caddr chunk)))
-        (vst3-ffi::set-state (.component module) buffer)
+        (vst3-ffi::set-state (.component module) (vst3-impl::ptr buffer))
         (setf (vst3-impl::.cursor buffer) (cadr chunk))
         (setf (vst3-impl::.tail buffer) (+ (cadr chunk) (caddr chunk)))
-        (vst3-ffi::set-component-state (.controller module) buffer)))
+        (vst3-ffi::set-component-state (.controller module) (vst3-impl::ptr buffer))))
     (let ((chunk (find "Cont" chunks :key #'car :test #'string=)))
       (when chunk
         (setf (vst3-impl::.cursor buffer) (cadr chunk))
         (setf (vst3-impl::.tail buffer) (+ (cadr chunk) (caddr chunk)))
-        (vst3-ffi::set-state (.controller module) buffer)))))
+        (vst3-ffi::set-state (.controller module) (vst3-impl::ptr buffer))))))
