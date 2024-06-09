@@ -68,15 +68,15 @@ EOF +---------------------------+
                                       do (format out "~2,'0X" i))))
     (vst3-impl::write-integer buffer 0 8)
     ;; Component State
-    (push (list "Comp" (vst3-impl::.cursor buffer)
-                (vst3-ffi::get-state (.component module) (vst3-impl::ptr buffer))
-                (vst3-impl::.cursor buffer))
-          chunks)
+    (let ((offset (vst3-impl::.cursor buffer)))
+      (vst3-ffi::get-state (.component module) (vst3-impl::ptr buffer))
+      (push (list "Comp" offset (- (vst3-impl::.cursor buffer) offset))
+            chunks))
     ;; Controller State
-    (push (list "Cont" (vst3-impl::.cursor buffer)
-                (vst3-ffi::get-state (.controller module) (vst3-impl::ptr buffer))
-                (vst3-impl::.cursor buffer))
-          chunks)
+    (let ((offset (vst3-impl::.cursor buffer)))
+      (vst3-ffi::get-state (.controller module) (vst3-impl::ptr buffer))
+     (push (list "Cont" offset (- (vst3-impl::.cursor buffer) offset))
+           chunks))
     ;; offset to chunk list
     (let ((pos (vst3-impl::.cursor buffer)))
       (setf (vst3-impl::.cursor buffer) +preset-vst3-list-offset-pos+)
@@ -103,6 +103,7 @@ EOF +---------------------------+
                    chunks))
     (let ((chunk (find "Comp" chunks :key #'car :test #'string=)))
       (when chunk
+        (print chunk)
         (setf (vst3-impl::.cursor buffer) (cadr chunk))
         (setf (vst3-impl::.tail buffer) (+ (cadr chunk) (caddr chunk)))
         (vst3-ffi::set-state (.component module) (vst3-impl::ptr buffer))
@@ -111,6 +112,7 @@ EOF +---------------------------+
         (vst3-ffi::set-component-state (.controller module) (vst3-impl::ptr buffer))))
     (let ((chunk (find "Cont" chunks :key #'car :test #'string=)))
       (when chunk
+        (print chunk)
         (setf (vst3-impl::.cursor buffer) (cadr chunk))
         (setf (vst3-impl::.tail buffer) (+ (cadr chunk) (caddr chunk)))
         (vst3-ffi::set-state (.controller module) (vst3-impl::ptr buffer))))))

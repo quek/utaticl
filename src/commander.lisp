@@ -21,7 +21,8 @@
                 do (if run
                        #1=(progn
                             (cmd-add *project* class)
-                            (hide self))
+                            (hide self)
+                            (loop-finish))
                        (when (ig:button class-name)
                          #1#)))))
 
