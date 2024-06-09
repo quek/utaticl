@@ -441,7 +441,7 @@
 (defmethod read-integer ((self bstream) size)
   (loop for i below size
         with n = 0
-        do (setf (ldb (byte 8 i) n) (read-byte$ self))
+        do (setf (ldb (byte 8 (* 8 i)) n) (read-byte$ self))
         finally (return n)))
 
 (defmethod read-string ((self bstream) size)
@@ -457,7 +457,7 @@
 
 (defmethod write-integer ((self bstream) integer size)
   (loop for i below size
-        do (write-byte$ self (ldb (byte 8 i) integer))))
+        do (write-byte$ self (ldb (byte 8 (* 8 i)) integer))))
 
 (defmethod write-string$ ((self bstream) string)
   (loop for c across (sb-ext:string-to-octets string :external-format :utf-8)

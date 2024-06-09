@@ -36,6 +36,10 @@ EOF +---------------------------+
 (defconstant +preset-vst3-cid-pos+ 8)
 (defconstant +preset-vst3-list-offset-pos+ 40)
 
+(defmethod initialize-instance :after ((self preset-vst3) &key)
+  ;; add-ref しておかないと preset-load の set-state で release されてしまうっぽい
+  (vst3-impl::add-ref (.buffer self)))
+
 (defmethod cid ((self preset-vst3))
   (let ((buffer (.buffer self))
         (cid (make-array 16 :element-type '(unsigned-byte 8))))
@@ -59,6 +63,7 @@ EOF +---------------------------+
   (let ((buffer (.buffer self))
         (chunks nil))
     (setf (vst3-impl::.cursor buffer) 0)
+    (setf (vst3-impl::.tail buffer) 0)
     ;; HEAD
     (vst3-impl::write-string$ buffer "VST3")
     (vst3-impl::write-integer buffer +preset-vst3-version+ 4)
@@ -77,10 +82,12 @@ EOF +---------------------------+
       (vst3-ffi::get-state (.controller module) (vst3-impl::ptr buffer))
      (push (list "Cont" offset (- (vst3-impl::.cursor buffer) offset))
            chunks))
+    (print chunks)
     ;; offset to chunk list
     (let ((pos (vst3-impl::.cursor buffer)))
       (setf (vst3-impl::.cursor buffer) +preset-vst3-list-offset-pos+)
       (vst3-impl::write-integer buffer pos 8)
+      (print (list "xxx" pos))
       (setf (vst3-impl::.cursor buffer) pos))
     (vst3-impl::write-string$ buffer "List")
     (vst3-impl::write-integer buffer (length chunks) 4)
@@ -95,18 +102,24 @@ EOF +---------------------------+
         (chunks nil))
     (setf (vst3-impl::.cursor buffer) +preset-vst3-list-offset-pos+)
     (setf pos (vst3-impl::read-integer buffer 8))
-    (setf (vst3-impl::.cursor buffer) (+ pos 4))
-    (loop repeat (vst3-impl::read-integer buffer 4)
+    (print (list "yyy" pos))
+    (setf (vst3-impl::.cursor buffer) pos)
+    (assert (string= (vst3-impl::read-string buffer 4)
+                     "List"))
+    (loop repeat (vst3-impl::read-integer buffer 4) ;entry count
           do (push (list (vst3-impl::read-string buffer 4)
                          (vst3-impl::read-integer buffer 8)
                          (vst3-impl::read-integer buffer 8))
                    chunks))
+    (print chunks)
     (let ((chunk (find "Comp" chunks :key #'car :test #'string=)))
       (when chunk
         (print chunk)
         (setf (vst3-impl::.cursor buffer) (cadr chunk))
         (setf (vst3-impl::.tail buffer) (+ (cadr chunk) (caddr chunk)))
+        (describe buffer)
         (vst3-ffi::set-state (.component module) (vst3-impl::ptr buffer))
+        (describe buffer)
         (setf (vst3-impl::.cursor buffer) (cadr chunk))
         (setf (vst3-impl::.tail buffer) (+ (cadr chunk) (caddr chunk)))
         (vst3-ffi::set-component-state (.controller module) (vst3-impl::ptr buffer))))

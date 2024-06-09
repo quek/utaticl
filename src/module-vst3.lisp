@@ -118,7 +118,7 @@
       (when (and (.controller self) terminate-controller-p)
         (vst3-ffi::terminate (.controller self)))))
 
-  (log:debug (vst3-ffi::release (.factory self)))
+  (vst3-ffi::release (.factory self))
   (vst3-impl::release (.host-applicaiton self))
   (vst3::unload-library (.library self)))
 
