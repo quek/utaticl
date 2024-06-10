@@ -44,7 +44,7 @@ EOF +---------------------------+
   (let ((buffer (.buffer self))
         (cid (make-array 16 :element-type '(unsigned-byte 8))))
     (setf (vst3-impl::.cursor buffer) +preset-vst3-cid-pos+)
-    (loop for i below 16
+    (loop for i in '(3 2 1 0 5 4 7 6 8 9 10 11 12 13 14 15)
           for n = (parse-integer (vst3-impl::read-string buffer 2) :radix 16)
           do (setf (aref cid i) n))
     cid))
@@ -69,8 +69,8 @@ EOF +---------------------------+
     (vst3-impl::write-integer buffer +preset-vst3-version+ 4)
     (vst3-impl::write-string$ buffer
                               (with-output-to-string (out)
-                                (loop for i across (.id module)
-                                      do (format out "~2,'0X" i))))
+                                (loop for i in '(3 2 1 0 5 4 7 6 8 9 10 11 12 13 14 15)
+                                      do (format out "~2,'0X" (aref (.id module) i)))))
     (vst3-impl::write-integer buffer 0 8)
     ;; Component State
     (let ((offset (vst3-impl::.cursor buffer)))
@@ -80,8 +80,8 @@ EOF +---------------------------+
     ;; Controller State
     (let ((offset (vst3-impl::.cursor buffer)))
       (vst3-ffi::get-state (.controller module) (vst3-impl::ptr buffer))
-     (push (list "Cont" offset (- (vst3-impl::.cursor buffer) offset))
-           chunks))
+      (push (list "Cont" offset (- (vst3-impl::.cursor buffer) offset))
+            chunks))
     ;; offset to chunk list
     (let ((pos (vst3-impl::.cursor buffer)))
       (setf (vst3-impl::.cursor buffer) +preset-vst3-list-offset-pos+)
@@ -92,7 +92,13 @@ EOF +---------------------------+
     (loop for (id offset size) in chunks
           do (vst3-impl::write-string$ buffer id)
              (vst3-impl::write-integer buffer offset 8)
-             (vst3-impl::write-integer buffer size 8))))
+             (vst3-impl::write-integer buffer size 8))
+
+
+    (with-open-file (out "/tmp/a.xxx" :direction :output :element-type '(unsigned-byte 8))
+      (write-sequence (subseq (vst3-impl::.buffer buffer) 0 (vst3-impl::.tail buffer))
+                      out))
+    ))
 
 (defmethod preset-load ((self preset-vst3) module)
   (let ((buffer (.buffer self))
