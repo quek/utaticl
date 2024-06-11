@@ -408,11 +408,11 @@
          (setf (.cursor self)
                (case mod
                  (#.sb:+ib-stream-i-stream-seek-mode-k-ib-seek-set+
-                  (max pos (length (.buffer self))))
+                  (max 0 (min pos (length (.buffer self)))))
                  (#.sb:+ib-stream-i-stream-seek-mode-k-ib-seek-cur+
-                  (max (+ pos (.cursor self)) (length (.buffer self))))
+                  (max 0 (min (+ pos (.cursor self)) (length (.buffer self)))))
                  (#.sb:+ib-stream-i-stream-seek-mode-k-ib-seek-end+
-                  (min 0 (- (length (.buffer self)) pos)))))
+                  (max 0 (- (length (.buffer self)) pos)))))
          (when (and result (not (cffi:null-pointer-p result)))
            (setf (cffi:mem-ref result :int64) (.cursor self)))
          sb:+k-result-ok+)
