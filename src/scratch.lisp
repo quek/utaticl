@@ -3,8 +3,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (sb-int:with-float-traps-masked (:invalid :inexact :overflow :divide-by-zero)
   (let ((module (module-vst3-load
-                 ;; "c:/Program Files/Common Files/VST3/Dexed.vst3"
-                 "c:/Program Files/Common Files/VST3/DS Thorn.vst3"
+                 "c:/Program Files/Common Files/VST3/Dexed.vst3"
+                 ;; "c:/Program Files/Common Files/VST3/DS Thorn.vst3"
                  ;; "c:/Program Files/Common Files/VST3/MeldaProduction/MSoundFactory.vst3"
                  ;; "c:/Program Files/Common Files/VST3/Vital.vst3"
                  ))

@@ -271,6 +271,7 @@
   (let* ((preset (preset-vst3-from-base64 state))
          (id (cid preset)))
     (load-by-id self id)
+    (initialize self)
     (preset-load preset self)))
 
 

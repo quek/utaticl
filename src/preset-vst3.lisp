@@ -61,8 +61,7 @@ EOF +---------------------------+
 
 (defmethod preset-save ((self preset-vst3) module)
   (let ((buffer (.buffer self))
-        (chunks nil)
-        xx yy)
+        (chunks nil))
     (setf (vst3-impl::.cursor buffer) 0)
     (setf (vst3-impl::.tail buffer) 0)
     ;; HEAD
@@ -77,11 +76,7 @@ EOF +---------------------------+
     (let ((offset (vst3-impl::.cursor buffer)))
       (vst3-ffi::get-state (.component module) (vst3-impl::ptr buffer))
       (push (list "Comp" offset (- (vst3-impl::.cursor buffer) offset))
-            chunks)
-
-      (setf xx offset yy (vst3-impl::.cursor buffer))
-
-      )
+            chunks))
     ;; Controller State
     (let ((offset (vst3-impl::.cursor buffer)))
       (vst3-ffi::get-state (.controller module) (vst3-impl::ptr buffer))
@@ -98,13 +93,6 @@ EOF +---------------------------+
           do (vst3-impl::write-string$ buffer id)
              (vst3-impl::write-integer buffer offset 8)
              (vst3-impl::write-integer buffer size 8))
-
-    ;; TODO delete
-    (with-open-file (out "/tmp/a.vstpreset" :direction :output
-                                            :element-type '(unsigned-byte 8)
-                                            :if-exists :supersede)
-      (write-sequence (subseq (vst3-impl::.buffer buffer) 0 (vst3-impl::.tail buffer))
-                      out))
 
     (let ((buf (make-instance 'vst3-impl::bstream)))
       (vst3-ffi::get-state (.component module) (vst3-impl::ptr buf))
