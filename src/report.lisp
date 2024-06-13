@@ -7,9 +7,7 @@
     (call-next-method)))
 
 (defmethod render ((self report-window))
-  (ig:with-begin ("Report"
-                  :open-p (.show-p self)
-                  :flags ig:+im-gui-window-flags-always-auto-resize+)
+  (ig:with-begin ("Report" :open-p (.show-p self))
     (ig:text-wrapped (.message self))
     (ig:separator)
     (when (ig:button "Close")
