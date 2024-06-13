@@ -4,7 +4,6 @@
 
 (defmethod initialize-instance :after ((self module-vst3) &key)
   (let ((host-applicaiton (make-instance 'vst3-impl::host-application :module self)))
-    (vst3-impl::add-ref host-applicaiton)
     (setf (slot-value self 'host-applicaiton) host-applicaiton)))
 
 (defun module-vst3-load (path)

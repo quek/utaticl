@@ -36,10 +36,6 @@ EOF +---------------------------+
 (defconstant +preset-vst3-cid-pos+ 8)
 (defconstant +preset-vst3-list-offset-pos+ 40)
 
-(defmethod initialize-instance :after ((self preset-vst3) &key)
-  ;; add-ref しておかないと preset-load の set-state で release されてしまうっぽい
-  (vst3-impl::add-ref (.buffer self)))
-
 (defmethod cid ((self preset-vst3))
   (let ((buffer (.buffer self))
         (cid (make-array 16 :element-type '(unsigned-byte 8))))
@@ -100,13 +96,7 @@ EOF +---------------------------+
     (loop for (id offset size) in chunks
           do (vst3-impl::write-string$ buffer id)
              (vst3-impl::write-integer buffer offset 8)
-             (vst3-impl::write-integer buffer size 8))
-
-    (let ((buf (make-instance 'vst3-impl::bstream)))
-      (vst3-ffi::get-state (.component module) (vst3-impl::ptr buf))
-      (setf (vst3-impl::.cursor buf) 0)
-      (let ((result (vst3-ffi::set-state (.component module) (vst3-impl::ptr buf))))
-        (assert (= result sb:+k-result-ok+))))))
+             (vst3-impl::write-integer buffer size 8))))
 
 (defmethod preset-load ((self preset-vst3) module)
   (let ((buffer (.buffer self))

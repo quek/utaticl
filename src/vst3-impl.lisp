@@ -66,7 +66,7 @@
 (defclass unknown ()
   ((wrap :reader .wrap)
    (vtbl :reader .vtbl)
-   (ref-count :initform 0 :accessor .ref-count)))
+   (ref-count :initform 1 :accessor .ref-count)))
 
 (defmethod ptr ((self unknown))
   (autowrap:ptr (.wrap self)))
@@ -186,10 +186,8 @@
 (defmethod initialize-instance :after ((self host-application) &key module)
   (setf (slot-value self 'component-handler)
         (make-instance 'component-handler2 :module module))
-  (add-ref (slot-value self 'component-handler))
   (setf (slot-value self 'plug-frame)
-        (make-instance 'plug-frame :module module))
-  (add-ref (slot-value self 'plug-frame)))
+        (make-instance 'plug-frame :module module)))
 
 (defmethod release :around ((self host-application))
   (let ((ref-count (call-next-method)))

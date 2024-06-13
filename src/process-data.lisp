@@ -25,17 +25,13 @@
     (setf (sb:vst-process-data.outputs wrap) (.ptr outputs))
 
     (setf (.input-events self) input-events)
-    (vst3-impl::add-ref input-events)
     (setf (sb:vst-process-data.input-events wrap) (vst3-impl::ptr input-events))
     (setf (.output-events self) output-events)
-    (vst3-impl::add-ref output-events)
     (setf (sb:vst-process-data.output-events wrap) (vst3-impl::ptr output-events))
 
     (setf (.input-parameter-changes self) input-parameter-changes)
-    (vst3-impl::add-ref input-parameter-changes)
     (setf (sb:vst-process-data.input-parameter-changes wrap) (vst3-impl::ptr input-parameter-changes))
     (setf (.output-parameter-changes self) output-parameter-changes)
-    (vst3-impl::add-ref output-parameter-changes)
     (setf (sb:vst-process-data.output-parameter-changes wrap) (vst3-impl::ptr output-parameter-changes))
 
     (setf (.context self) context)
