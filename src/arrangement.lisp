@@ -139,7 +139,11 @@
         (ig:set-next-item-shortcut (logior ig:+im-gui-mod-ctrl+ ig:+im-gui-key-t+))
         (when (ig:button "+" (@ (.offset-x self) 0.0))
           (cmd-add *project* 'cmd-track-add
-                   :track-id-parent (.neko-id (.master-track *project*)))))
+                   :track-id-parent (.neko-id (.master-track *project*))
+                   :execute-after (lambda (cmd)
+                                    (let ((track (find-neko (.track-id-new cmd))))
+                                      (unselect-all-tracks *project*)
+                                      (setf (.select-p track) t))))))
 
       (render-clip self (.master-track *project*) nil nil (.time-ruler-height self))
 
