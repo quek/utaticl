@@ -73,15 +73,23 @@ EOF +---------------------------+
                                       do (format out "~2,'0X" (aref (.id module) i)))))
     (vst3-impl::write-integer buffer 0 8)
     ;; Component State
-    (let ((offset (vst3-impl::.cursor buffer)))
-      (vst3-ffi::get-state (.component module) (vst3-impl::ptr buffer))
-      (push (list "Comp" offset (- (vst3-impl::.cursor buffer) offset))
-            chunks))
+    (let ((offset (vst3-impl::.cursor buffer))
+          (result (vst3-ffi::get-state (.component module) (vst3-impl::ptr buffer))))
+      (case result
+        (#.sb:+k-result-ok+
+         (push (list "Comp" offset (- (vst3-impl::.cursor buffer) offset))
+               chunks))
+        (#.sb:+k-not-implemented+)      ;ignore
+        (t (report "Error get-state ~d ~a ~a" result self module))))
     ;; Controller State
-    (let ((offset (vst3-impl::.cursor buffer)))
-      (vst3-ffi::get-state (.controller module) (vst3-impl::ptr buffer))
-      (push (list "Cont" offset (- (vst3-impl::.cursor buffer) offset))
-            chunks))
+    (let ((offset (vst3-impl::.cursor buffer))
+          (result (vst3-ffi::get-state (.controller module) (vst3-impl::ptr buffer))))
+      (case result
+        (#.sb:+k-result-ok+
+         (push (list "Cont" offset (- (vst3-impl::.cursor buffer) offset))
+               chunks))
+        (#.sb:+k-not-implemented+)      ;ignore
+        (t (report "Error get-state ~d ~a ~a" result self module))))
     ;; offset to chunk list
     (let ((pos (vst3-impl::.cursor buffer)))
       (setf (vst3-impl::.cursor buffer) +preset-vst3-list-offset-pos+)
@@ -107,8 +115,9 @@ EOF +---------------------------+
     (setf (vst3-impl::.cursor buffer) +preset-vst3-list-offset-pos+)
     (setf pos (vst3-impl::read-integer buffer 8))
     (setf (vst3-impl::.cursor buffer) pos)
-    (assert (string= (vst3-impl::read-string buffer 4)
-                     "List"))
+    (unless (string= (vst3-impl::read-string buffer 4)
+                     "List")
+      (report "Invalid preset. No List. ~a ~a" self module))
     (loop repeat (vst3-impl::read-integer buffer 4) ;entry count
           do (push (list (vst3-impl::read-string buffer 4)
                          (vst3-impl::read-integer buffer 8)
@@ -119,12 +128,19 @@ EOF +---------------------------+
         (setf (vst3-impl::.cursor buffer) (cadr chunk))
         (setf (vst3-impl::.tail buffer) (+ (cadr chunk) (caddr chunk)))
         (let ((result (vst3-ffi::set-state (.component module) (vst3-impl::ptr buffer))))
-          (assert (= result sb:+k-result-ok+)))
+          (unless (= result sb:+k-result-ok+)
+            (report "Error set-state ~d ~a ~a" result self module)))
         (setf (vst3-impl::.cursor buffer) (cadr chunk))
         (setf (vst3-impl::.tail buffer) (+ (cadr chunk) (caddr chunk)))
-        (vst3-ffi::set-component-state (.controller module) (vst3-impl::ptr buffer))))
+        (let ((result (vst3-ffi::set-component-state (.controller module) (vst3-impl::ptr buffer))))
+          (unless (or (= result sb:+k-result-ok+)
+                      (= result sb:+k-not-implemented+))
+            (report "Error set-component-state ~d ~a ~a" result self module)))))
     (let ((chunk (find "Cont" chunks :key #'car :test #'string=)))
       (when chunk
         (setf (vst3-impl::.cursor buffer) (cadr chunk))
         (setf (vst3-impl::.tail buffer) (+ (cadr chunk) (caddr chunk)))
-        (vst3-ffi::set-state (.controller module) (vst3-impl::ptr buffer))))))
+        (let ((result (vst3-ffi::set-state (.controller module) (vst3-impl::ptr buffer))))
+          (unless (or (= result sb:+k-result-ok+)
+                      (= result sb:+k-not-implemented+))
+            (report "Error set-state(controller) ~d ~a ~a" result self module)))))))

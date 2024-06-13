@@ -74,6 +74,7 @@
    (:file "note")
    (:file "process-data")
    (:file "view")
+   (:file "report")
    (:file "transposer")
    (:file "arrangement")
    (:file "audio-bus-buffers")

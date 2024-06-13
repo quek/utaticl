@@ -422,6 +422,10 @@
   :iid vst3-ffi::+ibstream-iid+
   :vst3-c-api-class sb:ib-stream)
 
+(defmethod initialize-instance :after ((self bstream) &key buffer)
+  (when buffer
+    (setf (.tail self) (length buffer))))
+
 (defmethod (setf .cursor) :after (value (self bstream))
   (setf (.tail self) (max (.tail self) value)))
 

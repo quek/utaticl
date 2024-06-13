@@ -13,18 +13,23 @@
     (let ((run (ig:input-text "##query" (.query self)
                               :flags (logior  ig:+im-gui-input-text-flags-auto-select-all+
                                               ig:+im-gui-input-text-flags-enter-returns-true+))))
-      (let ((classes (sb-mop:class-direct-subclasses (find-class 'command))))
-        (loop for class in classes
-              for class-name = (subseq (substitute #\space #\- (symbol-name (class-name class)))
-                                       4) ;"CMD-" を削除
-              if (fuzzy= class-name (.query self))
-                do (if run
-                       #1=(progn
-                            (cmd-add *project* class)
-                            (hide self)
-                            (loop-finish))
-                       (when (ig:button class-name)
-                         #1#)))))
+      (let* ((classes (loop for class in (sb-mop:class-direct-subclasses (find-class 'command))
+                            for name = (subseq (substitute #\space #\- (symbol-name (class-name class)))
+                                               4) ;"CMD-" を削除
+                            if (fuzzy= name (.query self))
+                              collect (cons class name)))
+             (classes (sort classes #'string<
+                            :key (lambda (x)
+                                   (symbol-name (class-name (car x)))))))
+        (loop for (class . name) in classes
+              do (if run
+                     (progn
+                       (cmd-add *project* class)
+                       (hide self)
+                       (loop-finish))
+                     (when (ig:button name)
+                       (cmd-add *project* class)
+                       (hide self))))))
 
     (when (ig:is-key-pressed ig:+im-gui-key-escape+)
       (hide self))

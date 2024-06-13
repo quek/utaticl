@@ -4,7 +4,8 @@
   (setf *config* (make-instance 'config))
   (config-load *config*)
   (setf *theme* (make-instance 'theme))
-  (config-load *theme*))
+  (config-load *theme*)
+  (setf *report-window* (make-instance 'report-window)))
 
 (defmethod cmd-run ((self app))
   (loop for project in (.projects self)
@@ -27,7 +28,8 @@
 
 (defmethod render ((self app))
   (loop for project in (.projects self)
-        do (render project)))
+        do (render project))
+  (render *report-window*))
 
 (defmethod terminate ((self app))
   (when (.audio-device self)

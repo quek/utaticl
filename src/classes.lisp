@@ -67,6 +67,9 @@
 (defclass view ()
   ())
 
+(defclass report-window (show-mixin view)
+  ((message :initform "" :accessor .message)))
+
 (defclass transposer (view)
   ())
 
