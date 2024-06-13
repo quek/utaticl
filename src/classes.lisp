@@ -109,7 +109,7 @@
    (range-selecting-pos2 :initform nil :accessor .range-selecting-pos2)
    (render-first-p :initform t :accessor .render-first-p)
    (threshold-text-hide :initform 18.0 :accessor .threshold-text-hide))
-  (:default-initargs :zoom-x 25.0 :zoom-y 30.0 :zoom-x-factor .5 :zoom-y-factor .5 :zoom-y-min 5.0
+  (:default-initargs :zoom-x 25.0 :zoom-y 25.0 :zoom-x-factor .5 :zoom-y-factor .5 :zoom-y-min 5.0
                      :grid-unit +grid-beat+))
 
 (defclass rack (view)
