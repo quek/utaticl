@@ -53,13 +53,11 @@
 (defmethod start ((self module))
   (setf (.start-p self) t))
 
-(defmethod stop :before ((self module))
-  (editor-close self))
-
 (defmethod stop ((self module))
   (setf (.start-p self) nil))
 
 (defmethod terminate :before ((self module))
+  (editor-close self)
   (stop self))
 
 (defmethod terminate ((self module)))

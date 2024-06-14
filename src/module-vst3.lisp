@@ -163,7 +163,12 @@
   (declare (ignore id)))
 
 (defmethod restart-component ((self module-vst3) flags)
-  (declare (ignore flags)))
+  (declare (ignorable flags))
+  (log:trace self flags)
+  (stop self)
+  (start self)
+  ;; TODO flags に応じた処理
+  )
 
 (defmethod start ((self module-vst3))
   (unless (.start-p self)
