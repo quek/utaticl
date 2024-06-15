@@ -80,7 +80,7 @@
             sb:+vst-process-modes-k-realtime+)
       (setf (sb:vst-process-setup.symbolic-sample-size setup)
             sb:+vst-symbolic-sample-sizes-k-sample32+)
-      (setf (sb:vst-process-setup.max-samples-per-block  setup)
+      (setf (sb:vst-process-setup.max-samples-per-block setup)
             1024)
       (setf (sb:vst-process-setup.sample-rate setup)
             48000.0d0)

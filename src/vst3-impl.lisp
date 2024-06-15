@@ -424,6 +424,10 @@
   (when buffer
     (setf (.tail self) (length buffer))))
 
+(defmethod bstream-subseq ((self bstream) start end)
+  (make-instance 'bstream
+                 :buffer (subseq (.buffer self) start end)))
+
 (defmethod (setf .cursor) :after (value (self bstream))
   (setf (.tail self) (max (.tail self) value)))
 
