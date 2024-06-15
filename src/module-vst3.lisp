@@ -272,10 +272,10 @@
     (preset-vst3-to-base64 preset)))
 
 (defmethod (setf state) (state (self module-vst3))
-  (let* ((preset (preset-vst3-from-base64 state))
-         (id (cid preset)))
-    (load-by-id self id)
-    (initialize self)
+  (let* ((preset (preset-vst3-from-base64 state)))
+    (unless (.component self)
+      (load-by-id self (cid preset))
+      (initialize self))
     (preset-load preset self)))
 
 

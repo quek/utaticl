@@ -12,11 +12,14 @@
                        (editor-close module)
                        (editor-open module)))
 
+                 ;; TODO state テスト用なので後で消す
                  (ig:with-popup-context-item ()
                    (when (ig:menu-item "Copy" :shortcut "C-c")
-                     ;; コピー処理
-                     (print "コピー処理")
-                     ))
+                     (let ((state (state module)))
+                       (ig:set-clipboard-text state)))
+                   (when (ig:menu-item "Paste" :shortcut "C-v")
+                     (let ((state (ig:get-clipboard-text)))
+                       (setf (state module) state))))
 
                  (render-module-delete-button self module))
                (ig:end-group)
