@@ -11,6 +11,13 @@
                    (if (.editor-open-p module)
                        (editor-close module)
                        (editor-open module)))
+
+                 (ig:with-popup-context-item ()
+                   (when (ig:menu-item "Copy" :shortcut "C-c")
+                     ;; コピー処理
+                     (print "コピー処理")
+                     ))
+
                  (render-module-delete-button self module))
                (ig:end-group)
                (ig:same-line))
