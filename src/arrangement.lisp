@@ -9,7 +9,7 @@
 
 (defmethod handle-double-click ((self arrangement))
   (if (.clip-at-mouse self)
-      (cmd-add *project* 'cmd-clip-delete :clip-id (.neko-id (.clip-at-mouse self)))
+      (edit (.clip-at-mouse self))
       (multiple-value-bind (time lane) (world-pos-to-time-lane self (ig:get-mouse-pos))
         (setf time (time-grid-applied self time #'floor))
         (when (and (not (minusp time)) lane)
@@ -122,7 +122,6 @@
 
       (let ((pos (@ (.time-ruler-width self) .0))
             (scroll-x (ig:get-scroll-x))
-            (scroll-y (ig:get-scroll-y))
             (window-pos (ig:get-window-pos)))
 
         (ig:set-cursor-pos (@+ pos (@ (- scroll-x) .0)))
@@ -147,7 +146,15 @@
       (render-clip self (.master-track *project*) nil nil (.time-ruler-width self))
 
       (handle-mouse self))
-    (shortcut-common)))
+    (handle-shortcut self)))
+
+(defmethod handle-shortcut ((self arrangement))
+  (defshortcut (ig:+im-gui-key-delete+)
+    (when (.clips-selected self)
+      (cmd-add *project* 'cmd-clips-delete
+               :clips (.clips-selected self))))
+
+  (shortcut-common))
 
 (defmethod render-clip ((self arrangement) (track track) (lane null) (clip null) x)
   (loop for lane in (.lanes track)
