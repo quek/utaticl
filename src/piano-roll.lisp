@@ -385,14 +385,14 @@
 (defmethod render-notes ((self piano-roll))
   (loop with clip = (.clip self)
         with draw-list = (ig:get-window-draw-list)
-        with key-height = (.zoom-y self)
+        with key-width = (.zoom-x self)
         with mouse-pos = (ig:get-mouse-pos)
         for note in (.notes (.seq clip))
         for x = (key-to-world-x self (.key note))
         for y = (time-to-world-y self (.time note))
         for pos1 = (@ x y)
-        for pos2 = (@+ pos1 (@ key-height
-                               (coerce (* (.duration note) (.zoom-x self)) 'single-float)))
+        for pos2 = (@+ pos1 (@ key-width
+                               (coerce (* (.duration note) (.zoom-y self)) 'single-float)))
         do (ig:with-id (note)
              (ig:add-rect-filled draw-list
                                  (@+ pos1 (@ 2.0 .0))
