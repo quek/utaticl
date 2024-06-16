@@ -80,12 +80,12 @@
    (clip-target :initform nil :accessor .clip-target)
    (clips-selected :initform nil :accessor .clips-selected)
    (clips-dragging :initform nil :accessor .clips-dragging)
-   (default-lane-height :allocation :class :initform 50.0 :accessor .default-lane-height)
+   (default-lane-width :allocation :class :initform 50.0 :accessor .default-lane-width)
    (lane-at-mouse :initform nil :accessor .lane-at-mouse)
-   (lane-height-map :initform (make-hash-table) :accessor .lane-height-map)
-   (offset-x :initform 150.0 :accessor .offset-x)
+   (lane-width-map :initform (make-hash-table) :accessor .lane-width-map)
+   (offset-y :initform 150.0 :accessor .offset-y)
    (range-selecting-p :initform nil :accessor .range-selecting-p)
-   (time-ruler-height :initform 20.0 :accessor .time-ruler-height))
+   (time-ruler-width :initform 20.0 :accessor .time-ruler-width))
   (:default-initargs :zoom-x 25.0 :zoom-y 50.0 :zoom-x-factor .5 :zoom-y-factor .5
                      :grid-unit +grid-bar+))
 
@@ -101,8 +101,8 @@
    (notes-dragging-time :initform nil :accessor .notes-dragging-time)
    (notes-dragging-duration :initform nil :accessor .notes-dragging-duration)
    (notes-selected :initform nil :accessor .notes-selected)
-   (offset-x :initform 30.0 :accessor .offset-x)
-   (offset-y :initform 25.0 :accessor .offset-y)
+   (offset-x :initform 25.0 :accessor .offset-x)
+   (offset-y :initform 30.0 :accessor .offset-y)
    (range-selecting-mode :initform nil :accessor .range-selecting-mode
                          :type (member :note :region nil))
    (range-selecting-pos1 :initform nil :accessor .range-selecting-pos1)

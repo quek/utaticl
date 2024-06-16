@@ -1,13 +1,13 @@
 (in-package :dgw)
 
-(flet ((%time-to-local-x (self time)
-         (coerce (* time (.zoom-x self)) 'single-float)))
+(flet ((%time-to-local-y (self time)
+         (coerce (* time (.zoom-y self)) 'single-float)))
 
-  (defmethod time-to-local-x ((self zoom-mixin) time)
-    (%time-to-local-x self time))
+  (defmethod time-to-local-y ((self zoom-mixin) time)
+    (%time-to-local-y self time))
 
-  (defmethod time-to-world-x ((self zoom-mixin) time)
-    (+ (%time-to-local-x self time) (.x (ig:get-window-pos)))))
+  (defmethod time-to-world-y ((self zoom-mixin) time)
+    (+ (%time-to-local-y self time) (.y (ig:get-window-pos)))))
 
 (defmethod zoom-x-update ((self zoom-mixin) io)
   (when (and (/= .0 (c-ref io ig:im-gui-io :mouse-wheel))
