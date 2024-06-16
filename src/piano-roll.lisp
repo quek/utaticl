@@ -424,7 +424,7 @@
                   (setf (.zoom-x self) zoom-x)
                   t)
                 (let ((scroll-x (max .0
-                                     (- (key-to-local-x self (1+ key-max)) (.offset-x self)))))
+                                     (- (key-to-local-x self (1- key-min)) (.offset-x self)))))
                   (ig:set-scroll-x-float scroll-x)
                   nil))))
         (progn
