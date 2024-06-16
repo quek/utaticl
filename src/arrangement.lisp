@@ -46,7 +46,7 @@
       (multiple-value-bind (time lane)
           (world-pos-to-time-lane self
                                   (@- (ig:get-mouse-pos)
-                                      (@ (.clip-drag-offset self) .0)))
+                                      (@ .0 (.clip-drag-offset self))))
         (setf time (max (time-grid-applied self time #'floor) .0d0))
         (let ((delta-time (- time (.time (.clip-target self))))
               (delta-lane (diff lane (gethash (.clip-target self) (.clip-lane-map self)))))
