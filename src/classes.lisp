@@ -83,10 +83,10 @@
    (default-lane-width :allocation :class :initform 50.0 :accessor .default-lane-width)
    (lane-at-mouse :initform nil :accessor .lane-at-mouse)
    (lane-width-map :initform (make-hash-table) :accessor .lane-width-map)
-   (offset-y :initform 150.0 :accessor .offset-y)
+   (offset-y :initform 30.0 :accessor .offset-y)
    (range-selecting-p :initform nil :accessor .range-selecting-p)
    (time-ruler-width :initform 20.0 :accessor .time-ruler-width))
-  (:default-initargs :zoom-x 25.0 :zoom-y 50.0 :zoom-x-factor .5 :zoom-y-factor .5
+  (:default-initargs :zoom-x 25.0 :zoom-y 25.0 :zoom-x-factor .5 :zoom-y-factor .5
                      :grid-unit +grid-bar+))
 
 (defclass piano-roll (time-ruler-mixin grid-mixin offset-mixin scroll-mixin zoom-mixin view)

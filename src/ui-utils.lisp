@@ -80,6 +80,15 @@
          (p2 (@+ p1 (@ window-width 0.0))))
     (ig:add-line draw-list p1 p2 (.color-line *theme*))))
 
+(defun draw-vertical-line (pos)
+  (let* ((draw-list (ig:get-window-draw-list))
+         (window-pos (ig:get-window-pos))
+         (window-height (ig:get-window-height))
+         (scroll-x (ig:get-scroll-x))
+         (p1 (@+ pos window-pos (@ (- scroll-x) 0.0) (@ -3.0 0.0)))
+         (p2 (@+ p1 (@ 0.0 window-height))))
+    (ig:add-line draw-list p1 p2 (.color-line *theme*))))
+
 (defun error-handler (e)
   (log:error e)
   (log:error (with-output-to-string (out)

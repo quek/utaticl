@@ -86,7 +86,7 @@
            (handle-click self))
           ((ig:is-mouse-released ig:+im-gui-mouse-button-left+)
            (handle-mouse-released self)))
-    (zoom-x-update self io)))
+    (zoom-y-update self io)))
 
 (defmethod handle-mouse-released ((self arrangement))
   (if (.clip-at-mouse self)
@@ -120,17 +120,16 @@
 
       (render-time-ruler self)
 
-      (let ((pos (ig:get-cursor-pos))
+      (let ((pos (@ (.time-ruler-width self) .0))
+            (scroll-x (ig:get-scroll-x))
             (scroll-y (ig:get-scroll-y))
             (window-pos (ig:get-window-pos)))
 
-        (ig:set-cursor-pos (@+ pos (@ (ig:get-scroll-x) (- scroll-y))))
+        (ig:set-cursor-pos (@+ pos (@ (- scroll-x) .0)))
 
-        (ig:with-clip-rect ((@+ window-pos (@ .0 (- (.y pos) scroll-y 3)))
+        (ig:with-clip-rect ((@+ window-pos (@ (- (.x pos) scroll-x 3.0) .0))
                             (@+ window-pos (ig:get-window-size)))
-          (ig:begin-group)
-          (render-track self (.master-track *project*))
-          (ig:end-group)))
+          (render-track self (.master-track *project*))))
 
       (draw-horizontal-line (ig:get-cursor-pos))
 
@@ -152,16 +151,16 @@
 
 (defmethod render-clip ((self arrangement) (track track) (lane null) (clip null) x)
   (loop for lane in (.lanes track)
-        do (setf y (render-clip self track lane nil x)))
+        do (setf x (render-clip self track lane nil x)))
   (loop for track in (.tracks track)
-        do (setf y (render-clip self track nil nil x)))
-  y)
+        do (setf x (render-clip self track nil nil x)))
+  x)
 
 (defmethod render-clip ((self arrangement) (track track) (lane lane) (clip null) x)
   (loop for clip in (.clips lane)
         do (render-clip self track lane clip x))
-  ;; この 4.0 は意味わかんない
-  (+ x (lane-width self lane) 4.0))
+  ;; この 8.0 は ItemSpacing じゃないかな
+  (+ x (lane-width self lane) 8.0))
 
 (defmethod render-clip ((self arrangement) (track track) (lane lane) (clip clip) x)
   (setf (gethash clip (.clip-lane-map self)) lane)
@@ -181,7 +180,7 @@
           (color (color-selected (.color clip) (member clip (.clips-selected self)))))
       (ig:add-rect-filled draw-list
                           pos1
-                          (@+ pos2 (@ .0 -1.0))
+                          pos2
                           color
                           :rounding 3.0)
       (when (contain-p mouse-pos pos1 pos2)
@@ -190,7 +189,7 @@
 
 (defmethod render-track ((self arrangement) track)
   (ig:with-id (track)
-    (draw-horizontal-line (@- (ig:get-cursor-pos) (@ (ig:get-scroll-x) 0.0)))
+    (draw-vertical-line (@- (ig:get-cursor-pos) (@ 0.0 (ig:get-scroll-y))))
     (let ((pos (ig:get-cursor-pos)))
       (ig:text (format nil "  ~a" (.name track)))
       (ig:set-cursor-pos pos)
@@ -200,7 +199,8 @@
                                     (.offset-y self)))
             (unless (key-ctrl-p)
               (unselect-all-tracks *project*))
-            (setf (.select-p track) t)))))
+            (setf (.select-p track) t))))
+      (ig:same-line))
     (loop for x in (.tracks track)
           do (render-track self x))))
 
