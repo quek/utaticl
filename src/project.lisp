@@ -65,6 +65,21 @@
       (f (.master-track self)))
     (nreverse lanes)))
 
+(defun map-lanes (project proc)
+  (map-tracks project
+              (lambda (track acc)
+                (loop for lane in (.lanes track)
+                      do (setf acc (funcall proc lane acc)))
+                acc)))
+
+(defun map-tracks (project proc)
+  (labels ((f (track acc)
+             (let ((acc (funcall proc track acc)))
+               (loop for x in (.tracks track)
+                     do (setf acc (f x acc)))
+               acc)))
+    (f (.master-track project) nil)))
+
 (defmethod open-project ((self project))
   (stop-audio-device (.audio-device *app*))
   (multiple-value-bind (ok path)

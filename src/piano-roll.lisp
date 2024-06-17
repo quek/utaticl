@@ -268,6 +268,8 @@
     (setf (.range-selecting-mode self) nil)))
 
 (defmethod handle-shortcut ((self piano-roll))
+  (defshortcut (ig:+im-gui-mod-ctrl+ ig:+im-gui-key-a+)
+    (setf (.notes-selected self) (.notes (.seq (.clip self)))))
   (defshortcut (ig:+im-gui-key-delete+)
     (when (.notes-selected self)
       (cmd-add *project* 'cmd-notes-delete

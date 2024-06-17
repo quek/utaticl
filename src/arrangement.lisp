@@ -149,6 +149,10 @@
     (handle-shortcut self)))
 
 (defmethod handle-shortcut ((self arrangement))
+  (defshortcut (ig:+im-gui-mod-ctrl+ ig:+im-gui-key-a+)
+    (setf (.clips-selected self)
+          (map-lanes *project* (lambda (lane acc)
+                                 (append acc (.clips lane))))))
   (defshortcut (ig:+im-gui-key-delete+)
     (when (.clips-selected self)
       (cmd-add *project* 'cmd-clips-delete
