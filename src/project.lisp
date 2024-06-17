@@ -65,20 +65,21 @@
       (f (.master-track self)))
     (nreverse lanes)))
 
-(defun map-lanes (project proc)
+(defun map-lanes (project proc &optional initial-value)
   (map-tracks project
               (lambda (track acc)
                 (loop for lane in (.lanes track)
                       do (setf acc (funcall proc lane acc)))
-                acc)))
+                acc)
+              initial-value))
 
-(defun map-tracks (project proc)
+(defun map-tracks (project proc &optional initial-value)
   (labels ((f (track acc)
              (let ((acc (funcall proc track acc)))
                (loop for x in (.tracks track)
                      do (setf acc (f x acc)))
                acc)))
-    (f (.master-track project) nil)))
+    (f (.master-track project) initial-value)))
 
 (defmethod open-project ((self project))
   (stop-audio-device (.audio-device *app*))

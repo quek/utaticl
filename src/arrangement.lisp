@@ -99,11 +99,12 @@
               (push (.clip-at-mouse self) (.clips-selected self))))))
 
 (defmethod lane-width ((self arrangement) (lane lane))
-  (sif (gethash lane (.lane-width-map self))
-       it
-       (setf it (+ (.default-lane-width self)
-                   (* (c-ref (ig:get-style) ig:im-gui-style :item-spacing :y)
-                      2)))))
+  (let ((width (gethash lane (.lane-width-map self))))
+    (or width
+        (let ((width (+ (.default-lane-width self)
+                        (* (c-ref (ig:get-style) ig:im-gui-style :item-spacing :y)
+                           2))))
+          (setf (gethash lane (.lane-width-map self)) width)))))
 
 (defmethod handle-range-selecting ((self arrangement))
   ;; TODO
@@ -234,11 +235,13 @@
   (let ((local-x (+ (- x (.x (ig:get-window-pos)) (.time-ruler-width self))
                     (ig:get-scroll-x)))
         (last-lane nil))
-    (labels ((f (track width)
-               (or (loop for lane in (.lanes track)
-                         do (setf last-lane lane)
-                           thereis (and (< local-x (incf width (lane-width self lane))) lane))
-                   (loop for track in (.tracks track)
-                           thereis (f track width)))))
-      (or (f (.master-track *project*) 0)
-          last-lane))))
+    (map-lanes *project*
+               (lambda (lane width)
+                 (incf width (lane-width self lane))
+                 (if (< local-x width)
+                     (return-from world-x-to-lane lane)
+                     (progn
+                       (setf last-lane lane)
+                       width)))
+               .0)
+    last-lane))
