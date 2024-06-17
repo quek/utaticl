@@ -122,15 +122,16 @@
 
       (let ((pos (@ (.time-ruler-width self) .0))
             (scroll-x (ig:get-scroll-x))
+            (scroll-y (ig:get-scroll-y))
             (window-pos (ig:get-window-pos)))
 
-        (ig:set-cursor-pos (@+ pos (@ (- scroll-x) .0)))
+        (ig:set-cursor-pos (@+ pos (@ (- scroll-x) scroll-y)))
 
         (ig:with-clip-rect ((@+ window-pos (@ (- (.x pos) scroll-x 3.0) .0))
                             (@+ window-pos (ig:get-window-size)))
-          (render-track self (.master-track *project*))))
+          (render-track self (.master-track *project*)))
 
-      (draw-horizontal-line (ig:get-cursor-pos))
+        (draw-vertical-line (@- (ig:get-cursor-pos) (@ .0 scroll-y))))
 
       (let ((pos (ig:get-cursor-pos)))
         (ig:set-cursor-pos (@+ pos (@ (ig:get-scroll-x) 0.0)))
