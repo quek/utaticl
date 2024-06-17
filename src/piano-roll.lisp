@@ -257,7 +257,7 @@
              (loop for note in (.notes (.seq (.clip self)))
                    if (and (< (.time note) time2)
                            (< time1 (time-end note))
-                           (<= key2 (.key note) key1))
+                           (<= key1 (.key note) key2))
                      collect note))
        (ig:add-rect draw-list pos1 pos2
                     (.color-selecting-rect-border *theme*))))
