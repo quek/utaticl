@@ -99,12 +99,9 @@
               (push (.clip-at-mouse self) (.clips-selected self))))))
 
 (defmethod lane-width ((self arrangement) (lane lane))
-  (let ((width (gethash lane (.lane-width-map self))))
-    (or width
-        (let ((width (+ (.default-lane-width self)
-                        (* (c-ref (ig:get-style) ig:im-gui-style :item-spacing :y)
-                           2))))
-          (setf (gethash lane (.lane-width-map self)) width)))))
+  (sif (gethash lane (.lane-width-map self))
+       it
+       (setf it (.default-lane-width self))))
 
 (defmethod handle-range-selecting ((self arrangement))
   ;; TODO
@@ -172,8 +169,7 @@
 (defmethod render-clip ((self arrangement) (track track) (lane lane) (clip null) x)
   (loop for clip in (.clips lane)
         do (render-clip self track lane clip x))
-  ;; この 8.0 は ItemSpacing じゃないかな
-  (+ x (lane-width self lane) 8.0))
+  (+ x (lane-width self lane)))
 
 (defmethod render-clip ((self arrangement) (track track) (lane lane) (clip clip) x)
   (setf (gethash clip (.clip-lane-map self)) lane)
@@ -213,7 +209,9 @@
             (unless (key-ctrl-p)
               (unselect-all-tracks *project*))
             (setf (.select-p track) t))))
-      (ig:same-line))
+      (ig:same-line)
+      (ig:set-cursor-pos (@- (ig:get-cursor-pos)
+                             (@ (c-ref (ig:get-style) ig:im-gui-style :item-spacing :x) .0))))
     (loop for x in (.tracks track)
           do (render-track self x))))
 
@@ -237,7 +235,7 @@
         (last-lane nil))
     (map-lanes *project*
                (lambda (lane width)
-                 (incf width (lane-width self lane))
+                 (incf width (+ (lane-width self lane)))
                  (if (< local-x width)
                      (return-from world-x-to-lane lane)
                      (progn

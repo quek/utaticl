@@ -71,22 +71,14 @@
          ,@body)
        (ig:pop-id))))
 
-(defun draw-horizontal-line (pos)
-  (let* ((draw-list (ig:get-window-draw-list))
-         (window-pos (ig:get-window-pos))
-         (window-width (ig:get-window-width))
-         (scroll-y (ig:get-scroll-y))
-         (p1 (@+ pos window-pos (@ 0.0 (- scroll-y)) (@ 0.0 -3.0)))
-         (p2 (@+ p1 (@ window-width 0.0))))
-    (ig:add-line draw-list p1 p2 (.color-line *theme*))))
-
 (defun draw-vertical-line (pos)
   (let* ((draw-list (ig:get-window-draw-list))
          (window-pos (ig:get-window-pos))
          (window-height (ig:get-window-height))
          (scroll-x (ig:get-scroll-x))
-         (p1 (@+ pos window-pos (@ (- scroll-x) 0.0) (@ -3.0 0.0)))
-         (p2 (@+ p1 (@ 0.0 window-height))))
+         (p1 (@+ pos window-pos (@ (- scroll-x) 0.0)))
+         (p2 (@+ p1 (@ 0.0 (- window-height
+                              (c-ref (ig:get-style) ig:im-gui-style :scrollbar-size))))))
     (ig:add-line draw-list p1 p2 (.color-line *theme*))))
 
 (defun error-handler (e)

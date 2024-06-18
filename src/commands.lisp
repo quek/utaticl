@@ -138,6 +138,28 @@
              (clip-delete lane-to clip)
              (clip-add lane-from clip))))
 
+(defcommand cmd-clips-delete (command)
+  ((clips :initarg :clips :accessor .clips)
+   (lanes :initform :nil :accessor .lanes)))
+
+(defmethod execute ((self cmd-clips-delete))
+  (setf (.lanes self)
+        (loop for clip in (.clips self)
+              collect (map-lanes *project*
+                                 (lambda (lane acc)
+                                   (if (member clip (.clips lane))
+                                       (progn
+                                         (clip-delete lane clip)
+                                         lane)
+                                       acc)))))
+  (setf (.clips self) (with-serialize-context (serialize (.clips self)))))
+
+(defmethod undo ((self cmd-clips-delete))
+  (setf (.clips self) (with-serialize-context (deserialize (.clips self))))
+  (loop for clip in (.clips self)
+        for lane in (.lanes self)
+        do (clip-add lane clip)))
+
 (defcommand cmd-module-add (command)
   ((track-id :initarg :track-id :accessor .track-id)
    (plugin-info :initarg :plugin-info :accessor .plugin-info)))
