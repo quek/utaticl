@@ -129,18 +129,19 @@
                             (@+ window-pos (ig:get-window-size)))
           (render-track self (.master-track *project*)))
 
-        (draw-vertical-line (@- (ig:get-cursor-pos) (@ .0 scroll-y))))
+        (draw-vertical-line (@- (ig:get-cursor-pos) (@ .0 scroll-y)))
 
-      (ig:set-next-item-shortcut (logior ig:+im-gui-mod-ctrl+ ig:+im-gui-key-t+))
-      (when (ig:button "+" (@ (.default-lane-width self) (.offset-y self)))
-        (cmd-add *project* 'cmd-track-add
-                 :track-id-parent (.neko-id (.master-track *project*))
-                 :execute-after (lambda (cmd)
-                                  (let ((track (find-neko (.track-id-new cmd))))
-                                    (unselect-all-tracks *project*)
-                                    (setf (.select-p track) t)))))
+        (ig:set-next-item-shortcut (logior ig:+im-gui-mod-ctrl+ ig:+im-gui-key-t+))
+        (when (ig:button "+" (@ (.default-lane-width self) (.offset-y self)))
+          (cmd-add *project* 'cmd-track-add
+                   :track-id-parent (.neko-id (.master-track *project*))
+                   :execute-after (lambda (cmd)
+                                    (let ((track (find-neko (.track-id-new cmd))))
+                                      (unselect-all-tracks *project*)
+                                      (setf (.select-p track) t)))))
 
-      (render-clip self (.master-track *project*) nil nil (.time-ruler-width self))
+        (render-clip self (.master-track *project*) nil nil
+                     (- (.time-ruler-width self) scroll-x)))
 
       (handle-mouse self))
     (handle-shortcut self)))
@@ -173,7 +174,7 @@
   (setf (gethash clip (.clip-lane-map self)) lane)
   (let* ((draw-list (ig:get-window-draw-list))
          (y1 (time-to-local-y self (.time clip)))
-         (y2 (time-to-local-y self (+ (.time clip) (.duration clip))))
+         (y2 (time-to-local-y self (time-end clip)))
          (scroll-pos (@ (ig:get-scroll-x) (ig:get-scroll-y)))
          (pos1 (@ x y1))
          (pos2 (@ (+ x (lane-width self lane)) y2))
@@ -182,8 +183,8 @@
     (ig:set-cursor-pos pos1)
     (ig:text (format nil "  ~a" (.name clip)))
 
-    (let ((pos1 (@+ pos1 window-pos (@- scroll-pos)))
-          (pos2 (@+ pos2 window-pos (@- scroll-pos)))
+    (let ((pos1 (@+ pos1 window-pos (@- scroll-pos) (@ 2.0 .0)))
+          (pos2 (@+ pos2 window-pos (@- scroll-pos) (@ -1.0 .0)))
           (color (color-selected (.color clip) (member clip (.clips-selected self)))))
       (ig:add-rect-filled draw-list
                           pos1
@@ -197,19 +198,18 @@
 (defmethod render-track ((self arrangement) track)
   (ig:with-id (track)
     (draw-vertical-line (@- (ig:get-cursor-pos) (@ 0.0 (ig:get-scroll-y))))
-    (let ((pos (ig:get-cursor-pos)))
+    (let ((pos (ig:get-cursor-pos))
+          (lane-width (lane-width self (car (.lanes track)))))
       (ig:text (format nil "  ~a" (.name track)))
       (ig:set-cursor-pos pos)
       (let ((color (color-selected (.color track) (.select-p track))))
         (ig:with-button-color (color)
-          (when (ig:button "##_" (@ (lane-width self (car (.lanes track)))
-                                    (.offset-y self)))
+          (when (ig:button "##_" (@ lane-width (.offset-y self)))
             (unless (key-ctrl-p)
               (unselect-all-tracks *project*))
             (setf (.select-p track) t))))
       (ig:same-line)
-      (ig:set-cursor-pos (@- (ig:get-cursor-pos)
-                             (@ (c-ref (ig:get-style) ig:im-gui-style :item-spacing :x) .0))))
+      (ig:set-cursor-pos (@+ pos (@ lane-width .0))))
     (loop for x in (.tracks track)
           do (render-track self x))))
 

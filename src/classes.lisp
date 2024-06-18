@@ -80,7 +80,7 @@
    (clip-target :initform nil :accessor .clip-target)
    (clips-selected :initform nil :accessor .clips-selected)
    (clips-dragging :initform nil :accessor .clips-dragging)
-   (default-lane-width :allocation :class :initform 50.0 :accessor .default-lane-width)
+   (default-lane-width :initform 60.0 :accessor .default-lane-width)
    (lane-at-mouse :initform nil :accessor .lane-at-mouse)
    (lane-width-map :initform (make-hash-table) :accessor .lane-width-map)
    (offset-y :initform 30.0 :accessor .offset-y)
