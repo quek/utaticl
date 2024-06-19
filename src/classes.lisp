@@ -83,6 +83,7 @@
    (default-lane-width :initform 60.0 :accessor .default-lane-width)
    (lane-at-mouse :initform nil :accessor .lane-at-mouse)
    (lane-width-map :initform (make-hash-table) :accessor .lane-width-map)
+   (offset-group :initform 5.0 :accessor .offset-group)
    (offset-y :initform 30.0 :accessor .offset-y)
    (range-selecting-p :initform nil :accessor .range-selecting-p)
    (time-ruler-width :initform 20.0 :accessor .time-ruler-width))
@@ -136,7 +137,8 @@
    (nbus-event-out :initform 1 :accessor .nbus-event-out)
    (process-data :accessor .process-data)
    (select-p :initform nil :accessor .select-p)
-   (tracks :initform nil :accessor .tracks))
+   (tracks :initform nil :accessor .tracks)
+   (tracks-show-p :initform t :accessor .tracks-show-p))
   (:default-initargs :name "TRACK" :color (color #x33 #x33 #x33)))
 
 (defserialize track lanes modules tracks)

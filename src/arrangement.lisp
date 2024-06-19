@@ -1,5 +1,13 @@
 (in-package :dgw)
 
+(defmethod compute-offset-y ((self arrangement))
+  (labels ((f (track group-level)
+             (if (and (.tracks-show-p track) (.tracks track))
+                 (f (car (.tracks track)) (1+ group-level))
+                 group-level)))
+    (setf (.offset-y self) (+ 35.0
+                              (* (.offset-group self) (f (.master-track *project*) 1))))))
+
 (defmethod handle-click ((self arrangement))
   (if (.clip-at-mouse self)
       (when (and (not (member (.clip-at-mouse self) (.clips-selected self)))
@@ -111,6 +119,7 @@
 (defmethod render ((self arrangement))
   (setf (.clip-at-mouse self) nil)
   (clrhash (.clip-lane-map self))
+  (compute-offset-y self)
 
   (ig:with-begin ("##arrangement" :flags ig:+im-gui-window-flags-no-scrollbar+)
     (render-grid self)
@@ -127,7 +136,7 @@
 
         (ig:with-clip-rect ((@+ window-pos (@ (- (.x pos) scroll-x 3.0) .0))
                             (@+ window-pos (ig:get-window-size)))
-          (render-track self (.master-track *project*)))
+          (render-track self (.master-track *project*) 0))
 
         (draw-vertical-line (@- (ig:get-cursor-pos) (@ .0 scroll-y)))
 
@@ -198,23 +207,25 @@
         (setf (.lane-at-mouse self) lane)
         (setf (.clip-at-mouse self) clip)))))
 
-(defmethod render-track ((self arrangement) track)
+(defmethod render-track ((self arrangement) track group-level)
   (ig:with-id (track)
-    (draw-vertical-line (@- (ig:get-cursor-pos) (@ 0.0 (ig:get-scroll-y))))
-    (let ((pos (ig:get-cursor-pos))
-          (lane-width (lane-width self (car (.lanes track)))))
-      (ig:text (format nil "  ~a" (.name track)))
-      (ig:set-cursor-pos pos)
-      (let ((color (color-selected (.color track) (.select-p track))))
-        (ig:with-button-color (color)
-          (when (ig:button "##_" (@ lane-width (.offset-y self)))
-            (unless (key-ctrl-p)
-              (unselect-all-tracks *project*))
-            (setf (.select-p track) t))))
-      (ig:same-line)
-      (ig:set-cursor-pos (@+ pos (@ lane-width .0))))
-    (loop for x in (.tracks track)
-          do (render-track self x))))
+    (let ((offset-group (* (.offset-group self) (max 0 (1- group-level)))))
+      (draw-vertical-line (@- (ig:get-cursor-pos) (@ 0.0 (ig:get-scroll-y))))
+      (let ((pos (@+ (ig:get-cursor-pos)
+                     (@ .0 offset-group)))
+            (lane-width (lane-width self (car (.lanes track)))))
+        (ig:set-cursor-pos pos)
+        (let ((color (color-selected (.color track) (.select-p track))))
+          (ig:with-button-color (color)
+            (when (ig:button (.name track) (@ lane-width
+                                              (- (.offset-y self) offset-group)))
+              (unless (key-ctrl-p)
+                (unselect-all-tracks *project*))
+              (setf (.select-p track) t))))
+        (ig:same-line)
+        (ig:set-cursor-pos (@+ pos (@ lane-width (- offset-group)))))
+      (loop for x in (.tracks track)
+            do (render-track self x (1+ group-level))))))
 
 (defmethod .track-height ((self arrangement) track)
   ;; TODO
