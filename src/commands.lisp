@@ -414,6 +414,33 @@
     (track-delete track-parent track-new))
   )
 
+(defcommand cmd-tracks-group (command)
+  ((tracks :initarg :tracks :accessor .tracks)
+   (track-group :accessor .track-group)
+   (parents :accessor .parents)
+   (tracks-before :accessor .tracks-before)))
+
+(defmethod execute ((self cmd-tracks-group))
+  (let* ((track-group (make-instance 'track :name (track-group-name-new *project*)))
+         (parents (mapcar #'parent (.tracks self))))
+    (setf (.track-group self) track-group)
+    (setf (.parents self) parents)
+    (setf (.tracks-before self) (mapcar #'before (.tracks self)))
+    (track-add (car parents) track-group :track-before (car (.tracks self)))
+    (loop for track in (.tracks self)
+          for parent in parents
+          do (track-delete parent track)
+          do (track-add track-group track))))
+
+(defmethod undo ((self cmd-tracks-group))
+  (let ((track-group (.track-group self)))
+    (track-delete (parent track-group) track-group)
+    (loop for track in (.tracks self)
+          for parent in (.parents self)
+          for track-before in (.tracks-before self)
+          do (track-delete track-group track)
+             (track-add parent track :track-before track-before))))
+
 (defcommand cmd-undo (command)
   ()
   (:default-initargs :undo-p nil))

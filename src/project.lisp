@@ -219,6 +219,22 @@
                     (mapcar (lambda (track) (f track max)) (.tracks track)))))
     (format nil "TRACK~d" (1+ (f (.master-track self) 0)))))
 
+(defmethod track-group-name-new ((self project))
+  (labels ((f (track max)
+             (apply #'max (or (ppcre:register-groups-bind
+                                  ((#'parse-integer n)) ("^GROUP(\\d+)" (.name track))
+                                n)
+                              max)
+                    (mapcar (lambda (track) (f track max)) (.tracks track)))))
+    (format nil "GROUP~d" (1+ (f (.master-track self) 0)))))
+
+(defmethod tracks-selected ((self project))
+  (map-tracks self
+              (lambda (track acc)
+                (if (.select-p track)
+                    (cons track acc)
+                    acc))))
+
 (defmethod unselect-all-tracks ((self project))
   (unselect-all-tracks (.master-track self)))
 

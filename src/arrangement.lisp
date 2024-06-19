@@ -155,6 +155,9 @@
     (when (.clips-selected self)
       (cmd-add *project* 'cmd-clips-delete
                :clips (.clips-selected self))))
+  (defshortcut (ig:+im-gui-mod-ctrl+ ig:+im-gui-key-g+)
+    (cmd-add *project* 'cmd-tracks-group
+             :tracks (tracks-selected *project*)))
 
   (shortcut-common))
 

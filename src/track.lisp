@@ -6,6 +6,13 @@
                                      :num-outputs (.nbus-audio-out self))))
     (setf (.process-data self) process-data)))
 
+(defmethod before ((self track))
+  (map-tracks *project*
+              (lambda (track acc)
+                (if (eq track self)
+                    (return-from before acc)
+                    track))))
+
 (defmethod note-off-all ((self track))
   (note-off-all (.process-data self))
   (loop for track in (.tracks self)
@@ -18,6 +25,13 @@
 (defmethod gain ((self track))
   (find-if (lambda (x) (typep x 'module-gain-track))
            (.modules self)))
+
+(defmethod parent ((self track))
+  (map-tracks *project*
+              (lambda (track acc)
+                (if (member self (.tracks track))
+                    (return-from parent track)
+                    acc))))
 
 (defmethod prepare ((self track))
   (setf (.module-wait-for self) nil)
