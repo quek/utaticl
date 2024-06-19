@@ -3,9 +3,10 @@
 (defmethod compute-offset-y ((self arrangement))
   (labels ((f (track group-level)
              (if (and (.tracks-show-p track) (.tracks track))
-                 (f (car (.tracks track)) (1+ group-level))
+                 (apply #'max (mapcar (lambda (x) (f x (1+ group-level)))
+                                      (.tracks track)))
                  group-level)))
-    (setf (.offset-y self) (+ 35.0
+    (setf (.offset-y self) (+ 20.0
                               (* (.offset-group self) (f (.master-track *project*) 1))))))
 
 (defmethod handle-click ((self arrangement))
@@ -211,21 +212,33 @@
   (ig:with-id (track)
     (let ((offset-group (* (.offset-group self) (max 0 (1- group-level)))))
       (draw-vertical-line (@- (ig:get-cursor-pos) (@ 0.0 (ig:get-scroll-y))))
-      (let ((pos (@+ (ig:get-cursor-pos)
-                     (@ .0 offset-group)))
-            (lane-width (lane-width self (car (.lanes track)))))
+      (let* ((pos (@+ (ig:get-cursor-pos)
+                      (@ .0 offset-group)))
+             (lane-width (lane-width self (car (.lanes track))))
+             (group-p (and (.tracks track) (not (typep track 'master-track))))
+             (group-button-width 15.0)
+             (button-height (- lane-width (if group-p group-button-width .0))))
         (ig:set-cursor-pos pos)
         (let ((color (color-selected (.color track) (.select-p track))))
           (ig:with-button-color (color)
-            (when (ig:button (.name track) (@ lane-width
+            (when (ig:button (.name track) (@ button-height
                                               (- (.offset-y self) offset-group)))
               (unless (key-ctrl-p)
                 (unselect-all-tracks *project*))
-              (setf (.select-p track) t))))
+              (setf (.select-p track) t))
+
+            (when group-p
+              (ig:same-line)
+              (ig:set-cursor-pos (@+ pos (@ (- lane-width group-button-width) .0)))
+              (when (ig:button (if (.tracks-show-p track) "≪" "≫")
+                               (@ group-button-width button-height))
+                (setf (.tracks-show-p track) (not (.tracks-show-p track)))))))
+
         (ig:same-line)
         (ig:set-cursor-pos (@+ pos (@ lane-width (- offset-group)))))
-      (loop for x in (.tracks track)
-            do (render-track self x (1+ group-level))))))
+      (when (and (.tracks-show-p track) (.tracks track))
+        (loop for x in (.tracks track)
+              do (render-track self x (1+ group-level)))))))
 
 (defmethod .track-height ((self arrangement) track)
   ;; TODO
