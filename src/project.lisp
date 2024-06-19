@@ -213,20 +213,20 @@
 (defmethod track-name-new ((self project))
   (labels ((f (track max)
              (apply #'max (or (ppcre:register-groups-bind
-                                  ((#'parse-integer n)) ("^TRACK(\\d+)" (.name track))
+                                  ((#'parse-integer n)) ("^T(\\d+)" (.name track))
                                 n)
                               max)
                     (mapcar (lambda (track) (f track max)) (.tracks track)))))
-    (format nil "TRACK~d" (1+ (f (.master-track self) 0)))))
+    (format nil "T~d" (1+ (f (.master-track self) 0)))))
 
 (defmethod track-group-name-new ((self project))
   (labels ((f (track max)
              (apply #'max (or (ppcre:register-groups-bind
-                                  ((#'parse-integer n)) ("^GROUP(\\d+)" (.name track))
+                                  ((#'parse-integer n)) ("^G(\\d+)" (.name track))
                                 n)
                               max)
                     (mapcar (lambda (track) (f track max)) (.tracks track)))))
-    (format nil "GROUP~d" (1+ (f (.master-track self) 0)))))
+    (format nil "G~d" (1+ (f (.master-track self) 0)))))
 
 (defmethod tracks-selected ((self project))
   (map-tracks self
