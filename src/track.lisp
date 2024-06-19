@@ -118,8 +118,8 @@
 
 (defmethod track-delete ((self track) track-delete)
   (setf (.tracks self) (delete track-delete (.tracks self)))
-  ;; TODO connection
-  )
+  (disconnect (car (last (.modules track-delete)))
+              (car (.modules self))))
 
 (defmethod unselect-all-tracks ((self track))
   (setf (.select-p self) nil)

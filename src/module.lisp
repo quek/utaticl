@@ -26,6 +26,18 @@
 (defmethod deserialize-slot ((self module) (slot (eql 'state)) value)
   (setf (state self) value))
 
+(defmethod disconnect ((from module) (to module))
+  (setf (.connections from)
+        (delete-if (lambda (connection)
+                     (and (eq (.from connection) from)
+                          (eq (.to connection) to)))
+                   (.connections from)))
+  (setf (.connections to)
+        (delete-if (lambda (connection)
+                     (and (eq (.from connection) from)
+                          (eq (.to connection) to)))
+                   (.connections from))))
+
 (defmethod editor-open ((self module))
   (setf (.editor-open-p self) t))
 
