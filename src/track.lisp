@@ -13,6 +13,13 @@
                     (return-from before acc)
                     track))))
 
+(defmethod next ((self track))
+  (labels ((f (track)
+             (aif (member self (.tracks track))
+                  (cadr it)
+                  (some #'f (.tracks track)))))
+    (f (.master-track *project*))))
+
 (defmethod note-off-all ((self track))
   (note-off-all (.process-data self))
   (loop for track in (.tracks self)
@@ -113,13 +120,13 @@
                     collect track-new
                   collect track)
             (append (.tracks self) (list track-new))))
-  (connect (car (last (.modules track-new)))
-           (car (.modules self))))
+  (connect (fader track-new)
+           (gain self)))
 
 (defmethod track-delete ((self track) track-delete)
   (setf (.tracks self) (delete track-delete (.tracks self)))
-  (disconnect (car (last (.modules track-delete)))
-              (car (.modules self))))
+  (disconnect (fader track-delete)
+              (gain self)))
 
 (defmethod unselect-all-tracks ((self track))
   (setf (.select-p self) nil)

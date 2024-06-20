@@ -26,17 +26,16 @@
 (defmethod deserialize-slot ((self module) (slot (eql 'state)) value)
   (setf (state self) value))
 
+
 (defmethod disconnect ((from module) (to module))
-  (setf (.connections from)
-        (delete-if (lambda (connection)
-                     (and (eq (.from connection) from)
-                          (eq (.to connection) to)))
-                   (.connections from)))
-  (setf (.connections to)
-        (delete-if (lambda (connection)
-                     (and (eq (.from connection) from)
-                          (eq (.to connection) to)))
-                   (.connections from))))
+  "from is a fader, to is a gain"
+  (flet ((pred (connection)
+           (and (eq (.from connection) from)
+                (eq (.to connection) to))))
+    (setf (.connections from)
+          (delete-if #'pred (.connections from)))
+    (setf (.connections to)
+          (delete-if #'pred (.connections to)))))
 
 (defmethod editor-open ((self module))
   (setf (.editor-open-p self) t))

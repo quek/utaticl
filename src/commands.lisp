@@ -425,7 +425,7 @@
          (parents (mapcar #'parent (.tracks self))))
     (setf (.track-group self) track-group)
     (setf (.parents self) parents)
-    (setf (.tracks-before self) (mapcar #'before (.tracks self)))
+    (setf (.tracks-before self) (mapcar #'next (.tracks self)))
     (track-add (car parents) track-group :track-before (car (.tracks self)))
     (loop for track in (.tracks self)
           for parent in parents
