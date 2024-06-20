@@ -7,12 +7,6 @@
 
 (defserialize neko neko-id name color)
 
-(defmethod print-object ((self neko) stream)
-  (print-unreadable-object (self stream :type t :identity t)
-    (format stream "~a ~a"
-            (.name self)
-            (.neko-id self))))
-
 (defclass project (neko)
   ((arrangement :initform (make-instance 'arrangement) :accessor .arrangement)
    (dirty-p :initform nil :accessor .dirty-p)
@@ -266,11 +260,12 @@
 
 (defclass connection (neko)
   ((from :initarg :from :accessor .from)
-   (to :initarg :to :accessor .to)
    (from-bus-index :initarg :from-bus-index :initform 0 :accessor .from-bus-index)
-   (to-bus-index :initarg :to-bus-index :initform 0 :accessor .to-bus-index)
    (from-process-data :accessor .from-process-data)
-   (latency-pdc :initform 0 :accessor .latency-pdc)))
+   (latency-pdc :initform 0 :accessor .latency-pdc)
+   (to :initarg :to :accessor .to)
+   (to-bus-index :initarg :to-bus-index :initform 0 :accessor .to-bus-index)
+   (pdc-buffer :initform (make-instance 'ring-buffer :size 0) :accessor .pdc-buffer)))
 
 (defserialize connection (:ref from) (:ref to) from-bus-index to-bus-index)
 

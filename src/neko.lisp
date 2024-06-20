@@ -28,5 +28,11 @@
 (defmethod .neko-id ((self list))
   (mapcar #'.neko-id self))
 
+(defmethod print-object ((self neko) stream)
+  (print-unreadable-object (self stream :type t :identity t)
+    (format stream "~a ~a"
+            (.name self)
+            (.neko-id self))))
+
 (defmethod ig:push-id ((self neko))
   (ig:push-id (.neko-id self)))

@@ -1,5 +1,12 @@
 (in-package :dgw)
 
+(defmethod (setf .latency-pdc) :around (value (self connection))
+  (when (/= (.latency-pdc self) value)
+    (call-next-method)
+    (setf (.pdc-buffer self)
+          ;; 2ch
+          (make-instance 'ring-buffer :size (* value 2)))))
+
 (defmethod process ((self connection))
   (when (.start-p (.from self))
     (let* ((from-process-data (.from-process-data self))
@@ -15,9 +22,15 @@
             for to-silent-p = (silence-flags to-buses to-bus-index channel-index)
             unless from-silent-p
               do (loop for i below (.frames-per-buffer *config*)
+                       for value-from = (let ((value (cffi:mem-aref from-channel :float i)))
+                                          (if (plusp (.latency-pdc self))
+                                              (progn
+                                                (ring-buffer-push (.buffer self) value)
+                                                (ring-buffer-pop (.buffer self)))
+                                              value))
                        do (setf (cffi:mem-aref to-channel :float i)
                                 (if to-silent-p
-                                    (cffi:mem-aref from-channel :float i)
-                                    (+ (cffi:mem-aref from-channel :float i)
+                                    value-from
+                                    (+ value-from
                                        (cffi:mem-aref to-channel :float i)))))
                  (setf (silence-flags to-buses to-bus-index channel-index) nil)))))

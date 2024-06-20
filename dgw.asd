@@ -29,6 +29,7 @@
    (:file "prelude")
    (:file "utils")
    (:file "thread-pool")
+   (:file "ring-buffer")
    (:file "grid")
    (:file "macro-serialize")
    (:file "config")
