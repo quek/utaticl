@@ -65,6 +65,20 @@
       (f (.master-track self)))
     (nreverse lanes)))
 
+(defmethod latency-compute ((self project))
+  (let ((modules-sorted (modules-sorted self)))
+    (loop for module in modules-sorted
+          for latency = (.latency module)
+          do (loop for x in modules-sorted
+                   until (eq module x)
+                   if (eq (track module) (track x))
+                     do (setf latency (+ (.latency module) (.latency-pdc x))))
+             (loop for connection in (.connections module)
+                   if (eq module (.to connection))
+                     do (setf latency (max latency
+                                           (.latency-pdc (.from connection)))))
+             (setf (.latency-pdc module) latency))))
+
 (defun map-lanes (project proc &optional initial-value)
   (map-tracks project
               (lambda (track acc)
@@ -80,6 +94,21 @@
                      do (setf acc (f x acc)))
                acc)))
     (f (.master-track project) initial-value)))
+
+(defmethod modules-sorted ((self project))
+  (let ((modules-sorted nil)
+        (modules-processed nil)
+        (module-waiting-map (make-hash-table)))
+    (prepare (.master-track self))
+    (loop until (map-tracks self
+                            (lambda (track acc)
+                              (and (modules-sorted% track
+                                                    modules-sorted
+                                                    modules-processed
+                                                    module-waiting-map)
+                                   acc))
+                            t))
+    (nreverse modules-sorted)))
 
 (defmethod open-project ((self project))
   (stop-audio-device (.audio-device *app*))

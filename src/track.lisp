@@ -33,6 +33,25 @@
   (find-if (lambda (x) (typep x 'module-gain-track))
            (.modules self)))
 
+(defmethod modules-sorted% ((self track) modules-sorted modules-processed
+                            module-waiting-map)
+  (loop with module-waiting = (gethash module-waiting-map self)
+        for module in (.modules self)
+        if (eq module module-waiting)
+          do (remhash self module-waiting-map)
+             (setf module-waiting nil)
+        if (and (not module-waiting) (.start-p module))
+          do (unless (.process-data module)
+               (when (wait-for-from-p module)
+                 (setf (gethash self module-waiting-map) module)
+                 (return-from modules-sorted% nil))
+               (push modules-sorted module)
+               (setf (.process-done module) t))
+             (when (wait-for-to-p module)
+               (setf (gethash self module-waiting-map) module)
+               (return-from modules-sorted% nil)))
+  t)
+
 (defmethod parent ((self track))
   (map-tracks *project*
               (lambda (track acc)

@@ -203,12 +203,14 @@
   ())
 
 (defclass module (neko)
-  ((id :initarg :id :accessor .id)
-   (connections :initform nil :accessor .connections)
+  ((connections :initform nil :accessor .connections)
    (editor-open-p :initform nil :accessor .editor-open-p)
-   (start-p :initform nil :accessor .start-p)
+   (id :initarg :id :accessor .id)
+   (latency :initform 0 :accessor .latency)
+   (latency-pdc :initform 0 :accessor .latency-pdc)
    (params :initform (make-hash-table) :accessor .params)
-   (process-done :initform nil :accessor .process-done)))
+   (process-done :initform nil :accessor .process-done)
+   (start-p :initform nil :accessor .start-p)))
 
 (defserialize module connections)
 
@@ -267,7 +269,8 @@
    (to :initarg :to :accessor .to)
    (from-bus-index :initarg :from-bus-index :initform 0 :accessor .from-bus-index)
    (to-bus-index :initarg :to-bus-index :initform 0 :accessor .to-bus-index)
-   (from-process-data :accessor .from-process-data)))
+   (from-process-data :accessor .from-process-data)
+   (latency-pdc :initform 0 :accessor .latency-pdc)))
 
 (defserialize connection (:ref from) (:ref to) from-bus-index to-bus-index)
 
@@ -286,7 +289,8 @@
    (input-parameter-changes :accessor .input-parameter-changes)
    (output-parameter-changes :accessor .output-parameter-changes)
    (context :accessor .context)
-   (notes-on :initform nil :accessor .notes-on)))
+   (notes-on :initform nil :accessor .notes-on)
+   (pdc-buffer :initform nil :accessor .pdc-buffer)))
 
 (defclass audio-bus-buffers ()
   ((ptr :accessor .ptr)

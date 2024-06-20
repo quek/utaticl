@@ -45,6 +45,14 @@
 
 (defmethod initialize ((self module)))
 
+(defmethod (setf .latency-pdc) :after (value (self module))
+  (loop for connection in (.connections self)
+        if (eq self (.to connection))
+          do (setf (.latency-pdc connection)
+                   (if (< (.latency-pdc (.from connection)) value)
+                       (- value (.latency-pdc (.from connection)))
+                       0))))
+
 (defmethod prepare ((self module))
   (setf (.process-done self) nil))
 
@@ -72,6 +80,13 @@
   (stop self))
 
 (defmethod terminate ((self module)))
+
+(defmethod track ((self module))
+  (map-tracks *process-data*
+              (lambda (track acc)
+                (declare (ignore acc))
+                (when (member self (.modules track))
+                  (return-from track track)))))
 
 (defmethod wait-for-from-p ((self module))
   (some (lambda (connection)

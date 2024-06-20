@@ -160,6 +160,13 @@
         for lane in (.lanes self)
         do (clip-add lane clip)))
 
+(defcommand cmd-latency-compute (command)
+  ()
+  (:default-initargs :undo-p nil))
+
+(defmethod execute ((self cmd-latency-compute))
+  (latency-compute *project*))
+
 (defcommand cmd-module-add (command)
   ((track-id :initarg :track-id :accessor .track-id)
    (plugin-info :initarg :plugin-info :accessor .plugin-info)))
