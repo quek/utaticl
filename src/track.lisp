@@ -44,13 +44,13 @@
           do (unless (.process-done module)
                (when (wait-for-from-p module)
                  (setf (gethash self module-waiting-map) module)
-                 (return-from modules-sorted% nil))
+                 (return-from modules-sorted% (cons modules-sorted nil)))
                (push module modules-sorted)
                (setf (.process-done module) t))
              (when (wait-for-to-p module)
                (setf (gethash self module-waiting-map) module)
-               (return-from modules-sorted% nil)))
-  t)
+               (return-from modules-sorted% (cons modules-sorted nil))))
+  (cons modules-sorted t))
 
 (defmethod parent ((self track))
   (map-tracks *project*

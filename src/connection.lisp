@@ -25,8 +25,8 @@
                        for value-from = (let ((value (cffi:mem-aref from-channel :float i)))
                                           (if (plusp (.latency-pdc self))
                                               (progn
-                                                (ring-buffer-push (.buffer self) value)
-                                                (ring-buffer-pop (.buffer self)))
+                                                (ring-buffer-push (.pdc-buffer self) value)
+                                                (ring-buffer-pop (.pdc-buffer self)))
                                               value))
                        do (setf (cffi:mem-aref to-channel :float i)
                                 (if to-silent-p

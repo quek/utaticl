@@ -102,11 +102,13 @@
     (prepare (.master-track self))
     (loop until (map-tracks self
                             (lambda (track acc)
-                              (and (modules-sorted% track
-                                                    modules-sorted
-                                                    modules-processed
-                                                    module-waiting-map)
-                                   acc))
+                              (destructuring-bind (sorted . ret)
+                                  (modules-sorted% track
+                                                   modules-sorted
+                                                   modules-processed
+                                                   module-waiting-map)
+                                (setf modules-sorted sorted)
+                                (and ret acc)))
                             t))
     (nreverse modules-sorted)))
 
