@@ -24,9 +24,9 @@
               do (loop for i below (.frames-per-buffer *config*)
                        for value-from = (let ((value (cffi:mem-aref from-channel :float i)))
                                           (if (plusp (.latency-pdc self))
-                                              (progn
-                                                (ring-buffer-push (.pdc-buffer self) value)
-                                                (ring-buffer-pop (.pdc-buffer self)))
+                                              (prog1
+                                                (ring-buffer-pop (.pdc-buffer self))
+                                                (ring-buffer-push (.pdc-buffer self) value))
                                               value))
                        do (setf (cffi:mem-aref to-channel :float i)
                                 (if to-silent-p
