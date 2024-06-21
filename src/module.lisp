@@ -45,15 +45,13 @@
 
 (defmethod initialize ((self module)))
 
-(defmethod (setf .latency-pdc) :around (value (self module))
-  (when (/= (.latency-pdc self) value)
-    (call-next-method)
-    (loop for connection in (.connections self)
-          if (eq self (.to connection))
-            do (setf (.latency-pdc connection)
-                     (if (< (.latency-pdc (.from connection)) value)
-                         (- value (.latency-pdc (.from connection)))
-                         0)))))
+(defmethod (setf .latency-pdc) :after (value (self module))
+  (loop for connection in (.connections self)
+        if (eq self (.to connection))
+          do (setf (.latency-pdc connection)
+                   (if (< (.latency-pdc (.from connection)) value)
+                       (- value (.latency-pdc (.from connection)))
+                       0))))
 
 (defmethod prepare ((self module))
   (setf (.process-done self) nil))
