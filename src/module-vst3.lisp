@@ -173,10 +173,12 @@
 (defmethod start ((self module-vst3))
   (unless (.start-p self)
     (vst3-ffi::set-active (.component self) 1)
+
     (let ((latency (vst3-ffi::get-latency-samples (.audio-processor self))))
-      (when (/= (.latency self) latency)
+      (when t ;; (/= (.latency self) latency)
         (setf (.latency self) latency)
         (cmd-add *project* 'cmd-latency-compute)))
+
     (vst3-ffi::set-processing (.audio-processor self) 1)
     (call-next-method)))
 
