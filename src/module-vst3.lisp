@@ -177,7 +177,7 @@
     (let ((latency (vst3-ffi::get-latency-samples (.audio-processor self))))
       (when t ;; (/= (.latency self) latency)
         (setf (.latency self) latency)
-        (cmd-add *project* 'cmd-latency-compute)))
+        (cmd-add (.project self) 'cmd-latency-compute)))
 
     (vst3-ffi::set-processing (.audio-processor self) 1)
     (call-next-method)))
@@ -252,10 +252,10 @@
 
 (defmethod process ((self module-vst3))
   (let ((context (.context *process-data*))
-        (bpm (.bpm *project*))
-        (play-time (.play-start *project*)))
+        (bpm (.bpm (.project self)))
+        (play-time (.play-start (.project self))))
     (setf (sb:vst-process-context.state context)
-          (logand (if (.play-p *project*) sb:+vst-process-context-states-and-flags-k-playing+ 0)
+          (logand (if (.play-p (.project self)) sb:+vst-process-context-states-and-flags-k-playing+ 0)
                   sb:+vst-process-context-states-and-flags-k-tempo-valid+
                   sb:+vst-process-context-states-and-flags-k-project-time-music-valid+
                   sb:+vst-process-context-states-and-flags-k-bar-position-valid+))

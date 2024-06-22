@@ -8,11 +8,11 @@
 (defserialize neko neko-id name color)
 
 (defclass project (neko)
-  ((arrangement :initform (make-instance 'arrangement) :accessor .arrangement)
+  ((arrangement :accessor .arrangement)
    (dirty-p :initform nil :accessor .dirty-p)
    (piano-roll :initform nil :accessor .piano-roll)
-   (commander :initform (make-instance 'commander) :accessor .commander)
-   (rack :initform (make-instance 'rack) :accessor .rack)
+   (commander :accessor .commander)
+   (rack :accessor .rack)
    (bpm :accessor .bpm)
    (sec-per-beat :accessor .sec-per-beat)
    (samples-per-beat :accessor .samples-per-beat)
@@ -20,7 +20,7 @@
    (cmd-undo-stack :initform nil :accessor .cmd-undo-stack)
    (cmd-redo-stack :initform nil :accessor .cmd-redo-stack)
    (mailbox :initform (sb-concurrency:make-mailbox) :accessor .mailbox)
-   (master-track :initform (make-instance 'master-track) :accessor .master-track)
+   (master-track :accessor .master-track)
    (path :initform nil :accessor .path)
    (play-p :initform nil :accessor .play-p)
    (play-just-stop-p :initform nil :accessor .play-just-stop-p)
@@ -29,7 +29,7 @@
    (loop-start :initarg :loop-start :initform .0d0 :accessor .loop-start)
    (loop-end :initarg :loop-end :initform 16.0d0 :accessor .loop-end)
    (loop-p :initarg :loop-p :initform t :accessor .loop-p)
-   (transposer :initform (make-instance 'transposer) :accessor .transposer)
+   (transposer :accessor .transposer)
    (target-track :initform :nil :accessor .target-track)))
 
 (defserialize project bpm master-track loop-start loop-end loop-p)
@@ -65,7 +65,7 @@
   ((message :initform "" :accessor .message)))
 
 (defclass transposer (view)
-  ())
+  ((project :initarg :project :accessor .project)))
 
 (defclass arrangement (time-ruler-mixin grid-mixin offset-mixin scroll-mixin zoom-mixin view)
   ((clip-at-mouse :initform nil :accessor .clip-at-mouse)
@@ -79,6 +79,7 @@
    (lane-width-map :initform (make-hash-table) :accessor .lane-width-map)
    (offset-group :initform 5.0 :accessor .offset-group)
    (offset-y :initform 30.0 :accessor .offset-y)
+   (project :initarg :project :accessor .project)
    (range-selecting-p :initform nil :accessor .range-selecting-p)
    (time-ruler-width :initform 20.0 :accessor .time-ruler-width))
   ;; zoom-x は使わない
@@ -104,20 +105,22 @@
    (range-selecting-pos1 :initform nil :accessor .range-selecting-pos1)
    (range-selecting-pos2 :initform nil :accessor .range-selecting-pos2)
    (render-first-p :initform t :accessor .render-first-p)
+   (project :initarg :project :accessor .project)
    (threshold-text-hide :initform 18.0 :accessor .threshold-text-hide))
   (:default-initargs :zoom-x 25.0 :zoom-y 25.0 :zoom-x-factor .5 :zoom-y-factor .5 :zoom-y-min 5.0
                      :grid-unit +grid-beat+))
 
 (defclass rack (view)
-  ((plugin-selector :initform (make-instance 'plugin-selector)
-                    :accessor .plugin-selector)) )
+  ((plugin-selector :accessor .plugin-selector)
+   (project :initarg :project :accessor .project)))
 
 (defclass plugin-selector (view)
   ((plugin-infos :accessor .plugin-infos)
+   (rack :initarg :rack :accessor .rack)
    (query :initform "" :accessor .query)))
 
 (defclass track (neko)
-  ((lanes :initarg :lanes :initform (list (make-instance 'lane)) :accessor .lanes)
+  ((lanes :initarg :lanes :accessor .lanes)
    (event-in :accessor .event-in)
    (modules :initform (list (aprog1 (make-instance 'module-gain-track)
                               (start it))
@@ -129,6 +132,7 @@
    (nbus-audio-out :initform 1 :accessor .nbus-audio-out)
    (nbus-event-in :initform 1 :accessor .nbus-event-in)
    (nbus-event-out :initform 1 :accessor .nbus-event-out)
+   (parent :initarg :parent :accessor .parent)
    (process-data :accessor .process-data)
    (select-p :initform nil :accessor .select-p)
    (tracks :initform nil :accessor .tracks)
@@ -138,11 +142,12 @@
 (defserialize track lanes modules tracks)
 
 (defclass master-track (track)
-  ()
+  ((project :initarg :project :accessor .project))
   (:default-initargs :name "MASTER"))
 
 (defclass lane (neko)
-  ((clips :initarg :clips :initform nil :accessor .clips)))
+  ((clips :initarg :clips :initform nil :accessor .clips)
+   (track :initarg :track :accessor .tarck)))
 
 (defserialize lane clips)
 
@@ -155,6 +160,7 @@
 (defclass note (time-thing)
   ((key :initarg :key :initform +c4+ :accessor .key)
    (channel :initarg :channel :initform 0 :accessor .channel)
+   (seq-note :initarg :seq-note :accessor .seq-note)
    (velocity :initarg :velocity :initform .8 :accessor .velocity))
   (:default-initargs :duration 1.0d0 :color (color #x30 #xc0 #x30 #x80)))
 
@@ -168,7 +174,8 @@
             (.duration self))))
 
 (defclass clip (time-thing)
-  ((seq :initarg :seq :accessor .seq)))
+  ((lane :initarg :lane :accessor .lane)
+   (seq :initarg :seq :accessor .seq)))
 
 (defserialize clip seq)
 
@@ -204,7 +211,8 @@
    (latency-pdc :initform 0 :accessor .latency-pdc)
    (params :initform (make-hash-table) :accessor .params)
    (process-done :initform nil :accessor .process-done)
-   (start-p :initform nil :accessor .start-p)))
+   (start-p :initform nil :accessor .start-p)
+   (track :initarg :track :accessor .track)))
 
 (defserialize module connections)
 
@@ -301,7 +309,8 @@
                                      :accessor .supported-standard-sample-reates)))
 
 (defclass commander (show-mixin)
-  ((query :initform "" :accessor .query)))
+  ((project :initarg :project :accessor .project)
+   (query :initform "" :accessor .query)))
 
 (defclass audio-device ()
   ((device-api :initarg :device-api

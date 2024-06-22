@@ -24,11 +24,11 @@
         (loop for (class . name) in classes
               do (if run
                      (progn
-                       (cmd-add *project* class)
+                       (cmd-add (.project self) class)
                        (hide self)
                        (loop-finish))
                      (when (ig:button name)
-                       (cmd-add *project* class)
+                       (cmd-add (.project self) class)
                        (hide self))))))
 
     (when (ig:is-key-pressed ig:+im-gui-key-escape+)

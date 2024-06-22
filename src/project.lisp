@@ -2,7 +2,17 @@
 
 (defmethod initialize-instance :after ((self project) &key)
   (setf (.bpm self) 128.0)
-  (setf (.target-track self) (.master-track self)))
+  (let ((arrangement  (make-instance 'arrangement :project self))
+        (commander (make-instance 'commander :project self))
+        (master-track (make-instance 'master-track :project self))
+        (rack (make-instance 'rack :project self))
+        (transposer (make-instance 'transposer :project self)))
+    (setf (.arrangement self) arrangement)
+    (setf (.commander self) commander)
+    (setf (.master-track self) master-track)
+    (setf (.rack self) rack)
+    (setf (.transposer self) transposer)
+    (setf (.target-track self) master-track)))
 
 (defmethod (setf .bpm) :after (value (self project))
   (setf (.sec-per-beat self) (/ 60.0d0 value))
@@ -13,30 +23,27 @@
   (push (apply #'make-instance cmd-class args) (.cmd-queue project)))
 
 (defmethod cmd-redo ((self project))
-  (let ((*project* self)
-        (cmd (pop (.cmd-redo-stack self))))
+  (let ((cmd (pop (.cmd-redo-stack self))))
     (when cmd
-      (redo cmd)
+      (redo cmd self)
       (push cmd (.cmd-undo-stack self)))))
 
 (defmethod cmd-run ((self project))
-  (let ((*project* self))
-    (loop for cmd in (nreverse (.cmd-queue self))
-          do (if (.with-mutex-p cmd)
-                 (sb-thread:with-mutex ((.mutex *app*))
-                   (execute cmd))
-                 (execute cmd))
-             (when (.undo-p cmd)
-               (setf (.cmd-redo-stack self) nil)
-               (push cmd (.cmd-undo-stack self))
-               (setf (.dirty-p self) t)))
-    (setf (.cmd-queue self) nil)))
+  (loop for cmd in (nreverse (.cmd-queue self))
+        do (if (.with-mutex-p cmd)
+               (sb-thread:with-mutex ((.mutex *app*))
+                 (execute cmd self))
+               (execute cmd self))
+           (when (.undo-p cmd)
+             (setf (.cmd-redo-stack self) nil)
+             (push cmd (.cmd-undo-stack self))
+             (setf (.dirty-p self) t)))
+  (setf (.cmd-queue self) nil))
 
 (defmethod cmd-undo ((self project))
-  (let ((*project* self)
-        (cmd (pop (.cmd-undo-stack self))))
+  (let ((cmd (pop (.cmd-undo-stack self))))
     (when cmd
-      (undo cmd)
+      (undo cmd self)
       (push cmd (.cmd-redo-stack self)))))
 
 (defmethod deserialize-after ((self project))
@@ -123,21 +130,20 @@
        :filters '(("Lisp" "*.lisp") ("All" "*.*")))
     (when ok
       (let ((path (car path)))
-       (with-open-file (in path :direction :input)
-         (let ((project (with-serialize-context (deserialize (read in)))))
-           (setf (.path project) path)
-           (terminate self)
-           (setf (.projects *app*)
-                 (cons project (delete self (.projects *app*)))))))))
+        (with-open-file (in path :direction :input)
+          (let ((project (with-serialize-context (deserialize (read in)))))
+            (setf (.path project) path)
+            (terminate self)
+            (setf (.projects *app*)
+                  (cons project (delete self (.projects *app*)))))))))
   (start-audio-device (.audio-device *app*) ))
+
+(defmethod (setf .piano-roll) :after (piano-roll (self project))
+  (setf (.projects piano-roll) self))
 
 (defmethod (setf .play-p) :after (value (self project))
   (unless (.play-p self)
     (setf (.play-just-stop-p self) t)))
-
-(defmethod process :around ((self project))
-  (let ((*project* self))
-    (call-next-method)))
 
 (defmethod process ((self project))
   (prepare (.master-track self))
@@ -153,7 +159,7 @@
         (progn
           (prepare-event (.master-track self) (.play-start self) (.loop-end self) t 0)
           (prepare-event (.master-track self) (.loop-start self) (.play-end self) nil
-                         (time-to-sample *project* (- (.loop-end self) (.play-start self)))))
+                         (time-to-sample self (- (.loop-end self) (.play-start self)))))
         (prepare-event (.master-track self) (.play-start self) (.play-end self) nil 0)))
 
   (loop with tracks = (track-all self)
@@ -172,18 +178,16 @@
   (sb-concurrency:send-message
    *thread-pool*
    (list (lambda (project track)
-           (let ((*project* project))
-             (sb-concurrency:send-message
-              (.mailbox project) (process track))))
+           (sb-concurrency:send-message
+            (.mailbox project) (process track)))
          self track)))
 
 (defmethod render ((self project))
-  (let ((*project* self))
-    (render (.transposer self))
-    (render (.arrangement self))
-    (render (.piano-roll self))
-    (render (.rack self))
-    (render (.commander self))))
+  (render (.transposer self))
+  (render (.arrangement self))
+  (render (.piano-roll self))
+  (render (.rack self))
+  (render (.commander self)))
 
 (defmethod save ((self project))
   (if (.path self)

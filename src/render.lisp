@@ -4,8 +4,3 @@
 
 (defclass render-context ()
   ())
-
-(defgeneric render (self))
-
-(defmethod render ((self null)))
-

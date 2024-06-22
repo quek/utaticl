@@ -9,6 +9,9 @@
 
   (ig:open-popup "Plugin Selector"))
 
+(defmethod .project ((self plugin-selector))
+  (.project (.rack self)))
+
 (defmethod render ((self plugin-selector))
   (ig:set-next-window-size-constraints (@ 300.0 200.0) (@ ig:+flt-max+ ig:+flt-max+))
 
@@ -23,8 +26,8 @@
             if (fuzzy= (.name plugin-info) (.query self))
               do (if run-p
                      #1=(progn
-                          (cmd-add *project* 'cmd-module-add
-                                   :track-id (.neko-id (.target-track *project*))
+                          (cmd-add (.project self) 'cmd-module-add
+                                   :track-id (.neko-id (.target-track (.project self)))
                                    :plugin-info plugin-info)
                           (ig:close-current-popup)
                           (loop-finish))

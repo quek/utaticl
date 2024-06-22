@@ -14,7 +14,7 @@
                          thereis (g lane))
                  (loop for x in (.tracks track)
                          thereis (f x)))))
-    (f (.master-track *project*))))
+    (f (.master-track (.project self)))))
 
 (defmethod move ((self clip) time lane-to)
   (setf (.time self) time)
@@ -26,3 +26,6 @@
 (defmethod .name :around ((self clip))
   (or (call-next-method)
       (.name (.seq self))))
+
+(defmethod .project ((self clip))
+  (.project (.lane self)))

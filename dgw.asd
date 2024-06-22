@@ -27,6 +27,7 @@
   :components
   ((:file "package")
    (:file "prelude")
+   (:file "protocol")
    (:file "utils")
    (:file "thread-pool")
    (:file "ring-buffer")

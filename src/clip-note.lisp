@@ -1,16 +1,14 @@
 (in-package :dgw)
 
 (defmethod edit ((self clip-note))
-  (setf (.piano-roll *project*)
+  (setf (.piano-roll (.project self))
         (make-instance 'piano-roll :clip self)))
 
 (defmethod note-add ((self clip-note) (note note))
   (note-add (.seq self) note))
 
-(defmethod note-add ((self seq-note) (note note))
-  (setf (.notes self)
-        (sort (cons note (.notes self))
-              (lambda (x y) (< (.time x) (.time y))))))
+(defmethod note-delete ((self clip-note) (note note))
+  (note-delete (.seq self) note))
 
 (defmethod .notes ((self clip-note))
   (.notes (.seq self)))
@@ -25,14 +23,14 @@
                            (.key note)
                            (.channel note)
                            (.velocity note)
-                           (+ offset-samples (time-to-sample *project* (- note-start start)))))
+                           (+ offset-samples (time-to-sample (.project self) (- note-start start)))))
                  ((and (< start note-end)
                        (<= note-end end))
                   (note-off *process-data*
                             (.key note)
                             (.channel note)
                             1.0
-                            (+ offset-samples (time-to-sample *project* (- note-end start)))))
+                            (+ offset-samples (time-to-sample (.project self) (- note-end start)))))
                  ((and loop-p
                        (< note-start end)
                        (<= end note-end))
@@ -41,7 +39,7 @@
                             (.key note)
                             (.channel note)
                             1.0
-                            (+ offset-samples (time-to-sample *project* (- end start)))))
+                            (+ offset-samples (time-to-sample (.project self) (- end start)))))
                  ((<= end note-start)
                   ;; note は time 順にソートされている
                   (loop-finish)))))

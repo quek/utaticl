@@ -1,12 +1,14 @@
 (in-package :dgw)
 
 (defmethod clip-add ((self lane) clip)
+  (setf (.lane clip) self)
   (setf (.clips self)
         (sort (cons clip (.clips self))
               (lambda (x y)
                 (< (.time x) (.time y))))))
 
 (defmethod clip-delete ((self lane) clip)
+  (setf (.lane clip) nil)
   (setf (.clips self)
         (delete clip (.clips self))))
 
@@ -25,8 +27,8 @@
                                   (setf found t))))
                      (values (+ distance (length (.lanes track)))
                              found))))))
-    (- (f (.master-track *project*) a)
-       (f (.master-track *project*) b))))
+    (- (f (.master-track (.project a)) a)
+       (f (.master-track (.project b)) b))))
 
 (defmethod prepare-event ((self lane) start end loop-p offset-samples)
   (loop for clip in (.clips self)
@@ -36,9 +38,12 @@
                 (< start clip-end))
           do (prepare-event clip start end loop-p offset-samples)))
 
+(defmethod .project ((self lane))
+  (.project (.track self)))
+
 (defmethod relative-at ((self lane) delta)
   (if (zerop delta)
       self
-      (let* ((all (lane-all *project*))
+      (let* ((all (lane-all (.project self)))
              (pos (position self all)))
         (nth (+ pos delta) all))))

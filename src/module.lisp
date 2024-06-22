@@ -65,6 +65,9 @@
         do (setf (.from-process-data connection) *process-data*))
   (setf (.process-done self) t))
 
+(defmethod .project ((self module))
+  (.project (.track self)))
+
 (defmethod serialize ((self module))
   (append (call-next-method)
           `(state ,(state self))))
@@ -82,7 +85,7 @@
 (defmethod terminate ((self module)))
 
 (defmethod track ((self module))
-  (map-tracks *project*
+  (map-tracks (.project self)
               (lambda (track acc)
                 (declare (ignore acc))
                 (when (member self (.modules track))

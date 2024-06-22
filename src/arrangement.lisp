@@ -6,8 +6,10 @@
                  (apply #'max (mapcar (lambda (x) (f x (1+ group-level)))
                                       (.tracks track)))
                  group-level)))
-    (setf (.offset-y self) (+ 20.0
-                              (* (.offset-group self) (f (.master-track *project*) 1))))))
+    (setf (.offset-y self)
+          (+ 20.0
+             (* (.offset-group self)
+                (f (.master-track (.project self)) 1))))))
 
 (defmethod handle-click ((self arrangement))
   (if (.clip-at-mouse self)
@@ -22,7 +24,7 @@
       (multiple-value-bind (time lane) (world-pos-to-time-lane self (ig:get-mouse-pos))
         (setf time (time-grid-applied self time #'floor))
         (when (and (not (minusp time)) lane)
-          (cmd-add *project* 'cmd-clip-add
+          (cmd-add (.project self) 'cmd-clip-add
                    :time time :lane-id (.neko-id lane)
                    :execute-after (lambda (cmd)
                                     (edit (find-neko (.clip-id cmd)))))))))
@@ -33,13 +35,13 @@
       (progn
         (if (key-ctrl-p)
             ;; 複製
-            (cmd-add *project* 'cmd-clips-d&d-copy
+            (cmd-add (.project self) 'cmd-clips-d&d-copy
                      :clips (.clips-dragging self)
                      :lane-ids (loop for clip in (.clips-dragging self)
                                      collect (.neko-id (gethash clip (.clip-lane-map self)))))
             ;; 移動
             (progn
-              (cmd-add *project* 'cmd-clips-d&d-move
+              (cmd-add (.project self) 'cmd-clips-d&d-move
                        :clips (.clips-selected self)
                        :lane-ids (loop for clip in (.clips-selected self)
                                        collect (.neko-id (gethash clip (.clip-lane-map self))))
@@ -137,20 +139,20 @@
 
         (ig:with-clip-rect ((@+ window-pos (@ (- (.x pos) scroll-x 3.0) .0))
                             (@+ window-pos (ig:get-window-size)))
-          (render-track self (.master-track *project*) 0))
+          (render-track self (.master-track (.project self)) 0))
 
         (draw-vertical-line (@- (ig:get-cursor-pos) (@ .0 scroll-y)))
 
         (ig:set-next-item-shortcut (logior ig:+im-gui-mod-ctrl+ ig:+im-gui-key-t+))
         (when (ig:button "+" (@ (.default-lane-width self) (.offset-y self)))
-          (cmd-add *project* 'cmd-track-add
-                   :track-id-parent (.neko-id (.master-track *project*))
+          (cmd-add (.project self) 'cmd-track-add
+                   :track-id-parent (.neko-id (.master-track (.project self)))
                    :execute-after (lambda (cmd)
                                     (let ((track (find-neko (.track-id-new cmd))))
-                                      (unselect-all-tracks *project*)
+                                      (unselect-all-tracks (.project self))
                                       (setf (.select-p track) t)))))
 
-        (render-clip self (.master-track *project*) nil nil
+        (render-clip self (.master-track (.project self)) nil nil
                      (- (.time-ruler-width self) scroll-x)))
 
       (handle-mouse self))
@@ -159,17 +161,17 @@
 (defmethod handle-shortcut ((self arrangement))
   (defshortcut (ig:+im-gui-mod-ctrl+ ig:+im-gui-key-a+)
     (setf (.clips-selected self)
-          (map-lanes *project* (lambda (lane acc)
-                                 (append acc (.clips lane))))))
+          (map-lanes (.project self) (lambda (lane acc)
+                                       (append acc (.clips lane))))))
   (defshortcut (ig:+im-gui-key-delete+)
     (when (.clips-selected self)
-      (cmd-add *project* 'cmd-clips-delete
+      (cmd-add (.project self) 'cmd-clips-delete
                :clips (.clips-selected self))))
   (defshortcut (ig:+im-gui-mod-ctrl+ ig:+im-gui-key-g+)
-    (cmd-add *project* 'cmd-tracks-group
-             :tracks (tracks-selected *project*)))
+    (cmd-add (.project self) 'cmd-tracks-group
+             :tracks (tracks-selected (.project self))))
 
-  (shortcut-common))
+  (shortcut-common (.project self)))
 
 (defmethod render-clip ((self arrangement) (track track) (lane null) (clip null) x)
   (loop for lane in (.lanes track)
@@ -224,7 +226,7 @@
         (ig:with-button-color (color)
           (when (ig:button (.name track) (@ button-width button-height))
             (unless (key-ctrl-p)
-              (unselect-all-tracks *project*))
+              (unselect-all-tracks (.project self)))
             (setf (.select-p track) t))
 
           (when group-p
@@ -258,7 +260,7 @@
   (let ((local-x (+ (- x (.x (ig:get-window-pos)) (.time-ruler-width self))
                     (ig:get-scroll-x)))
         (last-lane nil))
-    (map-lanes *project*
+    (map-lanes (.project self)
                (lambda (lane width)
                  (incf width (+ (lane-width self lane)))
                  (if (< local-x width)

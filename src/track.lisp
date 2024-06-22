@@ -1,24 +1,18 @@
 (in-package :dgw)
 
 (defmethod initialize-instance :after ((self track) &key)
-  (let ((process-data (make-instance 'process-data
+  (let ((lane (make-instance 'lane :track self))
+        (process-data (make-instance 'process-data
                                      :num-inputs (.nbus-audio-in self)
                                      :num-outputs (.nbus-audio-out self))))
+    (setf (.lanes self) (list lane))
     (setf (.process-data self) process-data)))
 
 (defmethod before ((self track))
-  (map-tracks *project*
-              (lambda (track acc)
-                (if (eq track self)
-                    (return-from before acc)
-                    track))))
+  (cdar (member self (reverse (.tracks (.parent self))))))
 
 (defmethod next ((self track))
-  (labels ((f (track)
-             (aif (member self (.tracks track))
-                  (cadr it)
-                  (some #'f (.tracks track)))))
-    (f (.master-track *project*))))
+  (cdar (member self (.tracks (.parent self)))))
 
 (defmethod note-off-all ((self track))
   (note-off-all (.process-data self))
@@ -51,13 +45,6 @@
                (setf (gethash self module-waiting-map) module)
                (return-from modules-sorted% (cons modules-sorted nil))))
   (cons modules-sorted t))
-
-(defmethod parent ((self track))
-  (map-tracks *project*
-              (lambda (track acc)
-                (if (member self (.tracks track))
-                    (return-from parent track)
-                    acc))))
 
 (defmethod prepare ((self track))
   (setf (.module-wait-for self) nil)
@@ -103,7 +90,11 @@
       self
       nil))
 
+(defmethod .project ((self track))
+  (.project (.parent self)))
+
 (defmethod module-add ((self track) module)
+  (setf (.track module) self)
   (setf (.modules self)
         (append (butlast (.modules self))
                 (list module)
@@ -114,6 +105,7 @@
     (editor-open module)))
 
 (defmethod module-delete ((self track) module)
+  (setf (.track module) nil)
   (terminate module)
   (setf (.modules self) (delete module (.modules self))))
 
@@ -123,7 +115,7 @@
   (ig:pop-id))
 
 (defmethod (setf .select-p) :after ((value (eql t)) (self track))
-  (setf (.target-track *project*) self))
+  (setf (.target-track (.project self)) self))
 
 (defmethod terminate ((self track))
   (loop for module in (.modules self)
@@ -132,6 +124,7 @@
   (mapc #'terminate (.tracks self)))
 
 (defmethod track-add ((self track) track-new &key track-before)
+  (setf (.parent track-new) self)
   (setf (.tracks self)
         (if track-before
             (loop for track in (.tracks self)
@@ -143,6 +136,7 @@
            (gain self)))
 
 (defmethod track-delete ((self track) track-delete)
+  (setf (.parent track-delete) nil)
   (setf (.tracks self) (delete track-delete (.tracks self)))
   (disconnect (fader track-delete)
               (gain self)))

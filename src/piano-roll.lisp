@@ -30,13 +30,13 @@
 
 (defmethod handle-double-click ((self piano-roll))
   (if (.note-at-mouse self)
-      (cmd-add *project* 'cmd-note-delete
+      (cmd-add (.project self) 'cmd-note-delete
                :clip-id (.neko-id (.clip self))
                :note (.note-at-mouse self))
       (multiple-value-bind (time key) (world-pos-to-time-key self (ig:get-mouse-pos))
         (setf time (time-grid-applied self time #'floor))
         (when (and (not (minusp time)) key)
-          (cmd-add *project* 'cmd-note-add
+          (cmd-add (.project self) 'cmd-note-add
                    :clip-id (.neko-id (.clip self))
                    :time time
                    :key key
@@ -116,12 +116,12 @@
             (:move
              (if (key-ctrl-p)
                  ;; 複製
-                 (cmd-add *project* 'cmd-notes-d&d-copy
+                 (cmd-add (.project self) 'cmd-notes-d&d-copy
                           :notes (.notes-dragging self)
                           :clip-id (.neko-id (.clip self)))
                  ;; 移動
                  (progn
-                   (cmd-add *project* 'cmd-notes-d&d-move
+                   (cmd-add (.project self) 'cmd-notes-d&d-move
                             :notes (.notes-selected self)
                             :times-to (mapcar #'.time (.notes-dragging self))
                             :keys-to (mapcar #'.key (.notes-dragging self)))
@@ -133,7 +133,7 @@
                (loop for note in (.notes-dragging self)
                      do (incf (.time note) delta)
                         (decf (.duration note) delta))
-               (cmd-add *project* 'cmd-notes-start-change
+               (cmd-add (.project self) 'cmd-notes-start-change
                         :notes (.notes-dragging self)
                         :delta delta)))
             (:end
@@ -141,7 +141,7 @@
                              (car (.notes-dragging-duration self)))))
                (loop for note in (.notes-dragging self)
                      do (decf (.duration note) delta))
-               (cmd-add *project* 'cmd-notes-end-change
+               (cmd-add (.project self) 'cmd-notes-end-change
                         :notes (.notes-dragging self)
                         :delta delta)
                (setf (.note-default-duration self)
@@ -272,24 +272,24 @@
     (setf (.notes-selected self) (.notes (.seq (.clip self)))))
   (defshortcut (ig:+im-gui-key-delete+)
     (when (.notes-selected self)
-      (cmd-add *project* 'cmd-notes-delete
+      (cmd-add (.project self) 'cmd-notes-delete
                :notes (.notes-selected self)
                :clip (.clip self))))
   (defshortcut (ig:+im-gui-key-d+)
     (if (and (.range-selecting-pos1 self)
              (.range-selecting-pos2 self))
-        (cmd-add *project* 'cmd-notes-duplicate-region
+        (cmd-add (.project self) 'cmd-notes-duplicate-region
                  :pos1 (.range-selecting-pos1 self)
                  :pos2 (.range-selecting-pos2 self)
                  :notes (.notes-selected self))
         (when (.notes-selected self)
-          (cmd-add *project* 'cmd-notes-duplicate
+          (cmd-add (.project self) 'cmd-notes-duplicate
                    :notes (.notes-selected self)
                    :clip (.clip self)
                    :execute-after (lambda (cmd)
                                     (setf (.notes-selected self)
                                           (.notes-undo cmd)))))))
-  (shortcut-common))
+  (shortcut-common (.project self)))
 
 (defmethod key-to-local-x ((self piano-roll) key)
   (+ (* (.zoom-x self) key)
