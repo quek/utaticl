@@ -48,6 +48,8 @@
       (push cmd (.cmd-redo-stack self)))))
 
 (defmethod deserialize-after ((self project))
+  ;; (setf .master-track) :after でやってるんだけど、セットされないのでここにも入れてる
+  (setf (.project (.master-track self)) self)
   (setf (.target-track self) (.master-track self)))
 
 (defun find-lane (project lane-id)

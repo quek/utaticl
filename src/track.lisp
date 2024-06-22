@@ -119,9 +119,7 @@
 
   (maybe-recreate-process-data self module)
 
-  (start module)
-  (when (zerop (c-ref (ig:get-io) ig:im-gui-io :key-shift))
-    (editor-open module)))
+  (start module))
 
 (defmethod module-delete ((self track) module)
   (setf (.track module) nil)

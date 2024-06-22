@@ -191,7 +191,7 @@
 
 (defmethod release :around ((self host-application))
   (let ((ref-count (call-next-method)))
-    (when (zerop (call-next-method))
+    (when (zerop ref-count)
       (release (slot-value self 'component-handler))
       (release (slot-value self 'plug-frame)))
     ref-count))
