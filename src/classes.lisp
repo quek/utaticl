@@ -1,7 +1,7 @@
 (in-package :dgw)
 
 (defclass neko ()
-  ((neko-id :initarg :neko-id :initform (uid) :accessor .neko-id)
+  ((neko-id :initarg :neko-id :accessor .neko-id)
    (name :initarg :name :initform "" :accessor .name)
    (color :initarg :color :initform (color #x80 #x80 #x80 #x80) :accessor .color)))
 
@@ -152,7 +152,7 @@
   ((clips :initarg :clips :initform nil :accessor .clips)
    (track :initarg :track :accessor .track)))
 
-(defserialize lane clips)
+(defserialize lane (:list clips :writer clip-add))
 
 (defclass time-thing (neko)
   ((time :initarg :time :initform 0.0d0 :accessor .time)

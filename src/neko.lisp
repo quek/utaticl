@@ -6,7 +6,12 @@
   (gethash neko-id *neko-map*))
 
 (defmethod initialize-instance :after ((self neko) &key)
-  (setf (gethash (.neko-id self) *neko-map*) self))
+  (unless (slot-boundp self 'neko-id)
+    (loop for uid = (uid)
+          unless (gethash uid *neko-map*)
+            do (setf (slot-value self 'neko-id) uid)
+               (loop-finish)))
+  (setf (gethash (slot-value self 'neko-id) *neko-map*) self))
 
 (defmethod copy ((self neko))
   (let ((serialized (with-serialize-context
@@ -22,8 +27,8 @@
 (defmethod (setf .neko-id) :around (value (self neko))
   (let ((neko-id-old (.neko-id self)))
     (prog1 (call-next-method)
-      (setf (gethash value *neko-map*) self)
-      (remhash neko-id-old *neko-map*))))
+      (remhash neko-id-old *neko-map*)
+      (setf (gethash value *neko-map*) self))))
 
 (defmethod .neko-id ((self list))
   (mapcar #'.neko-id self))
