@@ -109,12 +109,16 @@
                            :audio-input-bus-count module-bus-count
                            :audio-output-bus-count module-bus-count)))))
 
-(defmethod module-add ((self track) module)
+(defmethod module-add ((self track) module &key before)
   (setf (.track module) self)
   (setf (.modules self)
-        (append (butlast (.modules self))
-                (list module)
-                (last (.modules self))))
+        (if before
+            (loop for x in (.modules self)
+                  if (eq before x)
+                    collect module
+                  collect x)
+            (append (.modules self)
+                    (list module))))
   (initialize module)
 
   (maybe-recreate-process-data self module)

@@ -28,7 +28,8 @@
                      #1=(progn
                           (cmd-add (.project self) 'cmd-module-add
                                    :track-id (.neko-id (.target-track (.project self)))
-                                   :plugin-info plugin-info)
+                                   :plugin-info plugin-info
+                                   :before (fader (.target-track (.project self))))
                           (ig:close-current-popup)
                           (loop-finish))
                      (progn

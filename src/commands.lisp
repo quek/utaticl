@@ -169,12 +169,13 @@
 
 (defcommand cmd-module-add (command)
   ((track-id :initarg :track-id :accessor .track-id)
-   (plugin-info :initarg :plugin-info :accessor .plugin-info)))
+   (plugin-info :initarg :plugin-info :accessor .plugin-info)
+   (before :initarg :before :initform nil :accessor .before)))
 
 (defmethod execute ((self cmd-module-add) project)
   (let ((track (find-track project (.track-id self)))
         (module (plugin-load (.plugin-info self))))
-    (module-add track module)))
+    (module-add track module :before (.before self))))
 
 (defcommand cmd-note-add (command)
   ((clip-id :initarg :clip-id :accessor .clip-id)
