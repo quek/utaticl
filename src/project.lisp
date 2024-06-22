@@ -4,7 +4,8 @@
   (setf (.bpm self) 128.0)
   (let ((arrangement  (make-instance 'arrangement :project self))
         (commander (make-instance 'commander :project self))
-        (master-track (make-instance 'master-track :project self))
+        ;; project は (setf .master-track) :after で setf
+        (master-track (make-instance 'master-track))
         (rack (make-instance 'rack :project self))
         (transposer (make-instance 'transposer :project self)))
     (setf (.arrangement self) arrangement)
@@ -19,7 +20,7 @@
   (setf (.samples-per-beat self) (* (.sec-per-beat self) (.sample-rate *config*))))
 
 
-(defun cmd-add (project cmd-class &rest args)
+(defmethod cmd-add ((project project) cmd-class &rest args)
   (push (apply #'make-instance cmd-class args) (.cmd-queue project)))
 
 (defmethod cmd-redo ((self project))
@@ -78,7 +79,7 @@
           for latency = (.latency module)
           do (loop for x in modules-sorted
                    until (eq module x)
-                   if (eq (track module) (track x))
+                   if (eq (.track module) (.track x))
                      do (setf latency (+ (.latency module) (.latency-pdc x))))
              (loop for connection in (.connections module)
                    if (eq module (.to connection))
@@ -101,6 +102,9 @@
                      do (setf acc (f x acc)))
                acc)))
     (f (.master-track project) initial-value)))
+
+(defmethod (setf .master-track) :after (value (self project))
+  (setf (.project value) self))
 
 (defmethod modules-sorted ((self project))
   (let ((modules-sorted nil)

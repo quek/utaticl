@@ -1,12 +1,15 @@
 (in-package :dgw)
 
 (defmethod initialize-instance :after ((self track) &key)
-  (let ((lane (make-instance 'lane :track self))
-        (process-data (make-instance 'process-data
-                                     :num-inputs (.nbus-audio-in self)
-                                     :num-outputs (.nbus-audio-out self))))
-    (setf (.lanes self) (list lane))
+  (let ((process-data (make-instance 'process-data
+                                     :audio-input-bus-count (.nbus-audio-in self)
+                                     :audio-output-bus-count (.nbus-audio-out self))))
+    (lane-add self (make-instance 'lane))
     (setf (.process-data self) process-data)))
+
+(defmethod lane-add ((self track) lane)
+  (setf (.track lane) self)
+  (setf (.lanes self) (append (.lanes self) (list lane))))
 
 (defmethod before ((self track))
   (cdar (member self (reverse (.tracks (.parent self))))))
@@ -93,6 +96,19 @@
 (defmethod .project ((self track))
   (.project (.parent self)))
 
+(defmethod maybe-recreate-process-data ((self track) module)
+  ;; in out を swap するので同じ数にする
+  (let ((module-bus-count (max (.audio-input-bus-count module)
+                               (.audio-output-bus-count module))))
+    (when (< (.audio-input-bus-count (.process-data self))
+             module-bus-count)
+      (setf (.nbus-audio-in self) module-bus-count)
+      (setf (.nbus-audio-out self) module-bus-count)
+      (setf (.process-data self)
+            (make-instance 'process-data
+                           :audio-input-bus-count module-bus-count
+                           :audio-output-bus-count module-bus-count)))))
+
 (defmethod module-add ((self track) module)
   (setf (.track module) self)
   (setf (.modules self)
@@ -100,6 +116,9 @@
                 (list module)
                 (last (.modules self))))
   (initialize module)
+
+  (maybe-recreate-process-data self module)
+
   (start module)
   (when (zerop (c-ref (ig:get-io) ig:im-gui-io :key-shift))
     (editor-open module)))

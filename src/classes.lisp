@@ -120,7 +120,7 @@
    (query :initform "" :accessor .query)))
 
 (defclass track (neko)
-  ((lanes :initarg :lanes :accessor .lanes)
+  ((lanes :initarg :lanes :initform nil :accessor .lanes)
    (event-in :accessor .event-in)
    (modules :initform (list (aprog1 (make-instance 'module-gain-track)
                               (start it))
@@ -132,22 +132,25 @@
    (nbus-audio-out :initform 1 :accessor .nbus-audio-out)
    (nbus-event-in :initform 1 :accessor .nbus-event-in)
    (nbus-event-out :initform 1 :accessor .nbus-event-out)
-   (parent :initarg :parent :accessor .parent)
+   (parent :initarg :parent :initform nil :accessor .parent)
    (process-data :accessor .process-data)
    (select-p :initform nil :accessor .select-p)
    (tracks :initform nil :accessor .tracks)
    (tracks-show-p :initform t :accessor .tracks-show-p))
   (:default-initargs :name "TRACK" :color (color #x33 #x33 #x33)))
 
-(defserialize track lanes modules tracks)
+(defserialize track
+    (:list lanes :writer lane-add)
+  (:list modules :writer module-add)
+  (:list tracks :writer track-add))
 
 (defclass master-track (track)
-  ((project :initarg :project :accessor .project))
+  ((project :initarg :project :initform nil :accessor .project))
   (:default-initargs :name "MASTER"))
 
 (defclass lane (neko)
   ((clips :initarg :clips :initform nil :accessor .clips)
-   (track :initarg :track :accessor .tarck)))
+   (track :initarg :track :accessor .track)))
 
 (defserialize lane clips)
 
@@ -204,15 +207,27 @@
   ())
 
 (defclass module (neko)
-  ((connections :initform nil :accessor .connections)
+  ((audio-input-bus-count :initarg :audio-input-bus-count
+                          :initform 0
+                          :accessor .audio-input-bus-count)
+   (audio-output-bus-count :initarg :audio-output-bus-count
+                           :initform 0
+                           :accessor .audio-output-bus-count)
+   (connections :initform nil :accessor .connections)
    (editor-open-p :initform nil :accessor .editor-open-p)
+   (event-input-bus-count :initarg :event-input-bus-count
+                          :initform 0
+                          :accessor .event-input-bus-count)
+   (event-output-bus-count :initarg :event-output-bus-count
+                           :initform 0
+                           :accessor .event-output-bus-count)
    (id :initarg :id :accessor .id)
    (latency :initform 0 :accessor .latency)
    (latency-pdc :initform 0 :accessor .latency-pdc)
    (params :initform (make-hash-table) :accessor .params)
    (process-done :initform nil :accessor .process-done)
    (start-p :initform nil :accessor .start-p)
-   (track :initarg :track :accessor .track)))
+   (track :initarg :track :initform nil :accessor .track)))
 
 (defserialize module connections)
 
@@ -224,10 +239,6 @@
    (controller :initarg :controller :initform nil :accessor .controller)
    (single-component-p :initarg :single-component-p :accessor .single-component-p)
    (audio-processor :accessor .audio-processor)
-   (audio-input-bus-count :accessor .audio-input-bus-count)
-   (audio-output-bus-count :accessor .audio-output-bus-count)
-   (event-input-bus-count :accessor .event-input-bus-count)
-   (event-output-bus-count :accessor .event-output-bus-count)
    (view :initform :nil :accessor .view)
    (hwnd :initform :nil :accessor .hwnd)
    (connection-component :initform nil :accessor .connection-component)
@@ -240,7 +251,9 @@
 
 (defclass module-fader (module-builtin)
   ()
-  (:default-initargs :id 'module-fader :name "Fader"))
+  (:default-initargs :id 'module-fader :name "Fader"
+                     :audio-input-bus-count 1
+                     :audio-output-bus-count 1))
 
 (defclass module-track-mixin () ()
   (:documentation "トラック備え付け"))
@@ -252,7 +265,9 @@
 
 (defclass module-gain (module-builtin)
   ()
-  (:default-initargs :id 'module-gain :name "Gain"))
+  (:default-initargs :id 'module-gain :name "Gain"
+                     :audio-input-bus-count 1
+                     :audio-output-bus-count 1))
 
 (defclass module-gain-track (module-track-mixin module-gain)
   ()

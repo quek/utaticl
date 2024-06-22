@@ -1,9 +1,11 @@
 (in-package :dgw)
 
-(defmethod initialize-instance :after ((self process-data) &key (num-inputs 1) (num-outputs 1))
+(defmethod initialize-instance :after ((self process-data)
+                                       &key (audio-input-bus-count 1)
+                                         (audio-output-bus-count 1))
   (let ((wrap (autowrap:alloc '(:struct (sb:vst-process-data))))
-        (inputs (make-instance 'audio-bus-buffers :nbuses num-inputs))
-        (outputs (make-instance 'audio-bus-buffers :nbuses num-outputs))
+        (inputs (make-instance 'audio-bus-buffers :nbuses audio-input-bus-count))
+        (outputs (make-instance 'audio-bus-buffers :nbuses audio-output-bus-count))
         (input-events (make-instance 'vst3-impl::event-list))
         (output-events (make-instance 'vst3-impl::event-list))
         (input-parameter-changes (make-instance 'vst3-impl::parameter-changes))
@@ -18,10 +20,10 @@
           (.frames-per-buffer *config*))
 
     (setf (.inputs self) inputs)
-    (setf (sb:vst-process-data.num-inputs wrap) num-inputs)
+    (setf (sb:vst-process-data.num-inputs wrap) audio-input-bus-count)
     (setf (sb:vst-process-data.inputs wrap) (.ptr inputs))
     (setf (.outputs self) outputs)
-    (setf (sb:vst-process-data.num-outputs wrap) num-outputs)
+    (setf (sb:vst-process-data.num-outputs wrap) audio-output-bus-count)
     (setf (sb:vst-process-data.outputs wrap) (.ptr outputs))
 
     (setf (.input-events self) input-events)
@@ -50,7 +52,6 @@
                             (vst3-impl::release input-parameter-changes)
                             (vst3-impl::release output-parameter-changes)))))
 
-
 (defmethod p ((self process-data))
   (flet ((f (label audio-bus-buffer nbuses)
            (let ((ptr (sb:vst-audio-bus-buffers.vst-audio-bus-buffers-channel-buffers32 audio-bus-buffer)))
@@ -63,6 +64,13 @@
                         (terpri))))))
     (f "in" (sb:vst-process-data.inputs* (.wrap self)) (sb:vst-process-data.num-inputs (.wrap self)))
     (f "out" (sb:vst-process-data.outputs* (.wrap self)) (sb:vst-process-data.num-outputs (.wrap self)))))
+
+
+(defmethod .audio-input-bus-count ((self process-data))
+  (sb:vst-process-data.num-inputs (.wrap self)))
+
+(defmethod .audio-output-bus-count ((self process-data))
+  (sb:vst-process-data.num-outputs (.wrap self)))
 
 (defmethod prepare ((self process-data))
   (prepare (.inputs self))

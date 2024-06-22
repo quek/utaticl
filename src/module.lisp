@@ -84,13 +84,6 @@
 
 (defmethod terminate ((self module)))
 
-(defmethod track ((self module))
-  (map-tracks (.project self)
-              (lambda (track acc)
-                (declare (ignore acc))
-                (when (member self (.modules track))
-                  (return-from track track)))))
-
 (defmethod wait-for-from-p ((self module))
   (some (lambda (connection)
           (not (.process-done (.from connection))))
