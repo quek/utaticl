@@ -145,7 +145,7 @@
   (start-audio-device (.audio-device *app*) ))
 
 (defmethod (setf .piano-roll) :after (piano-roll (self project))
-  (setf (.projects piano-roll) self))
+  (setf (.project piano-roll) self))
 
 (defmethod (setf .play-p) :after (value (self project))
   (unless (.play-p self)

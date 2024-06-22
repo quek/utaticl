@@ -142,7 +142,7 @@
 (defserialize track
     (:list lanes :writer lane-add)
   (:list modules :writer module-add)
-  (:list tracks :writer track-add))
+  (:list tracks :writer track-add-without-connect))
 
 (defclass master-track (track)
   ((project :initarg :project :initform nil :accessor .project))

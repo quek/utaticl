@@ -414,7 +414,7 @@
         (track-new (make-instance 'track :name (track-name-new project)))
         (track-parent (find-neko (.track-id-parent self))))
     (setf (.track-id-new self) (.neko-id track-new))
-    (track-add track-parent track-new :track-before track-before)))
+    (track-add track-parent track-new :before track-before)))
 
 (defmethod undo ((self cmd-track-add) project)
   (let ((track-new (find-neko (.track-id-new self)))
@@ -433,7 +433,7 @@
     (setf (.track-group self) track-group)
     (setf (.parents self) parents)
     (setf (.tracks-before self) (mapcar #'next (.tracks self)))
-    (track-add (car parents) track-group :track-before (car (.tracks self)))
+    (track-add (car parents) track-group :before (car (.tracks self)))
     (loop for track in (.tracks self)
           for parent in parents
           do (track-delete parent track)
@@ -446,7 +446,7 @@
           for parent in (.parents self)
           for track-before in (.tracks-before self)
           do (track-delete track-group track)
-             (track-add parent track :track-before track-before))))
+             (track-add parent track :before track-before))))
 
 (defcommand cmd-undo (command)
   ()

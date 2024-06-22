@@ -144,17 +144,20 @@
            (terminate module))
   (mapc #'terminate (.tracks self)))
 
-(defmethod track-add ((self track) track-new &key track-before)
-  (setf (.parent track-new) self)
-  (setf (.tracks self)
-        (if track-before
-            (loop for track in (.tracks self)
-                  if (eq track track-before)
-                    collect track-new
-                  collect track)
-            (append (.tracks self) (list track-new))))
+(defmethod track-add ((self track) track-new &key before)
+  (track-add-without-connect self track-new :before before)
   (connect (fader track-new)
            (gain self)))
+
+(defmethod track-add-without-connect ((self track) track-new &key before)
+  (setf (.parent track-new) self)
+  (setf (.tracks self)
+        (if before
+            (loop for track in (.tracks self)
+                  if (eq track before)
+                    collect track-new
+                  collect track)
+            (append (.tracks self) (list track-new)))))
 
 (defmethod track-delete ((self track) track-delete)
   (setf (.parent track-delete) nil)
