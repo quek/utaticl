@@ -5,8 +5,6 @@
    (name :initarg :name :initform "" :accessor .name)
    (color :initarg :color :initform (color #x80 #x80 #x80 #x80) :accessor .color)))
 
-(defserialize neko neko-id name color)
-
 (defclass project (neko)
   ((arrangement :accessor .arrangement)
    (dirty-p :initform nil :accessor .dirty-p)
@@ -31,8 +29,6 @@
    (loop-p :initarg :loop-p :initform t :accessor .loop-p)
    (transposer :accessor .transposer)
    (target-track :initform :nil :accessor .target-track)))
-
-(defserialize project bpm master-track loop-start loop-end loop-p)
 
 (defclass show-mixin ()
   ((show-p :initarg :show-p :initform nil :accessor .show-p)))
@@ -139,11 +135,6 @@
    (tracks-show-p :initform t :accessor .tracks-show-p))
   (:default-initargs :name "TRACK" :color (color #x33 #x33 #x33)))
 
-(defserialize track
-    (:list lanes :writer lane-add)
-  (:list modules :writer module-add)
-  (:list tracks :writer track-add-without-connect))
-
 (defclass master-track (track)
   ((project :initarg :project :initform nil :accessor .project))
   (:default-initargs :name "MASTER"))
@@ -152,13 +143,9 @@
   ((clips :initarg :clips :initform nil :accessor .clips)
    (track :initarg :track :accessor .track)))
 
-(defserialize lane (:list clips :writer clip-add))
-
 (defclass time-thing (neko)
   ((time :initarg :time :initform 0.0d0 :accessor .time)
    (duration :initarg :duration :initform 16.0d0 :accessor .duration)))
-
-(defserialize time-thing time duration)
 
 (defclass note (time-thing)
   ((key :initarg :key :initform +c4+ :accessor .key)
@@ -166,8 +153,6 @@
    (seq-note :initarg :seq-note :accessor .seq-note)
    (velocity :initarg :velocity :initform .8 :accessor .velocity))
   (:default-initargs :duration 1.0d0 :color (color #x30 #xc0 #x30 #x80)))
-
-(defserialize note key channel velocity)
 
 (defmethod print-object ((self note) stream)
   (print-unreadable-object (self stream :type t :identity t)
@@ -180,28 +165,20 @@
   ((lane :initarg :lane :accessor .lane)
    (seq :initarg :seq :accessor .seq)))
 
-(defserialize clip seq)
-
 (defclass clip-note (clip)
   ()
   (:default-initargs :name nil :color nil
                      :seq (make-instance 'seq-note)))
 
-(defserialize clip-note)
-
 (defclass seq-note (time-thing)
   ((notes :initarg :notes :initform nil :accessor .notes))
   (:default-initargs :name "NOTES" :color (color #x30 #xc0 #x30 #x80)))
-
-(defserialize seq-note notes)
 
 (defclass plugin-info ()
   ((id :initarg :id :accessor .id)
    (name :initarg :name :accessor .name)
    (path :initarg :path :accessor .path)
    (file-write-date :initarg :file-write-date :accessor .file-write-date)))
-
-(defserialize plugin-info id name path file-write-date)
 
 (defclass plugin-info-vst3 (plugin-info)
   ())
@@ -228,8 +205,6 @@
    (process-done :initform nil :accessor .process-done)
    (start-p :initform nil :accessor .start-p)
    (track :initarg :track :initform nil :accessor .track)))
-
-(defserialize module connections)
 
 (defclass module-vst3 (module)
   ((library :initarg :library :accessor .library)
@@ -290,13 +265,9 @@
    (to-bus-index :initarg :to-bus-index :initform 0 :accessor .to-bus-index)
    (pdc-buffer :initform (make-instance 'ring-buffer :size 0) :accessor .pdc-buffer)))
 
-(defserialize connection (:ref from) (:ref to) from-bus-index to-bus-index)
-
 (defclass param (neko)
   ((id :initarg :id :initform nil :accessor .id)
    (value :initarg :value :initform .0d0 :accessor .value)))
-
-(defserialize param id value)
 
 (defclass process-data ()
   ((wrap  :accessor .wrap)

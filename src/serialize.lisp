@@ -50,7 +50,7 @@
 
 (defmethod deserialize-after (self))
 
-(defmethod deserialize-slot ((self t) slot value))
+(defmethod deserialize-slot (self slot value))
 
 (defmethod serialize :around ((self neko))
   (if (serialize-did-p *serialize-context* self)

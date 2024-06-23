@@ -8,6 +8,8 @@
 (defmethod initialize-instance :after ((self neko) &key)
   (unless (slot-boundp self 'neko-id)
     (loop for uid = (uid)
+          if (gethash uid *neko-map*)
+            do (break "same uid generated ~a" uid)
           unless (gethash uid *neko-map*)
             do (setf (slot-value self 'neko-id) uid)
                (loop-finish)))

@@ -36,6 +36,7 @@
    (:file "config")
    (:file "classes")
    (:file "serialize")
+   (:file "defserialize")
    (:file "process")
    (:file "render")
    (:file "library")
