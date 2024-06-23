@@ -1,27 +1,7 @@
 (in-package :dgw)
 
-(gethash "2e8d86cb-fb7b-4b5e-8920-3368220c0724" *neko-map*)
-
-(PROGN
- (DEFMETHOD SERIALIZE-SLOTS ((SELF NEKO))
-   `(,'NEKO-ID ,(SERIALIZE (SLOT-VALUE SELF 'NEKO-ID)) ,'NAME
-     ,(SERIALIZE (SLOT-VALUE SELF 'NAME)) ,'COLOR
-     ,(SERIALIZE (SLOT-VALUE SELF 'COLOR)) ,@(CALL-NEXT-METHOD)))
- (DEFMETHOD DESERIALIZE-SLOT ((SELF NEKO) SLOT VALUE)
-   (COND ((EQ SLOT 'NEKO-ID)
-          (SETF (.NEKO-ID SELF) (DESERIALIZE VALUE)))
-         ((EQ SLOT 'NAME) (SETF (.NAME SELF) (DESERIALIZE VALUE)))
-         ((EQ SLOT 'COLOR) (SETF (.COLOR SELF) (DESERIALIZE VALUE)))
-         (T (CALL-NEXT-METHOD)))))
-
-(let ((lane (make-instance 'lane)))
-  (values lane
-          (with-serialize-context
-            (deserialize
-             (with-serialize-context
-               (serialize lane))))))
-
-
+(setf *random-state* (make-random-state t))
+(uid)
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

@@ -47,11 +47,6 @@
       (undo cmd self)
       (push cmd (.cmd-redo-stack self)))))
 
-(defmethod deserialize-after ((self project))
-  ;; (setf .master-track) :after でやってるんだけど、セットされないのでここにも入れてる
-  (setf (.project (.master-track self)) self)
-  (setf (.target-track self) (.master-track self)))
-
 (defun find-lane (project lane-id)
   (labels ((f (track)
              (or (find lane-id (.lanes track) :test #'equal :key #'.neko-id)
@@ -105,8 +100,9 @@
                acc)))
     (f (.master-track project) initial-value)))
 
-(defmethod (setf .master-track) :after (value (self project))
-  (setf (.project value) self))
+(defmethod (setf .master-track) :after (master-track (self project))
+  (setf (.project master-track) self)
+  (setf (.target-track self) master-track))
 
 (defmethod modules-sorted ((self project))
   (let ((modules-sorted nil)
