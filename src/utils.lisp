@@ -16,4 +16,4 @@
   (size :size))
 
 (defun uid ()
-  (random-uuid:to-string (random-uuid:make-uuid)))
+  (princ-to-string (uuid:make-v4-uuid)))

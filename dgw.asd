@@ -20,7 +20,7 @@
                "ftw"
                "anaphora"
                "log4cl"
-               "random-uuid"
+               "uuid"
                "qbase64")
   :serial t
   :pathname "src"

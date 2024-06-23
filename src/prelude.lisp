@@ -1,7 +1,5 @@
 (in-package :dgw)
 
-(setf *random-state* (make-random-state t))
-
 (log:config :trace)
 
 (defparameter *working-directory* (asdf:system-source-directory :dgw))
