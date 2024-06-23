@@ -16,10 +16,10 @@
   (setf (gethash (slot-value self 'neko-id) *neko-map*) self))
 
 (defmethod copy ((self neko))
-  (let ((serialized (with-serialize-context
+  (let ((serialized (with-serialize-context ()
                       (serialize self))))
     (setf (getf (cdr serialized) 'neko-id) (uid))
-    (with-serialize-context
+    (with-serialize-context ()
       (deserialize serialized))))
 
 (assert (let ((self (make-instance 'neko)))

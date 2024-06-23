@@ -170,7 +170,10 @@
   (:default-initargs :name nil :color nil
                      :seq (make-instance 'seq-note)))
 
-(defclass seq-note (time-thing)
+(defclass seq (time-thing)
+  ((clips :initarg :clips :initform nil :accessor .clips)))
+
+(defclass seq-note (seq)
   ((notes :initarg :notes :initform nil :accessor .notes))
   (:default-initargs :name "NOTES" :color (color #x30 #xc0 #x30 #x80)))
 

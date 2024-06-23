@@ -39,7 +39,7 @@
                                 do (,(getf spec :writer) self x))))))
          (t (call-next-method))))))
 
-(defmacro with-serialize-context (&body body)
-  `(let ((*serialize-context* (make-instance 'serialize-context)))
+(defmacro with-serialize-context ((&key copy) &body body)
+  `(let ((*serialize-context* (make-instance 'serialize-context :copy ,copy)))
      (prog1 (progn ,@body)
        (serialize-context-finalize))))

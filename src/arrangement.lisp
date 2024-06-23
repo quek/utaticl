@@ -166,7 +166,10 @@
   (defshortcut (ig:+im-gui-key-delete+)
     (when (.clips-selected self)
       (cmd-add (.project self) 'cmd-clips-delete
-               :clips (.clips-selected self))))
+               :clips (.clips-selected self)
+               :execute-after (lambda (cmd)
+                                (declare (ignore cmd))
+                                (setf (.clips-selected self) nil)))))
   (defshortcut (ig:+im-gui-mod-ctrl+ ig:+im-gui-key-g+)
     (cmd-add (.project self) 'cmd-tracks-group
              :tracks (tracks-selected (.project self))))
@@ -196,7 +199,7 @@
          (window-pos (ig:get-window-pos))
          (mouse-pos (ig:get-mouse-pos)))
     (ig:set-cursor-pos pos1)
-    (ig:text (format nil "  ~a" (.name clip)))
+    (ig:text (format nil "  ~:[~;∞~]~a" (link-p clip) (.name clip)))
 
     (let ((pos1 (@+ pos1 window-pos (@- scroll-pos) (@ 2.0 .0)))
           (pos2 (@+ pos2 window-pos (@- scroll-pos) (@ -1.0 .0)))

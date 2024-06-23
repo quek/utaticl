@@ -2,6 +2,7 @@
 
 (defclass serialize-context ()
   ((afters :initform nil :accessor .afters)
+   (copy :initarg :copy :initform nil :accessor .copy)
    (map :initform (make-hash-table) :accessor .map)))
 
 (defmethod after-add ((self serialize-context) f)
@@ -85,5 +86,5 @@
 #+nil
 (sb-int:with-float-traps-masked (:invalid :inexact :overflow :divide-by-zero)
   (with-open-file (in (merge-pathnames "user/project/20240511.lisp" *working-directory*))
-    (with-serialize-context
+    (with-serialize-context ()
       (deserialize (read in)))))

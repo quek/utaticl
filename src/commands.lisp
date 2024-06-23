@@ -62,7 +62,7 @@
 (defmethod execute ((self cmd-clip-delete) project)
   (let* ((clip (find-neko (.clip-id self)))
          (lane (lane clip)))
-    (setf (.clip self) (with-serialize-context (serialize clip)))
+    (setf (.clip self) (with-serialize-context () (serialize clip)))
     (setf (.lane-id self) (.neko-id lane))
     (clip-delete lane clip)
     (swhen (.piano-roll project)
@@ -82,7 +82,7 @@
 (defmethod initialize-instance :after ((self cmd-clips-d&d-copy) &key clips)
   (setf (.clip-ids self) (mapcar #'.neko-id clips))
   (setf (.clips self)
-        (with-serialize-context (serialize clips))))
+        (with-serialize-context () (serialize clips))))
 
 (defmethod execute ((self cmd-clips-d&d-copy) project)
   ;; ドラッグ中の表示が確定されるだけなので、何もしない。
@@ -96,7 +96,7 @@
         do (clip-delete lane clip)))
 
 (defmethod redo ((self cmd-clips-d&d-copy) project)
-  (loop for clip in (with-serialize-context (deserialize (.clips self)))
+  (loop for clip in (with-serialize-context () (deserialize (.clips self)))
         for lane-id in (.lane-ids self)
         for lane = (find-neko lane-id)
         do (clip-add lane clip)))
@@ -145,17 +145,16 @@
 (defmethod execute ((self cmd-clips-delete) project)
   (setf (.lanes self)
         (loop for clip in (.clips self)
-              collect (map-lanes project
-                                 (lambda (lane acc)
-                                   (if (member clip (.clips lane))
-                                       (progn
-                                         (clip-delete lane clip)
-                                         lane)
-                                       acc)))))
-  (setf (.clips self) (with-serialize-context (serialize (.clips self)))))
+              for lane = (.lane clip)
+              do (clip-delete lane clip)
+              collect lane))
+  (let ((serialized (with-serialize-context () (serialize (.clips self)))))
+    (loop for clip in (.clips self)
+          do (terminate clip))
+    (setf (.clips self) serialized)))
 
 (defmethod undo ((self cmd-clips-delete) project)
-  (setf (.clips self) (with-serialize-context (deserialize (.clips self))))
+  (setf (.clips self) (with-serialize-context () (deserialize (.clips self))))
   (loop for clip in (.clips self)
         for lane in (.lanes self)
         do (clip-add lane clip)))
@@ -205,7 +204,7 @@
 
 (defmethod initialize-instance :after ((self cmd-note-delete) &key note)
   (setf (.note-id self) (.neko-id note))
-  (setf (.note self) (with-serialize-context (serialize note))))
+  (setf (.note self) (with-serialize-context () (serialize note))))
 
 (defmethod execute ((self cmd-note-delete) project)
   (let ((clip (find-neko (.clip-id self)))
@@ -214,7 +213,7 @@
 
 (defmethod undo ((self cmd-note-delete) project)
   (let* ((clip (find-neko (.clip-id self)))
-         (note (with-serialize-context (deserialize (.note self)))))
+         (note (with-serialize-context () (deserialize (.note self)))))
     (note-delete clip note)))
 
 (defcommand cmd-notes-d&d-copy (command)
@@ -224,7 +223,7 @@
 
 (defmethod initialize-instance :after ((self cmd-notes-d&d-copy) &key notes)
   (setf (.note-ids self) (mapcar #'.neko-id notes))
-  (setf (.notes self) (with-serialize-context (serialize notes))))
+  (setf (.notes self) (with-serialize-context () (serialize notes))))
 
 (defmethod execute ((self cmd-notes-d&d-copy) project)
   ;; ドラッグ中の表示が確定されるだけなので、何もしない。
@@ -238,7 +237,7 @@
 
 (defmethod redo ((self cmd-notes-d&d-copy) project)
   (loop with clip = (find-neko (.clip-id self))
-        for note in (with-serialize-context (deserialize (.notes self)))
+        for note in (with-serialize-context () (deserialize (.notes self)))
         do (note-add clip note)))
 
 (defcommand cmd-notes-d&d-move (command)
@@ -276,14 +275,14 @@
 
 (defmethod execute ((self cmd-notes-delete) project)
   (setf (.notes-undo self)
-        (with-serialize-context (serialize (.notes self))))
+        (with-serialize-context () (serialize (.notes self))))
   (loop with clip = (.clip self)
         for note in (.notes self)
         do (note-delete clip note)))
 
 (defmethod undo ((self cmd-notes-delete) project)
   (setf (.notes self)
-        (with-serialize-context (deserialize (.notes-undo self))))
+        (with-serialize-context () (deserialize (.notes-undo self))))
   (loop with clip = (.clip self)
         for note in (.notes self)
         do (note-add clip note)))
