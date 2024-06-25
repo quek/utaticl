@@ -20,10 +20,18 @@
                  collect
                  (cond ((atom spec)
                         `((eq slot ',spec)
-                          ,(let ((fsym (find-symbol (format nil ".~a" spec) :dgw)))
-                             (if (fboundp fsym)
-                                 `(setf (,fsym self) (deserialize value))
-                                 `(setf (slot-value self slot) (deserialize value))))))
+                          ,(let ((accessor (find-symbol (format nil ".~a" spec) :dgw)))
+                             `(if (and (consp value) (eq :ref (car value)))
+                                  (after-add *serialize-context*
+                                             (lambda ()
+                                               (setf ,(if (fboundp accessor)
+                                                          `(,accessor self)
+                                                          `(slot-value self slot))
+                                                     (find-neko (cadr value)))))
+                                  (setf ,(if (fboundp accessor)
+                                             `(,accessor self)
+                                             `(slot-value self slot))
+                                        (deserialize value))))))
                        ((eq :ref (car spec))
                         `((eq slot ',(cadr spec))
                           (after-add *serialize-context*

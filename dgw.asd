@@ -2,12 +2,12 @@
 (setf cffi:*foreign-library-directories*
       '("c:/Users/ancient/quicklisp/local-projects/dgw/dll/"))
 
-(asdf:initialize-source-registry
+(initialize-source-registry
  '(:source-registry
    (:tree (:here "lib"))
    :inherit-configuration))
 
-(asdf:defsystem :dgw
+(defsystem :dgw
   :licence "GPL3"
   :depends-on ("cffi-libffi"
                "sb-concurrency"
@@ -73,6 +73,7 @@
    (:file "time-thing")
    (:file "clip")
    (:file "clip-note")
+   (:file "seq")
    (:file "seq-note")
    (:file "note")
    (:file "process-data")

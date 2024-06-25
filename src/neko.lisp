@@ -16,11 +16,14 @@
   (setf (gethash (slot-value self 'neko-id) *neko-map*) self))
 
 (defmethod copy ((self neko))
-  (let ((serialized (with-serialize-context ()
-                      (serialize self))))
-    (setf (getf (cdr serialized) 'neko-id) (uid))
-    (with-serialize-context ()
-      (deserialize serialized))))
+  (with-serialize-context (:copy t)
+    (deserialize (with-serialize-context ()
+                   (serialize self)))))
+
+(defmethod deserialize-slot ((self neko) (slot (eql 'neko-id)) value)
+  (if (.copy *serialize-context*)
+      (setf (.neko-id self) (uid))
+      (call-next-method)))
 
 (assert (let ((self (make-instance 'neko)))
           (string/= (.neko-id self)
@@ -43,3 +46,10 @@
 
 (defmethod ig:push-id ((self neko))
   (ig:push-id (.neko-id self)))
+
+(defmethod serialize :around ((self neko))
+  (if (gethash self (.map *serialize-context*))
+      `(:ref ,(.neko-id self))
+      (progn
+        (setf (gethash self (.map *serialize-context*)) self)
+        (call-next-method))))

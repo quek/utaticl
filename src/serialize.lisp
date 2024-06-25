@@ -8,18 +8,6 @@
 (defmethod after-add ((self serialize-context) f)
   (push f (.afters self)))
 
-(defmethod serialize-did-p ((self serialize-context) x)
-  (multiple-value-bind (value present-p) (gethash x (.map self))
-    (declare (ignore value))
-    present-p))
-
-(defmethod serialize-did ((self serialize-context) x)
-  (setf (gethash x (.map self)) x))
-
-(defun serialize-context-finalize ()
-  (loop for f in (.afters *serialize-context*)
-        do (funcall f)))
-
 (defmethod deserialize (sexp)
   (aprog1 (cond ((atom sexp)
                  sexp)
@@ -43,22 +31,18 @@
                          do (setf (gethash (deserialize key) map)
                                   (deserialize value)))))
                 (t
-                 (let ((self (make-instance (car sexp))))
-                   (loop for (slot value) on (cdr sexp) by #'cddr
-                         do (deserialize-slot self slot value))
-                   self)))
+                 (deserialize-neko (make-instance (car sexp)) (cdr sexp))))
     (deserialize-after it)))
 
 (defmethod deserialize-after (self))
 
-(defmethod deserialize-slot (self slot value))
+(defmethod deserialize-neko (instance slots)
+  (let ((self instance))
+    (loop for (slot value) on slots by #'cddr
+          do (deserialize-slot self slot value))
+    self))
 
-(defmethod serialize :around ((self neko))
-  (if (serialize-did-p *serialize-context* self)
-      `(:ref ,(.neko-id self))
-      (progn
-        (serialize-did *serialize-context* self)
-        (call-next-method))))
+(defmethod deserialize-slot (self slot value))
 
 (defmethod serialize ((self t))
   self)
@@ -82,6 +66,10 @@
 
 (defmethod serialize-slots ((self t))
   nil)
+
+(defun serialize-context-finalize ()
+  (loop for f in (.afters *serialize-context*)
+        do (funcall f)))
 
 #+nil
 (sb-int:with-float-traps-masked (:invalid :inexact :overflow :divide-by-zero)

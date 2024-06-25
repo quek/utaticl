@@ -1,7 +1,15 @@
 (in-package :dgw)
 
-(setf *random-state* (make-random-state t))
-(uid)
+(let* ((clip1 (make-instance 'clip-note))
+       (clip2 (copy clip1)))
+  (list (.seq clip1) (.seq clip2))
+  (mapc #'describe
+   (with-serialize-context ()
+     (deserialize
+      (with-serialize-context ()
+        (serialize (list clip1 clip2)))))))
+
+
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
