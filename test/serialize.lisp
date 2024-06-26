@@ -1,6 +1,6 @@
 (in-package #:dgw-test)
 
-(fiasco:deftest test-serialize ()
+(deftest test-serialize ()
   (let* ((clip1 (make-instance 'dgw::clip-note))
          (clip2 (dgw::copy clip1)))
     (destructuring-bind (clip11 clip22)
@@ -8,4 +8,4 @@
           (dgw::deserialize
            (dgw::with-serialize-context ()
              (dgw::serialize (list clip1 clip2)))))
-      (fiasco:is (eq (dgw::.seq clip11) (dgw::.seq clip22))))))
+      (is (eq (dgw::.seq clip11) (dgw::.seq clip22))))))
