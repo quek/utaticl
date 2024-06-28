@@ -81,6 +81,7 @@
    (:file "report")
    (:file "transposer")
    (:file "arrangement")
+   (:file "sceen-matrix")
    (:file "audio-bus-buffers")
    (:file "piano-roll")
    (:file "show-mixin")

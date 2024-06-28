@@ -82,6 +82,9 @@
   (:default-initargs :zoom-x 1.0 :zoom-y 25.0 :zoom-x-factor .5 :zoom-y-factor .5
                      :grid-unit +grid-bar+))
 
+(defclass sceen-matrix (view)
+  ((sceens :accessor .sceens)))
+
 (defclass piano-roll (time-ruler-mixin grid-mixin offset-mixin scroll-mixin zoom-mixin view)
   ((clip :initarg :clip :accessor .clip)
    (drag-mode :initform :move :accessor .drag-mode
@@ -176,6 +179,9 @@
 (defclass seq-note (seq)
   ((notes :initarg :notes :initform nil :accessor .notes))
   (:default-initargs :name "NOTES" :color (color #x30 #xc0 #x30 #x80)))
+
+(defclass sceen (neko)
+  ((sceen-matrix :accessor .sceen-matrix)))
 
 (defclass plugin-info ()
   ((id :initarg :id :accessor .id)
