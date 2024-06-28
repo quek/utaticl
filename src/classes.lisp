@@ -7,6 +7,7 @@
 
 (defclass project (neko)
   ((arrangement :accessor .arrangement)
+   (sceen-matrix :accessor .sceen-matrix)
    (dirty-p :initform nil :accessor .dirty-p)
    (piano-roll :initform nil :accessor .piano-roll)
    (commander :accessor .commander)
@@ -83,7 +84,8 @@
                      :grid-unit +grid-bar+))
 
 (defclass sceen-matrix (view)
-  ((sceens :accessor .sceens)))
+  ((project :initarg :project :accessor .project)
+   (sceens :accessor .sceens)))
 
 (defclass piano-roll (time-ruler-mixin grid-mixin offset-mixin scroll-mixin zoom-mixin view)
   ((clip :initarg :clip :accessor .clip)

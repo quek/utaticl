@@ -7,3 +7,6 @@
   (setf (.sceen-matrix sceen) sceen-matrix)
   (push (.sceens sceen-matrix) sceen))
 
+(defmethod render ((sceen-matrix sceen-matrix))
+  (ig:with-begin ("##sceen-matrix" :flags ig:+im-gui-window-flags-no-scrollbar+)
+    (ig:text "Sceen MATRIX")))
