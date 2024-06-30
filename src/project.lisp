@@ -218,6 +218,9 @@
       (setf (.path self) (car path))
       (save self))))
 
+(defmethod sceen-name-new ((project project))
+  (sceen-name-new (.sceen-matrix project)))
+
 (defmethod seq-note-name-new ((self project))
   (let ((max 0))
     (labels
