@@ -428,7 +428,7 @@
 
 (defmethod execute ((self cmd-tracks-group) project)
   (let* ((track-group (make-instance 'track :name (track-group-name-new project)))
-         (parents (mapcar #'parent (.tracks self))))
+         (parents (mapcar #'.parent (.tracks self))))
     (setf (.track-group self) track-group)
     (setf (.parents self) parents)
     (setf (.tracks-before self) (mapcar #'next (.tracks self)))

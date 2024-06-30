@@ -109,11 +109,6 @@
           (if (key-ctrl-p)
               (push (.clip-at-mouse self) (.clips-selected self))))))
 
-(defmethod lane-width ((self arrangement) (lane lane))
-  (sif (gethash lane (.lane-width-map self))
-       it
-       (setf it (.default-lane-width self))))
-
 (defmethod handle-range-selecting ((self arrangement))
   ;; TODO
   (when (ig:is-mouse-released ig:+im-gui-mouse-button-left+)
@@ -144,7 +139,7 @@
         (draw-vertical-line (@- (ig:get-cursor-pos) (@ .0 scroll-y)))
 
         (ig:set-next-item-shortcut (logior ig:+im-gui-mod-ctrl+ ig:+im-gui-key-t+))
-        (when (ig:button "+" (@ (.default-lane-width self) (.offset-y self)))
+        (when (ig:button "+" (@ *default-lane-width* (.offset-y self)))
           (cmd-add (.project self) 'cmd-track-add
                    :track-id-parent (.neko-id (.master-track (.project self)))
                    :execute-after (lambda (cmd)
@@ -186,7 +181,7 @@
 (defmethod render-clip ((self arrangement) (track track) (lane lane) (clip null) x)
   (loop for clip in (.clips lane)
         do (render-clip self track lane clip x))
-  (+ x (lane-width self lane)))
+  (+ x (.width lane)))
 
 (defmethod render-clip ((self arrangement) (track track) (lane lane) (clip clip) x)
   (setf (gethash clip (.clip-lane-map self)) lane)
@@ -195,7 +190,7 @@
          (y2 (time-to-local-y self (time-end clip)))
          (scroll-pos (@ (ig:get-scroll-x) (ig:get-scroll-y)))
          (pos1 (@ x y1))
-         (pos2 (@ (+ x (lane-width self lane)) y2))
+         (pos2 (@ (+ x (.width lane)) y2))
          (window-pos (ig:get-window-pos))
          (mouse-pos (ig:get-mouse-pos)))
     (ig:set-cursor-pos pos1)
@@ -218,7 +213,7 @@
     (let* ((offset-group (* (.offset-group self) (max 0 (1- group-level))))
            (pos (@+ (ig:get-cursor-pos)
                     (@ .0 offset-group)))
-           (lane-width (lane-width self (car (.lanes track))))
+           (lane-width (.width (car (.lanes track))))
            (group-p (and (.tracks track) (not (typep track 'master-track))))
            (group-button-width 17.0)
            (button-width (- lane-width (if group-p group-button-width .0)))
@@ -265,7 +260,7 @@
         (last-lane nil))
     (map-lanes (.project self)
                (lambda (lane width)
-                 (incf width (+ (lane-width self lane)))
+                 (incf width (+ (.width lane)))
                  (if (< local-x width)
                      (return-from world-x-to-lane lane)
                      (progn

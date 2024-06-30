@@ -71,9 +71,7 @@
    (clip-target :initform nil :accessor .clip-target)
    (clips-selected :initform nil :accessor .clips-selected)
    (clips-dragging :initform nil :accessor .clips-dragging)
-   (default-lane-width :initform 60.0 :accessor .default-lane-width)
    (lane-at-mouse :initform nil :accessor .lane-at-mouse)
-   (lane-width-map :initform (make-hash-table) :accessor .lane-width-map)
    (offset-group :initform 5.0 :accessor .offset-group)
    (offset-y :initform 30.0 :accessor .offset-y)
    (project :initarg :project :accessor .project)
@@ -85,7 +83,7 @@
 
 (defclass sceen-matrix (view)
   ((project :initarg :project :accessor .project)
-   (sceens :accessor .sceens)))
+   (sceens :initform nil :accessor .sceens)))
 
 (defclass piano-roll (time-ruler-mixin grid-mixin offset-mixin scroll-mixin zoom-mixin view)
   ((clip :initarg :clip :accessor .clip)
@@ -146,7 +144,10 @@
 
 (defclass lane (neko)
   ((clips :initarg :clips :initform nil :accessor .clips)
-   (track :initarg :track :accessor .track)))
+   (track :initarg :track :accessor .track)
+   (width :initarg :width
+          :initform *default-lane-width*
+          :accessor .width)))
 
 (defclass time-thing (neko)
   ((time :initarg :time :initform 0.0d0 :accessor .time)

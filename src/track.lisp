@@ -12,10 +12,10 @@
   (setf (.lanes self) (append (.lanes self) (list lane))))
 
 (defmethod before ((self track))
-  (cdar (member self (reverse (.tracks (.parent self))))))
+  (cadr (member self (reverse (.tracks (.parent self))))))
 
 (defmethod next ((self track))
-  (cdar (member self (.tracks (.parent self)))))
+  (cadr (member self (.tracks (.parent self)))))
 
 (defmethod note-off-all ((self track))
   (note-off-all (.process-data self))
