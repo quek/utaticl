@@ -4,9 +4,19 @@
   (sceen-add sceen-matrix
              (make-instance 'sceen :name (sceen-name-new sceen-matrix))))
 
-(defmethod sceen-add ((sceen-matrix sceen-matrix) (sceen sceen))
+(defmethod sceen-add ((sceen-matrix sceen-matrix) (sceen sceen) &key before)
   (setf (.sceen-matrix sceen) sceen-matrix)
-  (push sceen (.sceens sceen-matrix)))
+  (if before
+      (labels ((f (xs)
+                 (if (endp xs)
+                     nil
+                     (if (eq (car xs) before)
+                         (psetf (car xs) sceen
+                                (cdr xs) (cons (car xs) (cdr xs)))
+                         (f (cdr xs))))))
+        (f (.sceens sceen-matrix)))
+      (setf (.sceens sceen-matrix)
+            (append (.sceens sceen-matrix) (list sceen)))))
 
 (defmethod render ((sceen-matrix sceen-matrix))
   (ig:with-styles ((ig:+im-gui-style-var-item-spacing+ (@ .0 .0)))
