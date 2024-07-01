@@ -4,6 +4,9 @@
   (sceen-add sceen-matrix
              (make-instance 'sceen :name (sceen-name-new sceen-matrix))))
 
+(defmethod .offset-x ((sceen-matrix sceen-matrix))
+  (.offset-x (.arrangement (.project sceen-matrix))))
+
 (defmethod sceen-add ((sceen-matrix sceen-matrix) (sceen sceen) &key before)
   (setf (.sceen-matrix sceen) sceen-matrix)
   (if before
@@ -22,17 +25,27 @@
   (ig:with-styles ((ig:+im-gui-style-var-item-spacing+ (@ .0 .0)))
     (ig:with-begin ("##sceen-matrix" :flags ig:+im-gui-window-flags-no-scrollbar+)
       (ig:with-begin-child ("##canvas" :window-flags ig:+im-gui-window-flags-horizontal-scrollbar+)
-        (ig:text "Sceen MATRIX")
-        (render-track sceen-matrix (.master-track (.project sceen-matrix)) 0)))))
+        (loop for y = .0 then (+ y (.height sceen))
+              for sceen in (.sceens sceen-matrix)
+              do (render-sceen sceen-matrix sceen y))))))
 
-(defmethod render-track ((sceen-matrix sceen-matrix) track group-level)
-  (ig:with-id (track)
-    (loop for sceen in (.sceens sceen-matrix)
-          do (render-sceen sceen-matrix track sceen))))
-
-(defmethod render-sceen ((sceen-matrix sceen-matrix) track sceen)
+(defmethod render-sceen ((sceen-matrix sceen-matrix) (sceen sceen) y)
   (ig:with-id (sceen)
-    (ig:text (.name sceen))))
+    (ig:set-cursor-pos (@ .0 y))
+    (ig:text (.name sceen))
+    (render-sceen-track sceen-matrix sceen (.master-track (.project sceen-matrix))
+                        (.offset-x sceen-matrix)
+                        y)))
+
+(defmethod render-sceen-track ((sceen-matrix sceen-matrix) (sceen sceen) (track track) x y)
+  (ig:with-id (track)
+    (ig:set-cursor-pos (@ x y))
+    (ig:button "▶")
+    (incf x (.width track))
+    (when (.tracks-show-p track)
+      (loop for each-track in (.tracks track)
+            do (setf x (render-sceen-track sceen-matrix sceen each-track x y))))
+    x))
 
 (defmethod sceen-name-new ((sceen-matrix sceen-matrix))
   (format nil "S~d"

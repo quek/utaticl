@@ -168,3 +168,6 @@
 (defmethod unselect-all-tracks ((self track))
   (setf (.select-p self) nil)
   (mapc #'unselect-all-tracks (.tracks self)))
+
+(defmethod .width ((track track))
+  (apply #'+ (mapcar #'.width (.lanes track))))

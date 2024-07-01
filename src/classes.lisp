@@ -76,7 +76,9 @@
    (offset-y :initform 30.0 :accessor .offset-y)
    (project :initarg :project :accessor .project)
    (range-selecting-p :initform nil :accessor .range-selecting-p)
-   (time-ruler-width :initform 20.0 :accessor .time-ruler-width))
+   (time-ruler-width :initform 50.0
+                     :accessor .time-ruler-width
+                     :accessor .offset-x))
   ;; zoom-x は使わない
   (:default-initargs :zoom-x 1.0 :zoom-y 25.0 :zoom-x-factor .5 :zoom-y-factor .5
                      :grid-unit +grid-bar+))
@@ -184,7 +186,8 @@
   (:default-initargs :name "NOTES" :color (color #x30 #xc0 #x30 #x80)))
 
 (defclass sceen (neko)
-  ((sceen-matrix :accessor .sceen-matrix)))
+  ((height :initarg :height :initform 30.0 :accessor .height)
+   (sceen-matrix :accessor .sceen-matrix)))
 
 (defclass plugin-info ()
   ((id :initarg :id :accessor .id)
