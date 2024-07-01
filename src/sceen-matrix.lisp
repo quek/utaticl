@@ -27,7 +27,8 @@
       (ig:with-begin-child ("##canvas" :window-flags ig:+im-gui-window-flags-horizontal-scrollbar+)
         (loop for y = .0 then (+ y (.height sceen))
               for sceen in (.sceens sceen-matrix)
-              do (render-sceen sceen-matrix sceen y))))))
+              do (render-sceen sceen-matrix sceen y)
+              finally (render-sceen-add-button sceen-matrix y))))))
 
 (defmethod render-sceen ((sceen-matrix sceen-matrix) (sceen sceen) y)
   (ig:with-id (sceen)
@@ -36,6 +37,14 @@
     (render-sceen-track sceen-matrix sceen (.master-track (.project sceen-matrix))
                         (.offset-x sceen-matrix)
                         y)))
+
+(defmethod render-sceen-add-button ((sceen-matrix sceen-matrix) y)
+  (ig:set-cursor-pos (@ .0 y))
+  (when (ig:button "+" (@ (.offset-x sceen-matrix) .0))
+    ;; TODO commnad にする
+    (sceen-add sceen-matrix
+               (make-instance 'sceen
+                              :name (sceen-name-new sceen-matrix)))))
 
 (defmethod render-sceen-track ((sceen-matrix sceen-matrix) (sceen sceen) (track track) x y)
   (ig:with-id (track)
