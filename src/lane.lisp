@@ -1,6 +1,6 @@
 (in-package :dgw)
 
-(defmethod clip-add ((self lane) clip)
+(defmethod clip-add ((self lane) clip &key)
   (setf (.lane clip) self)
   (setf (.clips self)
         (sort (cons clip (.clips self))

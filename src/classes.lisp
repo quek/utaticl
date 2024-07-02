@@ -169,8 +169,10 @@
             (.time self)
             (.duration self))))
 
+
 (defclass clip (time-thing)
   ((lane :initarg :lane :accessor .lane)
+   (sceen :initarg :sceen :initform nil :accessor .sceen)
    (seq :initarg :seq :accessor .seq)))
 
 (defclass clip-note (clip)
@@ -187,7 +189,8 @@
 
 (defclass sceen (neko)
   ((height :initarg :height :initform 30.0 :accessor .height)
-   (sceen-matrix :accessor .sceen-matrix)))
+   (sceen-matrix :accessor .sceen-matrix)
+   (.clips :initform (make-hash-table) :accessor .clips)))
 
 (defclass plugin-info ()
   ((id :initarg :id :accessor .id)

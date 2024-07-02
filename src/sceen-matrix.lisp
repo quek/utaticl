@@ -49,7 +49,13 @@
 (defmethod render-sceen-track ((sceen-matrix sceen-matrix) (sceen sceen) (track track) x y)
   (ig:with-id (track)
     (ig:set-cursor-pos (@ x y))
-    (ig:button "▶")
+    (let* ((lane (car (.lanes track)))
+           (clip (gethash lane (.clips sceen))))
+      (if clip
+          (ig:button (format nil "▶~a" (.name clip)))
+          (when (ig:button "+")
+            ;; TODO command
+            (clip-add sceen (make-instance 'clip-note :name "クリップ") :lane lane))))
     (incf x (.width track))
     (when (.tracks-show-p track)
       (loop for each-track in (.tracks track)
