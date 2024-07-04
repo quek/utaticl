@@ -52,7 +52,8 @@
     (let* ((lane (car (.lanes track)))
            (clip (gethash lane (.clips sceen))))
       (if clip
-          (ig:button (format nil "▶~a" (.name clip)))
+          (when (ig:button (format nil "▶~a" (.name clip)))
+            (edit clip))
           (when (ig:button "+")
             ;; TODO command
             (clip-add sceen (make-instance 'clip-note :name "クリップ") :lane lane))))
