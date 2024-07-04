@@ -147,7 +147,9 @@
 
 (defmethod (setf .play-p) :after (value (self project))
   (unless (.play-p self)
-    (setf (.play-just-stop-p self) t)))
+    (setf (.play-just-stop-p self) t))
+  (unless value
+    (setf (.play-p (.sceen-matrix self)) nil)))
 
 (defmethod process ((self project))
   (prepare (.master-track self))

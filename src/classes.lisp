@@ -172,6 +172,7 @@
 
 (defclass clip (time-thing)
   ((lane :initarg :lane :accessor .lane)
+   (play-p :initform nil :accessor .play-p)
    (sceen :initarg :sceen :initform nil :accessor .sceen)
    (seq :initarg :seq :accessor .seq)))
 

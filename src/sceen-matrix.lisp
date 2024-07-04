@@ -7,19 +7,10 @@
 (defmethod .offset-x ((sceen-matrix sceen-matrix))
   (.offset-x (.arrangement (.project sceen-matrix))))
 
-(defmethod sceen-add ((sceen-matrix sceen-matrix) (sceen sceen) &key before)
-  (setf (.sceen-matrix sceen) sceen-matrix)
-  (if before
-      (labels ((f (xs)
-                 (if (endp xs)
-                     nil
-                     (if (eq (car xs) before)
-                         (psetf (car xs) sceen
-                                (cdr xs) (cons (car xs) (cdr xs)))
-                         (f (cdr xs))))))
-        (f (.sceens sceen-matrix)))
-      (setf (.sceens sceen-matrix)
-            (append (.sceens sceen-matrix) (list sceen)))))
+(defmethod (setf .play-p) (value (sceen-matrix sceen-matrix))
+  (unless value
+    (loop for sceen in (.sceens sceen-matrix)
+          do (setf (.play-p sceen) nil))))
 
 (defmethod render ((sceen-matrix sceen-matrix))
   (ig:with-styles ((ig:+im-gui-style-var-item-spacing+ (@ .0 .0)))
@@ -52,8 +43,13 @@
     (let* ((lane (car (.lanes track)))
            (clip (gethash lane (.clips sceen))))
       (if clip
-          (when (ig:button (format nil "▶~a" (.name clip)))
-            (edit clip))
+          (progn
+            (when (ig:button (format nil "~:[▶~;■~]~a" (.play-p clip) (.name clip)))
+              (when (setf (.play-p clip) (not (.play-p clip)))
+                (setf (.play-p (.project sceen-matrix)) t)))
+            (when (and (ig:is-item-active)
+                       (ig:is-mouse-double-clicked ig:+im-gui-mouse-button-left+))
+              (edit clip)))
           (when (ig:button "+")
             ;; TODO command
             (clip-add sceen (make-instance 'clip-note :name "クリップ") :lane lane))))
@@ -62,6 +58,20 @@
       (loop for each-track in (.tracks track)
             do (setf x (render-sceen-track sceen-matrix sceen each-track x y))))
     x))
+
+(defmethod sceen-add ((sceen-matrix sceen-matrix) (sceen sceen) &key before)
+  (setf (.sceen-matrix sceen) sceen-matrix)
+  (if before
+      (labels ((f (xs)
+                 (if (endp xs)
+                     nil
+                     (if (eq (car xs) before)
+                         (psetf (car xs) sceen
+                                (cdr xs) (cons (car xs) (cdr xs)))
+                         (f (cdr xs))))))
+        (f (.sceens sceen-matrix)))
+      (setf (.sceens sceen-matrix)
+            (append (.sceens sceen-matrix) (list sceen)))))
 
 (defmethod sceen-name-new ((sceen-matrix sceen-matrix))
   (format nil "S~d"
