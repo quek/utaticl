@@ -9,3 +9,10 @@
   (unless value
     (loop for clip being each hash-value of (.clips sceen)
           do (setf (.play-p clip) nil))))
+
+(defmethod prepare-event ((sceen sceen) start end loop-p offset-samples)
+  (loop for lane being the hash-key in (.clips sceen)
+          using (hash-value clip)
+        if (.play-p clip)
+          do (let ((*process-data* (.process-data (.track lane))))
+               (prepare-event clip start end loop-p offset-samples))))

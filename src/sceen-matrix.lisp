@@ -12,6 +12,10 @@
     (loop for sceen in (.sceens sceen-matrix)
           do (setf (.play-p sceen) nil))))
 
+(defmethod prepare-event ((sceen-matrix sceen-matrix) start end loop-p offset-samples)
+  (loop for sceen in (.sceens sceen-matrix)
+        do (prepare-event sceen start end loop-p offset-samples)))
+
 (defmethod render ((sceen-matrix sceen-matrix))
   (ig:with-styles ((ig:+im-gui-style-var-item-spacing+ (@ .0 .0)))
     (ig:with-begin ("##sceen-matrix" :flags ig:+im-gui-window-flags-no-scrollbar+)
