@@ -1,9 +1,12 @@
 (in-package :dgw)
 
+(defmethod playhead-y ((self time-ruler-mixin))
+  (time-to-local-y self (.play-start (.project self))))
+
 (defmethod render-playhead ((self time-ruler-mixin))
   (let* ((draw-list (ig:get-window-draw-list))
          (window-pos (ig:get-window-pos))
-         (y (time-to-local-y self (.play-start (.project self))))
+         (y (playhead-y self))
          (pos1 (@+ (@ .0 y) window-pos))
          (pos2 (@+ pos1 (@ (ig:get-window-width) .0))))
     (ig:add-line draw-list pos1 pos2 (.color-playhead *theme*))))

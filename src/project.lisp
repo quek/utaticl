@@ -222,7 +222,10 @@
                (declare (ignore sec min h))
                (format nil "~d~2,'0d~2,'0d.lisp" y m d)))
     (when ok
-      (setf (.path self) (car path))
+      (let* ((path (car path)))
+        (unless (string-equal "lisp" (pathname-type path))
+          (setf path (namestring (merge-pathnames path "_.lisp"))))
+        (setf (.path self) path))
       (save self))))
 
 (defmethod sceen-name-new ((project project))

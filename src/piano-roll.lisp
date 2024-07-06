@@ -300,6 +300,12 @@
      (.x (ig:get-window-pos))
      (- (ig:get-scroll-x))))
 
+(defmethod playhead-y ((piano-roll piano-roll))
+  (if (.sceen (.clip piano-roll))
+      (time-to-local-y piano-roll (rem (.play-start (.project piano-roll))
+                                       (.duration (.clip piano-roll))))
+      (call-next-method)))
+
 (defmethod range-selecting-region-time-key ((self piano-roll) pos1 pos2)
   (multiple-value-bind (time1 key1)
       (world-pos-to-time-key self pos1)
