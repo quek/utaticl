@@ -10,6 +10,11 @@
                     nconc `(',(cadr slot) (.neko-id (slot-value self ',(cadr slot))))
                   else if (and (consp slot) (eq :list (car slot)))
                          nconc `(',(cadr slot) (serialize (slot-value self ',(cadr slot))))
+                  else if (and (consp slot) (eq :hash (car slot)))
+                         nconc `(',(cadr slot)
+         (loop for key being the hash-key in (slot-value self ',(cadr slot))
+                 using (hash-value val)
+               collect (list (serialize key) (serialize val))))
                   else
                     nconc `(',slot (serialize (slot-value self ',slot))))
          ,@(call-next-method)))
@@ -44,7 +49,32 @@
                         `((eq slot ',(cadr spec))
                           (setf (slot-value self slot) nil)
                           (loop for x in (deserialize value)
-                                do (,(getf spec :writer) self x))))))
+                                do (,(getf spec :writer) self x))))
+                       ((eq :hash (car spec))
+                        `((eq slot ',(cadr spec))
+                          (loop for (key val) in value
+                                for key-ref-p = (and (consp key) (eq :ref (car key)))
+                                for val-ref-p = (and (consp val) (eq :ref (car val)))
+                                if (or key-ref-p val-ref-p)
+                                  do (after-add *serialize-context*
+                                                (let ((key key)
+                                                      (val val)
+                                                      (key-ref-p key-ref-p)
+                                                      (val-ref-p val-ref-p))
+                                                  (lambda ()
+                                                    (,(getf spec :writer)
+                                                     self
+                                                     (if key-ref-p
+                                                         (find-neko (cadr key))
+                                                         (deserialize key))
+                                                     (if val-ref-p
+                                                         (find-neko (cadr val))
+                                                         (deserialize val))))))
+                                else
+                                  do (,(getf spec :writer)
+                                      self
+                                      (deserialize key)
+                                      (deserialize val)))))))
          (t (call-next-method))))))
 
 (defmacro with-serialize-context ((&key copy) &body body)

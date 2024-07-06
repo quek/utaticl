@@ -1,9 +1,11 @@
 (in-package :dgw)
 
 (defmethod clip-add ((sceen sceen) (clip clip) &key lane)
-  (setf (.lane clip) lane)
-  (setf (.sceen clip) sceen)
-  (setf (gethash lane (.clips sceen)) clip))
+  (let ((lane (if lane
+                  (setf (.lane clip) lane)
+                  (.lane clip))))
+    (setf (.sceen clip) sceen)
+    (setf (gethash lane (.clips sceen)) clip)))
 
 (defmethod (setf .play-p) (value (sceen sceen))
   (unless value

@@ -3,7 +3,7 @@
 (defmethod initialize-instance :after ((self project) &key)
   (setf (.bpm self) 128.0)
   (let ((arrangement  (make-instance 'arrangement :project self))
-        (sceen-matrix  (make-instance 'sceen-matrix :project self))
+        (sceen-matrix  (make-instance 'sceen-matrix))
         (commander (make-instance 'commander :project self))
         ;; project は (setf .master-track) :after で setf
         (master-track (make-instance 'master-track))
@@ -19,7 +19,8 @@
 
 (defmethod (setf .bpm) :after (value (self project))
   (setf (.sec-per-beat self) (/ 60.0d0 value))
-  (setf (.samples-per-beat self) (* (.sec-per-beat self) (.sample-rate *config*))))
+  (setf (.samples-per-beat self)
+        (* (.sec-per-beat self) (.sample-rate *config*))))
 
 
 (defmethod cmd-add ((project project) cmd-class &rest args)
@@ -227,6 +228,9 @@
           (setf path (namestring (merge-pathnames path "_.lisp"))))
         (setf (.path self) path))
       (save self))))
+
+(defmethod (setf .sceen-matrix) :after ((sceen-matrix sceen-matrix) (project project))
+  (setf (.project sceen-matrix) project))
 
 (defmethod sceen-name-new ((project project))
   (sceen-name-new (.sceen-matrix project)))

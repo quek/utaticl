@@ -83,8 +83,8 @@
   (:default-initargs :zoom-x 1.0 :zoom-y 25.0 :zoom-x-factor .5 :zoom-y-factor .5
                      :grid-unit +grid-bar+))
 
-(defclass sceen-matrix (view)
-  ((project :initarg :project :accessor .project)
+(defclass sceen-matrix (view neko)
+  ((project :accessor .project)
    (sceens :initform nil :accessor .sceens)))
 
 (defclass piano-roll (time-ruler-mixin grid-mixin offset-mixin scroll-mixin zoom-mixin view)
@@ -171,7 +171,7 @@
 
 
 (defclass clip (time-thing)
-  ((lane :initarg :lane :accessor .lane)
+  ((lane :initform nil :initarg :lane :accessor .lane)
    (play-p :initform nil :accessor .play-p)
    (sceen :initarg :sceen :initform nil :accessor .sceen)
    (seq :initarg :seq :accessor .seq)))
@@ -191,7 +191,7 @@
 (defclass sceen (neko)
   ((height :initarg :height :initform 30.0 :accessor .height)
    (sceen-matrix :accessor .sceen-matrix)
-   (.clips :initform (make-hash-table) :accessor .clips)))
+   (clips :initform (make-hash-table) :accessor .clips)))
 
 (defclass plugin-info ()
   ((id :initarg :id :accessor .id)

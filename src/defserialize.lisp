@@ -2,7 +2,8 @@
 
 (defserialize neko neko-id name color)
 
-(defserialize project bpm master-track loop-start loop-end loop-p)
+(defserialize project bpm master-track loop-start loop-end loop-p
+  sceen-matrix)
 
 (defserialize track
     (:list lanes :writer lane-add)
@@ -15,7 +16,7 @@
 
 (defserialize note key channel velocity)
 
-(defserialize clip seq)
+(defserialize clip seq lane)
 
 (defserialize clip-note)
 
@@ -28,3 +29,8 @@
 (defserialize connection (:ref from) (:ref to) from-bus-index to-bus-index)
 
 (defserialize param id value)
+
+(defserialize sceen-matrix (:list sceens :writer sceen-add))
+
+(defserialize sceen height (:hash clips :writer (lambda (sceen lane clip)
+                                                  (clip-add sceen clip :lane lane))))

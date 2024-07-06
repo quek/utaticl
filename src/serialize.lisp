@@ -25,11 +25,6 @@
                          else
                            do (setf (nth i list) (deserialize x)))
                    list))
-                ((eq 'hash-table (car sexp))
-                 (let ((map (make-hash-table :test (cadr sexp))))
-                   (loop for (key value) on (cddr sexp) by #'cddr
-                         do (setf (gethash (deserialize key) map)
-                                  (deserialize value)))))
                 (t
                  (deserialize-neko (make-instance (car sexp)) (cdr sexp))))
     (deserialize-after it)))

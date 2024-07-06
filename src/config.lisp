@@ -31,6 +31,6 @@
   ((audio-device-api :initform nil :accessor .audio-device-api)
    (audio-device-name :initform nil :accessor .audio-device-name)
    (frames-per-buffer :initform 1024 :accessor .frames-per-buffer)
-   (sample-rate :initform nil :accessor .sample-rate))
+   (sample-rate :initform 48000d0 :accessor .sample-rate))
   (:default-initargs :name "config.lisp"))
 

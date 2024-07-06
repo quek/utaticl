@@ -3,5 +3,4 @@
   :serial t
   :pathname "test"
   :components
-  ((:file "package")
-   (:file "serialize")))
+  ((:file "serialize")))
