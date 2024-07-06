@@ -161,17 +161,17 @@
       (note-off-all (.master-track self))
       (setf (.play-just-stop-p self) nil))
 
-    (if (< (.play-end self) (.play-start self))
+    (if (< (.play-start self) (.play-end self))
+        (progn
+          (prepare-event (.master-track self) (.play-start self) (.play-end self) nil 0)
+          (prepare-event (.sceen-matrix self) (.play-start self) (.play-end self) nil 0))
         (progn
           (prepare-event (.master-track self) (.play-start self) (.loop-end self) t 0)
           (prepare-event (.master-track self) (.loop-start self) (.play-end self) nil
                          (time-to-sample self (- (.loop-end self) (.play-start self))))
           (prepare-event (.sceen-matrix self) (.play-start self) (.loop-end self) t 0)
           (prepare-event (.sceen-matrix self) (.loop-start self) (.play-end self) nil
-                         (time-to-sample self (- (.loop-end self) (.play-start self)))))
-        (progn
-          (prepare-event (.master-track self) (.play-start self) (.play-end self) nil 0)
-          (prepare-event (.sceen-matrix self) (.play-start self) (.play-end self) nil 0))))
+                         (time-to-sample self (- (.loop-end self) (.play-start self)))))))
 
   (loop with tracks = (track-all self)
         with tracks-lenght = (length tracks)

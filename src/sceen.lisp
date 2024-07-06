@@ -18,4 +18,14 @@
                     (duration (.duration clip))
                     (start (rem start duration))
                     (end (rem end duration)))
-               (prepare-event clip start end loop-p offset-samples))))
+               (if (< start end)
+                   (prepare-event clip start end loop-p offset-samples)
+                   (progn
+                     (prepare-event clip start duration t offset-samples)
+                     (prepare-event clip .0d0 end nil
+                                    (+ offset-samples
+                                       (time-to-sample (.project sceen)
+                                                       (- duration start)))))))))
+
+(defmethod .project ((sceen sceen))
+  (.project (.sceen-matrix sceen)))
