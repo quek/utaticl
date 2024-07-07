@@ -57,6 +57,8 @@
    (:file "module-builtin")
    (:file "module-fader")
    (:file "module-gain")
+   (:file "module-track-mixin")
+   (:file "module-fader-track")
    (:file "preset-vst3")
    (:file "connection")
    (:file "param")

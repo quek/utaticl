@@ -68,6 +68,30 @@
 (defmethod .project ((self module))
   (.project (.track self)))
 
+(defmethod render ((module module))
+  (ig:with-id (module)
+    (when (ig:button (.name module))
+      (if (.editor-open-p module)
+          (editor-close module)
+          (editor-open module)))
+
+    ;; TODO state テスト用なので後で消す
+    (ig:with-popup-context-item ()
+      (when (ig:menu-item "Copy" :shortcut "C-c")
+        (let ((state (state module)))
+          (ig:set-clipboard-text state)))
+      (when (ig:menu-item "Paste" :shortcut "C-v")
+        (let ((state (ig:get-clipboard-text)))
+          (setf (state module) state))))
+
+    (render-module-delete-button module)))
+
+(defmethod render-module-delete-button ((module module))
+  (when (ig:button "x")
+    (cmd-add (.project module) 'cmd-module-delete
+             :track-id (.neko-id (.target-track (.project module)))
+             :module-id (.neko-id module))))
+
 (defmethod serialize ((self module))
   (append (call-next-method)
           `(state ,(state self))))
