@@ -3,7 +3,7 @@
 (defmethod render ((self transposer))
   (when (ig:begin "##transponser")
     (when (.dirty-p (.project self))
-      (ig:text "* ")
+      (ig:text "*")
       (ig:same-line))
     (awhen (.path (.project self))
       (ig:text (file-namestring it))

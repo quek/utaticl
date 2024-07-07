@@ -85,6 +85,7 @@
 
 (defclass sceen-matrix (view neko)
   ((project :accessor .project)
+   (queue :initform nil :accessor .queue)
    (sceens :initform nil :accessor .sceens)))
 
 (defclass piano-roll (time-ruler-mixin grid-mixin offset-mixin scroll-mixin zoom-mixin view)
@@ -169,12 +170,13 @@
             (.time self)
             (.duration self))))
 
-
 (defclass clip (time-thing)
-  ((lane :initform nil :initarg :lane :accessor .lane)
+  ((clip-next :initform nil :accessor .clip-next)
+   (lane :initform nil :initarg :lane :accessor .lane)
    (play-p :initform nil :accessor .play-p)
    (sceen :initarg :sceen :initform nil :accessor .sceen)
-   (seq :initarg :seq :accessor .seq)))
+   (seq :initarg :seq :accessor .seq)
+   (will-stop :initform nil :accessor .will-stop)))
 
 (defclass clip-note (clip)
   ()

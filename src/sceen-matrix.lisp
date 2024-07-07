@@ -3,15 +3,35 @@
 (defmethod initialize-instance :after ((sceen-matrix sceen-matrix) &key)
   (sceen-add sceen-matrix (make-instance 'sceen)))
 
+(defmethod clip-playing ((sceen-matrix sceen-matrix) (lane lane))
+  (loop for sceen in (.sceens sceen-matrix)
+        for clip = (gethash lane (.clips sceen))
+          thereis (and clip (.play-p clip) clip)))
+
+(defmethod enqueue ((sceen-matrix sceen-matrix) (clip clip))
+  (push clip (.queue sceen-matrix))
+  (unless (.play-p (.project sceen-matrix))
+    (setf (.play-p (.project sceen-matrix)) t)))
+
 (defmethod .offset-x ((sceen-matrix sceen-matrix))
   (.offset-x (.arrangement (.project sceen-matrix))))
 
 (defmethod (setf .play-p) (value (sceen-matrix sceen-matrix))
   (unless value
     (loop for sceen in (.sceens sceen-matrix)
-          do (setf (.play-p sceen) nil))))
+          do (setf (.play-p sceen) nil))
+    (setf (.queue sceen-matrix) nil)))
 
 (defmethod prepare-event ((sceen-matrix sceen-matrix) start end loop-p offset-samples)
+  (loop for clip in (nreverse (.queue sceen-matrix))
+        for lane = (.lane clip)
+        for clip-playing = (clip-playing sceen-matrix lane)
+        if clip-playing
+          collect (setf (.clip-next clip-playing) clip)
+        else
+          do (setf (.play-p clip) t))
+  (setf (.queue sceen-matrix) nil)
+
   (loop for sceen in (.sceens sceen-matrix)
         do (prepare-event sceen start end loop-p offset-samples)))
 
@@ -46,8 +66,9 @@
       (if clip
           (progn
             (when (ig:button (format nil "~:[▶~;■~]~a" (.play-p clip) (.name clip)))
-              (when (setf (.play-p clip) (not (.play-p clip)))
-                (setf (.play-p (.project sceen-matrix)) t)))
+              (if (.play-p clip)
+                  (setf (.will-stop clip) t)
+                  (enqueue sceen-matrix clip)))
             (when (and (ig:is-item-active)
                        (ig:is-mouse-double-clicked ig:+im-gui-mouse-button-left+))
               (edit clip)))
