@@ -65,7 +65,10 @@
            (clip (gethash lane (.clips sceen))))
       (if clip
           (progn
-            (when (ig:button (format nil "~:[▶~;■~]~a" (.play-p clip) (.name clip)))
+            (when (ig:with-button-color ((if (.play-p clip)
+                                             (.color-button-toggle-on *theme*)
+                                             (.color-button-toggle-off *theme*)))
+                    (ig:button (format nil "~:[▶~;■~]~a" (.play-p clip) (.name clip))))
               (if (.play-p clip)
                   (setf (.will-stop clip) t)
                   (enqueue sceen-matrix clip)))
