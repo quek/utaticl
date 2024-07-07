@@ -18,13 +18,11 @@
 
 (defmethod prepare-event :around ((clip-note clip-note) start end loop-p offset-samples)
   (if (and (.sceen clip-note)
-           (progn
-             (print (list (= .0d0 start)
-                          (< end start)
-                          (.will-stop clip-note)))
-             (or (= .0d0 start)
-                 (< end start))))
-      (cond ((.will-stop clip-note)
+           (= .0d0 start))
+      (cond ((.will-start clip-note)
+             (setf (.play-p clip-note) t)
+             (setf (.will-start clip-note) nil))
+            ((.will-stop clip-note)
              (setf (.play-p clip-note) nil)
              (setf (.will-stop clip-note) nil))
             ((.clip-next clip-note)
@@ -32,7 +30,8 @@
              (setf (.play-p (.clip-next clip-note)) t)
              (setf (.clip-next clip-note) nil))
             (t (call-next-method)))
-      (call-next-method)))
+      (unless (.will-start clip-note)
+        (call-next-method))))
 
 (defmethod prepare-event ((self clip-note) start end loop-p offset-samples)
   (loop for note in (.notes self)

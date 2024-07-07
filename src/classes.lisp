@@ -176,6 +176,7 @@
    (play-p :initform nil :accessor .play-p)
    (sceen :initarg :sceen :initform nil :accessor .sceen)
    (seq :initarg :seq :accessor .seq)
+   (will-start :initform nil :accessor .will-start)
    (will-stop :initform nil :accessor .will-stop)))
 
 (defclass clip-note (clip)

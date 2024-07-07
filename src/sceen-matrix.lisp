@@ -29,7 +29,7 @@
         if clip-playing
           collect (setf (.clip-next clip-playing) clip)
         else
-          do (setf (.play-p clip) t))
+          do (setf (.will-start clip) t))
   (setf (.queue sceen-matrix) nil)
 
   (loop for sceen in (.sceens sceen-matrix)

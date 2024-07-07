@@ -1,6 +1,7 @@
 (in-package :dgw)
 
 (defmethod initialize-instance :before ((self app) &key)
+  (clrhash *neko-map*)
   (setf *config* (make-instance 'config))
   (config-load *config*)
   (setf *theme* (make-instance 'theme))
