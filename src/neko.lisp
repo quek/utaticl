@@ -29,6 +29,20 @@
           (string/= (.neko-id self)
                     (.neko-id (copy self)))))
 
+(defun name-new (class-symbol prefix)
+  (format
+   nil (format nil "~a~~d" prefix)
+   (1+
+    (loop for neko being the hash-value in *neko-map*
+          maximize
+          (or
+           (and (typep neko class-symbol)
+                (ppcre:register-groups-bind
+                    ((#'parse-integer n))
+                    ((format nil "^~a(\\d+)$" prefix) (.name neko))
+                  n))
+           0)))))
+
 (defmethod (setf .neko-id) :around (value (self neko))
   (let ((neko-id-old (.neko-id self)))
     (prog1 (call-next-method)

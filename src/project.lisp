@@ -232,27 +232,6 @@
 (defmethod (setf .sceen-matrix) :after ((sceen-matrix sceen-matrix) (project project))
   (setf (.project sceen-matrix) project))
 
-(defmethod sceen-name-new ((project project))
-  (sceen-name-new (.sceen-matrix project)))
-
-(defmethod seq-note-name-new ((self project))
-  (let ((max 0))
-    (labels
-        ((f (track)
-           (loop for lane in (.lanes track)
-                 do (loop for clip in (.clips lane)
-                          for seq = (.seq clip)
-                          if (typep seq 'seq-note)
-                            do (setf max
-                                     (max (or (ppcre:register-groups-bind
-                                                  ((#'parse-integer n)) ("^SEQ(\\d+)" (.name seq))
-                                                n)
-                                              max)))))
-           (loop for x in (.tracks track)
-                 do (f x))))
-      (f (.master-track self))
-      (format nil "SEQ~d" (1+ max)))))
-
 (defmethod terminate ((self project))
   (terminate (.master-track self)))
 
@@ -266,24 +245,6 @@
              (cons track (loop for x in (.tracks track)
                                nconc (f x)))))
     (f (.master-track self))))
-
-(defmethod track-name-new ((self project))
-  (labels ((f (track max)
-             (apply #'max (or (ppcre:register-groups-bind
-                                  ((#'parse-integer n)) ("^T(\\d+)" (.name track))
-                                n)
-                              max)
-                    (mapcar (lambda (track) (f track max)) (.tracks track)))))
-    (format nil "T~d" (1+ (f (.master-track self) 0)))))
-
-(defmethod track-group-name-new ((self project))
-  (labels ((f (track max)
-             (apply #'max (or (ppcre:register-groups-bind
-                                  ((#'parse-integer n)) ("^G(\\d+)" (.name track))
-                                n)
-                              max)
-                    (mapcar (lambda (track) (f track max)) (.tracks track)))))
-    (format nil "G~d" (1+ (f (.master-track self) 0)))))
 
 (defmethod tracks-selected ((self project))
   (map-tracks self

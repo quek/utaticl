@@ -41,7 +41,6 @@
 (defmethod execute ((self cmd-clip-add) project)
   (let ((lane (find-lane project (.lane-id self)))
         (clip (make-instance 'clip-note :time (.time self))))
-    (setf (.name (.seq clip)) (seq-note-name-new project))
     (setf (.clip-id self) (.neko-id clip))
     (clip-add lane clip)))
 
@@ -410,7 +409,7 @@
 
 (defmethod execute ((self cmd-track-add) project)
   (let ((track-before (find-neko (.track-id-before self)))
-        (track-new (make-instance 'track :name (track-name-new project)))
+        (track-new (make-instance 'track))
         (track-parent (find-neko (.track-id-parent self))))
     (setf (.track-id-new self) (.neko-id track-new))
     (track-add track-parent track-new :before track-before)))
@@ -427,7 +426,7 @@
    (tracks-before :accessor .tracks-before)))
 
 (defmethod execute ((self cmd-tracks-group) project)
-  (let* ((track-group (make-instance 'track :name (track-group-name-new project)))
+  (let* ((track-group (make-instance 'track :name (name-new 'track "GRP")))
          (parents (mapcar #'.parent (.tracks self))))
     (setf (.track-group self) track-group)
     (setf (.parents self) parents)

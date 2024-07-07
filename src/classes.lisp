@@ -138,7 +138,7 @@
    (select-p :initform nil :accessor .select-p)
    (tracks :initform nil :accessor .tracks)
    (tracks-show-p :initform t :accessor .tracks-show-p))
-  (:default-initargs :name "TRACK" :color (color #x33 #x33 #x33)))
+  (:default-initargs :color (color #x33 #x33 #x33)))
 
 (defclass master-track (track)
   ((project :initarg :project :initform nil :accessor .project))
@@ -186,7 +186,7 @@
 
 (defclass seq-note (seq)
   ((notes :initarg :notes :initform nil :accessor .notes))
-  (:default-initargs :name "NOTES" :color (color #x30 #xc0 #x30 #x80)))
+  (:default-initargs :color (color #x30 #xc0 #x30 #x80)))
 
 (defclass sceen (neko)
   ((height :initarg :height :initform 30.0 :accessor .height)

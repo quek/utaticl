@@ -1,5 +1,9 @@
 (in-package :dgw)
 
+(defmethod initialize-instance :after ((sceen sceen) &key)
+  (when (string= "" (.name sceen))
+    (setf (.name sceen) (name-new 'sceen "SCN"))))
+
 (defmethod clip-add ((sceen sceen) (clip clip) &key lane)
   (let ((lane (if lane
                   (setf (.lane clip) lane)

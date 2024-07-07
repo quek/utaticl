@@ -1,8 +1,7 @@
 (in-package :dgw)
 
 (defmethod initialize-instance :after ((sceen-matrix sceen-matrix) &key)
-  (sceen-add sceen-matrix
-             (make-instance 'sceen :name (sceen-name-new sceen-matrix))))
+  (sceen-add sceen-matrix (make-instance 'sceen)))
 
 (defmethod .offset-x ((sceen-matrix sceen-matrix))
   (.offset-x (.arrangement (.project sceen-matrix))))
@@ -37,9 +36,7 @@
   (ig:set-cursor-pos (@ .0 y))
   (when (ig:button "+" (@ (.offset-x sceen-matrix) .0))
     ;; TODO commnad にする
-    (sceen-add sceen-matrix
-               (make-instance 'sceen
-                              :name (sceen-name-new sceen-matrix)))))
+    (sceen-add sceen-matrix (make-instance 'sceen))))
 
 (defmethod render-sceen-track ((sceen-matrix sceen-matrix) (sceen sceen) (track track) x y)
   (ig:with-id (track)
@@ -56,7 +53,7 @@
               (edit clip)))
           (when (ig:button "+")
             ;; TODO command
-            (clip-add sceen (make-instance 'clip-note :name "クリップ") :lane lane))))
+            (clip-add sceen (make-instance 'clip-note) :lane lane))))
     (incf x (.width track))
     (when (.tracks-show-p track)
       (loop for each-track in (.tracks track)
@@ -77,10 +74,3 @@
       (setf (.sceens sceen-matrix)
             (append (.sceens sceen-matrix) (list sceen)))))
 
-(defmethod sceen-name-new ((sceen-matrix sceen-matrix))
-  (format nil "S~d"
-          (1+ (loop for sceen in (.sceens sceen-matrix)
-                    maximize (or (ppcre:register-groups-bind
-                                     ((#'parse-integer n)) ("^S(\\d+)" (.name sceen))
-                                   n)
-                                 0)))))

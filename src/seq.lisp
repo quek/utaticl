@@ -1,5 +1,9 @@
 (in-package :dgw)
 
+(defmethod initialize-instance :after ((seq seq) &key)
+  (when (string= "" (.name seq))
+    (setf (.name seq) (name-new 'seq "SEQ"))))
+
 (defmethod deserialize-neko ((self seq) slots)
   (let ((neko-id (getf slots 'neko-id)))
     (or (find-neko neko-id)

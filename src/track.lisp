@@ -5,7 +5,10 @@
                                      :audio-input-bus-count (.nbus-audio-in self)
                                      :audio-output-bus-count (.nbus-audio-out self))))
     (lane-add self (make-instance 'lane))
-    (setf (.process-data self) process-data)))
+    (setf (.process-data self) process-data))
+
+  (when (string= "" (.name self))
+    (setf (.name self) (name-new 'track "TRK"))))
 
 (defmethod lane-add ((self track) lane)
   (setf (.track lane) self)

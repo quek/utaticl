@@ -1,3 +1,4 @@
+;;; export してないシンボルもテストしたいのでテスト用のパッケージは作らない
 (in-package #:dgw)
 
 (setf *config* (make-instance 'config))
@@ -19,11 +20,10 @@
     (clip-add sceen (make-instance 'clip-note) :lane lane)
     (let ((serialized (with-serialize-context ()
                         (serialize project))))
-      (print serialized)
       (let ((deserialized (with-serialize-context ()
                             (deserialize serialized))))
         (fiasco:is (equalp serialized
-                           (print (with-serialize-context ()
-                              (serialize deserialized)))))))))
+                           (with-serialize-context ()
+                             (serialize deserialized))))))))
 
 
