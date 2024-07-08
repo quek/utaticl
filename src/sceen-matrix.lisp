@@ -66,22 +66,26 @@
       (ig:set-cursor-pos pos-local)
       (if clip
           (progn
-            (let* ((pos1 (@+ pos-local (ig:get-window-pos)))
-                   (pos2 (@+ pos1 (@ (.width lane) (.height sceen))))
-                   (draw-list (ig:get-window-draw-list)))
-              (ig:add-rect-filled draw-list pos1 pos2
-                                  (if (.play-p clip)
-                                      (color #x00 #x80 #x40 #x80)
-                                      (color 0 0 0 0))))
+            (when (member clip (.clips-selected sceen-matrix))
+              (let* ((pos1 (@+ pos-local (ig:get-window-pos)))
+                     (pos2 (@+ pos1 (@ (.width lane) (.height sceen))))
+                     (draw-list (ig:get-window-draw-list)))
+                (ig:add-rect-filled draw-list pos1 pos2
+                                    (color #x00 #x80 #x00 #x80))))
             (ig:with-button-color ((color 0 0 0 0))
               (when (ig:button (format nil "~:[▶~;■~]" (.play-p clip)))
                 (if (.play-p clip)
                     (setf (.will-stop clip) t)
                     (enqueue sceen-matrix clip)))
               (ig:same-line)
-              (when (ig:button (.name clip))
-                ;; TODO select
-                )
+              (when (ig:with-styles ((ig:+im-gui-col-text+
+                                      (if (.play-p clip)
+                                          (color #xff #x00 #xff #xff)
+                                          (color #xff #xff #xff #xff))))
+                      (ig:button (.name clip)))
+                (unless (key-ctrl-p)
+                  (setf (.clips-selected sceen-matrix) nil))
+                (push clip (.clips-selected sceen-matrix)))
               (when (and (ig:is-item-active)
                          (ig:is-mouse-double-clicked ig:+im-gui-mouse-button-left+))
                 (edit clip))))

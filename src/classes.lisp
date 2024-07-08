@@ -84,7 +84,8 @@
                      :grid-unit +grid-bar+))
 
 (defclass sceen-matrix (view neko)
-  ((project :accessor .project)
+  ((clips-selected :initform nil :accessor .clips-selected)
+   (project :accessor .project)
    (queue :initform nil :accessor .queue)
    (sceens :initform nil :accessor .sceens)))
 
