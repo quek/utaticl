@@ -71,7 +71,7 @@
                      (pos2 (@+ pos1 (@ (.width lane) (.height sceen))))
                      (draw-list (ig:get-window-draw-list)))
                 (ig:add-rect-filled draw-list pos1 pos2
-                                    (color #x00 #x80 #x00 #x80))))
+                                    (color #xa0 #xff #xa0 #x20))))
             (ig:with-button-color ((color 0 0 0 0))
               (when (ig:button (format nil "~:[▶~;■~]" (.play-p clip)))
                 (if (.play-p clip)
