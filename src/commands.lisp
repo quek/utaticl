@@ -26,6 +26,13 @@
 (defmethod execute ((self cmd-audio-engine-start) project)
   (start-audio-device (.audio-device *app*)))
 
+(defcommand cmd-audio-device-window (command)
+  ()
+  (:default-initargs :undo-p nil))
+
+(defmethod execute ((self cmd-audio-device-window) project)
+  (setf (.render-audio-device-window-p *app*) t))
+
 (defcommand cmd-audio-engine-stop (command)
   ()
   (:default-initargs :undo-p nil))

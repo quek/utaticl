@@ -84,6 +84,7 @@
       (setf (.audio-device-api *config*) (.api self))
       (setf (.audio-device-name *config*) (.name self))
       (setf (.sample-rate *config*) (.sample-rate self))
+      (setf (.render-audio-device-window-p *app*) nil)
 
       (config-save *config*))))
 

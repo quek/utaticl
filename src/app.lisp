@@ -25,7 +25,10 @@
             (setf (.audio-device self) (make-instance 'audio-device))
             (open-audio-device (.audio-device self))
             (start-audio-device (.audio-device self))))
-      (call-next-method)))
+      (progn
+        (when (.render-audio-device-window-p self)
+          (render (.audio-device-window self)))
+        (call-next-method))))
 
 (defmethod render ((self app))
   (loop for project in (.projects self)
