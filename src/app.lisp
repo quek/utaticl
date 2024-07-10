@@ -22,7 +22,10 @@
             ;; サンプルレートとバッファサイズが決まったのでプロジェクトが作れる
             (push (make-instance 'project) (.projects self))
             ;; オーディオデバイスを開いてオーディオイベントループを開始
-            (setf (.audio-device self) (make-instance 'audio-device))
+            (setf (.audio-device self)
+                  (make-instance 'audio-device
+                                 :device-api (.audio-device-api *config*)
+                                 :device-name (.audio-device-name *config*)))
             (open-audio-device (.audio-device self))
             (start-audio-device (.audio-device self))))
       (progn
