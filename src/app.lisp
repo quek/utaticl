@@ -26,12 +26,13 @@
                   (make-instance 'audio-device
                                  :device-api (.audio-device-api *config*)
                                  :device-name (.audio-device-name *config*)))
-            (open-audio-device (.audio-device self))
-            (start-audio-device (.audio-device self))))
+            (if (open-audio-device (.audio-device self))
+                (start-audio-device (.audio-device self))
+                (setf (.render-audio-device-window-p self) t))))
       (progn
+        (call-next-method)
         (when (.render-audio-device-window-p self)
-          (render (.audio-device-window self)))
-        (call-next-method))))
+          (render (.audio-device-window self))))))
 
 (defmethod render ((self app))
   (loop for project in (.projects self)

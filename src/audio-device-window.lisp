@@ -85,8 +85,12 @@
       (setf (.audio-device-name *config*) (.name self))
       (setf (.sample-rate *config*) (.sample-rate self))
       (setf (.render-audio-device-window-p *app*) nil)
+      (config-save *config*)
 
-      (config-save *config*))))
+      (awhen (.audio-device *app*)
+        (setf (.device-api it) (.api self))
+        (setf (.device-name it) (.name self))
+        (start-audio-device it)))))
 
 (defun preferred-buffer-size (device-index)
   (cffi:with-foreign-objects ((min-size :long)

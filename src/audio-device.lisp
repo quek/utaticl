@@ -66,15 +66,16 @@
       nil))
 
 (defmethod close-audio-device ((self audio-device))
-  (stop-audio-device self)
   (when (.stream self)
+    (stop-audio-device self)
     (pa:close-stream (.stream self))
     (setf (.stream self) nil)))
 
 (defmethod start-audio-device ((self audio-device))
-  (unless (.processing self)
-    (setf (.processing self) t)
-    (pa:start-stream (.stream self))))
+  (when (.stream self)
+    (unless (.processing self)
+      (setf (.processing self) t)
+      (pa:start-stream (.stream self)))))
 
 (defmethod stop-audio-device ((self audio-device))
   (when (.processing self)
