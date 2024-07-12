@@ -10,6 +10,11 @@
                 thereis (and (char= (char-downcase xc) yc)
                              (= (incf yi) end))))))
 
+(defun interval-p (sec)
+  (< (mod (/ (get-internal-real-time) internal-time-units-per-second)
+          (* sec 2))
+     sec))
+
 (cffi:defcfun ("memcpy" memcpy) :pointer
   (dst :pointer)
   (src :pointer)

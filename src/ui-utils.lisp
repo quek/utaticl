@@ -51,6 +51,13 @@
              (min (max (+ ab bb) 0) #xff)
              (min (max (+ aa ba) 0) #xff)))))
 
+(defun color* (color rate &optional (alpha-rate 1.0))
+  (destructuring-bind (r g b a) (color-decode color)
+    (color (min (max (+ r rate) 0) #xff)
+           (min (max (+ g rate) 0) #xff)
+           (min (max (+ b rate) 0) #xff)
+           (min (max (+ a alpha-rate) 0) #xff))))
+
 (defun color-decode (c)
   (list (ldb (byte 8 0) c)
         (ldb (byte 8 8) c)

@@ -28,8 +28,7 @@
         for clip-playing = (clip-playing sceen-matrix lane)
         if clip-playing
           collect (setf (.clip-next clip-playing) clip)
-        else
-          do (setf (.will-start clip) t))
+        do (setf (.will-start clip) t))
   (setf (.queue sceen-matrix) nil)
 
   (loop for sceen in (.sceens sceen-matrix)
@@ -72,7 +71,12 @@
                      (draw-list (ig:get-window-draw-list)))
                 (ig:add-rect-filled draw-list pos1 pos2
                                     (color #xa0 #xff #xa0 #x20))))
-            (ig:with-button-color ((color 0 0 0 0))
+            (ig:with-button-color ((cond ((or (.will-start clip)
+                                              (.will-stop clip))
+                                          (if (interval-p 0.3)
+                                              (color #x80 #x80 #x80)
+                                              (color #x00 #x00 #x00)))
+                                         (t (color 0 0 0 0))))
               (when (ig:button (format nil "~:[▶~;■~]" (.play-p clip)))
                 (if (.play-p clip)
                     (setf (.will-stop clip) t)
