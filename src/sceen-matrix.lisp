@@ -89,9 +89,7 @@
                       (ig:button (.name clip)))
                 (unless (key-ctrl-p)
                   (setf (.clips-selected sceen-matrix) nil))
-                (push clip (.clips-selected sceen-matrix)))
-              (when (and (ig:is-item-active)
-                         (ig:is-mouse-double-clicked ig:+im-gui-mouse-button-left+))
+                (push clip (.clips-selected sceen-matrix))
                 (edit clip))))
           (when (ig:button "+")
             ;; TODO command
