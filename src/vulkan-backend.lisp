@@ -457,7 +457,8 @@
                  (unwind-protect
                       (sdl2:with-sdl-event (e)
                         (loop until dgw::*done* do
-                          (vulkan-ui-loop main-window-data dgw::*app* window e)))
+                          (dgw::with-debugger
+                            (vulkan-ui-loop main-window-data dgw::*app* window e))))
                    (dgw::terminate dgw::*app*))))
 
           (vk:device-wait-idle *device*)

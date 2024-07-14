@@ -227,6 +227,13 @@
               (unless (key-ctrl-p)
                 (unselect-all-tracks (.project self)))
               (setf (.select-p track) t)))
+          (ig:with-drag-drop-source ()
+            (ig:set-drag-drop-payload +dd-tracks+)
+            (ig:text (.name track)))
+          (ig:with-drag-drop-target
+            (unless (autowrap:wrapper-null-p (ig:accept-drag-drop-payload +dd-tracks+))
+              ;; TODO
+              (print "ACCEPT DD tracks.")))
 
           (when group-p
             (ig:same-line)
