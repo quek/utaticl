@@ -118,3 +118,21 @@
     (cmd-add project 'cmd-redo))
   (defshortcut (ig:+im-gui-mod-ctrl+ ig:+im-gui-key-z+)
     (cmd-add project 'cmd-undo)))
+
+(defmacro with-renaming ((object form &optional width) &body body)
+  (let (($object (gensym "OBJECT")))
+    `(let ((,$object ,object))
+       (if (eq ,$object ,form)
+           (progn
+             (ig:set-keyboard-focus-here)
+             ,@(awhen width
+                 `((ig:set-next-item-width ,it)))
+             (when (ig:input-text "##rename" (.name ,$object)
+                                  :flags (logior ig:+im-gui-input-text-flags-auto-select-all+
+                                                 ig:+im-gui-input-text-flags-enter-returns-true+))
+               (setf ,form nil)))
+           (progn
+             ,@body
+             (when (ig:is-item-hovered)
+               (defshortcut (ig:+im-gui-key-r+)
+                 (setf ,form ,$object))))))))

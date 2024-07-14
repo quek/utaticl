@@ -88,6 +88,7 @@
    (clips-selected :initform nil :accessor .clips-selected)
    (project :accessor .project)
    (queue :initform nil :accessor .queue)
+   (sceen-renaming :initform nil :accessor .sceen-renaming)
    (sceens :initform nil :accessor .sceens)))
 
 (defclass piano-roll (time-ruler-mixin grid-mixin offset-mixin scroll-mixin zoom-mixin view)
