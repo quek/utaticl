@@ -222,10 +222,11 @@
       (ig:set-cursor-pos pos)
       (let ((color (color-selected (.color track) (.select-p track))))
         (ig:with-button-color (color)
-          (when (ig:button (.name track) (@ button-width button-height))
-            (unless (key-ctrl-p)
-              (unselect-all-tracks (.project self)))
-            (setf (.select-p track) t))
+          (with-renaming (track (.track-renaming self) lane-width)
+            (when (ig:button (.name track) (@ button-width button-height))
+              (unless (key-ctrl-p)
+                (unselect-all-tracks (.project self)))
+              (setf (.select-p track) t)))
 
           (when group-p
             (ig:same-line)

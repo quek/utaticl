@@ -78,7 +78,8 @@
    (range-selecting-p :initform nil :accessor .range-selecting-p)
    (time-ruler-width :initform 50.0
                      :accessor .time-ruler-width
-                     :accessor .offset-x))
+                     :accessor .offset-x)
+   (track-renaming :initform nil :accessor .track-renaming))
   ;; zoom-x は使わない
   (:default-initargs :zoom-x 1.0 :zoom-y 25.0 :zoom-x-factor .5 :zoom-y-factor .5
                      :grid-unit +grid-bar+))
