@@ -175,12 +175,19 @@
 (defcommand cmd-module-add (command)
   ((track-id :initarg :track-id :accessor .track-id)
    (plugin-info :initarg :plugin-info :accessor .plugin-info)
-   (before :initarg :before :initform nil :accessor .before)))
+   (before :initarg :before :initform nil :accessor .before)
+   (module :initform nil :accessor .module)))
 
 (defmethod execute ((self cmd-module-add) project)
   (let ((track (find-track project (.track-id self)))
         (module (plugin-load (.plugin-info self))))
     (module-add track module :before (.before self))))
+
+(defmethod undo ((self cmd-module-add) project)
+  (let ((track (find-track project (.track-id self)))
+        (module (.module self)))
+    (when (and track module)
+      (module-delete  track module))))
 
 (defcommand cmd-note-add (command)
   ((clip-id :initarg :clip-id :accessor .clip-id)
@@ -425,6 +432,33 @@
   (let ((track-new (find-neko (.track-id-new self)))
         (track-parent (find-neko (.track-id-parent self))))
     (track-delete track-parent track-new)))
+
+(defcommand cmd-tracks-dd-copy (command)
+  ((tracks :initarg :tracks :accessor .tracks)
+   (before :initarg :before :accessor .before)
+   (tracks-copied :accessor .tracks-copied)))
+
+(defmethod execute ((self cmd-tracks-dd-copy) project)
+  (setf (.tracks-copied self)
+        (loop for track in (.tracks self)
+              collect (copy track)))
+  (loop with before = (.before self)
+        with parent = (.parent before)
+        for track in (reverse (.tracks-copied self))
+        do (track-add parent track :before before)))
+
+(defmethod undo ((self cmd-tracks-dd-copy) project)
+  (loop with parent = (.parent (.before self))
+        for track in (.tracks-copied self)
+        do (track-delete parent track)))
+
+(defcommand cmd-tracks-dd-move (command)
+  ((tracks :initarg :tracks :accessor .tracks)
+   (before :initarg :before :accessor .before)
+   (tracks-copied :accessor .tracks-copied)))
+
+(defmethod execute ((self cmd-tracks-dd-move) project)
+)
 
 (defcommand cmd-tracks-group (command)
   ((tracks :initarg :tracks :accessor .tracks)

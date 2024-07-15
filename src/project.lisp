@@ -144,7 +144,8 @@
   (start-audio-device (.audio-device *app*) ))
 
 (defmethod (setf .piano-roll) :after (piano-roll (self project))
-  (setf (.project piano-roll) self))
+  (when piano-roll
+    (setf (.project piano-roll) self)))
 
 (defmethod (setf .play-p) :after (value (self project))
   (unless (.play-p self)
@@ -246,8 +247,8 @@
                                nconc (f x)))))
     (f (.master-track self))))
 
-(defmethod tracks-selected ((self project))
-  (map-tracks self
+(defmethod tracks-selected ((project project))
+  (map-tracks project
               (lambda (track acc)
                 (if (.select-p track)
                     (cons track acc)

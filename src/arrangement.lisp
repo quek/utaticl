@@ -232,8 +232,12 @@
             (ig:text (.name track)))
           (ig:with-drag-drop-target
             (unless (autowrap:wrapper-null-p (ig:accept-drag-drop-payload +dd-tracks+))
-              ;; TODO
-              (print "ACCEPT DD tracks.")))
+              (let ((tracks (tracks-selected (.project self))))
+                (if (key-ctrl-p)
+                    (cmd-add (.project self) 'cmd-tracks-dd-copy
+                             :tracks tracks :before track)
+                    (cmd-add (.project self) 'cmd-tracks-dd-move
+                             :tracks tracks :before track)))))
 
           (when group-p
             (ig:same-line)
