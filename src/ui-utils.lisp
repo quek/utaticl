@@ -119,6 +119,10 @@
   (defshortcut (ig:+im-gui-mod-ctrl+ ig:+im-gui-key-z+)
     (cmd-add project 'cmd-undo)))
 
+(cffi:defcfun ("SetCursorPos" sys-set-cursor-pos) :int
+  (x :int)
+  (y :int))
+
 (defmacro with-renaming ((object form &optional width) &body body)
   (let (($object (gensym "OBJECT")))
     `(let ((,$object ,object))

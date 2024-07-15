@@ -46,7 +46,10 @@
                                     (let ((note (find-neko (.note-id cmd))))
                                       (setf (.note-target self) note)
                                       (setf (.notes-selected self) (list note))
-                                      (setf (.drag-mode self) :end))))))))
+                                      (setf (.drag-mode self) :end)
+                                      (let ((x (key-to-world-x self (.key note)))
+                                            (y (time-to-world-y self (time-end note))))
+                                        (sys-set-cursor-pos (round x) (round y))))))))))
 
 (defmethod handle-drag-start ((self piano-roll))
   (cond ((and (.note-at-mouse self)
@@ -445,9 +448,9 @@
     (values time key)))
 
 (defmethod world-y-to-time ((self piano-roll) y)
-  (+ (/ (- y (.y (ig:get-window-pos)) (.offset-y self))
-        (.zoom-y self))
-     (ig:get-scroll-y)))
+  (/ (+ (- y (.y (ig:get-window-pos)) (.offset-y self))
+        (ig:get-scroll-y))
+     (.zoom-y self)))
 
 (defmethod world-x-to-key ((self piano-roll) x)
   (let ((local-x (+ (- x (.x (ig:get-window-pos)) (.offset-x self))
