@@ -96,6 +96,7 @@
   ((clip :initarg :clip :accessor .clip)
    (drag-mode :initform :move :accessor .drag-mode
               :type (member :start :move :end))
+   (note-add-pos :initform nil :accessor .note-add-pos)
    (note-at-mouse :initform nil :accessor .note-at-mouse)
    (note-default-duration :initform 1 :accessor .note-default-duration)
    (note-drag-offset :initform .0 :accessor .note-drag-offset)
