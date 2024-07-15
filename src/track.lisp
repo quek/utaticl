@@ -10,12 +10,15 @@
   (when (string= "" (.name self))
     (setf (.name self) (name-new 'track "TRK"))))
 
-(defmethod lane-add ((self track) lane)
-  (setf (.track lane) self)
-  (setf (.lanes self) (append (.lanes self) (list lane))))
+(defmethod after ((self track))
+  (cadr (member self (.tracks (.parent self)))))
 
 (defmethod before ((self track))
   (cadr (member self (reverse (.tracks (.parent self))))))
+
+(defmethod lane-add ((self track) lane)
+  (setf (.track lane) self)
+  (setf (.lanes self) (append (.lanes self) (list lane))))
 
 (defmethod next ((self track))
   (cadr (member self (.tracks (.parent self)))))

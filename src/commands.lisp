@@ -455,10 +455,21 @@
 (defcommand cmd-tracks-dd-move (command)
   ((tracks :initarg :tracks :accessor .tracks)
    (before :initarg :before :accessor .before)
-   (tracks-copied :accessor .tracks-copied)))
+   (befores :accessor .befores)))
 
 (defmethod execute ((self cmd-tracks-dd-move) project)
-)
+  (setf (.befores self) (mapcar #'after (.tracks self)))
+  (loop with before = (.before self)
+        with parent = (.parent before)
+        for track in (reverse (.tracks self))
+        do (track-delete (.parent track) track)
+           (track-add parent track :before before)))
+
+(defmethod undo ((self cmd-tracks-dd-move) project)
+  (loop for track in (.tracks self)
+        for before in (.befores self)
+        do (track-delete (.parent track) track)
+           (track-add (.parent before) track :before before)))
 
 (defcommand cmd-tracks-group (command)
   ((tracks :initarg :tracks :accessor .tracks)
@@ -480,7 +491,7 @@
 
 (defmethod undo ((self cmd-tracks-group) project)
   (let ((track-group (.track-group self)))
-    (track-delete (parent track-group) track-group)
+    (track-delete (.parent track-group) track-group)
     (loop for track in (.tracks self)
           for parent in (.parents self)
           for track-before in (.tracks-before self)
