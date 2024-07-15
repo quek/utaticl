@@ -36,20 +36,27 @@
       (multiple-value-bind (time key) (world-pos-to-time-key self (ig:get-mouse-pos))
         (setf time (time-grid-applied self time #'floor))
         (when (and (not (minusp time)) key)
-          (cmd-add (.project self) 'cmd-note-add
-                   :clip-id (.neko-id (.clip self))
-                   :time time
-                   :key key
-                   :duration (.note-default-duration self)
-                   :execute-after (lambda (cmd)
-                                    ;; そのままドラッグで長さを変えられる
-                                    (let ((note (find-neko (.note-id cmd))))
-                                      (setf (.note-target self) note)
-                                      (setf (.notes-selected self) (list note))
-                                      (setf (.drag-mode self) :end)
-                                      (let ((x (key-to-world-x self (.key note)))
-                                            (y (time-to-world-y self (time-end note))))
-                                        (sys-set-cursor-pos (round x) (round y))))))))))
+          (multiple-value-bind (window-x window-y) (sdl2:get-window-position (.window *app*))
+            (let* ((duration (.note-default-duration self))
+                   (x (round (+ (key-to-world-x self key)
+                                window-x
+                                (/ (.zoom-x self) ;key width
+                                   2))))
+                   (y (round (+ (time-to-world-y self (+ time duration))
+                                window-y))))
+              (sys-set-cursor-pos x y)
+
+              (cmd-add (.project self) 'cmd-note-add
+                       :clip-id (.neko-id (.clip self))
+                       :time time
+                       :key key
+                       :duration duration
+                       :execute-after (lambda (cmd)
+                                        ;; そのままドラッグで長さを変えられる
+                                        (let ((note (find-neko (.note-id cmd))))
+                                          (setf (.note-target self) note)
+                                          (setf (.notes-selected self) (list note))
+                                          (setf (.drag-mode self) :end))))))))))
 
 (defmethod handle-drag-start ((self piano-roll))
   (cond ((and (.note-at-mouse self)
