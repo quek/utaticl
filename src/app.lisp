@@ -26,7 +26,7 @@
                   (make-instance 'audio-device
                                  :device-api (.audio-device-api *config*)
                                  :device-name (.audio-device-name *config*)))
-            (if (open-audio-device (.audio-device self))
+            (if (ignore-errors (open-audio-device (.audio-device self)))
                 (start-audio-device (.audio-device self))
                 (setf (.render-audio-device-window-p self) t))))
       (progn
