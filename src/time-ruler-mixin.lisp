@@ -1,7 +1,8 @@
 (in-package :dgw)
 
 (defmethod playhead-y ((self time-ruler-mixin))
-  (time-to-local-y self (.play-start (.project self))))
+  (- (time-to-local-y self (.play-start (.project self)))
+     (ig:get-scroll-y)))
 
 (defmethod render-playhead ((self time-ruler-mixin))
   (let* ((draw-list (ig:get-window-draw-list))
