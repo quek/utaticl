@@ -80,6 +80,16 @@
 
     (ig:separator)
 
+    (ig:with-disabled ((.processing (.audio-device *app*)))
+      (when (ig:button "Start Audio Engine")
+        (cmd-add (car (.projects *app* )) 'cmd-audio-engine-start)))
+    (ig:same-line)
+    (ig:with-disabled ((not (.processing (.audio-device *app*))))
+      (when (ig:button "Stop Audio Engine")
+        (cmd-add (car (.projects *app* )) 'cmd-audio-engine-stop)))
+
+    (ig:separator)
+
     (when (ig:button "Ok")
       (setf (.audio-device-api *config*) (.api self))
       (setf (.audio-device-name *config*) (.name self))
@@ -90,7 +100,10 @@
       (awhen (.audio-device *app*)
         (setf (.device-api it) (.api self))
         (setf (.device-name it) (.name self))
-        (start-audio-device it)))))
+        (start-audio-device it)))
+    (ig:same-line)
+    (when (ig:button "Close")
+      (setf (.render-audio-device-window-p *app*) nil))))
 
 (defun preferred-buffer-size (device-index)
   (cffi:with-foreign-objects ((min-size :long)

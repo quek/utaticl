@@ -19,7 +19,9 @@
         (progn
           (setf (.drag-mode self) (drag-mode self note-at-mouse))
           (setf (.note-target self) note-at-mouse)
-          (unless (.range-selecting-pos1 self)
+          (setf (.note-default-duration self) (.duration note-at-mouse))
+          (when (or (not (.range-selecting-pos1 self))
+                    (not (.range-selecting-pos2 self)))
             (when (and (not (member note-at-mouse (.notes-selected self)))
                        (not (key-ctrl-p)))
               (setf (.notes-selected self) (list note-at-mouse)))))
@@ -287,7 +289,7 @@
 
 (defmethod handle-shortcut ((self piano-roll))
   (defshortcut (ig:+im-gui-mod-ctrl+ ig:+im-gui-key-a+)
-    (setf (.notes-selected self) (.notes (.seq (.clip self)))))
+    (setf (.notes-selected self) (copy-list (.notes (.seq (.clip self))))))
   (defshortcut (ig:+im-gui-key-delete+)
     (when (.notes-selected self)
       (cmd-add (.project self) 'cmd-notes-delete
