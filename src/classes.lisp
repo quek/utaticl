@@ -321,6 +321,9 @@
    (supported-standard-sample-reates :initform nil
                                      :accessor .supported-standard-sample-reates)))
 
+(defclass color-window (show-mixin view)
+  ((neko :initform nil :accessor .neko)))
+
 (defclass commander (show-mixin)
   ((project :initarg :project :accessor .project)
    (query :initform "" :accessor .query)))
@@ -373,6 +376,8 @@
   ((audio-device :initform nil :accessor .audio-device)
    (audio-device-window :initform (make-instance 'audio-device-window)
                         :accessor .audio-device-window)
+   (color-window :initform (make-instance 'color-window)
+                 :accessor .color-window)
    (mutex :initform (sb-thread:make-mutex :name "APP") :accessor .mutex)
    (projects :initform nil :accessor .projects)
    (render-audio-device-window-p :initform nil :accessor .render-audio-device-window-p)

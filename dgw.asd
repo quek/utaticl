@@ -96,6 +96,7 @@
    (:file "offset-mixin")
    (:file "grid-mixin")
    (:file "audio-device-window")
+   (:file "color-window")
    (:file "commander")
    (:file "plugin-selector")
    (:file "app")

@@ -34,9 +34,10 @@
         (when (.render-audio-device-window-p self)
           (render (.audio-device-window self))))))
 
-(defmethod render ((self app))
-  (loop for project in (.projects self)
+(defmethod render ((app app))
+  (loop for project in (.projects app)
         do (render project))
+  (render (.color-window app))
   (render *report-window*))
 
 (defmethod terminate ((self app))

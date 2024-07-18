@@ -142,4 +142,6 @@
              ,@body
              (when (ig:is-item-hovered)
                (defshortcut (ig:+im-gui-key-r+)
-                 (setf ,form ,$object))))))))
+                 (setf ,form ,$object))
+               (defshortcut (ig:+im-gui-key-c+)
+                 (color-window ,$object))))))))
