@@ -322,7 +322,8 @@
                                      :accessor .supported-standard-sample-reates)))
 
 (defclass color-window (show-mixin view)
-  ((neko :initform nil :accessor .neko)))
+  ((neko :initform nil :accessor .neko)
+   (color-before :accessor .color-before)))
 
 (defclass commander (show-mixin)
   ((project :initarg :project :accessor .project)
