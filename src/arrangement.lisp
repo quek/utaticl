@@ -210,7 +210,12 @@
                           :rounding 3.0)
       (when (contain-p mouse-pos pos1 pos2)
         (setf (.lane-at-mouse self) lane)
-        (setf (.clip-at-mouse self) clip)))))
+        (setf (.clip-at-mouse self) clip)
+        #+nil
+        (defshortcut (ig:+im-gui-key-r+)
+          (setf ,form ,$object))
+        (defshortcut (ig:+im-gui-key-c+)
+          (color-window clip))))))
 
 (defmethod render-track ((self arrangement) track group-level)
   (ig:with-id (track)
