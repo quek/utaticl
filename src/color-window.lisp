@@ -15,11 +15,8 @@
     (ig:open-popup "Color"))
 
   (ig:with-popup-modal ("Color" :open-p (.show-p color-window))
-    (ig:color-picker4 "##color" (.color (.neko color-window)))
-    (when (ig:button "Ok")
-      (hide color-window))
-    (ig:same-line)
-    (when (ig:button "Cancel")
-      (setf (.color (.neko color-window))
-            (.color-before color-window))c
+    (ig:color-picker4 "##color" (.color (.neko color-window))
+                      :ref-col (.color-before color-window))
+    (ig:set-next-item-shortcut ig:+im-gui-key-escape+)
+    (when (ig:button "閉じる")
       (hide color-window))))
