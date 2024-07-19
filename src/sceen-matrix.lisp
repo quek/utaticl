@@ -37,7 +37,7 @@
 (defmethod render ((sceen-matrix sceen-matrix))
   (ig:with-styles ((ig:+im-gui-style-var-item-spacing+ (@ .0 .0)))
     (ig:with-begin ("##sceen-matrix" :flags ig:+im-gui-window-flags-no-scrollbar+)
-      (ig:with-begin-child ("##canvas" :window-flags ig:+im-gui-window-flags-horizontal-scrollbar+)
+      (ig:with-child ("##canvas" :window-flags ig:+im-gui-window-flags-horizontal-scrollbar+)
         (loop for y = .0 then (+ y (.height sceen))
               for sceen in (.sceens sceen-matrix)
               do (render-sceen sceen-matrix sceen y)

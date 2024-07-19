@@ -6,7 +6,7 @@
 
 (defmethod render ((self rack))
   (ig:with-begin ("##rack" :flags ig:+im-gui-window-flags-no-scrollbar+)
-    (ig:with-begin-child ("##canvas" :window-flags ig:+im-gui-window-flags-horizontal-scrollbar+)
+    (ig:with-child ("##canvas" :window-flags ig:+im-gui-window-flags-horizontal-scrollbar+)
 
       (loop for module in (.modules (.target-track (.project self)))
             do (ig:with-group (render module))
