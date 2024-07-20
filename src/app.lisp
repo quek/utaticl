@@ -42,6 +42,12 @@
           (render (.audio-device-window self))))))
 
 (defmethod render ((app app))
+  (when (.dragging-p app)
+    (ig:with-drag-drop-source (ig:+im-gui-drag-drop-flags-source-extern+)
+      (ig:set-drag-drop-payload +dd-extern+)
+      (ig:with-tooltip
+          (loop for file in (.drop-files app)
+                do (ig:text file)))))
   (loop for project in (.projects app)
         do (render project))
   (render (.color-window app))

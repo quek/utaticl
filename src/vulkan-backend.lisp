@@ -454,12 +454,13 @@
                (setf dgw::*done* nil)
                (pa:with-audio
                  (setf dgw::*app* (make-instance 'dgw::app :window window))
-                 (unwind-protect
-                      (sdl2:with-sdl-event (e)
-                        (loop until dgw::*done* do
-                          (dgw::with-debugger
-                            (vulkan-ui-loop main-window-data dgw::*app* window e))))
-                   (dgw::terminate dgw::*app*))))
+                 (dd-ffi::with-drag-drop-handler (dgw::*hwnd*)
+                   (unwind-protect
+                        (sdl2:with-sdl-event (e)
+                          (loop until dgw::*done* do
+                            (dgw::with-debugger
+                              (vulkan-ui-loop main-window-data dgw::*app* window e))))
+                     (dgw::terminate dgw::*app*)))))
 
           (vk:device-wait-idle *device*)
           (imgui-impl-vulkan-shutdown)

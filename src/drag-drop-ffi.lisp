@@ -5,9 +5,6 @@
 
 (defconstant +ok+ 0)
 (defconstant +no-interface+ -2147467262)
-#x8007000E
-;;⇒ 2147942414
-
 
 (defvar *ptr-object-map* (make-hash-table :weakness :value))
 
@@ -41,46 +38,62 @@
   (d-unadvice :pointer)
   (enum-d-advice :pointer))
 
-(defun iid-from-string (str)
-  (let ((iid 0)
-        (integer (parse-integer (delete #\- str) :radix 16)))
-    (setf (ldb (byte 8   0) iid) (ldb (byte 8 120) integer))
-    (setf (ldb (byte 8   8) iid) (ldb (byte 8 112) integer))
-    (setf (ldb (byte 8  16) iid) (ldb (byte 8 104) integer))
-    (setf (ldb (byte 8  24) iid) (ldb (byte 8  96) integer))
-    (setf (ldb (byte 8  32) iid) (ldb (byte 8  72) integer))
-    (setf (ldb (byte 8  40) iid) (ldb (byte 8  64) integer))
-    (setf (ldb (byte 8  48) iid) (ldb (byte 8  88) integer))
-    (setf (ldb (byte 8  56) iid) (ldb (byte 8  80) integer))
-    (setf (ldb (byte 8  64) iid) (ldb (byte 8  32) integer))
-    (setf (ldb (byte 8  72) iid) (ldb (byte 8  40) integer))
-    (setf (ldb (byte 8  80) iid) (ldb (byte 8  48) integer))
-    (setf (ldb (byte 8  88) iid) (ldb (byte 8  56) integer))
-    (setf (ldb (byte 8  96) iid) (ldb (byte 8   0) integer))
-    (setf (ldb (byte 8 104) iid) (ldb (byte 8   8) integer))
-    (setf (ldb (byte 8 112) iid) (ldb (byte 8  16) integer))
-    (setf (ldb (byte 8 120) iid) (ldb (byte 8  24) integer))
-    iid))
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defun iid-from-string (str)
+    (let ((iid 0)
+          (integer (parse-integer (delete #\- str) :radix 16)))
+      (setf (ldb (byte 8   0) iid) (ldb (byte 8 120) integer))
+      (setf (ldb (byte 8   8) iid) (ldb (byte 8 112) integer))
+      (setf (ldb (byte 8  16) iid) (ldb (byte 8 104) integer))
+      (setf (ldb (byte 8  24) iid) (ldb (byte 8  96) integer))
+      (setf (ldb (byte 8  32) iid) (ldb (byte 8  72) integer))
+      (setf (ldb (byte 8  40) iid) (ldb (byte 8  64) integer))
+      (setf (ldb (byte 8  48) iid) (ldb (byte 8  88) integer))
+      (setf (ldb (byte 8  56) iid) (ldb (byte 8  80) integer))
+      (setf (ldb (byte 8  64) iid) (ldb (byte 8  32) integer))
+      (setf (ldb (byte 8  72) iid) (ldb (byte 8  40) integer))
+      (setf (ldb (byte 8  80) iid) (ldb (byte 8  48) integer))
+      (setf (ldb (byte 8  88) iid) (ldb (byte 8  56) integer))
+      (setf (ldb (byte 8  96) iid) (ldb (byte 8   0) integer))
+      (setf (ldb (byte 8 104) iid) (ldb (byte 8   8) integer))
+      (setf (ldb (byte 8 112) iid) (ldb (byte 8  16) integer))
+      (setf (ldb (byte 8 120) iid) (ldb (byte 8  24) integer))
+      iid))
 
-(defun iid-from-alien (pointer)
-  (let ((iid 0))
-    (setf (ldb (byte 8   0) iid) (cffi:mem-aref pointer :unsigned-char 15))
-    (setf (ldb (byte 8   8) iid) (cffi:mem-aref pointer :unsigned-char 14))
-    (setf (ldb (byte 8  16) iid) (cffi:mem-aref pointer :unsigned-char 13))
-    (setf (ldb (byte 8  24) iid) (cffi:mem-aref pointer :unsigned-char 12))
-    (setf (ldb (byte 8  32) iid) (cffi:mem-aref pointer :unsigned-char  9))
-    (setf (ldb (byte 8  40) iid) (cffi:mem-aref pointer :unsigned-char  8))
-    (setf (ldb (byte 8  48) iid) (cffi:mem-aref pointer :unsigned-char 11))
-    (setf (ldb (byte 8  56) iid) (cffi:mem-aref pointer :unsigned-char 10))
-    (setf (ldb (byte 8  64) iid) (cffi:mem-aref pointer :unsigned-char  4))
-    (setf (ldb (byte 8  72) iid) (cffi:mem-aref pointer :unsigned-char  5))
-    (setf (ldb (byte 8  80) iid) (cffi:mem-aref pointer :unsigned-char  6))
-    (setf (ldb (byte 8  88) iid) (cffi:mem-aref pointer :unsigned-char  7))
-    (setf (ldb (byte 8  96) iid) (cffi:mem-aref pointer :unsigned-char  0))
-    (setf (ldb (byte 8 104) iid) (cffi:mem-aref pointer :unsigned-char  1))
-    (setf (ldb (byte 8 112) iid) (cffi:mem-aref pointer :unsigned-char  2))
-    (setf (ldb (byte 8 120) iid) (cffi:mem-aref pointer :unsigned-char  3))
-    iid))
+  (defun iid-from-alien (pointer)
+    (let ((iid 0))
+      (setf (ldb (byte 8   0) iid) (cffi:mem-aref pointer :unsigned-char 15))
+      (setf (ldb (byte 8   8) iid) (cffi:mem-aref pointer :unsigned-char 14))
+      (setf (ldb (byte 8  16) iid) (cffi:mem-aref pointer :unsigned-char 13))
+      (setf (ldb (byte 8  24) iid) (cffi:mem-aref pointer :unsigned-char 12))
+      (setf (ldb (byte 8  32) iid) (cffi:mem-aref pointer :unsigned-char  9))
+      (setf (ldb (byte 8  40) iid) (cffi:mem-aref pointer :unsigned-char  8))
+      (setf (ldb (byte 8  48) iid) (cffi:mem-aref pointer :unsigned-char 11))
+      (setf (ldb (byte 8  56) iid) (cffi:mem-aref pointer :unsigned-char 10))
+      (setf (ldb (byte 8  64) iid) (cffi:mem-aref pointer :unsigned-char  4))
+      (setf (ldb (byte 8  72) iid) (cffi:mem-aref pointer :unsigned-char  5))
+      (setf (ldb (byte 8  80) iid) (cffi:mem-aref pointer :unsigned-char  6))
+      (setf (ldb (byte 8  88) iid) (cffi:mem-aref pointer :unsigned-char  7))
+      (setf (ldb (byte 8  96) iid) (cffi:mem-aref pointer :unsigned-char  0))
+      (setf (ldb (byte 8 104) iid) (cffi:mem-aref pointer :unsigned-char  1))
+      (setf (ldb (byte 8 112) iid) (cffi:mem-aref pointer :unsigned-char  2))
+      (setf (ldb (byte 8 120) iid) (cffi:mem-aref pointer :unsigned-char  3))
+      iid))
+
+  (defmacro define-query-interface (class str)
+    (let ((iid-symbol (intern (format nil "+~a-iid+" class)))
+          (iid-value (iid-from-string str)))
+      `(progn
+         (defconstant ,iid-symbol ,iid-value)
+         (defmethod query-interface ((,class ,class) iid object)
+           (break "query-interface ~a ~a ~a" ,class iid object)
+           (if (= (iid-from-alien iid) ,iid-value)
+               (progn
+                 (setf (cffi:mem-ref object :pointer)
+                       (.vtbl ,class))
+                 +ok+)
+               (call-next-method))
+           )))))
 
 (defclass unknown ()
   ((vtbl :accessor .vtbl)
@@ -95,41 +108,16 @@
   (unless (slot-boundp unknown 'vtbl)
     (setf (.vtbl unknown)
           (cffi:foreign-alloc '(:struct i-unknown-vtbl))))
-  (cffi:with-foreign-slots ((query-interface
-                             add-ref release
-                             drag-enter drag-over drag-leave drop)
+  (cffi:with-foreign-slots ((query-interface add-ref release)
                             (.vtbl unknown) (:struct i-unknown-vtbl))
     (setf query-interface (cffi:callback query-interface))
     (setf add-ref (cffi:callback add-ref))
     (setf release (cffi:callback release))))
 
-(defmacro define-iid (class str)
-  (let ((iid-symbol (intern (format nil "+~a-iid+" class)))
-        (iid-value (iid-from-string str)))
-    `(progn
-       (defconstant ,iid-symbol ,iid-value)
-       (defmethod query-interface ((,class ,class) iid object)
-         (if (= (iid-from-alien iid) ,iid-value)
-             (progn
-               (setf (cffi:mem-ref object :pointer)
-                     (.vtbl ,class))
-               +ok+)
-             (call-next-method)))
-       )))
-
-(define-iid unknown "00000000-0000-0000-C000-000000000046")
+(define-query-interface unknown "00000000-0000-0000-C000-000000000046")
 
 (defmethod query-interface (x iid object)
   +no-interface+)
-
-(defmethod query-interface ((unknown unknown) iid object)
-  ;; TODO これだめだね
-  (if (iid= iid (.iid unknown))
-      (progn
-        (setf (cffi:mem-ref object :pointer)
-              (.vtbl unknown))
-        +ok+)
-      (call-next-method)))
 
 (cffi:defcallback query-interface :long
     ((this :pointer)
@@ -160,15 +148,13 @@
 (defclass drop-target (unknown)
   ())
 
-(define-iid drop-target "00000122-0000-0000-C000-000000000046")
+(define-query-interface drop-target "00000122-0000-0000-C000-000000000046")
 
 (defmethod initialize-instance :before ((drop-target drop-target) &key)
   (unless (slot-boundp drop-target 'vtbl)
     (setf (.vtbl drop-target)
           (cffi:foreign-alloc '(:struct i-drop-target-vtbl))))
-  (cffi:with-foreign-slots ((query-interface
-                             add-ref release
-                             drag-enter drag-over drag-leave drop)
+  (cffi:with-foreign-slots ((drag-enter drag-over drag-leave drop)
                             (.vtbl drop-target) (:struct i-drop-target-vtbl))
     (setf drag-enter (cffi:callback drag-enter))
     (setf drag-over (cffi:callback drag-over))
@@ -295,3 +281,20 @@
      (effect :pointer))
   (drop (gethash (cffi:pointer-address this) *ptr-object-map*)
         data state pt effect))
+
+;;; WINOLEAPI  RegisterDragDrop(IN HWND hwnd, IN LPDROPTARGET pDropTarget)
+(cffi:defcfun ("RegisterDragDrop" register-drag-drop) :long
+  (hwnd :pointer)
+  (p-drop-target :pointer))
+
+;;; WINOLEAPI  RevokeDragDrop(IN HWND hwnd);
+(cffi:defcfun ("RevokeDragDrop" revoke-drag-drop) :long
+  (hwnd :pointer))
+
+(defmacro with-drag-drop-handler ((hwnd) &body body)
+  (let ((drop-target (gensym "DROP-TARGET")))
+    `(let ((,drop-target (make-instance 'drop-target)))
+       (register-drag-drop ,hwnd (.vtbl ,drop-target))
+       (unwind-protect (progn ,@body)
+         (revoke-drag-drop ,hwnd)
+         (release ,drop-target)))))
