@@ -31,3 +31,6 @@
 
 (defpackage vulkan-backend
   (:use :cl))
+
+(defpackage :dd-ffi
+  (:use :cl))

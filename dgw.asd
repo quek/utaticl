@@ -81,6 +81,7 @@
    (:file "note")
    (:file "process-data")
    (:file "view")
+   (:file "drag-drop-ffi")
    (:file "drag-drop")
    (:file "report")
    (:file "transposer")

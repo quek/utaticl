@@ -12,6 +12,13 @@
   (loop for project in (.projects self)
         do (cmd-run project)))
 
+(defmethod drag-enter ((app app) files)
+  (setf (.drop-files app) files)
+  (setf (.dragging-p app) t))
+
+(defmethod drop ((app app))
+  (setf (.dragging-p app) nil))
+
 (defmethod render :around ((self app))
   (if (null (.audio-device self))
       (if (or (null (.audio-device-api *config*))

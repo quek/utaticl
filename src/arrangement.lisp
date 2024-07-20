@@ -198,7 +198,8 @@
          (window-pos (ig:get-window-pos))
          (mouse-pos (ig:get-mouse-pos)))
     (ig:set-cursor-pos pos1)
-    (ig:text (format nil "  ~:[~;∞~]~a" (link-p clip) (.name clip)))
+    (with-renaming (clip (.clip-renaming self) (.width lane))
+      (ig:text (format nil "  ~:[~;∞~]~a" (link-p clip) (.name clip))))
 
     (let ((pos1 (@+ pos1 window-pos (@- scroll-pos) (@ 2.0 .0)))
           (pos2 (@+ pos2 window-pos (@- scroll-pos) (@ -1.0 .0)))
@@ -210,12 +211,7 @@
                           :rounding 3.0)
       (when (contain-p mouse-pos pos1 pos2)
         (setf (.lane-at-mouse self) lane)
-        (setf (.clip-at-mouse self) clip)
-        #+nil
-        (defshortcut (ig:+im-gui-key-r+)
-          (setf ,form ,$object))
-        (defshortcut (ig:+im-gui-key-c+)
-          (color-window clip))))))
+        (setf (.clip-at-mouse self) clip)))))
 
 (defmethod render-track ((self arrangement) track group-level)
   (ig:with-id (track)
