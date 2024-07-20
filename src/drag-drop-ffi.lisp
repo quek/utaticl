@@ -13,6 +13,9 @@
   (add-ref :pointer)
   (release :pointer))
 
+(cffi:defcstruct i-unknown
+  (vtbl :pointer))
+
 ;;; C:\Program Files (x86)\Windows Kits\10\Include\10.0.19041.0\um\oleidl.h
 (cffi:defcstruct i-drop-target-vtbl
   (query-interface :pointer)
@@ -22,6 +25,9 @@
   (drag-over :pointer)
   (drag-leave :pointer)
   (drop :pointer))
+
+(cffi:defcstruct i-drop-target
+  (vtbl :pointer))
 
 ;;; C:\Program Files (x86)\Windows Kits\10\Include\10.0.19041.0\um\ObjIdl.h
 (cffi:defcstruct i-data-object-vtbl
@@ -37,6 +43,9 @@
   (d-advice :pointer)
   (d-unadvice :pointer)
   (enum-d-advice :pointer))
+
+(cffi:defcstruct i-data-object
+  (vtbl :pointer))
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defun iid-from-string (str)
@@ -90,26 +99,29 @@
            (if (= (iid-from-alien iid) ,iid-value)
                (progn
                  (setf (cffi:mem-ref object :pointer)
-                       (.vtbl ,class))
+                       (.ptr ,class))
                  +ok+)
                (call-next-method))
            )))))
 
 (defclass unknown ()
-  ((vtbl :accessor .vtbl)
+  ((ptr :accessor .ptr)
    (ref-count :initform 1 :accessor .ref-count)))
 
 (defmethod initialize-instance :after ((unknown unknown) &key)
-  (setf (gethash (cffi:pointer-address (.vtbl unknown))
+  (setf (gethash (cffi:pointer-address (.ptr unknown))
                  *ptr-object-map*)
         unknown))
 
 (defmethod initialize-instance :before ((unknown unknown) &key)
-  (unless (slot-boundp unknown 'vtbl)
-    (setf (.vtbl unknown)
+  (unless (slot-boundp unknown 'ptr)
+    (setf (.ptr unknown)
+          (cffi:foreign-alloc '(:struct i-unknown)))
+    (setf (cffi:foreign-slot-value (.ptr unknown) '(:struct i-unknown) 'vtbl)
           (cffi:foreign-alloc '(:struct i-unknown-vtbl))))
   (cffi:with-foreign-slots ((query-interface add-ref release)
-                            (.vtbl unknown) (:struct i-unknown-vtbl))
+                            (cffi:foreign-slot-value (.ptr unknown) '(:struct i-unknown) 'vtbl)
+                            (:struct i-unknown-vtbl))
     (setf query-interface (cffi:callback query-interface))
     (setf add-ref (cffi:callback add-ref))
     (setf release (cffi:callback release))))
@@ -137,8 +149,9 @@
 (defmethod release ((unknown unknown))
   (let ((ref-count (decf (.ref-count unknown))))
     (when (zerop ref-count)
-      (cffi:foreign-free (.vtbl unknown))
-      (setf (.vtbl unknown) nil))
+      (cffi:foreign-free (cffi:foreign-slot-value (.ptr unknown) '(:struct i-unknown) 'vtbl))
+      (cffi:foreign-free (.ptr unknown))
+      (setf (.ptr unknown) nil))
     ref-count))
 
 (cffi:defcallback release :unsigned-long
@@ -152,11 +165,14 @@
 (define-query-interface drop-target "00000122-0000-0000-C000-000000000046")
 
 (defmethod initialize-instance :before ((drop-target drop-target) &key)
-  (unless (slot-boundp drop-target 'vtbl)
-    (setf (.vtbl drop-target)
+  (unless (slot-boundp drop-target 'ptr)
+    (setf (.ptr drop-target)
+          (cffi:foreign-alloc '(:struct i-drop-target)))
+    (setf (cffi:foreign-slot-value (.ptr drop-target) '(:struct i-drop-target) 'vtbl)
           (cffi:foreign-alloc '(:struct i-drop-target-vtbl))))
   (cffi:with-foreign-slots ((drag-enter drag-over drag-leave drop)
-                            (.vtbl drop-target) (:struct i-drop-target-vtbl))
+                            (cffi:foreign-slot-value (.ptr drop-target) '(:struct i-drop-target) 'vtbl)
+                            (:struct i-drop-target-vtbl))
     (setf drag-enter (cffi:callback drag-enter))
     (setf drag-over (cffi:callback drag-over))
     (setf drag-leave (cffi:callback drag-leave))
@@ -217,12 +233,16 @@
       (setf index -1)
       (setf tymed 1))                   ;TYMED_HGLOBAL
     (unless (minusp (cffi:foreign-funcall-pointer
-                     (cffi:foreign-slot-value data '(:struct i-data-object-vtbl) 'get-data) ()
+                     (cffi:foreign-slot-value
+                      (cffi:foreign-slot-value data '(:struct i-data-object) 'vtbl)
+                      '(:struct i-data-object-vtbl) 'get-data) ()
+                     :pointer data
                      :pointer formatetc
                      :pointer stgmedium
                      :long))
       (let ((h-drop (global-lock (cffi:foreign-slot-value stgmedium '(:struct stgmedium) 'union))))
         (unless (cffi:null-pointer-p h-drop)
+          (break)
           (let ((files
                   (loop with file-path = (make-array (* +max-path+ 2) :element-type '(unsigned-byte 8))
                         with file-count = (drag-query-file h-drop #xFFFFFFFF (cffi:null-pointer) 0)
@@ -295,7 +315,7 @@
 (defmacro with-drag-drop-handler ((hwnd) &body body)
   (let ((drop-target (gensym "DROP-TARGET")))
     `(let ((,drop-target (make-instance 'drop-target)))
-       (register-drag-drop ,hwnd (.vtbl ,drop-target))
+       (register-drag-drop ,hwnd (.ptr ,drop-target))
        (unwind-protect (progn ,@body)
          (revoke-drag-drop ,hwnd)
          (release ,drop-target)))))
