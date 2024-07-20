@@ -26,12 +26,6 @@
 (defmethod .y ((self list))
   (cadr self))
 
-(defun color (r g b &optional (a #x80))
-  (+ (* a #x1000000)
-     (* b #x10000)
-     (* g #x100)
-     r))
-
 (defmacro button-toggle (label var)
   `(ig:with-button-color ((if ,var
                               (.color-button-toggle-on *theme*)
@@ -43,6 +37,12 @@
   (and (<= (.x pos-min) (.x pos) (.x pos-max))
        (<= (.y pos-min) (.y pos) (.y pos-max))))
 
+(defun color (r g b &optional (a #x80))
+  (+ (* a #x1000000)
+     (* b #x10000)
+     (* g #x100)
+     r))
+
 (defun color+ (a b)
   (destructuring-bind (ar ag ab aa) (color-decode a)
     (destructuring-bind (br bg bb ba) (color-decode b)
@@ -53,10 +53,10 @@
 
 (defun color* (color rate &optional (alpha-rate 1.0))
   (destructuring-bind (r g b a) (color-decode color)
-    (color (min (max (+ r rate) 0) #xff)
-           (min (max (+ g rate) 0) #xff)
-           (min (max (+ b rate) 0) #xff)
-           (min (max (+ a alpha-rate) 0) #xff))))
+    (color (min (max (round (* r rate)) 0) #xff)
+           (min (max (round (* g rate)) 0) #xff)
+           (min (max (round (* b rate)) 0) #xff)
+           (min (max (round (* a alpha-rate)) 0) #xff))))
 
 (defun color-decode (c)
   (list (ldb (byte 8 0) c)
@@ -141,7 +141,7 @@
            (progn
              ,@body
              (when (ig:is-item-hovered)
-               (defshortcut (ig:+im-gui-key-r+)
-                 (setf ,form ,$object))
                (defshortcut (ig:+im-gui-key-c+)
-                 (color-window ,$object))))))))
+                 (color-window ,$object))
+               (defshortcut (ig:+im-gui-key-r+)
+                 (setf ,form ,$object))))))))
