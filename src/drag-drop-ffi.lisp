@@ -117,6 +117,7 @@
 (define-query-interface unknown "00000000-0000-0000-C000-000000000046")
 
 (defmethod query-interface (x iid object)
+  (setf (cffi:mem-ref object :pointer) (cffi:null-pointer))
   +no-interface+)
 
 (cffi:defcallback query-interface :long
