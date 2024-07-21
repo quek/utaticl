@@ -96,16 +96,25 @@
       (when (ig:accept-drag-drop-payload +dd-extern+  ig:+im-gui-drag-drop-flags-source-extern+)
         (setf (.dragging-source-extern arrangement) (.drop-files *app*))))))
 
+(defmethod handle-dragging-extern-drop ((arrangement arrangement))
+  (when (ig:is-mouse-down-nil ig:+im-gui-mouse-button-left+)
+    (let ((path (car (.dragging-source-extern arrangement)))) ;TODO 複数ファイル
+      (multiple-value-bind (time lane) (world-pos-to-time-lane arrangement (ig:get-mouse-pos))
+        (setf time (time-grid-applied arrangement time #'floor))
+        (when (and (not (minusp time)) lane)
+          (cmd-add (.project arrangement) 'cmd-clip-audio-add
+                   :time time :lane lane :path path
+                   ;; :execute-after (lambda (cmd)
+                   ;;                  (edit (find-neko (.clip-id cmd))))
+                   ))))
+    (setf (.dragging-source-extern arrangement) nil)))
+
 (defmethod handle-mouse ((self arrangement))
   (let* ((io (ig:get-io)))
     (cond ((dragging-extern-p)
            (handle-dragging-extern self))
           ((.dragging-source-extern self)
-           (if (ig:is-mouse-down-nil ig:+im-gui-mouse-button-left+)
-               (progn
-                 (print (list "release" (.dragging-source-extern self)))
-                 (setf (.dragging-source-extern self) nil))
-               (print "not release")))
+           (handle-dragging-extern-drop self))
           ((.clips-dragging self)
            (handle-dragging self))
           ((.range-selecting-p self)

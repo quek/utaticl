@@ -21,7 +21,8 @@
                "anaphora"
                "log4cl"
                "uuid"
-               "qbase64")
+               "qbase64"
+               "cl-wav")
   :serial t
   :pathname "src"
   :components
@@ -75,8 +76,10 @@
    (:file "lane")
    (:file "time-thing")
    (:file "clip")
+   (:file "clip-audio")
    (:file "clip-note")
    (:file "seq")
+   (:file "seq-audio")
    (:file "seq-note")
    (:file "note")
    (:file "process-data")

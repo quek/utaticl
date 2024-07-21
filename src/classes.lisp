@@ -186,6 +186,11 @@
    (will-start :initform nil :accessor .will-start)
    (will-stop :initform nil :accessor .will-stop)))
 
+(defclass clip-audio (clip)
+  ()
+  (:default-initargs :name nil :color nil
+                     :seq (make-instance 'seq-audio)))
+
 (defclass clip-note (clip)
   ()
   (:default-initargs :name nil :color nil
@@ -193,6 +198,12 @@
 
 (defclass seq (time-thing)
   ((clips :initarg :clips :initform nil :accessor .clips)))
+
+(defclass seq-audio (seq)
+  ((nchannels :initform 1 :accessor .nchannels)
+   (sample-rate :initform 48000 :accessor .sample-rate)
+   (data :initform (make-array 0 :element-type '(unsigned-byte 8)) :accessor .data)
+   (path :initform nil :accessor .path)))
 
 (defclass seq-note (seq)
   ((notes :initarg :notes :initform nil :accessor .notes))

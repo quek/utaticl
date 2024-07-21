@@ -60,6 +60,22 @@
       (when (and it (eq clip (.clip it)))
         (setf it nil)))))
 
+(defcommand cmd-clip-audio-add (command)
+  ((clip :accessor .clip)
+   (lane :initarg :lane :accessor .lane)
+   (path :initarg :path :accessor .path)
+   (time :initarg :time :accessor .time)))
+
+(defmethod execute ((self cmd-clip-audio-add) project)
+  (let ((clip (make-instance 'clip-audio
+                             :path (.path self)
+                             :time (.time self))))
+    (clip-add (.lane self) clip)
+    (setf (.clip self) clip)))
+
+(defmethod undo ((self cmd-clip-audio-add) project)
+  (clip-delete (.lane self) (.clip self)))
+
 (defcommand cmd-clip-delete (command)
   ((clip :accessor .clip)
    (clip-id :initarg :clip-id :accessor .clip-id)

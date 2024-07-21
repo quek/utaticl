@@ -1,7 +1,8 @@
 (in-package :dgw)
 
-(defmethod initialize-instance :after ((self clip-note) &key seq)
-  (setf (.seq self) (or seq (make-instance 'seq-note))))
+;; TODO これいらないよね
+;; (defmethod initialize-instance :after ((self clip-note) &key seq)
+;;   (setf (.seq self) (or seq (make-instance 'seq-note))))
 
 (defmethod edit ((self clip-note))
   (setf (.piano-roll (.project self))
