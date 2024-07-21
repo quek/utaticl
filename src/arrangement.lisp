@@ -33,6 +33,21 @@
                  :execute-after (lambda (cmd)
                                   (edit (find-neko (.clip-id cmd)))))))))
 
+(defmethod handle-drag-start ((self arrangement))
+  (if (and (.clips-selected self) (.clip-at-mouse self))
+      (progn
+        ;; ノートの移動 or 長さ変更
+        (setf (.clip-target self) (.clip-at-mouse self))
+        (setf (.clip-drag-offset self) (- (.y (ig:get-mouse-pos))
+                                          (time-to-world-y self (.time (.clip-at-mouse self)))))
+        (setf (.clips-dragging self) (mapcar #'copy (.clips-selected self)))
+        (loop for clip in (.clips-dragging self)
+              for src-clip in (.clips-selected self)
+              for lane = (gethash src-clip (.clip-lane-map self))
+              do (clip-add lane clip)))
+      ;; 範囲選択
+      (setf (.range-selecting-p self) t)))
+
 (defmethod handle-dragging ((self arrangement))
   (if (ig:is-mouse-released ig:+im-gui-mouse-button-left+)
       ;; ドラッグの終了
@@ -72,24 +87,19 @@
                 for lane = (relative-at lane-selected delta-lane)
                 do (move dragging time lane))))))
 
-(defmethod handle-drag-start ((self arrangement))
-  (if (and (.clips-selected self) (.clip-at-mouse self))
-      (progn
-        ;; ノートの移動 or 長さ変更
-        (setf (.clip-target self) (.clip-at-mouse self))
-        (setf (.clip-drag-offset self) (- (.y (ig:get-mouse-pos))
-                                          (time-to-world-y self (.time (.clip-at-mouse self)))))
-        (setf (.clips-dragging self) (mapcar #'copy (.clips-selected self)))
-        (loop for clip in (.clips-dragging self)
-              for src-clip in (.clips-selected self)
-              for lane = (gethash src-clip (.clip-lane-map self))
-              do (clip-add lane clip)))
-      ;; 範囲選択
-      (setf (.range-selecting-p self) t)))
+(defmethod handle-dragging-extern ((arrangement arrangement))
+  (let ((pos (@- (ig:get-mouse-pos) (ig:get-window-pos))))
+    (ig:set-cursor-pos pos)
+    (ig:invisible-button +dd-extern+ (@ 0.1 0.1))
+    (ig:with-drag-drop-target
+      (when (ig:accept-drag-drop-payload +dd-extern+)
+        (print (.drop-files *app*))))))
 
 (defmethod handle-mouse ((self arrangement))
   (let* ((io (ig:get-io)))
-    (cond ((.clips-dragging self)
+    (cond ((dragging-extern-p)
+           (handle-dragging-extern self))
+          ((.clips-dragging self)
            (handle-dragging self))
           ((.range-selecting-p self)
            (handle-range-selecting self))
@@ -236,7 +246,7 @@
             (ig:set-drag-drop-payload +dd-tracks+)
             (ig:text (.name track)))
           (ig:with-drag-drop-target
-            (unless (autowrap:wrapper-null-p (ig:accept-drag-drop-payload +dd-tracks+))
+            (when (ig:accept-drag-drop-payload +dd-tracks+)
               (let ((tracks (tracks-selected (.project self))))
                 (if (key-ctrl-p)
                     (cmd-add (.project self) 'cmd-tracks-dd-copy
