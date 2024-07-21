@@ -204,7 +204,7 @@
 
 (cffi:defcstruct stgmedium
   (tymed :unsigned-long)
-  (union (:union stgmedium-union))
+  (u (:union stgmedium-union))
   (p-unk-for-release :pointer))
 
 (cffi:defcfun ("GlobalLock" global-lock) :pointer
@@ -232,32 +232,37 @@
       (setf aspect 1)                   ;DVASPECT_CONTENT
       (setf index -1)
       (setf tymed 1))                   ;TYMED_HGLOBAL
-    (unless (minusp (cffi:foreign-funcall-pointer
+    (when (<= 0 (cffi:foreign-funcall-pointer
+                 (cffi:foreign-slot-value
+                  (cffi:foreign-slot-value data '(:struct i-data-object) 'vtbl)
+                  '(:struct i-data-object-vtbl) 'get-data) ()
+                 :pointer data
+                 :pointer formatetc
+                 :pointer stgmedium
+                 :long))
+      (let ((h-drop (global-lock
                      (cffi:foreign-slot-value
-                      (cffi:foreign-slot-value data '(:struct i-data-object) 'vtbl)
-                      '(:struct i-data-object-vtbl) 'get-data) ()
-                     :pointer data
-                     :pointer formatetc
-                     :pointer stgmedium
-                     :long))
-      (let ((h-drop (global-lock (cffi:foreign-slot-value stgmedium '(:struct stgmedium) 'union))))
+                      (cffi:foreign-slot-value stgmedium '(:struct stgmedium) 'u)
+                      '(:union stgmedium-union) 'h-global))))
         (unless (cffi:null-pointer-p h-drop)
-          (break)
           (let ((files
-                  (loop with file-path = (make-array (* +max-path+ 2) :element-type '(unsigned-byte 8))
+                  (loop with file-path = (make-array (* +max-path+ 2) :element-type '(unsigned-byte 8)
+                                                                      :initial-element 0)
                         with file-count = (drag-query-file h-drop #xFFFFFFFF (cffi:null-pointer) 0)
                         for i below file-count
                         for file = (sb-sys:with-pinned-objects (file-path)
-                                     (and (plusp (drag-query-file
-                                                  h-drop i (sb-sys:vector-sap file-path) +max-path+))
-                                          (sb-ext:octets-to-string file-path
-                                                                   :external-format :utf16le)))
+                                     (let ((len (drag-query-file
+                                                 h-drop i (sb-sys:vector-sap file-path) +max-path+)))
+                                       (and (plusp len)
+                                            (sb-ext:octets-to-string file-path
+                                                                     :external-format :utf16le
+                                                                     :end (* len 2)))))
                         if (and file (equalp (pathname-type file) "wav"))
                           collect file)))
             (when files
               (setf (cffi:mem-ref effect :unsigned-long) +dropeffect-copy+)
               (dgw::drag-enter dgw::*app* files)))))
-      (global-unlock (cffi:foreign-slot-value stgmedium '(:struct stgmedium) 'union))
+      (global-unlock (cffi:foreign-slot-value stgmedium '(:struct stgmedium) 'u))
       (release-stg-medium stgmedium)))
   +ok+)
 
