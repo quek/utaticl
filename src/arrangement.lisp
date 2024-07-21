@@ -92,13 +92,20 @@
     (ig:set-cursor-pos pos)
     (ig:invisible-button +dd-extern+ (@ 0.1 0.1))
     (ig:with-drag-drop-target
-      (when (ig:accept-drag-drop-payload +dd-extern+)
-        (print (.drop-files *app*))))))
+      ;; マウスボタン離してなくても accept しちゃう
+      (when (ig:accept-drag-drop-payload +dd-extern+  ig:+im-gui-drag-drop-flags-source-extern+)
+        (setf (.dragging-source-extern arrangement) (.drop-files *app*))))))
 
 (defmethod handle-mouse ((self arrangement))
   (let* ((io (ig:get-io)))
     (cond ((dragging-extern-p)
            (handle-dragging-extern self))
+          ((.dragging-source-extern self)
+           (if (ig:is-mouse-down-nil ig:+im-gui-mouse-button-left+)
+               (progn
+                 (print (list "release" (.dragging-source-extern self)))
+                 (setf (.dragging-source-extern self) nil))
+               (print "not release")))
           ((.clips-dragging self)
            (handle-dragging self))
           ((.range-selecting-p self)

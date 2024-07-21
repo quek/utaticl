@@ -72,6 +72,7 @@
    (clip-target :initform nil :accessor .clip-target)
    (clips-selected :initform nil :accessor .clips-selected)
    (clips-dragging :initform nil :accessor .clips-dragging)
+   (dragging-source-extern :initform nil :accessor .dragging-source-extern)
    (lane-at-mouse :initform nil :accessor .lane-at-mouse)
    (offset-group :initform 5.0 :accessor .offset-group)
    (offset-y :initform 30.0 :accessor .offset-y)
