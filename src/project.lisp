@@ -153,6 +153,10 @@
   (unless value
     (setf (.play-p (.sceen-matrix self)) nil)))
 
+(defmethod process :around ((project project))
+  (let ((*project* project))
+    (call-next-method)))
+
 (defmethod process ((self project))
   (prepare (.master-track self))
 
@@ -191,8 +195,9 @@
   (sb-concurrency:send-message
    *thread-pool*
    (list (lambda (project track)
-           (sb-concurrency:send-message
-            (.mailbox project) (process track)))
+           (let ((*project* project))
+             (sb-concurrency:send-message
+              (.mailbox project) (process track))))
          self track)))
 
 (defmethod render ((self project))

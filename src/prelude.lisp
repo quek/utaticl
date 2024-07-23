@@ -11,6 +11,7 @@
 ;;(setf *done* t)
 (defparameter *invoke-debugger-p* t)
 
+(defvar *project*)
 (defvar *process-data*)
 
 (defconstant +side-threshold+ 5.0)

@@ -310,7 +310,8 @@
    (value :initarg :value :initform .0d0 :accessor .value)))
 
 (defclass process-data ()
-  ((wrap  :accessor .wrap)
+  ((bpm :accessor .bpm)
+   (wrap  :accessor .wrap)
    (inputs :accessor .inputs)
    (outputs :accessor .outputs)
    (input-events :accessor .input-events)

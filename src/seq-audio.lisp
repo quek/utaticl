@@ -8,34 +8,39 @@
 
 (defmethod (setf .path) :after (path (seq-audio seq-audio))
   (when path
-   (let ((riff (wav:read-wav-file path)))
-     (loop for chunk in riff
-           if (equal "fmt " (getf chunk :chunk-id))
-             do (let ((data (getf chunk :chunk-data)))
-                  (setf (.nchannels seq-audio) (getf data :number-of-channels))
-                  (setf (.sample-rate seq-audio) (getf data :sample-rate)))
-           if (equal "data" (getf chunk :chunk-id))
-             do (let* ((chunk-data (getf chunk :chunk-data))
-                       (size-of-float (cffi:foreign-type-size :float))
-                       (length (/ (length chunk-data) size-of-float))
-                       (buffer (make-array length
-                                           :element-type 'single-float)))
-                  (loop for i below length
-                        do (setf (aref buffer i)
-                                 (coerce (logior (ash (aref chunk-data (* i size-of-float)) 24)
-                                                 (ash (aref chunk-data (+ (* i size-of-float) 1)) 16)
-                                                 (ash (aref chunk-data (+ (* i size-of-float) 2)) 8)
-                                                 (+ (* i size-of-float) 3))
-                                         'single-float)))
-                  (setf (.data seq-audio) buffer))))))
+    (let ((riff (wav:read-wav-file path)))
+      (loop for chunk in riff
+            if (equal "fmt " (getf chunk :chunk-id))
+              do (let ((data (getf chunk :chunk-data)))
+                   (setf (.nchannels seq-audio) (getf data :number-of-channels))
+                   (setf (.sample-rate seq-audio) (getf data :sample-rate)))
+            if (equal "data" (getf chunk :chunk-id))
+              do (let* ((chunk-data (getf chunk :chunk-data))
+                        (size-of-float (cffi:foreign-type-size :float))
+                        (length (/ (length chunk-data) size-of-float))
+                        (buffer (make-array length
+                                            :element-type 'single-float)))
+                   (loop for i below length
+                         do (setf (aref buffer i)
+                                  (ieee-floats:decode-float32
+                                   (logior (ash (aref chunk-data (* i size-of-float)) 24)
+                                           (ash (aref chunk-data (+ (* i size-of-float) 1)) 16)
+                                           (ash (aref chunk-data (+ (* i size-of-float) 2)) 8)
+                                           (+ (* i size-of-float) 3)))))
+                   (setf (.data seq-audio) buffer))))))
 
 (defmethod prepare-event ((seq-audio seq-audio) start end loop-p offset-samples)
   (loop with bus = 0
         with nchannels = (.nchannels seq-audio)
         with data = (.data seq-audio)
+        with frame-rate = (* (/ 60 (.bpm *project*)) (.frames-per-buffer *config*))
+        with start-frame = (round (* start frame-rate))
+        with end-frame = (round (* end frame-rate))
+        with nframes = (min (- end-frame start-frame) (- (length data) start-frame))
         for channel below (min nchannels 2)
         for buffer = (buffer (.outputs *process-data*) bus channel)
-        do (loop for i below (.frames-per-buffer *config*)
+        do (assert (<= nframes (.frames-per-buffer *config*)))
+        do (loop for i below nframes
                  do (setf (cffi:mem-aref buffer :float i)
                           (aref data (+ (* i nchannels) channel))))))
 
