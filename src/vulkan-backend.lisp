@@ -136,6 +136,7 @@
 
 
 
+
 ;; static VkInstance               g_Instance = VK_NULL_HANDLE;
 (defvar *instance*)
 ;; static VkPhysicalDevice         g_PhysicalDevice = VK_NULL_HANDLE;
@@ -200,12 +201,32 @@
       (setf *device* (vk:create-device *physical-device* create-info))
       (setf *queue* (vk:get-device-queue *device* *queue-family* 0)))
 
-    (let ((pool-info (vk:make-descriptor-pool-create-info
-                      :flags '(:free-descriptor-set)
-                      :max-sets 1
-                      :pool-sizes (list (vk:make-descriptor-pool-size
-                                         :type :combined-image-sampler
-                                         :descriptor-count 1)))))
+    (let* ((pool-sizes (list (vk:make-descriptor-pool-size
+                              :type :sampler :descriptor-count 1000)
+                             (vk:make-descriptor-pool-size
+                              :type :combined-image-sampler :descriptor-count 1000)
+                             (vk:make-descriptor-pool-size
+                              :type :sampled-image :descriptor-count 1000)
+                             (vk:make-descriptor-pool-size
+                              :type :storage-image :descriptor-count 1000)
+                             (vk:make-descriptor-pool-size
+                              :type :uniform-texel-buffer :descriptor-count 1000)
+                             (vk:make-descriptor-pool-size
+                              :type :storage-texel-buffer :descriptor-count 1000)
+                             (vk:make-descriptor-pool-size
+                              :type :uniform-buffer :descriptor-count 1000)
+                             (vk:make-descriptor-pool-size
+                              :type :storage-buffer :descriptor-count 1000)
+                             (vk:make-descriptor-pool-size
+                              :type :uniform-buffer-dynamic :descriptor-count 1000)
+                             (vk:make-descriptor-pool-size
+                              :type :storage-buffer-dynamic :descriptor-count 1000)
+                             (vk:make-descriptor-pool-size
+                              :type :input-attachment :descriptor-count 1000)))
+           (pool-info (vk:make-descriptor-pool-create-info
+                       :flags '(:free-descriptor-set)
+                       :max-sets (* 1000 (length pool-sizes))
+                       :pool-sizes pool-sizes)))
       (setf *descriptor-pool* (vk:create-descriptor-pool *device* pool-info)))))
 
 (defun setup-vulkan-window (main-window-data surface width height)
@@ -213,6 +234,11 @@
                             main-window-data
                             (:struct imgui-impl-vulkan-h-window))
     (setf clear-enable t)
+    (setf (cffi:foreign-slot-value
+           main-window-data
+           '(:struct imgui-impl-vulkan-h-window)
+           'surface)
+          surface)
 
     (unless (vk:get-physical-device-surface-support-khr
              *physical-device* *queue-family* (vk:make-surface-khr-wrapper surface))
@@ -221,10 +247,15 @@
     ;; FIXME VkFormat はどれ？
     (cffi:with-foreign-object (request-format :int 4)
       (let ((VK_FORMAT_B8G8R8A8_UNORM 44)
+            (VK_FORMAT_R8G8B8A8_UNORM 37)
+            (VK_FORMAT_B8G8R8_UNORM 30)
+            (VK_FORMAT_R8G8B8_UNORM 23)
             (VK_COLORSPACE_SRGB_NONLINEAR_KHR 0))
         (loop for i below 4
+              for v in (list VK_FORMAT_B8G8R8A8_UNORM VK_FORMAT_R8G8B8A8_UNORM
+                             VK_FORMAT_B8G8R8_UNORM VK_FORMAT_R8G8B8_UNORM)
               do (setf (cffi:mem-aref request-format :int i)
-                       VK_FORMAT_B8G8R8A8_UNORM))
+                       v))
         (let ((ret (imgui-impl-vulkan-h-select-surface-format
                     (vk:raw-handle *physical-device*) surface request-format 4
                     VK_COLORSPACE_SRGB_NONLINEAR_KHR)))
@@ -242,7 +273,11 @@
      (vk:raw-handle *instance*) (vk:raw-handle *physical-device*)
      (vk:raw-handle *device*) main-window-data
      *queue-family* vk:*default-allocator*
-     width height *min-image-count*)))
+     width height *min-image-count*)
+    #+nil
+    (break "after first imgui-impl-vulkan-h-create-or-resize-window ~a"
+           (cffi:foreign-slot-value main-window-data '(:struct imgui-impl-vulkan-h-window)
+                                    'image-count))))
 
 (defun semaphore (main-window-data which)
   (cffi:with-foreign-slots ((frame-semaphores semaphore-index)
@@ -311,7 +346,7 @@
 
 (defun frame-present (main-window-data)
   (unless *swap-chain-rebuild*
-    (cffi:with-foreign-slots ((swapchain frame-index semaphore-index image-count)
+    (cffi:with-foreign-slots ((swapchain frame-index semaphore-index semaphore-count)
                               main-window-data
                               (:struct imgui-impl-vulkan-h-window))
       (handler-case
@@ -325,7 +360,7 @@
           (setf *swap-chain-rebuild* t)
           (return-from frame-present)))
 
-      (setf semaphore-index (mod (1+ semaphore-index) image-count)))))
+      (setf semaphore-index (mod (1+ semaphore-index) semaphore-count)))))
 
 (defun cleanup-vulkan-window (main-window-data)
   (imgui-impl-vulkan-h-destroy-window
@@ -338,9 +373,10 @@
   (vk:destroy-instance *instance*))
 
 (defun vulkan-backend-main ()
-  (cffi:with-foreign-object (main-window-data '(:struct imgui-impl-vulkan-h-window))
-    (loop for i below (cffi:foreign-type-size '(:struct imgui-impl-vulkan-h-window))
-          do (setf (cffi:mem-ref main-window-data :char i) 0))
+  (cffi:with-foreign-objects ((main-window-data '(:struct imgui-impl-vulkan-h-window))
+                              (surface 'vulkan:surface-khr))
+    (ftw:memset main-window-data (cffi:foreign-type-size '(:struct imgui-impl-vulkan-h-window)))
+    (ftw:memset surface (cffi:foreign-type-size 'vulkan:surface-khr))
 
     (sdl2:with-init (:video)
       (sdl2:with-window (window :title "DGW"
@@ -360,7 +396,7 @@
           (setf dgw::*hwnd* (plus-c:c-ref wm-info sdl2-ffi:sdl-syswm-info :info :x11 :display)))
 
         (unwind-protect
-             (cffi:with-foreign-slots ((surface render-pass image-count)
+             (cffi:with-foreign-slots ((render-pass image-count)
                                        main-window-data
                                        (:struct imgui-impl-vulkan-h-window))
                (cffi:with-foreign-object (extensions-count :uint32)
@@ -374,13 +410,13 @@
                    (setup-vulkan extensions (cffi:mem-ref extensions-count :uint32))))
 
                (unless (sdl-vulkan-create-surface (autowrap:ptr window) (vk:raw-handle *instance*)
-                                                  (cffi:foreign-slot-pointer main-window-data
-                                                                             '(:struct imgui-impl-vulkan-h-window)
-                                                                             'surface))
+                                                  surface)
                  (error "Failed to create Vulkan surface!"))
 
                (multiple-value-bind (w h) (sdl2:get-window-size window)
-                 (setup-vulkan-window main-window-data surface w h))
+                 (setup-vulkan-window main-window-data
+                                      (cffi:mem-ref surface 'vulkan:surface-khr)
+                                      w h))
 
                (ig:create-context (cffi:null-pointer))
 
@@ -481,20 +517,29 @@
                                  (= (we :window-id) (sdl2:get-window-id window))))))
                    (setf dgw::*done* t))))
 
-  (when *swap-chain-rebuild*
-    (multiple-value-bind (width height) (sdl2:get-window-size window)
-      (when (and (plusp width) (plusp height))
-        (imgui-impl-vulkan-set-min-image-count *min-image-count*)
-        (imgui-impl-vulkan-h-create-or-resize-window
-         (vk:raw-handle *instance*) (vk:raw-handle *physical-device*)
-         (vk:raw-handle *device*) main-window-data
-         *queue-family* vk:*default-allocator*
-         width height *min-image-count*)
-        (setf (cffi:foreign-slot-value main-window-data
-                                       '(:struct imgui-impl-vulkan-h-window)
-                                       'frame-index)
-              0)
-        (setf *swap-chain-rebuild* nil))))
+  (multiple-value-bind (width height) (sdl2:get-window-size window)
+    (when (and (plusp width) (plusp height)
+               (or *swap-chain-rebuild*
+                   (/= (cffi:foreign-slot-value main-window-data
+                                                '(:struct imgui-impl-vulkan-h-window)
+                                                'width)
+                       width)
+                   (/= (cffi:foreign-slot-value main-window-data
+                                                '(:struct imgui-impl-vulkan-h-window)
+                                                'height)
+                       height)))
+      (imgui-impl-vulkan-set-min-image-count *min-image-count*)
+      (break "in loop imgui-impl-vulkan-h-create-or-resize-window")
+      (imgui-impl-vulkan-h-create-or-resize-window
+       (vk:raw-handle *instance*) (vk:raw-handle *physical-device*)
+       (vk:raw-handle *device*) main-window-data
+       *queue-family* vk:*default-allocator*
+       width height *min-image-count*)
+      (setf (cffi:foreign-slot-value main-window-data
+                                     '(:struct imgui-impl-vulkan-h-window)
+                                     'frame-index)
+            0)
+      (setf *swap-chain-rebuild* nil)))
 
   (imgui-impl-vulkan-new-frame)
   (ig-backend::impl-sdl2-new-frame)

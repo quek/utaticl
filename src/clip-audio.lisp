@@ -1,7 +1,9 @@
 (in-package :dgw)
 
-(defmethod initialize-instance :after ((clip-audio clip-audio) &key path)
-  (setf (.path (.seq clip-audio)) path))
+(defmethod initialize-instance :around ((clip-audio clip-audio) &key path)
+  (if path
+      (call-next-method clip-audio :path path :seq (make-instance 'seq-audio :path path))
+      (call-next-method)))
 
 (defmethod clip-add :after ((lane lane) (clip-audio clip-audio) &key)
   (update-duration clip-audio (.bpm (.project lane))))
