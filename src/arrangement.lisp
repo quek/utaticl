@@ -225,13 +225,16 @@
          (pos1 (@ x y1))
          (pos2 (@ (+ x (.width lane)) y2))
          (window-pos (ig:get-window-pos))
+         (pos1-world (@+ pos1 window-pos (@- scroll-pos)))
+         (pos2-world (@+ pos2 window-pos (@- scroll-pos)))
          (mouse-pos (ig:get-mouse-pos)))
     (ig:set-cursor-pos pos1)
     (with-renaming (clip (.clip-renaming self) (.width lane))
-      (ig:text (format nil "  ~:[~;∞~]~a" (link-p clip) (.name clip))))
+      (ig:with-clip-rect (pos1-world pos2-world)
+        (ig:text (format nil "  ~:[~;∞~]~a" (link-p clip) (.name clip)))))
 
-    (let ((pos1 (@+ pos1 window-pos (@- scroll-pos) (@ 2.0 .0)))
-          (pos2 (@+ pos2 window-pos (@- scroll-pos) (@ -1.0 .0)))
+    (let ((pos1 (@+ pos1-world (@ 2.0 .0)))
+          (pos2 (@+ pos2-world (@ -1.0 .0)))
           (color (color-selected (.color clip) (member clip (.clips-selected self)))))
       (ig:add-rect-filled draw-list
                           pos1
