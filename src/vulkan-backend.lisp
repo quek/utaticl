@@ -532,7 +532,6 @@
                                                 'height)
                        height)))
       (imgui-impl-vulkan-set-min-image-count *min-image-count*)
-      (break "in loop imgui-impl-vulkan-h-create-or-resize-window")
       (imgui-impl-vulkan-h-create-or-resize-window
        (vk:raw-handle *instance*) (vk:raw-handle *physical-device*)
        (vk:raw-handle *device*) main-window-data
