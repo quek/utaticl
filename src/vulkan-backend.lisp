@@ -431,6 +431,9 @@
                                ig:+im-gui-config-flags-nav-enable-keyboard+
                                ig:+im-gui-config-flags-docking-enable+))
 
+                 ;; (ig:im-font-atlas-add-font-default
+                 ;;  (plus-c:c-ref io ig:im-gui-io :fonts)
+                 ;;  (cffi:null-pointer))
                  (autowrap:with-alloc (glyph-ranges 'ig:im-wchar 3)
                    (setf (plus-c:c-ref glyph-ranges ig:im-wchar 0) #x0020
                          (plus-c:c-ref glyph-ranges ig:im-wchar 1) #xfffd

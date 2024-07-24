@@ -21,7 +21,11 @@
            (unselect-all-tracks (.project self)))
          (setf (.select-p (.track (.lane it))) t)
          (edit it))
-       (setf (.clips-selected self) nil)))
+       (progn
+         (setf (.clips-selected self) nil)
+         (let* ((time (world-y-to-time self (.y (ig:get-mouse-pos))))
+                (time (time-grid-applied self time #'round)))
+           (setf (.play-start (.project self)) time)))))
 
 (defmethod handle-double-click ((self arrangement))
   (unless (.clip-at-mouse self)
