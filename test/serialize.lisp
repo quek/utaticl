@@ -26,4 +26,16 @@
                            (with-serialize-context ()
                              (serialize deserialized))))))))
 
+(fiasco:deftest test-copy-lane-clip ()
+  (let* ((lane (make-instance 'lane))
+         (clip (make-instance 'clip-note))
+         (note (make-instance 'note :time 1.0d0 :duration 0.5d0 :key 64)))
+    (note-add clip note)
+    (clip-add lane clip)
+    (let ((copied (with-serialize-context (:copy t)
+                    (deserialize (with-serialize-context ()
+                                   (print (serialize lane)))))))
+      (fiasco:is (= (.key note)
+                    (.key (car (.notes (car (.clips copied))))))))))
+
 

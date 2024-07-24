@@ -16,7 +16,7 @@
 
 (defserialize note key channel velocity)
 
-(defserialize clip seq lane)
+(defserialize clip seq (:ref lane))
 
 (defserialize clip-note)
 
