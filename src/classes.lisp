@@ -184,17 +184,15 @@
    (sceen :initarg :sceen :initform nil :accessor .sceen)
    (seq :initarg :seq :accessor .seq)
    (will-start :initform nil :accessor .will-start)
-   (will-stop :initform nil :accessor .will-stop)))
+   (will-stop :initform nil :accessor .will-stop))
+  (:default-initargs :name nil :color nil))
 
 (defclass clip-audio (clip)
-  ()
-  (:default-initargs :name nil :color nil
-                     :seq (make-instance 'seq-audio)))
+  ())
 
 (defclass clip-note (clip)
   ()
-  (:default-initargs :name nil :color nil
-                     :seq (make-instance 'seq-note)))
+  (:default-initargs :seq (make-instance 'seq-note)))
 
 (defclass seq (time-thing)
   ((clips :initarg :clips :initform nil :accessor .clips)))

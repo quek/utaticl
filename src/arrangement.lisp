@@ -104,9 +104,8 @@
         (when (and (not (minusp time)) lane)
           (cmd-add (.project arrangement) 'cmd-clip-audio-add
                    :time time :lane lane :path path
-                   ;; :execute-after (lambda (cmd)
-                   ;;                  (edit (find-neko (.clip-id cmd))))
-                   ))))
+                   :execute-after (lambda (cmd)
+                                    (edit (.clip cmd)))))))
     (setf (.dragging-source-extern arrangement) nil)))
 
 (defmethod handle-mouse ((self arrangement))

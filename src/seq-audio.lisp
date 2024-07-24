@@ -27,14 +27,14 @@
                                             :element-type 'single-float)))
                    (loop for i below length
                          do (setf (aref buffer i)
-                                  (print (/ (loop with n = 0
-                                                  for j below length-per-sample
-                                                  do (setf (ldb (byte 8 (* 8 j)) n)
-                                                           (aref chunk-data (+ (* i length-per-sample) j)))
-                                                  finally (return (if (> n positive-max)
-                                                                      (- n negative-operand)
-                                                                      n)))
-                                            float-operand))))
+                                  (/ (loop with n = 0
+                                           for j below length-per-sample
+                                           do (setf (ldb (byte 8 (* 8 j)) n)
+                                                    (aref chunk-data (+ (* i length-per-sample) j)))
+                                           finally (return (if (> n positive-max)
+                                                               (- n negative-operand)
+                                                               n)))
+                                     float-operand)))
                    (setf (.data seq-audio) buffer))))))
 
 (defmethod prepare-event ((seq-audio seq-audio) start end loop-p offset-samples)

@@ -68,8 +68,8 @@
 
 (defmethod execute ((self cmd-clip-audio-add) project)
   (let ((clip (make-instance 'clip-audio
-                             :path (.path self)
-                             :time (.time self))))
+                             :time (.time self)
+                             :path (.path self))))
     (clip-add (.lane self) clip)
     (setf (.clip self) clip)))
 
