@@ -186,7 +186,7 @@
   (defshortcut (ig:+im-gui-mod-ctrl+ ig:+im-gui-key-a+)
     (setf (.clips-selected self)
           (map-lanes (.project self) (lambda (lane acc)
-                                       (append acc (.clips lane))))))
+                                       (append acc (copy-list (.clips lane)))))))
   (defshortcut (ig:+im-gui-key-delete+)
     (when (.clips-selected self)
       (cmd-add (.project self) 'cmd-clips-delete

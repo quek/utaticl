@@ -12,7 +12,8 @@
   (print "edit clip-audio."))
 
 (defmethod prepare-event ((clip-audio clip-audio) start end loop-p offset-samples)
-  (prepare-event (.seq clip-audio) start end loop-p offset-samples))
+  (let ((clip-time (.time clip-audio)))
+   (prepare-event (.seq clip-audio) (max (- start clip-time) .0d0) (- end clip-time) loop-p offset-samples)))
 
 (defmethod update-duration ((clip-audio clip-audio) bpm)
   (setf (.duration clip-audio) (update-duration (.seq clip-audio) bpm)))
