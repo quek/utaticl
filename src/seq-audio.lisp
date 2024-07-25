@@ -35,7 +35,15 @@
                                                                (- n negative-operand)
                                                                n)))
                                      float-operand)))
-                   (setf (.data seq-audio) buffer))))))
+                   (setf (.data seq-audio)
+                         (if (= (.sample-rate seq-audio) (.sample-rate *config*))
+                             buffer
+                             (prog1
+                                 (src-ffi::simple buffer
+                                                  (.sample-rate seq-audio)
+                                                  (.sample-rate *config*)
+                                                  (.nchannels seq-audio))
+                               (setf (.sample-rate seq-audio) (.sample-rate *config*))))))))))
 
 (defmethod prepare-event ((seq-audio seq-audio) start end loop-p offset-samples)
   (loop with bus = 0

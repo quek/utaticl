@@ -44,6 +44,7 @@
    (:file "library")
    (:file "audio-device")
    (:file "read-h")
+   (:file "src-ffi")
    (:file "win32")
    (:file "ig")
    (:file "ig-backend")

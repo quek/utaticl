@@ -4,6 +4,9 @@
 
 (defpackage :dgw.ffi)
 
+(defpackage :src-ffi
+  (:use :cl))
+
 (defpackage :ig-backend
   (:use :cl))
 
