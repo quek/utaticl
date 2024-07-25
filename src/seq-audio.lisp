@@ -8,48 +8,7 @@
 
 (defmethod (setf .path) :after (path (seq-audio seq-audio))
   (when path
-    (loop with riff = (wav:read-wav-file path)
-          with compression-code = 0
-          for chunk in riff
-          if (equal "fmt " (getf chunk :chunk-id))
-            do (let ((data (getf chunk :chunk-data)))
-                 (setf (.nchannels seq-audio) (getf data :number-of-channels))
-                 (setf (.sample-rate seq-audio) (getf data :sample-rate))
-                 (setf (.bits-per-sample seq-audio) (getf data :significant-bits-per-sample))
-                 (setf compression-code (getf data :compression-code)))
-          if (equal "data" (getf chunk :chunk-id))
-            do (let* ((chunk-data (getf chunk :chunk-data))
-                      (bits-per-sample (.bits-per-sample seq-audio))
-                      (positive-max (1- (/ (ash 1 bits-per-sample) 2)))
-                      (negative-operand (ash 1 bits-per-sample))
-                      (float-operand (1- (/ (ash 1 bits-per-sample) 2.0)))
-                      (length-per-sample (/ bits-per-sample 8))
-                      (length (/ (length chunk-data) length-per-sample))
-                      (buffer (make-array length
-                                          :element-type 'single-float)))
-                 (loop for i below length
-                       do (setf (aref buffer i)
-                                (cond ((= compression-code 1)
-                                       (loop with n = 0
-                                             for j below length-per-sample
-                                             do (setf (ldb (byte 8 (* 8 j)) n)
-                                                      (aref chunk-data (+ (* i length-per-sample) j)))
-                                             finally (return (/ (if (> n positive-max)
-                                                                    (- n negative-operand)
-                                                                    n)
-                                                                float-operand))))
-                                      ((= compression-code 3)
-                                       (cffi:mem-aref (sb-sys:vector-sap chunk-data) :float
-                                                      i)))))
-                 (setf (.data seq-audio)
-                       (if (= (.sample-rate seq-audio) (.sample-rate *config*))
-                           buffer
-                           (prog1
-                               (src-ffi::simple buffer
-                                                (.sample-rate seq-audio)
-                                                (.sample-rate *config*)
-                                                (.nchannels seq-audio))
-                             (setf (.sample-rate seq-audio) (.sample-rate *config*)))))))))
+    (read-wav seq-audio)))
 
 (defmethod prepare-event ((seq-audio seq-audio) start end loop-p offset-samples)
   (loop with bus = 0
@@ -65,6 +24,50 @@
         do (loop for i below nframes
                  do (setf (cffi:mem-aref buffer :float i)
                           (aref data (+ (* (+ i start-frame) nchannels) channel))))))
+
+(defmethod read-wav ((seq-audio seq-audio))
+  (loop with riff = (wav:read-wav-file (.path seq-audio))
+        with compression-code = 0
+        for chunk in riff
+        if (equal "fmt " (getf chunk :chunk-id))
+          do (let ((data (getf chunk :chunk-data)))
+               (setf (.nchannels seq-audio) (getf data :number-of-channels))
+               (setf (.sample-rate seq-audio) (getf data :sample-rate))
+               (setf (.bits-per-sample seq-audio) (getf data :significant-bits-per-sample))
+               (setf compression-code (getf data :compression-code)))
+        if (equal "data" (getf chunk :chunk-id))
+          do (let* ((chunk-data (getf chunk :chunk-data))
+                    (bits-per-sample (.bits-per-sample seq-audio))
+                    (positive-max (1- (/ (ash 1 bits-per-sample) 2)))
+                    (negative-operand (ash 1 bits-per-sample))
+                    (float-operand (1- (/ (ash 1 bits-per-sample) 2.0)))
+                    (length-per-sample (/ bits-per-sample 8))
+                    (length (/ (length chunk-data) length-per-sample))
+                    (buffer (make-array length
+                                        :element-type 'single-float)))
+               (loop for i below length
+                     do (setf (aref buffer i)
+                              (cond ((= compression-code 1)
+                                     (loop with n = 0
+                                           for j below length-per-sample
+                                           do (setf (ldb (byte 8 (* 8 j)) n)
+                                                    (aref chunk-data (+ (* i length-per-sample) j)))
+                                           finally (return (/ (if (> n positive-max)
+                                                                  (- n negative-operand)
+                                                                  n)
+                                                              float-operand))))
+                                    ((= compression-code 3)
+                                     (cffi:mem-aref (sb-sys:vector-sap chunk-data) :float
+                                                    i)))))
+               (setf (.data seq-audio)
+                     (if (= (.sample-rate seq-audio) (.sample-rate *config*))
+                         buffer
+                         (prog1
+                             (src-ffi::simple buffer
+                                              (.sample-rate seq-audio)
+                                              (.sample-rate *config*)
+                                              (.nchannels seq-audio))
+                           (setf (.sample-rate seq-audio) (.sample-rate *config*))))))))
 
 (defmethod update-duration ((seq-audio seq-audio) bpm)
   (let* ((nframes (/ (length (.data seq-audio)) (.nchannels seq-audio))))

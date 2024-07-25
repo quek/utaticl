@@ -231,7 +231,10 @@
     (ig:set-cursor-pos pos1)
     (with-renaming (clip (.clip-renaming self) (.width lane))
       (ig:with-clip-rect (pos1-world pos2-world)
-        (ig:text (format nil "  ~:[~;∞~]~a" (link-p clip) (.name clip)))))
+        (ig:text (format nil "  ~:[~;∞~]~a" (link-p clip) (.name clip))))
+      (when (contain-p mouse-pos pos1-world pos2-world)
+        (ig:with-tooltip
+          (ig:text (.name clip)))))
 
     (let ((pos1 (@+ pos1-world (@ 2.0 .0)))
           (pos2 (@+ pos2-world (@ -1.0 .0)))
