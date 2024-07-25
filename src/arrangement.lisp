@@ -244,6 +244,7 @@
                           pos2
                           color
                           :rounding 3.0)
+      (render-in-arrangement clip pos1 pos2)
       (when (contain-p mouse-pos pos1 pos2)
         (setf (.lane-at-mouse self) lane)
         (setf (.clip-at-mouse self) clip)))))

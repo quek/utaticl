@@ -8,8 +8,9 @@
 
 
 (defmethod time-grid-applied ((self grid-mixin) time snap-function)
-  (if (.grid-snap-p self)
-      (let ((unit (.grid-unit self)))
+  (let ((unit (.grid-unit self)))
+    (if (and (.grid-snap-p self)
+             (not (eq unit +grid-none+)))
         (* (funcall snap-function (/ time unit))
-           unit))
-      time))
+           unit)
+        time)))

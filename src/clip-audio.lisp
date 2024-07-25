@@ -15,5 +15,8 @@
   (let ((clip-time (.time clip-audio)))
    (prepare-event (.seq clip-audio) (max (- start clip-time) .0d0) (- end clip-time) loop-p offset-samples)))
 
+(defmethod render-in-arrangement ((clip-audio clip-audio) pos1 pos2)
+  (render-in-arrangement (.seq clip-audio) pos1 pos2))
+
 (defmethod update-duration ((clip-audio clip-audio) bpm)
   (setf (.duration clip-audio) (update-duration (.seq clip-audio) bpm)))
