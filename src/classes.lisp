@@ -202,7 +202,8 @@
    (nchannels :initform 1 :accessor .nchannels)
    (sample-rate :initform 48000 :accessor .sample-rate)
    (data :initform (make-array 0 :element-type '(unsigned-byte 8)) :accessor .data)
-   (path :initform nil :accessor .path)))
+   (path :initform nil :accessor .path)
+   (waveform-cache :initform nil :accessor .waveform-cache)))
 
 (defclass seq-note (seq)
   ((notes :initarg :notes :initform nil :accessor .notes))

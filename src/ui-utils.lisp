@@ -3,6 +3,13 @@
 (defun @ (x y)
     (list x y))
 
+(defun @= (x y)
+  (and (.x x) (.x y)
+       (.y x) (.y y)))
+
+(defun @/= (x y)
+  (not (@= x y)))
+
 (defun @+ (&rest vec2-list)
   (labels ((add (&rest args)
              (if (endp args)
