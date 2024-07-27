@@ -39,10 +39,10 @@
 
 (defclass zoom-mixin ()
   ((zoom-x :initarg :zoom-x :initform 25.0 :accessor .zoom-x)
-   (zoom-x-factor :initarg :zoom-x-factor :initform .5 :accessor .zoom-x-factor)
+   (zoom-x-factor :initarg :zoom-x-factor :initform .1 :accessor .zoom-x-factor)
    (zoom-x-min :initarg :zoom-x-min :initform .1 :accessor .zoom-x-min)
    (zoom-y :initarg :zoom-y :initform 50.0 :accessor .zoom-y)
-   (zoom-y-factor :initarg :zoom-y-factor :initform .5 :accessor .zoom-y-factor)
+   (zoom-y-factor :initarg :zoom-y-factor :initform .1 :accessor .zoom-y-factor)
    (zoom-y-min :initarg :zoom-y-min :initform .1 :accessor .zoom-y-min)))
 
 (defclass scroll-mixin ()
@@ -83,7 +83,7 @@
                      :accessor .offset-x)
    (track-renaming :initform nil :accessor .track-renaming))
   ;; zoom-x は使わない
-  (:default-initargs :zoom-x 1.0 :zoom-y 25.0 :zoom-x-factor .5 :zoom-y-factor .5
+  (:default-initargs :zoom-x 1.0 :zoom-y 25.0
                      :grid-unit +grid-bar+))
 
 (defclass sceen-matrix (view neko)
@@ -116,7 +116,7 @@
    (render-first-p :initform t :accessor .render-first-p)
    (project :initarg :project :accessor .project)
    (threshold-text-hide :initform 18.0 :accessor .threshold-text-hide))
-  (:default-initargs :zoom-x 25.0 :zoom-y 25.0 :zoom-x-factor .5 :zoom-y-factor .5 :zoom-y-min 5.0
+  (:default-initargs :zoom-x 25.0 :zoom-y 25.0 :zoom-y-min 5.0
                      :grid-unit +grid-beat+))
 
 (defclass rack (view)
