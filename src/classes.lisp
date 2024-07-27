@@ -35,7 +35,9 @@
   ((show-p :initarg :show-p :initform nil :accessor .show-p)))
 
 (defclass time-ruler-mixin ()
-  ((time-ruler-threshold :initform 25.0 :accessor .time-ruler-threshold)))
+  ((loop-selecting-p :initform nil :accessor .loop-selecting-p)
+   (loop-selecting-time :initform nil :accessor .loop-selecting-time)
+   (time-ruler-threshold :initform 25.0 :accessor .time-ruler-threshold)))
 
 (defclass zoom-mixin ()
   ((zoom-x :initarg :zoom-x :initform 25.0 :accessor .zoom-x)
@@ -84,7 +86,7 @@
    (track-renaming :initform nil :accessor .track-renaming))
   ;; zoom-x は使わない
   (:default-initargs :zoom-x 1.0 :zoom-y 25.0
-                     :grid-unit +grid-bar+))
+                     :grid-unit +grid-beat+))
 
 (defclass sceen-matrix (view neko)
   ((clip-renaming :initform nil :accessor .clip-renaming)
