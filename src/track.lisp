@@ -4,9 +4,8 @@
   (let ((process-data (make-instance 'process-data
                                      :audio-input-bus-count (.nbus-audio-in self)
                                      :audio-output-bus-count (.nbus-audio-out self))))
-    (lane-add self (make-instance 'lane))
+    (lane-add self (make-instance 'lane :color (.color self)))
     (setf (.process-data self) process-data))
-
   (when (string= "" (.name self))
     (setf (.name self) (name-new 'track "TRK"))))
 

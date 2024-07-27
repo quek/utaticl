@@ -46,8 +46,8 @@
    (clip-id :accessor .clip-id)))
 
 (defmethod execute ((self cmd-clip-add) project)
-  (let ((lane (find-lane project (.lane-id self)))
-        (clip (make-instance 'clip-note :time (.time self))))
+  (let* ((lane (find-lane project (.lane-id self)))
+         (clip (make-instance 'clip-note :time (.time self) :color (.color lane))))
     (setf (.clip-id self) (.neko-id clip))
     (clip-add lane clip)))
 
@@ -69,7 +69,8 @@
 (defmethod execute ((self cmd-clip-audio-add) project)
   (let ((clip (make-instance 'clip-audio
                              :time (.time self)
-                             :path (.path self))))
+                             :path (.path self)
+                             :color (.color (.lane self)))))
     (clip-add (.lane self) clip)
     (setf (.clip self) clip)))
 
@@ -439,7 +440,7 @@
 
 (defmethod execute ((self cmd-track-add) project)
   (let ((track-before (find-neko (.track-id-before self)))
-        (track-new (make-instance 'track))
+        (track-new (make-instance 'track :color (color-random)))
         (track-parent (find-neko (.track-id-parent self))))
     (setf (.track-id-new self) (.neko-id track-new))
     (track-add track-parent track-new :before track-before)))
