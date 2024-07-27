@@ -9,8 +9,10 @@
         (mouse-pos (ig:get-mouse-pos)))
     (labels ((in-p (pos)
                (let ((window-pos (ig:get-window-pos)))
-                 (and (< (.x pos) (+ (.x window-pos) (.offset-x time-ruler-mixin)))
-                      (< (+ (.y window-pos) (.offset-y time-ruler-mixin)) (.y pos)))))
+                 (and (< (.x window-pos) (.x pos) (+ (.x window-pos) (.offset-x time-ruler-mixin)))
+                      (< (+ (.y window-pos) (.offset-y time-ruler-mixin))
+                         (.y pos)
+                         (+ (.y window-pos) (ig:get-window-height))))))
              (time-at (pos)
                (time-grid-applied time-ruler-mixin
                                   (world-y-to-time time-ruler-mixin (.y pos)) #'round)))

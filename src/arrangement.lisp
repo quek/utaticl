@@ -310,9 +310,9 @@
     (values time lane)))
 
 (defmethod world-y-to-time ((self arrangement) y)
-  (+ (/ (- y (.y (ig:get-window-pos)) (.offset-y self))
-        (.zoom-y self))
-     (ig:get-scroll-y)))
+  (/ (+ (- y (.y (ig:get-window-pos)) (.offset-y self))
+        (ig:get-scroll-y))
+     (.zoom-y self)))
 
 (defmethod world-x-to-lane ((self arrangement) x)
   (let ((local-x (+ (- x (.x (ig:get-window-pos)) (.time-ruler-width self))
