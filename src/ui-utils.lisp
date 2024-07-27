@@ -33,6 +33,12 @@
 (defmethod .y ((self list))
   (cadr self))
 
+(defmethod (setf .x) (value (self list))
+  (setf (car self) value))
+
+(defmethod (setf .y) (value (self list))
+  (setf (cadr self) value))
+
 (defmacro button-toggle (label var)
   `(ig:with-button-color ((if ,var
                               (.color-button-toggle-on *theme*)
