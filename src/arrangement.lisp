@@ -225,29 +225,36 @@
          (pos1 (@ x y1))
          (pos2 (@ (+ x (.width lane)) y2))
          (window-pos (ig:get-window-pos))
+         (window-size (ig:get-window-size))
          (pos1-world (@+ pos1 window-pos (@- scroll-pos)))
          (pos2-world (@+ pos2 window-pos (@- scroll-pos)))
+         (pos1-visible (@ (max (.x pos1-world) (+ (.x window-pos) (.offset-x self)))
+                          (max (.y pos1-world) (+ (.y window-pos) (.offset-y self)))))
+         (pos2-visible (@ (min (.x pos2-world) (+ (.x window-pos) (.x window-size)))
+                          (min (.y pos2-world) (+ (.y window-pos) (.y window-size)))))
          (mouse-pos (ig:get-mouse-pos)))
-    (ig:set-cursor-pos pos1)
-    (with-renaming (clip (.clip-renaming self) (.width lane))
-      (ig:with-clip-rect (pos1-world pos2-world)
-        (ig:text (format nil "  ~:[~;∞~]~a" (link-p clip) (.name clip))))
-      (when (contain-p mouse-pos pos1-world pos2-world)
-        (ig:with-tooltip
-          (ig:text (.name clip)))))
+    (when (and (< (.x pos1-visible) (.x pos2-visible))
+               (< (.y pos1-visible) (.y pos2-visible)))
+      (ig:with-clip-rect (pos1-visible pos2-visible)
+        (ig:set-cursor-pos pos1)
+        (with-renaming (clip (.clip-renaming self) (.width lane))
+          (ig:text (format nil "  ~:[~;∞~]~a" (link-p clip) (.name clip)))
+          (when (contain-p mouse-pos pos1-world pos2-world)
+            (ig:with-tooltip
+              (ig:text (.name clip)))))
 
-    (let ((pos1 (@+ pos1-world (@ 2.0 .0)))
-          (pos2 (@+ pos2-world (@ -1.0 .0)))
-          (color (color-selected (.color clip) (member clip (.clips-selected self)))))
-      (ig:add-rect-filled draw-list
-                          pos1
-                          pos2
-                          color
-                          :rounding 3.0)
-      (render-in-arrangement clip pos1 pos2)
-      (when (contain-p mouse-pos pos1 pos2)
-        (setf (.lane-at-mouse self) lane)
-        (setf (.clip-at-mouse self) clip)))))
+        (let ((pos1 (@+ pos1-world (@ 2.0 .0)))
+              (pos2 (@+ pos2-world (@ -1.0 .0)))
+              (color (color-selected (.color clip) (member clip (.clips-selected self)))))
+          (ig:add-rect-filled draw-list
+                              pos1
+                              pos2
+                              color
+                              :rounding 3.0)
+          (render-in-arrangement clip pos1 pos2 pos1-visible pos2-visible)
+          (when (contain-p mouse-pos pos1 pos2)
+            (setf (.lane-at-mouse self) lane)
+            (setf (.clip-at-mouse self) clip)))))))
 
 (defmethod render-track ((self arrangement) track group-level)
   (ig:with-id (track)

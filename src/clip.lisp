@@ -33,7 +33,7 @@
 (defmethod .project ((self clip))
   (.project (.lane self)))
 
-(defmethod render-in-arrangement ((clip clip) pos1 pos2))
+(defmethod render-in-arrangement ((clip clip) pos1 pos2 pos1-visible pos2-visible))
 
 (defmethod (setf .seq) :after ((seq seq) (self clip))
   (push self (.clips seq)))

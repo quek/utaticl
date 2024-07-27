@@ -73,7 +73,7 @@
   (let* ((nframes (/ (length (.data seq-audio)) (.nchannels seq-audio))))
     (setf (.duration seq-audio) (/ nframes (.sample-rate seq-audio) (/ 60.0 bpm)))))
 
-(defmethod render-in-arrangement ((seq-audio seq-audio) pos1 pos2)
+(defmethod render-in-arrangement ((seq-audio seq-audio) pos1 pos2 pos1-visible pos2-visible)
   (loop with width = (- (.x pos2) (.x pos1))
         with width-half = (float (/ width 2))
         with height = (- (.y pos2) (.y pos1))
@@ -83,19 +83,23 @@
         with data = (.data seq-audio)
         with draw-list = (ig:get-window-draw-list)
         for i below height
-        do (multiple-value-bind (min max)
-               (if (< frames-per-pixcel 1)
-                   (values .0 (random .5))
-                   (let* ((start (round (* frames-per-pixcel i)))
-                          (end (min (+ start (round frames-per-pixcel)) nframes)))
-                     (loop for j from start below end
-                           for value = (aref data (* j nchannels))
-                           minimize value into min
-                           maximize value into max
-                           finally (return (values min max)))))
-             (let ((p1 (@+ pos1 (@ (+ (* width-half min) width-half) (float i))))
-                   (p2 (@+ pos1 (@ (+ (* width-half max) width-half) (float i)))))
-               (ig:add-line draw-list p1 p2 (color #xff #xff #xff #x80))))))
+        if (< (.y pos2-visible) (+ (.y pos1) i))
+          do (loop-finish)
+        if (<= (.y pos1-visible) (+ (.y pos1) i))
+          do (multiple-value-bind (min max)
+                    (if (< frames-per-pixcel 1)
+                        (progn
+                          (values .5 (random .99)))
+                        (let* ((start (round (* frames-per-pixcel i)))
+                               (end (min (+ start (round frames-per-pixcel)) nframes)))
+                          (loop for j from start below end
+                                for value = (aref data (* j nchannels))
+                                minimize value into min
+                                maximize value into max
+                                finally (return (values min max)))))
+                  (let ((p1 (@+ pos1 (@ (+ (* width-half min) width-half) (float i))))
+                        (p2 (@+ pos1 (@ (+ (* width-half max) width-half) (float i)))))
+                    (ig:add-line draw-list p1 p2 (color #xff #xff #xff #x80))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (in-package :wav)
