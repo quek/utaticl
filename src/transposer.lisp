@@ -13,7 +13,7 @@
     (button-toggle "Loop" (.loop-p (.project self)))
     (ig:same-line)
     (ig:set-next-item-width (* (ig:get-font-size) 3))
-    (ig:drag-float "BPM" (.bpm (.project self)) :format "%.2f")
+    (ig:drag-float "BPM" (.bpm (.project self)) :min 1.0 :max 999.0 :format "%.2f")
     (ig:same-line)
     (ig:text (.audio-device-name *config*))
     (ig:same-line)

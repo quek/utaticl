@@ -17,6 +17,11 @@
     (setf (.transposer self) transposer)
     (setf (.target-track self) master-track)))
 
+(defmethod (setf .bpm) :around (value (project project))
+  (if (< value 1.0)
+      (call-next-method 1.0 project)
+      (call-next-method)))
+
 (defmethod (setf .bpm) :after (value (self project))
   (setf (.sec-per-beat self) (/ 60.0d0 value))
   (setf (.samples-per-beat self)
