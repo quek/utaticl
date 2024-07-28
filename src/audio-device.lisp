@@ -110,7 +110,7 @@
    ;; TODO かんぜんに暫定
    (let ((master-track (.master-track (car (.projects *app*)))))
      (loop for channel-index below 2
-           for in = (buffer (.inputs (.process-data master-track)) 0 channel-index)
+           for in = (buffer (.outputs (.process-data master-track)) 0 channel-index)
            for out = (nth channel-index (.master-buffer audio-device))
            do (loop for i below (.frames-per-buffer *config*)
                     do (setf (aref out i)
