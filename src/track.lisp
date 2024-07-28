@@ -3,9 +3,15 @@
 (defmethod initialize-instance :after ((self track) &key)
   (let ((process-data (make-instance 'process-data
                                      :audio-input-bus-count (.nbus-audio-in self)
-                                     :audio-output-bus-count (.nbus-audio-out self))))
+                                     :audio-output-bus-count (.nbus-audio-out self)))
+        (gain (make-instance 'module-gain-track))
+        (fader (make-instance 'module-fader-track)))
     (lane-add self (make-instance 'lane :color (.color self)))
-    (setf (.process-data self) process-data))
+    (setf (.process-data self) process-data)
+    (module-add self gain)
+    (module-add self fader)
+    (start gain)
+    (start fader))
   (when (string= "" (.name self))
     (setf (.name self) (name-new 'track "TRK"))))
 
