@@ -74,39 +74,47 @@
     (setf (.duration seq-audio) (/ nframes (.sample-rate seq-audio) (/ 60.0 bpm)))))
 
 (defmethod render-in-arrangement ((seq-audio seq-audio) pos1 pos2 pos1-visible pos2-visible)
-  (let ((width (- (.x pos2) (.x pos1)))
-        (height (round (- (.y pos2) (.y pos1))))
-        (height-cache (car (.waveform-cache seq-audio)))
-        (waveform (cadr (.waveform-cache seq-audio)))
-        (draw-list (ig:get-window-draw-list)))
+  (let* ((width (- (.x pos2) (.x pos1)))
+         (height (round (- (.y pos2) (.y pos1))))
+         (start (- (.y pos1-visible) (.y pos1)))
+         (end (- (.y pos2-visible) (.y pos1)))
+         (waveform-cache (.waveform-cache seq-audio))
+         (height-cache (or (car waveform-cache) 0))
+         (start-cache (or (cadr waveform-cache) 0))
+         (end-cache (or (caddr waveform-cache) 0))
+         (waveform (cadddr waveform-cache))
+         (draw-list (ig:get-window-draw-list)))
     (when (and (plusp width) (plusp height))
-      (when (or (null height-cache)
-                (/= height height-cache))
-        (setf (.waveform-cache seq-audio)
-              (list height
-                    (loop with nchannels = (.nchannels seq-audio)
-                          with nframes = (/ (length (.data seq-audio)) nchannels)
-                          with frames-per-pixcel = (/ nframes height)
-                          with data = (.data seq-audio)
-                          for i below height
-                          collect (if (< frames-per-pixcel 1)
-                                      (let* ((j (floor (* i (/ nframes height))))
-                                             (value (aref data (* j nchannels))))
-                                        (list value value))
-                                      (let* ((start (round (* frames-per-pixcel i)))
-                                             (end (min (+ start (round frames-per-pixcel)) nframes)))
-                                        (loop for j from start below end
-                                              for value = (aref data (* j nchannels))
-                                              minimize value into min
-                                              maximize value into max
-                                              finally (return (list min max)))))))))
-      (loop for i below height
-            for (min max) in waveform
+      (when (or (/= height height-cache)
+                (< start start-cache)
+                (< end-cache end))
+        (setf waveform
+              (loop with nchannels = (.nchannels seq-audio)
+                    with nframes = (/ (length (.data seq-audio)) nchannels)
+                    with frames-per-pixcel = (/ nframes height)
+                    with data = (.data seq-audio)
+                    for i from start below end
+                    collect (if (< frames-per-pixcel 1)
+                                (let* ((j (floor (* i (/ nframes height))))
+                                       (value (aref data (* j nchannels))))
+                                  (list value value))
+                                (let* ((j-start (round (* frames-per-pixcel i)))
+                                       (j-end (min (+ j-start (round frames-per-pixcel)) nframes)))
+                                  (loop for j from j-start below j-end
+                                        for value = (aref data (* j nchannels))
+                                        minimize value into min
+                                        maximize value into max
+                                        finally (return (list min max)))))))
+        (setf start-cache start)
+        (setf end-cache end)
+        (setf (.waveform-cache seq-audio) (list height start end waveform)))
+      (loop for i below (- end start)
+            for (min max) in (nthcdr (floor (- start start-cache)) waveform)
             with width-half = (float (/ width 2))
             for p1-last = nil then p1
             for p2-last = nil then p2
-            for p1 = (@+ pos1 (@ (+ (* width-half min) width-half) (float i)))
-            for p2 = (let ((p2 (@+ pos1 (@ (+ (* width-half max) width-half) (float i)))))
+            for p1 = (@+ pos1-visible (@ (+ (* width-half min) width-half) (float i)))
+            for p2 = (let ((p2 (@+ pos1-visible (@ (+ (* width-half max) width-half) (float i)))))
                        ;; min と max の差が1より小さいと線が途切れるので
                        (when (< (- (.x p2) (.x p1)) 1.0)
                          (setf (.x p2) (+ (.x p1) 1.0)))
@@ -117,9 +125,9 @@
               do (ig:add-line draw-list p1 p2 (color #xff #xff #xff #x80))
                  ;; ギャップを埋める
                  (cond ((and p1-last (< (.x p1-last) (.x p2)))
-                        (ig:add-line draw-list p1-last p2 (color #xff #xff #xff #x80)))
+                        (ig:add-line draw-list (@+ p1-last (@ .0 1.0)) p2 (color #xff #xff #xff #x80)))
                        ((and p2-last (< (.x p1) (.x p2-last)))
-                        (ig:add-line draw-list p2-last p1 (color #xff #xff #xff #x80))))))))
+                        (ig:add-line draw-list (@+ p2-last (@ .0 1.0)) p1 (color #xff #xff #xff #x80))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (in-package :wav)
