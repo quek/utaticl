@@ -196,8 +196,7 @@
   ((clips :initarg :clips :initform nil :accessor .clips)))
 
 (defclass seq-audio (seq)
-  ((bits-per-sample :initform 16 :accessor .bits-per-sample)
-   (nchannels :initform 1 :accessor .nchannels)
+  ((nchannels :initform 1 :accessor .nchannels)
    (sample-rate :initform 48000 :accessor .sample-rate)
    (data :initform (make-array 0 :element-type '(unsigned-byte 8)) :accessor .data)
    (path :initform nil :accessor .path)

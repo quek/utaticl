@@ -8,7 +8,21 @@
 
 (defmethod (setf .path) :after (path (seq-audio seq-audio))
   (when path
-    (read-wav seq-audio)))
+    (let ((pathname-type (pathname-type path)))
+      (cond ((equalp pathname-type "wav")
+             (read-wav seq-audio))
+            ((equalp pathname-type "ogg")
+             (read-ogg seq-audio))
+            (t
+             (report "サポートしていないファイルです。~a" path)))
+      (when (and (plusp (length (.data seq-audio)))
+                 (/= (.sample-rate seq-audio) (.sample-rate *config*)))
+        (setf (.data seq-audio)
+              (src-ffi::simple (.data seq-audio)
+                               (.sample-rate seq-audio)
+                               (.sample-rate *config*)
+                               (.nchannels seq-audio)))
+        (setf (.sample-rate seq-audio) (.sample-rate *config*))))))
 
 (defmethod prepare-event ((seq-audio seq-audio) start end loop-p offset-samples)
   (loop with bus = 0
@@ -25,19 +39,36 @@
                  do (setf (cffi:mem-aref buffer :float i)
                           (aref data (+ (* (+ i start-frame) nchannels) channel))))))
 
+(defmethod read-ogg ((seq-audio seq-audio))
+  (org.shirakumo.fraf.vorbis:with-file (in (.path seq-audio))
+    (setf (.nchannels seq-audio) (org.shirakumo.fraf.vorbis:channels in))
+    (setf (.sample-rate seq-audio) (org.shirakumo.fraf.vorbis:samplerate in))
+    (let* ((nframes (org.shirakumo.fraf.vorbis:sample-count in))
+           (data (make-array (* nframes (.nchannels seq-audio))
+                             :element-type 'single-float)))
+      (loop with i-data = -1
+            for frame = (org.shirakumo.fraf.vorbis:decode-frame in)
+            for frame-length = (length (car frame))
+            while (plusp frame-length)
+            do (loop for i below frame-length
+                     do (loop for channel below (.nchannels seq-audio)
+                              do (setf (aref data (incf i-data))
+                                       (aref (nth channel frame) i)))))
+      (setf (.data seq-audio) data))))
+
 (defmethod read-wav ((seq-audio seq-audio))
   (loop with riff = (wav:read-wav-file (.path seq-audio))
         with compression-code = 0
+        with bits-per-sample = 16
         for chunk in riff
         if (equal "fmt " (getf chunk :chunk-id))
           do (let ((data (getf chunk :chunk-data)))
                (setf (.nchannels seq-audio) (getf data :number-of-channels))
                (setf (.sample-rate seq-audio) (getf data :sample-rate))
-               (setf (.bits-per-sample seq-audio) (getf data :significant-bits-per-sample))
+               (setf bits-per-sample (getf data :significant-bits-per-sample))
                (setf compression-code (getf data :compression-code)))
         if (equal "data" (getf chunk :chunk-id))
           do (let* ((chunk-data (getf chunk :chunk-data))
-                    (bits-per-sample (.bits-per-sample seq-audio))
                     (positive-max (1- (/ (ash 1 bits-per-sample) 2)))
                     (negative-operand (ash 1 bits-per-sample))
                     (float-operand (1- (/ (ash 1 bits-per-sample) 2.0)))
@@ -59,15 +90,7 @@
                                     ((= compression-code 3)
                                      (cffi:mem-aref (sb-sys:vector-sap chunk-data) :float
                                                     i)))))
-               (setf (.data seq-audio)
-                     (if (= (.sample-rate seq-audio) (.sample-rate *config*))
-                         buffer
-                         (prog1
-                             (src-ffi::simple buffer
-                                              (.sample-rate seq-audio)
-                                              (.sample-rate *config*)
-                                              (.nchannels seq-audio))
-                           (setf (.sample-rate seq-audio) (.sample-rate *config*))))))))
+               (setf (.data seq-audio) buffer))))
 
 (defmethod update-duration ((seq-audio seq-audio) bpm)
   (let* ((nframes (/ (length (.data seq-audio)) (.nchannels seq-audio))))

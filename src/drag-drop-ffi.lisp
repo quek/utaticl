@@ -257,7 +257,7 @@
                                             (sb-ext:octets-to-string file-path
                                                                      :external-format :utf16le
                                                                      :end (* len 2)))))
-                        if (and file (equalp (pathname-type file) "wav"))
+                        if (and file (member (pathname-type file) '("ogg" "wav") :test #'equalp))
                           collect file)))
             (when files
               (setf (cffi:mem-ref effect :unsigned-long) +dropeffect-copy+)

@@ -22,7 +22,8 @@
                "log4cl"
                "uuid"
                "qbase64"
-               "cl-wav")
+               "cl-wav"
+               "cl-vorbis")
   :serial t
   :pathname "src"
   :components
