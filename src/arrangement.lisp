@@ -38,19 +38,20 @@
                                   (edit (find-neko (.clip-id cmd)))))))))
 
 (defmethod handle-drag-start ((self arrangement))
-  (if (and (.clips-selected self) (.clip-at-mouse self))
-      (progn
-        ;; ノートの移動 or 長さ変更
-        (setf (.clip-target self) (.clip-at-mouse self))
-        (setf (.clip-drag-offset self) (- (.y (ig:get-mouse-pos))
-                                          (time-to-world-y self (.time (.clip-at-mouse self)))))
-        (setf (.clips-dragging self) (mapcar #'copy (.clips-selected self)))
-        (loop for clip in (.clips-dragging self)
-              for src-clip in (.clips-selected self)
-              for lane = (gethash src-clip (.clip-lane-map self))
-              do (clip-add lane clip)))
-      ;; 範囲選択
-      (setf (.range-selecting-p self) t)))
+  (cond ((and (.clips-selected self) (.clip-at-mouse self))
+         ;; ノートの移動 or 長さ変更
+         (setf (.clip-target self) (.clip-at-mouse self))
+         (setf (.clip-drag-offset self) (- (.y (ig:get-mouse-pos))
+                                           (time-to-world-y self (.time (.clip-at-mouse self)))))
+         (setf (.clips-dragging self) (mapcar #'copy (.clips-selected self)))
+         (loop for clip in (.clips-dragging self)
+               for src-clip in (.clips-selected self)
+               for lane = (gethash src-clip (.clip-lane-map self))
+               do (clip-add lane clip)))
+        (t                              ;範囲選択
+         (setf (.range-selecting-mode self)
+               (if (key-shift-p) :region :clip))
+         (setf (.range-selecting-pos1 self) (ig:get-mouse-pos)))))
 
 (defmethod handle-dragging ((self arrangement))
   (if (ig:is-mouse-released ig:+im-gui-mouse-button-left+)
@@ -120,7 +121,7 @@
            (handle-dragging-extern-drop self))
           ((.clips-dragging self)
            (handle-dragging self))
-          ((.range-selecting-p self)
+          ((.range-selecting-mode self)
            (handle-range-selecting self))
           ((ig:is-mouse-dragging ig:+im-gui-mouse-button-left+ 0.1)
            (handle-drag-start self))
@@ -142,10 +143,38 @@
           (if (key-ctrl-p)
               (push (.clip-at-mouse self) (.clips-selected self))))))
 
-(defmethod handle-range-selecting ((self arrangement))
-  ;; TODO
+(defmethod handle-range-selecting ((arrangement arrangement))
+  (case (.range-selecting-mode arrangement)
+    (:clip
+     (let* ((draw-list (ig:get-window-draw-list))
+            (pos1 (.range-selecting-pos1 arrangement))
+            (pos2 (ig:get-mouse-pos))
+            (time1 (world-y-to-time arrangement (min (.y pos1) (.y pos2))))
+            (time2 (world-y-to-time arrangement (max (.y pos1) (.y pos2))))
+            (lane1 (world-x-to-lane arrangement (min (.x pos1) (.x pos2))))
+            (lane2 (world-x-to-lane arrangement (max (.x pos1) (.x pos2))))
+            (in-selected-lane-p nil))
+       (setf (.clips-selected arrangement) nil)
+       (map-lanes (.project arrangement)
+                  (lambda (lane acc)
+                    (declare (ignore acc))
+                    (when (eq lane lane1)
+                      (setf in-selected-lane-p t))
+                    (when in-selected-lane-p
+                      (loop for clip in (.clips lane)
+                            if (and (< (.time clip) time2)
+                                    (< time1 (time-end clip)))
+                              do (push clip (.clips-selected arrangement))))
+                    (when (eq lane lane2)
+                      (setf in-selected-lane-p nil)
+                      (values nil t))))
+       (ig:add-rect draw-list pos1 pos2
+                    (.color-selecting-rect-border *theme*))))
+    (:region
+     ;; TODO
+     ))
   (when (ig:is-mouse-released ig:+im-gui-mouse-button-left+)
-    (setf (.range-selecting-p self) nil)))
+    (setf (.range-selecting-mode arrangement) nil)))
 
 (defmethod render ((self arrangement))
   (setf (.clip-at-mouse self) nil)

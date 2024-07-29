@@ -79,7 +79,9 @@
    (offset-group :initform 5.0 :accessor .offset-group)
    (offset-y :initform 30.0 :accessor .offset-y)
    (project :initarg :project :accessor .project)
-   (range-selecting-p :initform nil :accessor .range-selecting-p)
+   (range-selecting-mode :initform nil :accessor .range-selecting-mode)
+   (range-selecting-pos1 :initform nil :accessor .range-selecting-pos1)
+   (range-selecting-pos2 :initform nil :accessor .range-selecting-pos2)
    (time-ruler-width :initform 50.0
                      :accessor .time-ruler-width
                      :accessor .offset-x)

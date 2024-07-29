@@ -46,4 +46,6 @@
       self
       (let* ((all (lane-all (.project self)))
              (pos (position self all)))
-        (nth (+ pos delta) all))))
+        (nth (min (max (+ pos delta) 0)
+                  (1- (length all)))
+             all))))

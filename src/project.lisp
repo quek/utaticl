@@ -95,18 +95,24 @@
 (defun map-lanes (project proc &optional initial-value)
   (map-tracks project
               (lambda (track acc)
-                (loop for lane in (.lanes track)
-                      do (setf acc (funcall proc lane acc)))
-                acc)
+                (let ((map-finish nil))
+                  (loop for lane in (.lanes track)
+                        do (setf (values acc map-finish) (funcall proc lane acc))
+                           (when map-finish (loop-finish)))
+                  (values acc map-finish)))
               initial-value))
 
 (defun map-tracks (project proc &optional initial-value)
   (labels ((f (track acc)
-             (let ((acc (funcall proc track acc)))
-               (loop for x in (.tracks track)
-                     do (setf acc (f x acc)))
-               acc)))
+             (let ((map-finish nil))
+               (setf (values acc map-finish) (funcall proc track acc))
+               (unless map-finish
+                 (loop for x in (.tracks track)
+                       do (setf (values acc map-finish) (f x acc))
+                          (when map-finish (loop-finish))))
+               (values acc map-finish))))
     (f (.master-track project) initial-value)))
+
 
 (defmethod (setf .master-track) :after (master-track (self project))
   (setf (.project master-track) self)
