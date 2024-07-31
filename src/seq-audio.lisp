@@ -6,6 +6,14 @@
     (unless name
       (setf (.name seq-audio) (pathname-name path)))))
 
+(defmethod (setf .data) :after (data (seq-audio seq-audio))
+  (unless (.data-original seq-audio)
+    (setf (.data-original seq-audio) data)))
+
+(defmethod (setf .duration) :after (duration (seq-audio seq-audio))
+  (unless (.duration-original seq-audio)
+    (setf (.duration-original seq-audio) duration)))
+
 (defmethod (setf .path) :after (path (seq-audio seq-audio))
   (when path
     (let ((pathname-type (pathname-type path)))
