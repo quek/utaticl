@@ -30,10 +30,9 @@
 (defconstant +src-zero-order-hold+ 3)
 (defconstant +src-linear+ 4)
 
-(defun simple (in rate-in rate-out nchannes)
-  (let* ((ratio (/ rate-out rate-in))
-         (nframes-in (/ (length in) nchannes))
-         (nframes-out (ceiling (* nframes-in ratio)))
+(defun simple (in ratio-out/in nchannes)
+  (let* ((nframes-in (/ (length in) nchannes))
+         (nframes-out (ceiling (* nframes-in ratio-out/in)))
          (out (make-array (* nframes-out nchannes)
                           :element-type 'single-float
                           :initial-element .0)))
@@ -50,7 +49,7 @@
           (setf output-frames nframes-out)
           (setf input-frames-used 0)
           (setf output-frames-gen 0)
-          (setf src-ratio ratio)
+          (setf src-ratio ratio-out/in)
           (let ((ret (src-simple data +src-sinc-best-quality+ nchannes)))
             (if (zerop ret)
                 out

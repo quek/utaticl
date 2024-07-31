@@ -19,8 +19,8 @@
                  (/= (.sample-rate seq-audio) (.sample-rate *config*)))
         (setf (.data seq-audio)
               (src-ffi::simple (.data seq-audio)
-                               (.sample-rate seq-audio)
-                               (.sample-rate *config*)
+                               (/ (.sample-rate *config*)
+                                  (.sample-rate seq-audio))
                                (.nchannels seq-audio)))
         (setf (.sample-rate seq-audio) (.sample-rate *config*))))))
 
