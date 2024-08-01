@@ -74,7 +74,11 @@
    (clip-target :initform nil :accessor .clip-target)
    (clips-selected :initform nil :accessor .clips-selected)
    (clips-dragging :initform nil :accessor .clips-dragging)
+   (clips-dragging-time :initform nil :accessor .clips-dragging-time)
+   (clips-dragging-duration :initform nil :accessor .clips-dragging-duration)
    (dragging-source-extern :initform nil :accessor .dragging-source-extern)
+   (drag-mode :initform :move :accessor .drag-mode
+              :type (member :start :move :end))
    (lane-at-mouse :initform nil :accessor .lane-at-mouse)
    (offset-group :initform 5.0 :accessor .offset-group)
    (offset-y :initform 30.0 :accessor .offset-y)

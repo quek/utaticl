@@ -11,9 +11,24 @@
              (* (.offset-group self)
                 (f (.master-track (.project self)) 1))))))
 
+(defmethod drag-mode ((arrangement arrangement) clip)
+  (let* ((mouse-pos (ig:get-mouse-pos))
+         (y1 (time-to-world-y arrangement (.time clip)))
+         (y2 (time-to-world-y arrangement (+ (.time clip) (.duration clip)))))
+    (cond ((or (< (- y2 y1) (* +side-threshold+ 2))
+               (< (+ y1 +side-threshold+)
+                  (.y mouse-pos)
+                  (- y2 +side-threshold+)))
+           :move)
+          ((<= (.y mouse-pos) (+ y1 +side-threshold+))
+           :start)
+          (t :end))))
+
 (defmethod handle-click ((self arrangement))
   (aif (.clip-at-mouse self)
        (progn
+         (setf (.drag-mode self) (drag-mode self it))
+         (setf (.clip-target self) it)
          (when (and (not (member it (.clips-selected self)))
                     (not (key-ctrl-p)))
            (setf (.clips-selected self) (list it)))
@@ -40,14 +55,19 @@
 (defmethod handle-drag-start ((self arrangement))
   (cond ((and (.clips-selected self) (.clip-at-mouse self))
          ;; ノートの移動 or 長さ変更
-         (setf (.clip-target self) (.clip-at-mouse self))
-         (setf (.clip-drag-offset self) (- (.y (ig:get-mouse-pos))
-                                           (time-to-world-y self (.time (.clip-at-mouse self)))))
-         (setf (.clips-dragging self) (mapcar #'copy (.clips-selected self)))
-         (loop for clip in (.clips-dragging self)
-               for src-clip in (.clips-selected self)
-               for lane = (gethash src-clip (.clip-lane-map self))
-               do (clip-add lane clip)))
+         (ecase (.drag-mode self)
+           (:move
+            (setf (.clip-drag-offset self) (- (.y (ig:get-mouse-pos))
+                                              (time-to-world-y self (.time (.clip-at-mouse self)))))
+            (setf (.clips-dragging self) (mapcar #'copy (.clips-selected self)))
+            (loop for clip in (.clips-dragging self)
+                  for src-clip in (.clips-selected self)
+                  for lane = (gethash src-clip (.clip-lane-map self))
+                  do (clip-add lane clip)))
+           ((:start :end)
+            (setf (.clips-dragging self) (copy-list (.clips-selected self)))
+            (setf (.clips-dragging-time self) (mapcar #'.time (.clips-selected self)))
+            (setf (.clips-dragging-duration self) (mapcar #'.duration (.clips-selected self))))))
         (t                              ;範囲選択
          (setf (.range-selecting-mode self)
                (if (key-shift-p) :region :clip))
@@ -57,25 +77,44 @@
   (if (ig:is-mouse-released ig:+im-gui-mouse-button-left+)
       ;; ドラッグの終了
       (progn
-        (if (key-ctrl-p)
-            ;; 複製
-            (cmd-add (.project self) 'cmd-clips-d&d-copy
-                     :clips (.clips-dragging self)
-                     :lane-ids (loop for clip in (.clips-dragging self)
-                                     collect (.neko-id (gethash clip (.clip-lane-map self)))))
-            ;; 移動
-            (progn
-              (cmd-add (.project self) 'cmd-clips-d&d-move
-                       :clips (.clips-selected self)
-                       :lane-ids (loop for clip in (.clips-selected self)
-                                       collect (.neko-id (gethash clip (.clip-lane-map self))))
-                       :times-to (mapcar #'.time (.clips-dragging self))
-                       :lane-ids-to (mapcar #'(lambda (clip)
-                                                (.neko-id (gethash clip (.clip-lane-map self))))
-                                            (.clips-dragging self)))
-              (loop for clip in (.clips-dragging self)
-                    for lane = (gethash clip (.clip-lane-map self))
-                    do (clip-delete lane clip))))
+        (case (.drag-mode self)
+          (:move
+           (if (key-ctrl-p)
+               ;; 複製
+               (cmd-add (.project self) 'cmd-clips-d&d-copy
+                        :clips (.clips-dragging self)
+                        :lane-ids (loop for clip in (.clips-dragging self)
+                                        collect (.neko-id (gethash clip (.clip-lane-map self)))))
+               ;; 移動
+               (progn
+                 (cmd-add (.project self) 'cmd-clips-d&d-move
+                          :clips (.clips-selected self)
+                          :lane-ids (loop for clip in (.clips-selected self)
+                                          collect (.neko-id (gethash clip (.clip-lane-map self))))
+                          :times-to (mapcar #'.time (.clips-dragging self))
+                          :lane-ids-to (mapcar #'(lambda (clip)
+                                                   (.neko-id (gethash clip (.clip-lane-map self))))
+                                               (.clips-dragging self)))
+                 (loop for clip in (.clips-dragging self)
+                       for lane = (gethash clip (.clip-lane-map self))
+                       do (clip-delete lane clip)))))
+          (:start
+           (let ((delta (- (.duration (car (.clips-dragging self)))
+                           (car (.clips-dragging-duration self)))))
+             (loop for clip in (.clips-dragging self)
+                   do (incf (.time clip) delta)
+                      (decf (.duration clip) delta))
+             (cmd-add (.project self) 'cmd-clips-start-change
+                      :clips (.clips-dragging self)
+                      :delta delta)))
+          (:end
+           (let ((delta (- (.duration (car (.clips-dragging self)))
+                           (car (.clips-dragging-duration self)))))
+             (loop for clip in (.clips-dragging self)
+                   do (decf (.duration clip) delta))
+             (cmd-add (.project self) 'cmd-clips-end-change
+                      :clips (.clips-dragging self)
+                      :delta delta))))
         (setf (.clips-dragging self) nil))
       ;; ドラッグ中の表示
       (multiple-value-bind (time lane)
@@ -131,7 +170,21 @@
            (handle-click self))
           ((ig:is-mouse-released ig:+im-gui-mouse-button-left+)
            (handle-mouse-released self)))
-    (zoom-y-update self io)))
+    (zoom-y-update self io))
+
+  (if (.clips-dragging self)
+      (ecase (.drag-mode self)
+        (:move
+         (ig:set-mouse-cursor ig:+im-gui-mouse-cursor-arrow+))
+        ((:start :end)
+         (ig:set-mouse-cursor ig:+im-gui-mouse-cursor-resize-ns+)))
+      (aif (.clip-at-mouse self)
+           (ecase (drag-mode self it)
+             (:move
+              (ig:set-mouse-cursor ig:+im-gui-mouse-cursor-arrow+))
+             ((:start :end)
+              (ig:set-mouse-cursor ig:+im-gui-mouse-cursor-resize-ns+)))
+           (ig:set-mouse-cursor ig:+im-gui-mouse-cursor-arrow+))))
 
 (defmethod handle-mouse-released ((self arrangement))
   (if (.clip-at-mouse self)

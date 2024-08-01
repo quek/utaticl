@@ -106,7 +106,7 @@
                     for src-note in (.notes-selected self)
                     do (note-add (.clip self) note)))
              ((:start :end)
-              (setf (.notes-dragging self) (.notes-selected self))
+              (setf (.notes-dragging self) (copy-list (.notes-selected self)))
               (setf (.notes-dragging-time self) (mapcar #'.time (.notes-selected self)))
               (setf (.notes-dragging-duration self) (mapcar #'.duration (.notes-selected self)))))))
         (t
