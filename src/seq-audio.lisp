@@ -103,7 +103,7 @@
 (defmethod stretch ((seq-audio seq-audio) duration)
   (setf (.data seq-audio)
         (src-ffi::simple (.data-original seq-audio)
-                         (/ duration (.duration seq-audio))
+                         (/ duration (.duration-original seq-audio))
                          (.nchannels seq-audio)))
   (setf (.duration seq-audio) duration))
 
