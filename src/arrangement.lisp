@@ -111,7 +111,8 @@
                         (decf (.duration clip) delta))
                (cmd-add (.project self) 'cmd-clips-start-change
                         :clips (.clips-dragging self)
-                        :delta delta)))
+                        :delta delta
+                        :stretch-p (key-alt-p))))
             (:end
              (let ((delta (- (.duration (car (.clips-dragging self)))
                              (car (.clips-dragging-duration self)))))
