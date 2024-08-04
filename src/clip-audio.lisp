@@ -5,7 +5,7 @@
     (setf (.seq clip-audio) (make-instance 'seq-audio :path path))))
 
 (defmethod clip-add :after ((lane lane) (clip-audio clip-audio) &key)
-  (update-duration clip-audio (.bpm (.project lane))))
+  (update-duration clip-audio (.bpm *project*)))
 
 (defmethod edit ((clip-audio clip-audio))
   ;; TODO

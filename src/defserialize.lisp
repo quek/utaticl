@@ -2,8 +2,8 @@
 
 (defserialize neko neko-id name color)
 
-(defserialize project bpm master-track loop-start loop-end loop-p
-  sceen-matrix)
+(defserialize project bpm loop-start loop-end loop-p
+  master-track sceen-matrix)
 
 (defserialize track
     (:list lanes :writer lane-add)
@@ -21,6 +21,8 @@
 (defserialize clip-note)
 
 (defserialize seq-note notes)
+
+(defserialize seq-audio nchannels sample-rate data-original duration-original path)
 
 (defserialize plugin-info id name path file-write-date)
 

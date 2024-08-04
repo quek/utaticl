@@ -10,6 +10,15 @@
   (unless (.data-original seq-audio)
     (setf (.data-original seq-audio) data)))
 
+(defmethod (setf .data-original) :around (data (seq-audio seq-audio))
+  (typecase data
+    ((simple-array single-float)
+     (call-next-method))
+    (t (call-next-method (make-array (length data)
+                                     :element-type 'single-float
+                                     :initial-contents data)
+                         seq-audio))))
+
 (defmethod (setf .duration) :after (duration (seq-audio seq-audio))
   (unless (.duration-original seq-audio)
     (setf (.duration-original seq-audio) duration)))

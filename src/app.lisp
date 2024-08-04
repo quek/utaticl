@@ -10,7 +10,8 @@
 
 (defmethod cmd-run ((self app))
   (loop for project in (.projects self)
-        do (cmd-run project)))
+        do (let ((*project* project))
+             (cmd-run project))))
 
 (defmethod drag-enter ((app app) files)
   (setf (.drop-files app) files)
@@ -46,10 +47,11 @@
     (ig:with-drag-drop-source (ig:+im-gui-drag-drop-flags-source-extern+)
       (ig:set-drag-drop-payload +dd-extern+)
       (ig:with-tooltip
-          (loop for file in (.drop-files app)
-                do (ig:text file)))))
+        (loop for file in (.drop-files app)
+              do (ig:text file)))))
   (loop for project in (.projects app)
-        do (render project))
+        do (let ((*project* project))
+             (render project)))
   (render (.color-window app))
   (render *report-window*))
 
