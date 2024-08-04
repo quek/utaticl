@@ -53,7 +53,7 @@
                                   (edit (find-neko (.clip-id cmd)))))))))
 
 (defmethod handle-drag-start ((self arrangement))
-  (cond ((and (.clips-selected self) (.clip-at-mouse self))
+  (cond ((.clips-selected self)
          ;; ノートの移動 or 長さ変更
          (ecase (.drag-mode self)
            (:move
@@ -74,62 +74,85 @@
          (setf (.range-selecting-pos1 self) (ig:get-mouse-pos)))))
 
 (defmethod handle-dragging ((self arrangement))
-  (if (ig:is-mouse-released ig:+im-gui-mouse-button-left+)
-      ;; ドラッグの終了
-      (progn
-        (case (.drag-mode self)
-          (:move
-           (if (key-ctrl-p)
-               ;; 複製
-               (cmd-add (.project self) 'cmd-clips-d&d-copy
+  (labels ((%time ()
+             (max (time-grid-applied self
+                                     (world-y-to-time self (.y (ig:get-mouse-pos)))
+                                     #'round)
+                  .0d0)))
+    (if (ig:is-mouse-released ig:+im-gui-mouse-button-left+)
+        ;; ドラッグの終了
+        (progn
+          (case (.drag-mode self)
+            (:move
+             (if (key-ctrl-p)
+                 ;; 複製
+                 (cmd-add (.project self) 'cmd-clips-d&d-copy
+                          :clips (.clips-dragging self)
+                          :lane-ids (loop for clip in (.clips-dragging self)
+                                          collect (.neko-id (gethash clip (.clip-lane-map self)))))
+                 ;; 移動
+                 (progn
+                   (cmd-add (.project self) 'cmd-clips-d&d-move
+                            :clips (.clips-selected self)
+                            :lane-ids (loop for clip in (.clips-selected self)
+                                            collect (.neko-id (gethash clip (.clip-lane-map self))))
+                            :times-to (mapcar #'.time (.clips-dragging self))
+                            :lane-ids-to (mapcar #'(lambda (clip)
+                                                     (.neko-id (gethash clip (.clip-lane-map self))))
+                                                 (.clips-dragging self)))
+                   (loop for clip in (.clips-dragging self)
+                         for lane = (gethash clip (.clip-lane-map self))
+                         do (clip-delete lane clip)))))
+            (:start
+             (let ((delta (- (.duration (car (.clips-dragging self)))
+                             (car (.clips-dragging-duration self)))))
+               (loop for clip in (.clips-dragging self)
+                     do (incf (.time clip) delta)
+                        (decf (.duration clip) delta))
+               (cmd-add (.project self) 'cmd-clips-start-change
                         :clips (.clips-dragging self)
-                        :lane-ids (loop for clip in (.clips-dragging self)
-                                        collect (.neko-id (gethash clip (.clip-lane-map self)))))
-               ;; 移動
-               (progn
-                 (cmd-add (.project self) 'cmd-clips-d&d-move
-                          :clips (.clips-selected self)
-                          :lane-ids (loop for clip in (.clips-selected self)
-                                          collect (.neko-id (gethash clip (.clip-lane-map self))))
-                          :times-to (mapcar #'.time (.clips-dragging self))
-                          :lane-ids-to (mapcar #'(lambda (clip)
-                                                   (.neko-id (gethash clip (.clip-lane-map self))))
-                                               (.clips-dragging self)))
-                 (loop for clip in (.clips-dragging self)
-                       for lane = (gethash clip (.clip-lane-map self))
-                       do (clip-delete lane clip)))))
+                        :delta delta)))
+            (:end
+             (let ((delta (- (.duration (car (.clips-dragging self)))
+                             (car (.clips-dragging-duration self)))))
+               (loop for clip in (.clips-dragging self)
+                     do (decf (.duration clip) delta))
+               (cmd-add (.project self) 'cmd-clips-end-change
+                        :clips (.clips-dragging self)
+                        :delta delta))))
+          (setf (.clips-dragging self) nil))
+        ;; ドラッグ中の表示
+        (ecase (.drag-mode self)
+          (:move
+           (multiple-value-bind (time lane)
+               (world-pos-to-time-lane self
+                                       (@- (ig:get-mouse-pos)
+                                           (@ .0 (.clip-drag-offset self))))
+             (setf time (max (time-grid-applied self time #'floor) .0d0))
+             (let ((delta-time (- time (.time (.clip-target self))))
+                   (delta-lane (diff lane (gethash (.clip-target self) (.clip-lane-map self)))))
+               (loop for dragging in (.clips-dragging self)
+                     for selected in (.clips-selected self)
+                     for time = (+ (.time selected) delta-time)
+                     for lane-selected = (gethash selected (.clip-lane-map self))
+                     for lane = (relative-at lane-selected delta-lane)
+                     do (move dragging time lane)))))
           (:start
-           (let ((delta (- (.duration (car (.clips-dragging self)))
-                           (car (.clips-dragging-duration self)))))
-             (loop for clip in (.clips-dragging self)
-                   do (incf (.time clip) delta)
-                      (decf (.duration clip) delta))
-             (cmd-add (.project self) 'cmd-clips-start-change
-                      :clips (.clips-dragging self)
-                      :delta delta)))
+           (let* ((delta (- (%time) (.time (.clip-target self)))))
+             (when (every (lambda (clip)
+                            (plusp (- (.duration clip) delta)))
+                          (.clips-dragging self))
+               (loop for clip in (.clips-dragging self)
+                     do (incf (.time clip) delta)
+                        (decf (.duration clip) delta)))))
           (:end
-           (let ((delta (- (.duration (car (.clips-dragging self)))
-                           (car (.clips-dragging-duration self)))))
-             (loop for clip in (.clips-dragging self)
-                   do (decf (.duration clip) delta))
-             (cmd-add (.project self) 'cmd-clips-end-change
-                      :clips (.clips-dragging self)
-                      :delta delta))))
-        (setf (.clips-dragging self) nil))
-      ;; ドラッグ中の表示
-      (multiple-value-bind (time lane)
-          (world-pos-to-time-lane self
-                                  (@- (ig:get-mouse-pos)
-                                      (@ .0 (.clip-drag-offset self))))
-        (setf time (max (time-grid-applied self time #'floor) .0d0))
-        (let ((delta-time (- time (.time (.clip-target self))))
-              (delta-lane (diff lane (gethash (.clip-target self) (.clip-lane-map self)))))
-          (loop for dragging in (.clips-dragging self)
-                for selected in (.clips-selected self)
-                for time = (+ (.time selected) delta-time)
-                for lane-selected = (gethash selected (.clip-lane-map self))
-                for lane = (relative-at lane-selected delta-lane)
-                do (move dragging time lane))))))
+           (let* ((clip (.clip-target self))
+                  (delta (- (%time) (+ (.time clip) (.duration clip)))))
+             (when (every (lambda (clip)
+                            (plusp (+ (.duration clip) delta)))
+                          (.clips-dragging self))
+               (loop for clip in (.clips-dragging self)
+                     do (incf (.duration clip) delta)))))))))
 
 (defmethod handle-dragging-extern ((arrangement arrangement))
   (let ((pos (@- (ig:get-mouse-pos) (ig:get-window-pos))))
