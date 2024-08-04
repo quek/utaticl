@@ -119,7 +119,8 @@
                      do (decf (.duration clip) delta))
                (cmd-add (.project self) 'cmd-clips-end-change
                         :clips (.clips-dragging self)
-                        :delta delta))))
+                        :delta delta
+                        :stretch-p (key-alt-p)))))
           (setf (.clips-dragging self) nil))
         ;; ドラッグ中の表示
         (ecase (.drag-mode self)

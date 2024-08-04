@@ -100,6 +100,13 @@
                                                     i)))))
                (setf (.data seq-audio) buffer))))
 
+(defmethod stretch ((seq-audio seq-audio) duration)
+  (setf (.data seq-audio)
+        (src-ffi::simple (.data-original seq-audio)
+                         (/ duration (.duration seq-audio))
+                         (.nchannels seq-audio)))
+  (setf (.duration seq-audio) duration))
+
 (defmethod update-duration ((seq-audio seq-audio) bpm)
   (let* ((nframes (/ (length (.data seq-audio)) (.nchannels seq-audio))))
     (setf (.duration seq-audio) (/ nframes (.sample-rate seq-audio) (/ 60.0 bpm)))))

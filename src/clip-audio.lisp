@@ -18,5 +18,11 @@
 (defmethod render-in-arrangement ((clip-audio clip-audio) pos1 pos2 pos1-visible pos2-visible)
   (render-in-arrangement (.seq clip-audio) pos1 pos2 pos1-visible pos2-visible))
 
+(defmethod stretch ((clip-audio clip-audio) duration)
+  (let ((old-duration (.duration clip-audio)))
+   (when (/= old-duration duration)
+     (setf (.duration clip-audio) duration)
+     (stretch (.seq clip-audio) duration))))
+
 (defmethod update-duration ((clip-audio clip-audio) bpm)
   (setf (.duration clip-audio) (update-duration (.seq clip-audio) bpm)))

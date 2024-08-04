@@ -200,12 +200,16 @@
 
 (defcommand cmd-clips-end-change (command)
   ((clips :initarg :clips :accessor .clips)
-   (delta :initarg :delta :accessor .delta)))
+   (delta :initarg :delta :accessor .delta)
+   (stretch-p :initarg :stretch-p :accessor .stretch-p)))
 
 (defmethod execute ((self cmd-clips-end-change) project)
   (loop with delta = (.delta self)
         for clip in (.clips self)
-        do (incf (.duration clip) delta)))
+        if (.stretch-p self)
+          do (stretch clip (+ (.duration clip) delta))
+        else
+          do (incf (.duration clip) delta)))
 
 (defmethod undo ((self cmd-clips-end-change) project)
   (loop with delta = (.delta self)
