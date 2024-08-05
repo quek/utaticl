@@ -14,10 +14,9 @@
   (typecase data
     ((simple-array single-float)
      (call-next-method))
-    (t (call-next-method (make-array (length data)
-                                     :element-type 'single-float
-                                     :initial-contents data)
-                         seq-audio))))
+    (t (call-next-method
+        (coerce data '(simple-array single-float (*)))
+        seq-audio))))
 
 (defmethod (setf .duration) :after (duration (seq-audio seq-audio))
   (unless (.duration-original seq-audio)

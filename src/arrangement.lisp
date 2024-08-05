@@ -53,7 +53,7 @@
                                   (edit (find-neko (.clip-id cmd)))))))))
 
 (defmethod handle-drag-start ((self arrangement))
-  (cond ((.clips-selected self)
+  (cond ((and (.clips-selected self) (.clip-at-mouse self))
          ;; ノートの移動 or 長さ変更
          (ecase (.drag-mode self)
            (:move
