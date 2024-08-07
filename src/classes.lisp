@@ -91,7 +91,7 @@
                      :accessor .offset-x)
    (track-renaming :initform nil :accessor .track-renaming))
   ;; zoom-x は使わない
-  (:default-initargs :zoom-x 1.0 :zoom-y 25.0
+  (:default-initargs :zoom-x 1.0 :zoom-y 15.0
                      :grid-unit +grid-beat+))
 
 (defclass sceen-matrix (view neko)
