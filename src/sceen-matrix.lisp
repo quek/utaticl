@@ -91,13 +91,23 @@
                 (unless (key-ctrl-p)
                   (setf (.clips-selected sceen-matrix) nil))
                 (push clip (.clips-selected sceen-matrix))
-                (edit clip)))
+                (edit clip))
+              (ig:with-drag-drop-source ()
+                (ig:set-drag-drop-payload +dd-clips+)
+                (ig:text (.name clip)))
+              (ig:with-drag-drop-target
+                (when (ig:accept-drag-drop-payload +dd-clips+)
+                  (print (.clips-selected (.arrangement *project*))))))
             (ig:with-popup-context-item ()
               (when (ig:menu-item "Rename")
                 (setf (.clip-renaming sceen-matrix) clip))))
-          (when (ig:button "+")
-            ;; TODO command
-            (clip-add sceen (make-instance 'clip-note) :lane lane))))
+          (progn
+            (when (ig:button "+")
+              ;; TODO command
+              (clip-add sceen (make-instance 'clip-note) :lane lane))
+            (ig:with-drag-drop-target
+              (when (ig:accept-drag-drop-payload +dd-clips+)
+                (print (.clips-selected (.arrangement *project*))))))))
     (incf x (.width track))
     (when (.tracks-show-p track)
       (loop for each-track in (.tracks track)

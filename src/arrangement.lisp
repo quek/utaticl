@@ -354,9 +354,17 @@
         (ig:set-cursor-pos pos1)
         (with-renaming (clip (.clip-renaming self) (.width lane))
           (ig:text (format nil "  ~:[~;∞~]~a" (link-p clip) (.name clip)))
-          (when (contain-p mouse-pos pos1-world pos2-world)
-            (ig:with-tooltip
-              (ig:text (.name clip)))))
+          (ig:set-cursor-pos pos1)
+          (ig:invisible-button "##" (@- pos2 pos1))
+          (let ((drag-p nil))
+            (ig:with-drag-drop-source ()
+              (ig:set-drag-drop-payload +dd-clips+)
+              (ig:text (.name clip))
+              (setf drag-p t))
+            (unless drag-p
+              (when (contain-p mouse-pos pos1-world pos2-world)
+                (ig:with-tooltip
+                  (ig:text (.name clip)))))))
 
         (let ((pos1 (@+ pos1-world (@ 2.0 .0)))
               (pos2 (@+ pos2-world (@ -1.0 .0)))
