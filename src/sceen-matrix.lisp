@@ -13,6 +13,21 @@
   (unless (.play-p (.project sceen-matrix))
     (setf (.play-p (.project sceen-matrix)) t)))
 
+(defmethod handle-shortcut ((sceen-matrix sceen-matrix))
+  (defshortcut (ig:+im-gui-mod-ctrl+ ig:+im-gui-key-a+)
+    (setf (.clips-selected sceen-matrix)
+          (loop for sceen in (.sceens sceen-matrix)
+                nconc (loop for clip being the hash-value in (.clips sceen)
+                            collect clip))))
+  (defshortcut (ig:+im-gui-key-delete+)
+    (when (.clips-selected sceen-matrix)
+      (cmd-add (.project sceen-matrix) 'cmd-clips-delete
+               :clips (.clips-selected sceen-matrix)
+               :execute-after (lambda (cmd)
+                                (declare (ignore cmd))
+                                (setf (.clips-selected sceen-matrix) nil)))))
+  (shortcut-common (.project sceen-matrix)))
+
 (defmethod .offset-x ((sceen-matrix sceen-matrix))
   (.offset-x (.arrangement (.project sceen-matrix))))
 
@@ -41,7 +56,8 @@
         (loop for y = .0 then (+ y (.height sceen))
               for sceen in (.sceens sceen-matrix)
               do (render-sceen sceen-matrix sceen y)
-              finally (render-sceen-add-button sceen-matrix y))))))
+              finally (render-sceen-add-button sceen-matrix y)))
+      (handle-shortcut sceen-matrix))))
 
 (defmethod render-sceen ((sceen-matrix sceen-matrix) (sceen sceen) y)
   (ig:with-id (sceen)
