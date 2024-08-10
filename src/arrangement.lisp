@@ -38,7 +38,7 @@
          (edit it))
        (progn
          (setf (.clips-selected self) nil)
-         (let* ((time (world-y-to-time self (.y (ig:get-mouse-pos))))
+         (let* ((time (max (world-y-to-time self (.y (ig:get-mouse-pos))) .0))
                 (time (time-grid-applied self time #'round)))
            (setf (.play-start (.project self)) time)))))
 
@@ -48,9 +48,10 @@
       (setf time (time-grid-applied self time #'floor))
       (when (and (not (minusp time)) lane)
         (cmd-add (.project self) 'cmd-clip-add
-                 :time time :lane-id (.neko-id lane)
+                 :clip (make-instance 'clip-note :time time :color (.color lane))
+                 :lane lane
                  :execute-after (lambda (cmd)
-                                  (edit (find-neko (.clip-id cmd)))))))))
+                                  (edit (.clip cmd))))))))
 
 (defmethod handle-drag-start ((self arrangement))
   (cond ((and (.clips-selected self) (.clip-at-mouse self))

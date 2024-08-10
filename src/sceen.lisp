@@ -11,6 +11,11 @@
     (setf (.sceen clip) sceen)
     (setf (gethash lane (.clips sceen)) clip)))
 
+(defmethod clip-delete ((sceen sceen) clip &key lane)
+  (setf (.lane clip) nil)
+  (setf (.sceen clip) nil)
+  (remhash lane (.clips sceen)))
+
 (defmethod (setf .play-p) (value (sceen sceen))
   (unless value
     (loop for clip being each hash-value of (.clips sceen)

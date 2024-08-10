@@ -7,7 +7,7 @@
               (lambda (x y)
                 (< (.time x) (.time y))))))
 
-(defmethod clip-delete ((self lane) clip)
+(defmethod clip-delete ((self lane) clip &key)
   (setf (.lane clip) nil)
   (setf (.clips self)
         (delete clip (.clips self))))

@@ -97,17 +97,23 @@
                 (ig:text (.name clip)))
               (ig:with-drag-drop-target
                 (when (ig:accept-drag-drop-payload +dd-clips+)
-                  (print (.clips-selected (.arrangement *project*))))))
+                  ;; TODO
+                  )))
             (ig:with-popup-context-item ()
               (when (ig:menu-item "Rename")
                 (setf (.clip-renaming sceen-matrix) clip))))
           (progn
             (when (ig:button "+")
-              ;; TODO command
-              (clip-add sceen (make-instance 'clip-note) :lane lane))
+              (cmd-add *project* 'cmd-clip-add
+                       :clip (make-instance 'clip-note) :lane lane
+                       :sceen sceen
+                       :lane lane))
             (ig:with-drag-drop-target
               (when (ig:accept-drag-drop-payload +dd-clips+)
-                (print (.clips-selected (.arrangement *project*))))))))
+                (cmd-add *project* 'cmd-clip-add
+                         :clip (copy (car (.clips-selected (.arrangement *project*))))
+                         :sceen sceen
+                         :lane lane))))))
     (incf x (.width track))
     (when (.tracks-show-p track)
       (loop for each-track in (.tracks track)
