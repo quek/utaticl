@@ -79,6 +79,8 @@
    (dragging-source-extern :initform nil :accessor .dragging-source-extern)
    (drag-mode :initform :move :accessor .drag-mode
               :type (member :start :move :end))
+   (drag-start-times :initform nil :accessor .drag-start-times)
+   (drag-start-lanes :initform nil :accessor .drag-start-lanes)
    (lane-at-mouse :initform nil :accessor .lane-at-mouse)
    (offset-group :initform 5.0 :accessor .offset-group)
    (offset-y :initform 30.0 :accessor .offset-y)
