@@ -8,7 +8,7 @@
 (sb-ext:defglobal *app* nil)
 (sb-ext:defglobal *hwnd* nil)
 (sb-ext:defglobal *done* nil)
-;;(setf *done* t)
+(sb-ext:defglobal *dd* nil)
 (defparameter *invoke-debugger-p* t)
 
 (defvar *project*)

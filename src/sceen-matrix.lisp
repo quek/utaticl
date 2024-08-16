@@ -110,6 +110,10 @@
                 (edit clip))
               (ig:with-drag-drop-source ()
                 (ig:set-drag-drop-payload +dd-clips+)
+                (unless (key-ctrl-p)
+                  (setf (.clips-selected sceen-matrix) nil))
+                (push clip (.clips-selected sceen-matrix))
+                (setf *dd* (.clips-selected sceen-matrix))
                 (ig:text (.name clip)))
               (ig:with-drag-drop-target
                 (when (ig:accept-drag-drop-payload +dd-clips+)

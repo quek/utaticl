@@ -68,8 +68,6 @@
 
 (defclass arrangement (time-ruler-mixin grid-mixin offset-mixin scroll-mixin zoom-mixin view)
   ((clip-at-mouse :initform nil :accessor .clip-at-mouse)
-   (clip-drag-offset :initform .0 :accessor .clip-drag-offset)
-   (clip-lane-map :initform (make-hash-table) :accessor .clip-lane-map)
    (clip-renaming :initform nil :accessor .clip-renaming)
    (clip-target :initform nil :accessor .clip-target)
    (clips-selected :initform nil :accessor .clips-selected)
@@ -79,8 +77,10 @@
    (dragging-source-extern :initform nil :accessor .dragging-source-extern)
    (drag-mode :initform :move :accessor .drag-mode
               :type (member :start :move :end))
-   (drag-start-times :initform nil :accessor .drag-start-times)
+   (drag-offset-lame :initform nil :accessor .drag-offset-lane)
+   (drag-offset-time :initform nil :accessor .drag-offset-time)
    (drag-start-lanes :initform nil :accessor .drag-start-lanes)
+   (drag-start-times :initform nil :accessor .drag-start-times)
    (lane-at-mouse :initform nil :accessor .lane-at-mouse)
    (offset-group :initform 5.0 :accessor .offset-group)
    (offset-y :initform 30.0 :accessor .offset-y)
