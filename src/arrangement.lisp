@@ -59,6 +59,7 @@
          (ecase (.drag-mode arrangement)
            (:move
             (setf (.clips-dragging arrangement) (mapcar #'copy (.clips-selected arrangement)))
+            (setf *dd* (.clips-selected arrangement))
             (loop for clip in (.clips-dragging arrangement)
                   for lane = (.lane clip)
                   do (clip-add lane clip))
@@ -84,6 +85,67 @@
                (if (key-shift-p) :region :clip))
          (setf (.range-selecting-pos1 arrangement) (ig:get-mouse-pos)))))
 
+(defmethod handle-drag-end ((arrangement arrangement)
+                            (mode (eql :move))
+                            (key-ctrl-p (eql t))
+                            sceen)
+  (cmd-add (.project arrangement) 'cmd-clips-d&d-copy
+           :clips (.clips-dragging arrangement)
+           :lane-ids (loop for clip in (.clips-dragging arrangement)
+                           collect (.neko-id (.lane clip)))))
+
+(defmethod handle-drag-end ((arrangement arrangement)
+                            (mode (eql :move))
+                            (key-ctrl-p (eql nil))
+                            (sceen null))
+  (cmd-add (.project arrangement) 'cmd-clips-d&d-move
+           :clips (.clips-selected arrangement)
+           :lane-ids (loop for clip in (.clips-selected arrangement)
+                           collect (.neko-id (.lane clip)))
+           :times-to (mapcar #'.time (.clips-dragging arrangement))
+           :lane-ids-to (mapcar #'(lambda (clip)
+                                    (.neko-id (.lane clip)))
+                                (.clips-dragging arrangement)))
+  (loop for clip in (.clips-dragging arrangement)
+        for lane = (.lane clip)
+        do (clip-delete lane clip)))
+
+(defmethod handle-drag-end ((arrangement arrangement)
+                            (mode (eql :move))
+                            (key-ctrl-p (eql nil))
+                            (sceen sceen))
+  (cmd-add (.project arrangement)
+           'cmd-clips-d&d-move-from-sceen-matrix-to-arrangement
+           :clips-from *dd*
+           :clips-to (.clips-dragging arrangement)))
+
+(defmethod handle-drag-end ((arrangement arrangement)
+                            (mode (eql :start))
+                            key-ctrl-p
+                            sceen)
+  (let ((delta (- (.duration (car (.clips-dragging arrangement)))
+                  (car (.clips-dragging-duration arrangement)))))
+    (loop for clip in (.clips-dragging arrangement)
+          do (incf (.time clip) delta)
+             (decf (.duration clip) delta))
+    (cmd-add (.project arrangement) 'cmd-clips-start-change
+             :clips (.clips-dragging arrangement)
+             :delta delta
+             :stretch-p (key-alt-p))))
+
+(defmethod handle-drag-end ((arrangement arrangement)
+                            (mode (eql :to))
+                            key-ctrl-p
+                            sceen)
+  (let ((delta (- (.duration (car (.clips-dragging arrangement)))
+                  (car (.clips-dragging-duration arrangement)))))
+    (loop for clip in (.clips-dragging arrangement)
+          do (decf (.duration clip) delta))
+    (cmd-add (.project arrangement) 'cmd-clips-end-change
+             :clips (.clips-dragging arrangement)
+             :delta delta
+             :stretch-p (key-alt-p))))
+
 (defmethod handle-dragging ((self arrangement))
   (labels ((%time ()
              (max (time-grid-applied self
@@ -93,46 +155,7 @@
     (if (not (ig:is-mouse-down ig:+im-gui-mouse-button-left+))
         ;; ドラッグの終了
         (progn
-          (case (.drag-mode self)
-            (:move
-             (if (key-ctrl-p)
-                 ;; 複製
-                 (cmd-add (.project self) 'cmd-clips-d&d-copy
-                          :clips (.clips-dragging self)
-                          :lane-ids (loop for clip in (.clips-dragging self)
-                                          collect (.neko-id (.lane clip))))
-                 ;; 移動
-                 (progn
-                   (cmd-add (.project self) 'cmd-clips-d&d-move
-                            :clips (.clips-selected self)
-                            :lane-ids (loop for clip in (.clips-selected self)
-                                            collect (.neko-id (.lane clip)))
-                            :times-to (mapcar #'.time (.clips-dragging self))
-                            :lane-ids-to (mapcar #'(lambda (clip)
-                                                     (.neko-id (.lane clip)))
-                                                 (.clips-dragging self)))
-                   (loop for clip in (.clips-dragging self)
-                         for lane = (.lane clip)
-                         do (clip-delete lane clip)))))
-            (:start
-             (let ((delta (- (.duration (car (.clips-dragging self)))
-                             (car (.clips-dragging-duration self)))))
-               (loop for clip in (.clips-dragging self)
-                     do (incf (.time clip) delta)
-                        (decf (.duration clip) delta))
-               (cmd-add (.project self) 'cmd-clips-start-change
-                        :clips (.clips-dragging self)
-                        :delta delta
-                        :stretch-p (key-alt-p))))
-            (:end
-             (let ((delta (- (.duration (car (.clips-dragging self)))
-                             (car (.clips-dragging-duration self)))))
-               (loop for clip in (.clips-dragging self)
-                     do (decf (.duration clip) delta))
-               (cmd-add (.project self) 'cmd-clips-end-change
-                        :clips (.clips-dragging self)
-                        :delta delta
-                        :stretch-p (key-alt-p)))))
+          (handle-drag-end self (.drag-mode self) (key-ctrl-p) (and *dd* (.sceen (car *dd*))))
           (setf *dd* nil)
           (setf (.clips-dragging self) nil))
         ;; ドラッグ中の表示
@@ -195,7 +218,8 @@
         (mapcar #'copy *dd*))
   (loop for clip in (.clips-dragging arrangement)
         for lane = (.lane clip)
-        do (clip-add lane clip))
+        do (setf (.sceen clip) nil)
+           (clip-add lane clip))
   (setf (.drag-start-times arrangement)
         (mapcar #'.time (.clips-dragging arrangement)))
   (setf (.drag-start-lanes arrangement)
