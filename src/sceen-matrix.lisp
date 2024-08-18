@@ -125,7 +125,7 @@
           (progn
             (when (ig:button "+")
               (cmd-add *project* 'cmd-clip-add
-                       :clip (make-instance 'clip-note) :lane lane
+                       :clip (make-instance 'clip-note :color (.color lane))
                        :sceen sceen
                        :lane lane))
             (ig:with-drag-drop-target
