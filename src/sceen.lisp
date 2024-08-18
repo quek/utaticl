@@ -17,6 +17,10 @@
     (setf (.sceen clip) nil)
     (remhash lane (.clips sceen))))
 
+(defmethod diff ((a sceen) (b sceen))
+  (- (position a (.sceens (.sceen-matrix a)))
+     (position b (.sceens (.sceen-matrix b)))))
+
 (defmethod (setf .play-p) (value (sceen sceen))
   (unless value
     (loop for clip being each hash-value of (.clips sceen)
@@ -42,3 +46,12 @@
 
 (defmethod .project ((sceen sceen))
   (.project (.sceen-matrix sceen)))
+
+(defmethod relative-at ((self sceen) delta)
+  (if (zerop delta)
+      self
+      (let* ((all (.sceens (.sceen-matrix self)))
+             (pos (position self all)))
+        (nth (min (max (+ pos delta) 0)
+                  (1- (length all)))
+             all))))

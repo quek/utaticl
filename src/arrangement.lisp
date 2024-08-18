@@ -59,7 +59,8 @@
          (ecase (.drag-mode arrangement)
            (:move
             (setf (.clips-dragging arrangement) (mapcar #'copy (.clips-selected arrangement)))
-            (setf *dd* (.clips-selected arrangement))
+            (setf *dd-at* (.clip-at-mouse arrangement))
+            (setf *dd-srcs* (.clips-selected arrangement))
             (loop for clip in (.clips-dragging arrangement)
                   for lane = (.lane clip)
                   do (clip-add lane clip))
@@ -86,7 +87,7 @@
          (setf (.range-selecting-pos1 arrangement) (ig:get-mouse-pos)))))
 
 (defmethod handle-drag-end ((arrangement arrangement)
-                            (mode (eql :move))
+                            (drag-mode (eql :move))
                             (key-ctrl-p (eql t))
                             sceen)
   (cmd-add (.project arrangement) 'cmd-clips-d&d-copy
@@ -95,7 +96,7 @@
                            collect (.neko-id (.lane clip)))))
 
 (defmethod handle-drag-end ((arrangement arrangement)
-                            (mode (eql :move))
+                            (drag-mode (eql :move))
                             (key-ctrl-p (eql nil))
                             (sceen null))
   (cmd-add (.project arrangement) 'cmd-clips-d&d-move
@@ -111,16 +112,16 @@
         do (clip-delete lane clip)))
 
 (defmethod handle-drag-end ((arrangement arrangement)
-                            (mode (eql :move))
+                            (drag-mode (eql :move))
                             (key-ctrl-p (eql nil))
                             (sceen sceen))
   (cmd-add (.project arrangement)
            'cmd-clips-d&d-move-from-sceen-matrix-to-arrangement
-           :clips-from *dd*
+           :clips-from *dd-srcs*
            :clips-to (.clips-dragging arrangement)))
 
 (defmethod handle-drag-end ((arrangement arrangement)
-                            (mode (eql :start))
+                            (drag-mode (eql :start))
                             key-ctrl-p
                             sceen)
   (let ((delta (- (.duration (car (.clips-dragging arrangement)))
@@ -134,7 +135,7 @@
              :stretch-p (key-alt-p))))
 
 (defmethod handle-drag-end ((arrangement arrangement)
-                            (mode (eql :to))
+                            (drag-mode (eql :end))
                             key-ctrl-p
                             sceen)
   (let ((delta (- (.duration (car (.clips-dragging arrangement)))
@@ -146,6 +147,11 @@
              :delta delta
              :stretch-p (key-alt-p))))
 
+(defmethod handle-drag-end :after ((arrangement arrangement) mode key-ctrl-p sceen)
+  (setf *dd-at* nil)
+  (setf *dd-srcs* nil)
+  (setf (.clips-dragging arrangement) nil))
+
 (defmethod handle-dragging ((self arrangement))
   (labels ((%time ()
              (max (time-grid-applied self
@@ -154,10 +160,8 @@
                   .0d0)))
     (if (not (ig:is-mouse-down ig:+im-gui-mouse-button-left+))
         ;; ドラッグの終了
-        (progn
-          (handle-drag-end self (.drag-mode self) (key-ctrl-p) (and *dd* (.sceen (car *dd*))))
-          (setf *dd* nil)
-          (setf (.clips-dragging self) nil))
+        (handle-drag-end self (.drag-mode self) (key-ctrl-p)
+                         (and *dd-srcs* (.sceen (car *dd-srcs*))))
         ;; ドラッグ中の表示
         (ecase (.drag-mode self)
           (:move
@@ -215,7 +219,7 @@
 (defmethod handle-dragging-intern ((arrangement arrangement))
   (setf (.drag-mode arrangement) :move)
   (setf (.clips-dragging arrangement)
-        (mapcar #'copy *dd*))
+        (mapcar #'copy *dd-srcs*))
   (loop for clip in (.clips-dragging arrangement)
         for lane = (.lane clip)
         do (setf (.sceen clip) nil)
@@ -230,7 +234,7 @@
     (loop for clip in (.clips-dragging arrangement)
           do (setf (.time clip) time))
     (setf (.drag-offset-lane arrangement)
-          (diff (.lane (car (.clips-dragging arrangement))) lane))))
+          (diff (.lane *dd-at*) lane))))
 
 (defmethod handle-mouse ((self arrangement))
   (if (can-handle-mouse-p self)
@@ -241,7 +245,7 @@
                (handle-dragging-extern-drop self))
               ((.clips-dragging self)
                (handle-dragging self))
-              ((and *dd* (ig:data-type-p (ig:get-drag-drop-payload) +dd-clips+))
+              ((and *dd-srcs* (ig:data-type-p (ig:get-drag-drop-payload) +dd-clips+))
                (handle-dragging-intern self))
               ((.range-selecting-mode self)
                (handle-range-selecting self))
@@ -483,8 +487,8 @@
   60.0)
 
 (defmethod world-pos-to-time-lane ((self arrangement) pos)
-  (let* ((time (world-y-to-time self (.y pos)))
-         (lane (world-x-to-lane self (.x pos))))
+  (let ((time (world-y-to-time self (.y pos)))
+        (lane (world-x-to-lane self (.x pos))))
     (values time lane)))
 
 (defmethod world-y-to-time ((self arrangement) y)

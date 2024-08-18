@@ -13,6 +13,91 @@
   (unless (.play-p (.project sceen-matrix))
     (setf (.play-p (.project sceen-matrix)) t)))
 
+(defmethod handle-drag-start ((sceen-matrix sceen-matrix))
+  (cond ((and (.clips-selected sceen-matrix) (.clip-at-mouse sceen-matrix))
+         (setf (.clips-dragging sceen-matrix) (mapcar #'copy (.clips-selected sceen-matrix)))
+         (setf *dd-at* (.clip-at-mouse sceen-matrix))
+         (setf *dd-srcs* (.clips-selected sceen-matrix))
+         (loop for clip in (.clips-dragging sceen-matrix)
+               do (clip-add (.sceen clip) clip))
+         (setf (.drag-start-sceens sceen-matrix)
+               (mapcar #'.sceen (.clips-dragging sceen-matrix)))
+         (setf (.drag-start-lanes sceen-matrix)
+               (mapcar #'.lane (.clips-dragging sceen-matrix)))
+         (multiple-value-bind (sceen lane)
+             (world-pos-to-sceen-lane sceen-matrix *mouse-pos*)
+           (declare (ignore sceen))
+           (setf (.drag-offset-sceen sceen-matrix) 0)
+           (setf (.drag-offset-lane sceen-matrix)
+                 (diff (.lane (.clip-at-mouse sceen-matrix)) lane))))
+        (t                              ;範囲選択
+         (setf (.range-selecting-mode sceen-matrix) :clip)
+         (setf (.range-selecting-pos1 sceen-matrix) *mouse-pos*))))
+
+(defmethod handle-drag-end ((sceen-matrix sceen-matrix)
+                            drag-mode
+                            (key-ctrl-p (eql t))
+                            (sceen sceen))
+  "sceen-matrix 内でのコピー"
+  )
+
+(defmethod handle-drag-end ((sceen-matrix sceen-matrix)
+                            drag-mode
+                            (key-ctrl-p (eql nil))
+                            (sceen sceen))
+  "sceen-matrix 内での移動"
+  )
+
+(defmethod handle-drag-end ((sceen-matrix sceen-matrix)
+                            drag-mode
+                            (key-ctrl-p (eql t))
+                            (sceen null))
+  "arrangement からのコピー"
+  )
+
+(defmethod handle-drag-end ((sceen-matrix sceen-matrix)
+                            drag-mode
+                            (key-ctrl-p (eql nil))
+                            (sceen null))
+  "arrangement からの移動"
+  )
+
+(defmethod handle-drag-end :after ((sceen-matrix sceen-matrix) drag-mode key-ctrl-p sceen)
+  (setf *dd-at* nil)
+  (setf *dd-srcs* nil)
+  (setf (.clips-dragging sceen-matrix) nil))
+
+(defmethod handle-dragging ((sceen-matrix sceen-matrix))
+  (if (not (ig:is-mouse-down ig:+im-gui-mouse-button-left+))
+      (handle-drag-end sceen-matrix :move (key-ctrl-p)
+                       (and *dd-srcs* (.sceen (car *dd-srcs*))))
+      (multiple-value-bind (sceen lane)
+          (world-pos-to-sceen-lane sceen-matrix *mouse-pos*)
+        (let ((sceen-delta (diff (.drag-start-sceens sceen-matrix) sceen))
+              (lane-delta (diff (.drag-start-lanes sceen-matrix) lane)))
+          (unless (and (zerop sceen-delta) (zerop lane-delta))
+            (loop for clip in (.clips-dragging sceen-matrix)
+                  for sceen-start in (.drag-start-sceens sceen-matrix)
+                  for lane-start in (.drag-start-lanes sceen-matrix)
+                  for sceen = (relative-at sceen-start sceen-delta)
+                  for lane = (relative-at lane-start lane-delta)
+                  unless (and (eq (.sceen clip) sceen)
+                              (eq (.lane clip) lane))
+                    do (clip-delete (.sceen clip) clip)
+                       (clip-add sceen clip)))))))
+
+(defmethod handle-mouse ((sceen-matrix sceen-matrix))
+  (cond #+TODO
+        ((dragging-extern-p)
+         (handle-dragging-extern sceen-matrix))
+        #+TODO
+        ((.dragging-source-extern sceen-matrix)
+         (handle-dragging-extern-drop sceen-matrix))
+        ((.clips-dragging sceen-matrix)
+         (handle-dragging sceen-matrix))
+        ((ig:is-mouse-dragging ig:+im-gui-mouse-button-left+)
+         (handle-drag-start sceen-matrix))))
+
 (defmethod handle-shortcut ((sceen-matrix sceen-matrix))
   (defshortcut (ig:+im-gui-mod-ctrl+ ig:+im-gui-key-a+)
     (setf (.clips-selected sceen-matrix)
@@ -50,6 +135,7 @@
         do (prepare-event sceen start end loop-p offset-samples)))
 
 (defmethod render ((sceen-matrix sceen-matrix))
+  (setf (.clip-at-mouse sceen-matrix) nil)
   (ig:with-styles ((ig:+im-gui-style-var-item-spacing+ (@ .0 .0)))
     (ig:with-begin ("##sceen-matrix" :flags ig:+im-gui-window-flags-no-scrollbar+)
       (ig:with-child ("##canvas" :window-flags ig:+im-gui-window-flags-horizontal-scrollbar+)
@@ -57,6 +143,7 @@
               for sceen in (.sceens sceen-matrix)
               do (render-sceen sceen-matrix sceen y)
               finally (render-sceen-add-button sceen-matrix y)))
+      (handle-mouse sceen-matrix)
       (handle-shortcut sceen-matrix))))
 
 (defmethod render-sceen ((sceen-matrix sceen-matrix) (sceen sceen) y)
@@ -87,7 +174,9 @@
                      (pos2 (@+ pos1 (@ (.width lane) (.height sceen))))
                      (draw-list (ig:get-window-draw-list)))
                 (ig:add-rect-filled draw-list pos1 pos2
-                                    (color #xa0 #xff #xa0 #x20))))
+                                    (color #xa0 #xff #xa0 #x20))
+                (when (contain-p (ig:get-mouse-pos) pos1 pos2)
+                  (setf (.clip-at-mouse sceen-matrix) clip))))
             (ig:with-button-color ((cond ((or (.will-start clip)
                                               (.will-stop clip))
                                           (if (interval-p 0.3)
@@ -110,10 +199,12 @@
                 (edit clip))
               (ig:with-drag-drop-source ()
                 (ig:set-drag-drop-payload +dd-clips+)
-                (unless (key-ctrl-p)
-                  (setf (.clips-selected sceen-matrix) nil))
-                (push clip (.clips-selected sceen-matrix))
-                (setf *dd* (.clips-selected sceen-matrix))
+                (unless (member clip (.clips-selected sceen-matrix))
+                  (unless (key-ctrl-p)
+                    (setf (.clips-selected sceen-matrix) nil))
+                  (push clip (.clips-selected sceen-matrix)))
+                (setf *dd-at* clip)
+                (setf *dd-srcs* (.clips-selected sceen-matrix))
                 (ig:text (.name clip)))
               (ig:with-drag-drop-target
                 (when (ig:accept-drag-drop-payload +dd-clips+)
@@ -130,15 +221,35 @@
                        :lane lane))
             (ig:with-drag-drop-target
               (when (ig:accept-drag-drop-payload +dd-clips+)
-                (cmd-add *project* 'cmd-clip-add
-                         :clip (copy (car (.clips-selected (.arrangement *project*))))
-                         :sceen sceen
-                         :lane lane))))))
+                (drag-drop-clips sceen-matrix sceen lane (key-ctrl-p)))))))
     (incf x (.width track))
     (when (.tracks-show-p track)
       (loop for each-track in (.tracks track)
             do (setf x (render-sceen-track sceen-matrix sceen each-track x y))))
     x))
+
+(defmethod drag-drop-clips ((sceen-matrix sceen-matrix)
+                            (sceen sceen)
+                            (lane lane)
+                            (key-ctrl-p (eql t)))
+  (let* ((lane-delta (diff (.lane *dd-at*) lane))
+         (clips (loop for x in *dd-srcs*
+                      for clip = (copy x)
+                      do (setf (.lane clip)
+                               (relative-at (.lane clip) lane-delta))
+                         (setf (.sceen clip) sceen)
+                      collect clip)))
+    (cmd-add *project* 'cmd-clips-add :clips clips)))
+
+(defmethod drag-drop-clips ((sceen-matrix sceen-matrix)
+                            (sceen sceen)
+                            (lane lane)
+                            (key-ctrl-p (eql nil)))
+  (cmd-add *project* 'cmd-clips-d&d-move-from-arrangement-to-sceen-matrix
+           :clips-from *dd-srcs*
+           :sceen-to sceen
+           :lane-from (.lane *dd-at*)
+           :lane-to lane))
 
 (defmethod sceen-add ((sceen-matrix sceen-matrix) (sceen sceen) &key before)
   (setf (.sceen-matrix sceen) sceen-matrix)
@@ -154,3 +265,29 @@
       (setf (.sceens sceen-matrix)
             (append (.sceens sceen-matrix) (list sceen)))))
 
+(defmethod world-pos-to-sceen-lane ((sceen-matrix sceen-matrix) pos)
+  (let ((sceen (world-y-to-sceen sceen-matrix (.y pos)))
+        (lane (world-x-to-lane sceen-matrix (.x pos))))
+   (values sceen lane)))
+
+(defmethod world-x-to-lane ((sceen-matrix sceen-matrix) x)
+  (let ((local-x (+ (- x (.x (ig:get-window-pos)) (.offset-x sceen-matrix))
+                    (ig:get-scroll-x)))
+        (last-lane nil))
+    (map-lanes (.project sceen-matrix)
+               (lambda (lane width)
+                 (incf width (+ (.width lane)))
+                 (if (< local-x width)
+                     (return-from world-x-to-lane lane)
+                     (progn
+                       (setf last-lane lane)
+                       width)))
+               .0)
+    last-lane))
+
+(defmethod world-y-to-sceen ((sceen-matrix sceen-matrix) y)
+  (loop for sceen in (.sceens sceen-matrix)
+        for heigth = (.y (ig:get-window-pos)) then (+ heigth (.height sceen))
+        if (< y heigth)
+          do (return-from world-y-to-sceen sceen)
+        finally (return-from world-y-to-sceen sceen)))
