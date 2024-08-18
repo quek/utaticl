@@ -85,7 +85,8 @@
    (offset-group :initform 5.0 :accessor .offset-group)
    (offset-y :initform 30.0 :accessor .offset-y)
    (project :initarg :project :accessor .project)
-   (range-selecting-mode :initform nil :accessor .range-selecting-mode)
+   (range-selecting-mode :initform nil :accessor .range-selecting-mode
+                         :type (member nil :region :clip))
    (range-selecting-pos1 :initform nil :accessor .range-selecting-pos1)
    (range-selecting-pos2 :initform nil :accessor .range-selecting-pos2)
    (time-ruler-width :initform 50.0
@@ -107,6 +108,10 @@
    (drag-start-lanes :initform nil :accessor .drag-start-lanes)
    (project :accessor .project)
    (queue :initform nil :accessor .queue)
+   (range-selecting-mode :initform nil :accessor .range-selecting-mode
+                         :type (member nil :region :clip))
+   (range-selecting-pos1 :initform nil :accessor .range-selecting-pos1)
+   (range-selecting-pos2 :initform nil :accessor .range-selecting-pos2)
    (sceen-renaming :initform nil :accessor .sceen-renaming)
    (sceens :initform nil :accessor .sceens)))
 
