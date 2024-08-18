@@ -68,23 +68,26 @@
   (setf (.clips-dragging sceen-matrix) nil))
 
 (defmethod handle-dragging ((sceen-matrix sceen-matrix))
-  (if (not (ig:is-mouse-down ig:+im-gui-mouse-button-left+))
+  (if (ig:is-mouse-down ig:+im-gui-mouse-button-left+)
+      (handle-dragging-move sceen-matrix)
       (handle-drag-end sceen-matrix :move (key-ctrl-p)
-                       (and *dd-srcs* (.sceen (car *dd-srcs*))))
-      (multiple-value-bind (sceen lane)
-          (world-pos-to-sceen-lane sceen-matrix *mouse-pos*)
-        (let ((sceen-delta (diff (.sceen *dd-at*) sceen))
-              (lane-delta (diff (.lane *dd-at*) lane)))
-          (unless (and (zerop sceen-delta) (zerop lane-delta))
-            (loop for clip in (.clips-dragging sceen-matrix)
-                  for sceen-start in (.drag-start-sceens sceen-matrix)
-                  for lane-start in (.drag-start-lanes sceen-matrix)
-                  for sceen = (relative-at sceen-start sceen-delta)
-                  for lane = (relative-at lane-start lane-delta)
-                  unless (and (eq (.sceen clip) sceen)
-                              (eq (.lane clip) lane))
-                    do (clip-delete (.sceen clip) clip)
-                       (clip-add sceen clip)))))))
+                       (and *dd-srcs* (.sceen (car *dd-srcs*))))))
+
+(defmethod handle-dragging-move ((sceen-matrix sceen-matrix))
+  (multiple-value-bind (sceen lane)
+      (world-pos-to-sceen-lane sceen-matrix *mouse-pos*)
+    (let ((sceen-delta (diff (.sceen *dd-at*) sceen))
+          (lane-delta (diff (.lane *dd-at*) lane)))
+      (unless (and (zerop sceen-delta) (zerop lane-delta))
+        (loop for clip in (.clips-dragging sceen-matrix)
+              for sceen-start in (.drag-start-sceens sceen-matrix)
+              for lane-start in (.drag-start-lanes sceen-matrix)
+              for sceen = (relative-at sceen-start sceen-delta)
+              for lane = (relative-at lane-start lane-delta)
+              unless (and (eq (.sceen clip) sceen)
+                          (eq (.lane clip) lane))
+                do (clip-delete (.sceen clip) clip)
+                   (clip-add sceen clip :lane lane))))))
 
 (defmethod handle-mouse ((sceen-matrix sceen-matrix))
   (cond #+TODO
@@ -111,6 +114,15 @@
                :execute-after (lambda (cmd)
                                 (declare (ignore cmd))
                                 (setf (.clips-selected sceen-matrix) nil)))))
+
+  (defshortcut (ig:+im-gui-mod-ctrl+ ig:+im-gui-key-t+)
+    (cmd-add (.project sceen-matrix) 'cmd-track-add
+             :track-id-parent (.neko-id (.master-track (.project sceen-matrix)))
+             :execute-after (lambda (cmd)
+                              (let ((track (find-neko (.track-id-new cmd))))
+                                (unselect-all-tracks (.project sceen-matrix))
+                                (setf (.select-p track) t)))))
+
   (shortcut-common (.project sceen-matrix)))
 
 (defmethod .offset-x ((sceen-matrix sceen-matrix))
@@ -157,6 +169,7 @@
 
 (defmethod render-sceen-add-button ((sceen-matrix sceen-matrix) y)
   (ig:set-cursor-pos (@ .0 y))
+  (ig:set-next-item-shortcut (logior ig:+im-gui-mod-shift+ ig:+im-gui-key-s+))
   (when (ig:button "+" (@ (.offset-x sceen-matrix) .0))
     ;; TODO commnad にする
     (sceen-add sceen-matrix (make-instance 'sceen))))
