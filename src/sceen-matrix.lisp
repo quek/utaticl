@@ -73,8 +73,8 @@
 (defmethod handle-dragging-move ((sceen-matrix sceen-matrix))
   (multiple-value-bind (sceen lane)
       (world-pos-to-sceen-lane sceen-matrix *mouse-pos*)
-    (let ((sceen-delta (diff (.sceen *dd-at*) sceen))
-          (lane-delta (diff (.lane *dd-at*) lane)))
+    (let ((sceen-delta (diff sceen (.sceen *dd-at*)))
+          (lane-delta (diff lane (.lane *dd-at*))))
       (unless (and (zerop sceen-delta) (zerop lane-delta))
         (print (list sceen-delta lane-delta *mouse-pos* (.sceen *dd-at*) (.lane *dd-at*) ))
         (loop for (clip sceen-start lane-start) being the hash-value in (.clips-dragging sceen-matrix)
@@ -82,8 +82,10 @@
               for lane = (relative-at lane-start lane-delta)
               unless (and (eq (.sceen clip) sceen)
                           (eq (.lane clip) lane))
-                do (clip-delete (.sceen clip) clip)
-                   (clip-add sceen clip :lane lane))))))
+                do (remhash (list  (.sceen clip) (.lane clip))
+                            (.clips-dragging sceen-matrix))
+                   (setf (gethash (list sceen lane) (.clips-dragging sceen-matrix))
+                         clip))))))
 
 (defmethod handle-mouse ((sceen-matrix sceen-matrix))
   (cond #+TODO
