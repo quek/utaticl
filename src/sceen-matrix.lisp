@@ -77,15 +77,18 @@
           (lane-delta (diff lane (.lane *dd-at*))))
       (unless (and (zerop sceen-delta) (zerop lane-delta))
         (print (list sceen-delta lane-delta *mouse-pos* (.sceen *dd-at*) (.lane *dd-at*) ))
-        (loop for (clip sceen-start lane-start) being the hash-value in (.clips-dragging sceen-matrix)
+        (loop with map = (make-hash-table :test 'equal)
+              for value being the hash-value in (.clips-dragging sceen-matrix)
+              for (clip sceen-start lane-start) = value
               for sceen = (relative-at sceen-start sceen-delta)
               for lane = (relative-at lane-start lane-delta)
               unless (and (eq (.sceen clip) sceen)
                           (eq (.lane clip) lane))
-                do (remhash (list  (.sceen clip) (.lane clip))
+                do (remhash (list sceen-start lane-start)
                             (.clips-dragging sceen-matrix))
-                   (setf (gethash (list sceen lane) (.clips-dragging sceen-matrix))
-                         clip))))))
+                   (setf (gethash (list sceen lane) map)
+                         value)
+              finally (setf (.clips-dragging sceen-matrix) map))))))
 
 (defmethod handle-mouse ((sceen-matrix sceen-matrix))
   (cond #+TODO
