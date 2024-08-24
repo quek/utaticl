@@ -135,27 +135,24 @@
    (clip-ids :accessor .clip-ids)
    (lane-ids :initarg :lane-ids :accessor .lane-ids)))
 
-(defmethod initialize-instance :after ((self cmd-clips-d&d-copy) &key clips)
-  (setf (.clip-ids self) (mapcar #'.neko-id clips))
-  (setf (.clips self)
-        (with-serialize-context () (serialize clips))))
-
 (defmethod execute ((self cmd-clips-d&d-copy) project)
   ;; ドラッグ中の表示が確定されるだけなので、何もしない。
   )
 
 (defmethod undo ((self cmd-clips-d&d-copy) project)
-  (loop for clip-id in (.clip-ids self)
-        for lane-id in (.lane-ids self)
-        for clip = (find-neko clip-id)
-        for lane = (find-neko lane-id)
-        do (clip-delete lane clip)))
+  (let ((clips-serialized (with-serialize-context ()
+                            (serialize (.clips self)))))
+    (loop for clip in (.clips self)
+          for sceen = (.sceen clip)
+          for lane = (.lane clip)
+          do (clip-delete (or sceen lane) clip)
+             (terminate clip))
+    (setf (.clips self) clips-serialized)))
 
 (defmethod redo ((self cmd-clips-d&d-copy) project)
-  (loop for clip in (with-serialize-context () (deserialize (.clips self)))
-        for lane-id in (.lane-ids self)
-        for lane = (find-neko lane-id)
-        do (clip-add lane clip)))
+  (setf (.clips self) (with-serialize-context ()
+                        (deserialize (.clips self))))
+  (execute self project ))
 
 (defcommand cmd-clips-d&d-move (command)
   ((clip-ids :initarg :clips :accessor .clip-ids)

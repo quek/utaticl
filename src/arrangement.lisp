@@ -91,9 +91,7 @@
                             (key-ctrl-p (eql t))
                             sceen)
   (cmd-add (.project arrangement) 'cmd-clips-d&d-copy
-           :clips (.clips-dragging arrangement)
-           :lane-ids (loop for clip in (.clips-dragging arrangement)
-                           collect (.neko-id (.lane clip)))))
+           :clips (.clips-dragging arrangement)))
 
 (defmethod handle-drag-end ((arrangement arrangement)
                             (drag-mode (eql :move))
