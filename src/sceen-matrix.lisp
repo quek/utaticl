@@ -304,7 +304,8 @@
 
 (defmethod world-y-to-sceen ((sceen-matrix sceen-matrix) y)
   (loop for sceen in (.sceens sceen-matrix)
-        for heigth = (.y (ig:get-window-pos)) then (+ heigth (.height sceen))
+        for heigth = (+ (.y (ig:get-window-pos)) (.height sceen))
+          then (+ heigth (.height sceen))
         if (< y heigth)
           do (return-from world-y-to-sceen sceen)
         finally (return-from world-y-to-sceen sceen)))
