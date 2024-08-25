@@ -63,8 +63,6 @@
               collect 0 into times
               collect sceen into sceens-to
               collect lane into lanes-to
-              ;; arrangement と処理を合わせるため
-              do (clip-add sceen clip :lane lane)
               finally (return (values clips times sceens-to lanes-to)))
      (cmd-add (.project sceen-matrix) 'cmd-clips-d&d-move
               :clips clips

@@ -172,14 +172,16 @@
   (loop for clip in (.clips self)
         for time-to in (.times-to self)
         for lane-to in (.lanes-to self)
-        for lane-from = (.lane clip)
+        for lane-from in (.lanes-from self)
         for sceen-to in (.sceens-to self)
-        for sceen-from = (.sceen clip)
+        for sceen-from in (.sceens-from self)
         do (setf (.time clip) time-to)
            (unless (and (eq lane-from lane-to)
                         (eq sceen-from sceen-to))
              (clip-delete (or sceen-from lane-from) clip)
-             (clip-add (or sceen-to lane-to) clip))))
+             (if sceen-to
+                 (clip-add sceen-to clip :lane lane-to)
+                 (clip-add lane-to clip)))))
 
 (defmethod undo ((self cmd-clips-d&d-move) project)
   (loop for clip in (.clips self)
@@ -192,7 +194,9 @@
            (unless (and (eq lane-from lane-to)
                         (eq sceen-from sceen-to))
              (clip-delete (or sceen-to lane-to) clip)
-             (clip-add (or sceen-from lane-from) clip))))
+             (if sceen-from
+                 (clip-add sceen-from clip :lane lane-from)
+                 (clip-add lane-from clip)))))
 
 (defcommand cmd-clips-d&d-move-from-arrangement-to-sceen-matrix (command)
   ((clips-from :initarg :clips-from :accessor .clips-from)
