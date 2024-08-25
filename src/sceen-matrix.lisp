@@ -42,10 +42,10 @@
         (loop for clip in (.clips-selected sceen-matrix)
               for (clip-to sceen lane) = (gethash clip map)
               collect clip into clips
-              collect 0 into times
+              collect 0 into times-to
               collect sceen into sceens-to
               collect lane into lanes-to
-              finally (return (values clips times sceens-to lanes-to)))
+              finally (return (values clips times-to sceens-to lanes-to)))
      (cmd-add (.project sceen-matrix) 'cmd-clips-d&d-move
               :clips clips
               :times-to times-to
@@ -57,7 +57,25 @@
                             (key-ctrl-p (eql nil))
                             (sceen null))
   "arrangement からの移動"
-  )
+  (let ((map (make-hash-table)))
+    (loop for (clip sceen-start lane-start clip-from)
+            being the hash-value in (.clips-dragging sceen-matrix)
+              using (hash-key (sceen lane))
+          do (setf (gethash clip-from map)
+                   (list clip sceen lane)))
+    (multiple-value-bind (times-to sceens-to lanes-to)
+        (loop for clip in *dd-srcs*
+              for (clip-to sceen lane) = (gethash clip map)
+              collect 0 into times-to
+              collect sceen into sceens-to
+              collect lane into lanes-to
+              finally (return (values times-to sceens-to lanes-to)))
+      (print sceens-to)
+      (cmd-add (.project sceen-matrix) 'cmd-clips-d&d-move
+               :clips *dd-srcs*
+               :times-to times-to
+               :sceens-to sceens-to
+               :lanes-to lanes-to))))
 
 (defmethod handle-drag-end :after ((sceen-matrix sceen-matrix) drag-mode key-ctrl-p sceen)
   (setf *dd-at* nil)

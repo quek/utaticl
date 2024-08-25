@@ -155,8 +155,16 @@
                   .0d0)))
     (if (not (ig:is-mouse-down ig:+im-gui-mouse-button-left+))
         ;; ドラッグの終了
-        (handle-drag-end self (.drag-mode self) (key-ctrl-p)
-                         (and *dd-srcs* (.sceen (car *dd-srcs*))))
+        (if *dd-srcs*
+            (handle-drag-end self (.drag-mode self) (key-ctrl-p)
+                             (and *dd-srcs* (.sceen (car *dd-srcs*))))
+            (progn
+              (loop for clip in (.clips-dragging self)
+                    for lane = (.lane clip)
+                    do (clip-delete lane clip))
+              (setf *dd-at* nil)
+              (setf *dd-srcs* nil)
+              (setf (.clips-dragging self) nil)))
         ;; ドラッグ中の表示
         (ecase (.drag-mode self)
           (:move
