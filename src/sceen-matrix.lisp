@@ -65,7 +65,10 @@
   (clrhash (.clips-dragging sceen-matrix)))
 
 (defmethod handle-drag-start ((sceen-matrix sceen-matrix))
-  (cond ((member (.clip-at-mouse sceen-matrix) (.clips-selected sceen-matrix))
+  (cond ((and *dd-srcs* (ig:data-type-p (ig:get-drag-drop-payload) +dd-clips+)
+              (null (.sceen *dd-at*)))
+         (handle-dragging-intern sceen-matrix))
+        ((member (.clip-at-mouse sceen-matrix) (.clips-selected sceen-matrix))
          (loop for clip in (.clips-selected sceen-matrix)
                do (setf (gethash (list (.sceen clip) (.lane clip))
                                  (.clips-dragging sceen-matrix))
@@ -132,9 +135,7 @@
             ((plusp (hash-table-count (.clips-dragging sceen-matrix)))
              (handle-dragging sceen-matrix))
             ((ig:is-mouse-dragging ig:+im-gui-mouse-button-left+)
-             (handle-drag-start sceen-matrix))
-            ((and *dd-srcs* (ig:data-type-p (ig:get-drag-drop-payload) +dd-clips+))
-             (handle-dragging-intern sceen-matrix)))))
+             (handle-drag-start sceen-matrix)))))
 
 (defmethod handle-shortcut ((sceen-matrix sceen-matrix))
   (defshortcut (ig:+im-gui-mod-ctrl+ ig:+im-gui-key-a+)
