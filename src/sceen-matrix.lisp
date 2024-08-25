@@ -18,7 +18,7 @@
          (loop for clip in (.clips-selected sceen-matrix)
                do (setf (gethash (list (.sceen clip) (.lane clip))
                                  (.clips-dragging sceen-matrix))
-                        (list (copy clip) (.sceen clip) (.lane clip))))
+                        (list (copy clip) (.sceen clip) (.lane clip) clip)))
          (setf *dd-at* (.clip-at-mouse sceen-matrix))
          (setf *dd-srcs* (.clips-selected sceen-matrix))
          (multiple-value-bind (sceen lane)
@@ -39,7 +39,7 @@
   (multiple-value-bind (sceen lane)
       (world-pos-to-sceen-lane sceen-matrix *mouse-pos*)
     (cmd-add *project* 'cmd-clips-d&d-copy
-             :clips (loop for (clip sceen-start lane-start)
+             :clips (loop for (clip sceen-start lane-start clip-from)
                             being the hash-value in (.clips-dragging sceen-matrix)
                           ;; arrangement は clip-add 済なので合わせる
                           do (clip-add sceen clip :lane lane)
@@ -50,7 +50,27 @@
                             (key-ctrl-p (eql nil))
                             (sceen sceen))
   "sceen-matrix 内での移動"
-  )
+  (let ((map (make-hash-table)))
+    (loop for (clip sceen-start lane-start clip-from)
+            being the hash-value in (.clips-dragging sceen-matrix)
+              using (hash-key (sceen lane))
+          do (setf (gethash clip-from map)
+                   (list clip sceen lane)))
+    (multiple-value-bind (clips times-to sceens-to lanes-to)
+        (loop for clip in (.clips-selected sceen-matrix)
+              for (clip-to sceen lane) = (gethash clip map)
+              collect clip into clips
+              collect 0 into times
+              collect sceen into sceens-to
+              collect lane into lanes-to
+              ;; arrangement と処理を合わせるため
+              do (clip-add sceen clip :lane lane)
+              finally (return (values clips times sceens-to lanes-to)))
+     (cmd-add (.project sceen-matrix) 'cmd-clips-d&d-move
+              :clips clips
+              :times-to times-to
+              :sceens-to sceens-to
+              :lanes-to lanes-to))))
 
 (defmethod handle-drag-end ((sceen-matrix sceen-matrix)
                             drag-mode
@@ -83,10 +103,9 @@
     (let ((sceen-delta (diff sceen (.sceen *dd-at*)))
           (lane-delta (diff lane (.lane *dd-at*))))
       (unless (and (zerop sceen-delta) (zerop lane-delta))
-        (print (list sceen-delta lane-delta *mouse-pos* (.sceen *dd-at*) (.lane *dd-at*) ))
         (loop with map = (make-hash-table :test 'equal)
               for value being the hash-value in (.clips-dragging sceen-matrix)
-              for (clip sceen-start lane-start) = value
+              for (clip sceen-start lane-start clip-from) = value
               for sceen = (relative-at sceen-start sceen-delta)
               for lane = (relative-at lane-start lane-delta)
               unless (and (eq (.sceen clip) sceen)
