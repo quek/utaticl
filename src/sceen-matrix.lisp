@@ -16,8 +16,8 @@
 (defmethod handle-drag-end ((sceen-matrix sceen-matrix)
                             drag-mode
                             (key-ctrl-p (eql t))
-                            (sceen sceen))
-  "sceen-matrix 内でのコピー"
+                            sceen)
+  "sceen-matrix 内、または arrangement からのコピー"
   (multiple-value-bind (sceen lane)
       (world-pos-to-sceen-lane sceen-matrix *mouse-pos*)
     (cmd-add *project* 'cmd-clips-d&d-copy
@@ -51,13 +51,6 @@
               :times-to times-to
               :sceens-to sceens-to
               :lanes-to lanes-to))))
-
-(defmethod handle-drag-end ((sceen-matrix sceen-matrix)
-                            drag-mode
-                            (key-ctrl-p (eql t))
-                            (sceen null))
-  "arrangement からのコピー"
-  )
 
 (defmethod handle-drag-end ((sceen-matrix sceen-matrix)
                             drag-mode
@@ -138,10 +131,10 @@
              (handle-dragging-extern-drop sceen-matrix))
             ((plusp (hash-table-count (.clips-dragging sceen-matrix)))
              (handle-dragging sceen-matrix))
-            ((and *dd-srcs* (ig:data-type-p (ig:get-drag-drop-payload) +dd-clips+))
-             (handle-dragging-intern sceen-matrix))
             ((ig:is-mouse-dragging ig:+im-gui-mouse-button-left+)
-             (handle-drag-start sceen-matrix)))))
+             (handle-drag-start sceen-matrix))
+            ((and *dd-srcs* (ig:data-type-p (ig:get-drag-drop-payload) +dd-clips+))
+             (handle-dragging-intern sceen-matrix)))))
 
 (defmethod handle-shortcut ((sceen-matrix sceen-matrix))
   (defshortcut (ig:+im-gui-mod-ctrl+ ig:+im-gui-key-a+)
