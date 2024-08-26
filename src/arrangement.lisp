@@ -54,8 +54,7 @@
                                   (edit (.clip cmd))))))))
 
 (defmethod handle-drag-start ((arrangement arrangement))
-  (cond ((and *dd-srcs* (ig:data-type-p (ig:get-drag-drop-payload) +dd-clips+)
-              (.sceen *dd-at*))
+  (cond ((and (typep *dd-at* 'clip) (.sceen *dd-at*))
          ;; sceen-matrix からのドラッグ
          (handle-dragging-intern arrangement))
         ((and (.clips-selected arrangement) (.clip-at-mouse arrangement))

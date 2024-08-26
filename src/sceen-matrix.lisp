@@ -45,7 +45,6 @@
               collect sceen into sceens-to
               collect lane into lanes-to
               finally (return (values times-to sceens-to lanes-to)))
-      (print sceens-to)
       (cmd-add (.project sceen-matrix) 'cmd-clips-d&d-move
                :clips *dd-srcs*
                :times-to times-to
@@ -58,11 +57,14 @@
   (clrhash (.clips-dragging sceen-matrix)))
 
 (defmethod handle-drag-start ((sceen-matrix sceen-matrix))
-  (cond ((and *dd-srcs* (ig:data-type-p (ig:get-drag-drop-payload) +dd-clips+)
-              (null (.sceen *dd-at*)))
+  (cond ((and (typep *dd-at* 'clip) (null (.sceen *dd-at*)))
          ;; arrangement からのドラッグ
          (handle-dragging-intern sceen-matrix))
-        ((member (.clip-at-mouse sceen-matrix) (.clips-selected sceen-matrix))
+        ((.clip-at-mouse sceen-matrix)
+         (unless (member (.clip-at-mouse sceen-matrix) (.clips-selected sceen-matrix))
+           (unless (key-ctrl-p)
+             (setf (.clips-selected sceen-matrix) nil))
+           (push (.clip-at-mouse sceen-matrix) (.clips-selected sceen-matrix)))
          (loop for clip in (.clips-selected sceen-matrix)
                do (setf (gethash (list (.sceen clip) (.lane clip))
                                  (.clips-dragging sceen-matrix))
@@ -215,14 +217,15 @@
       (ig:set-cursor-pos pos-local)
       (if clip
           (with-renaming  (clip (.clip-renaming sceen-matrix) (.width lane))
-            (when (member clip (.clips-selected sceen-matrix))
-              (let* ((pos1 (@+ pos-local (ig:get-window-pos)))
-                     (pos2 (@+ pos1 (@ (.width lane) (.height sceen))))
-                     (draw-list (ig:get-window-draw-list)))
+
+            (let* ((pos1 (@+ pos-local (ig:get-window-pos)))
+                   (pos2 (@+ pos1 (@ (.width lane) (.height sceen))))
+                   (draw-list (ig:get-window-draw-list)))
+              (when (member clip (.clips-selected sceen-matrix))
                 (ig:add-rect-filled draw-list pos1 pos2
-                                    (color #xa0 #xff #xa0 #x20))
-                (when (contain-p (ig:get-mouse-pos) pos1 pos2)
-                  (setf (.clip-at-mouse sceen-matrix) clip))))
+                                    (color #xa0 #xff #xa0 #x20)))
+              (when (contain-p *mouse-pos* pos1 pos2)
+                (setf (.clip-at-mouse sceen-matrix) clip)))
             (ig:with-button-color ((cond ((or (.will-start clip)
                                               (.will-stop clip))
                                           (if (interval-p 0.3)
@@ -243,6 +246,7 @@
                   (setf (.clips-selected sceen-matrix) nil))
                 (push clip (.clips-selected sceen-matrix))
                 (edit clip))
+              #+nil
               (ig:with-drag-drop-source ()
                 (ig:set-drag-drop-payload +dd-clips+)
                 (unless (member clip (.clips-selected sceen-matrix))
@@ -251,11 +255,7 @@
                   (push clip (.clips-selected sceen-matrix)))
                 (setf *dd-at* clip)
                 (setf *dd-srcs* (.clips-selected sceen-matrix))
-                (ig:text (.name clip)))
-              (ig:with-drag-drop-target
-                (when (ig:accept-drag-drop-payload +dd-clips+)
-                  ;; TODO
-                  )))
+                (ig:text (.name clip))))
             (ig:with-popup-context-item ()
               (when (ig:menu-item "Rename")
                 (setf (.clip-renaming sceen-matrix) clip))))
