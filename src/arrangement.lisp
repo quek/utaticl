@@ -54,7 +54,11 @@
                                   (edit (.clip cmd))))))))
 
 (defmethod handle-drag-start ((arrangement arrangement))
-  (cond ((and (.clips-selected arrangement) (.clip-at-mouse arrangement))
+  (cond ((and *dd-srcs* (ig:data-type-p (ig:get-drag-drop-payload) +dd-clips+)
+              (.sceen *dd-at*))
+         ;; sceen-matrix からのドラッグ
+         (handle-dragging-intern arrangement))
+        ((and (.clips-selected arrangement) (.clip-at-mouse arrangement))
          ;; ノートの移動 or 長さ変更
          (ecase (.drag-mode arrangement)
            (:move
@@ -170,7 +174,7 @@
           (:move
            (multiple-value-bind (time lane)
                (world-pos-to-time-lane self
-                                       (@- (ig:get-mouse-pos)
+                                       (@- *mouse-pos*
                                            (@ .0 (.drag-offset-time self))))
              (setf time (max (time-grid-applied self time #'floor) .0d0))
              (let ((delta-time (- time (car (.drag-start-times self))))
@@ -255,8 +259,6 @@
                (handle-dragging-extern-drop self))
               ((.clips-dragging self)
                (handle-dragging self))
-              ((and *dd-srcs* (ig:data-type-p (ig:get-drag-drop-payload) +dd-clips+))
-               (handle-dragging-intern self))
               ((.range-selecting-mode self)
                (handle-range-selecting self))
               ((ig:is-mouse-dragging ig:+im-gui-mouse-button-left+ 0.1)

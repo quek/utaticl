@@ -60,6 +60,7 @@
 (defmethod handle-drag-start ((sceen-matrix sceen-matrix))
   (cond ((and *dd-srcs* (ig:data-type-p (ig:get-drag-drop-payload) +dd-clips+)
               (null (.sceen *dd-at*)))
+         ;; arrangement からのドラッグ
          (handle-dragging-intern sceen-matrix))
         ((member (.clip-at-mouse sceen-matrix) (.clips-selected sceen-matrix))
          (loop for clip in (.clips-selected sceen-matrix)
