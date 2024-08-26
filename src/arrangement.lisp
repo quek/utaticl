@@ -174,8 +174,9 @@
           (:move
            (multiple-value-bind (time lane)
                (world-pos-to-time-lane self
-                                       (@- *mouse-pos*
-                                           (@ .0 (.drag-offset-time self))))
+                                       (@+ *mouse-pos*
+                                           (@ .0 (* (.drag-offset-time self)
+                                                    (.zoom-y self)))))
              (setf time (max (time-grid-applied self time #'floor) .0d0))
              (let ((delta-time (- time (car (.drag-start-times self))))
                    (delta-lane (diff lane (car (.drag-start-lanes self)))))
