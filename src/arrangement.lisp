@@ -270,13 +270,12 @@
               ((ig:is-mouse-released ig:+im-gui-mouse-button-left+)
                (handle-mouse-released self)))
         (zoom-y-update self io))
-      (progn
-        (cond ((.clips-dragging self)
-               (loop for dragging in (.clips-dragging self)
-                     for selected in (.clips-selected self)
-                     for time = (.time selected)
-                     for lane = (.lane selected)
-                     do (move dragging time lane))))))
+      (when (.clips-dragging self)
+        (loop for dragging in (.clips-dragging self)
+              for selected in (.clips-selected self)
+              for time = (.time selected)
+              for lane = (.lane selected)
+              do (move dragging time lane))))
 
   (if (.clips-dragging self)
       (ecase (.drag-mode self)
@@ -427,15 +426,9 @@
           (ig:text (format nil "  ~:[~;∞~]~a" (link-p clip) (.name clip)))
           (ig:set-cursor-pos pos1)
           (ig:invisible-button "##" (@- pos2 pos1))
-          (let ((drag-p nil))
-            (ig:with-drag-drop-source ()
-              (ig:set-drag-drop-payload +dd-clips+)
-              (ig:text (.name clip))
-              (setf drag-p t))
-            (unless drag-p
-              (when (contain-p mouse-pos pos1-world pos2-world)
-                (ig:with-tooltip
-                  (ig:text (.name clip)))))))
+          (when (contain-p mouse-pos pos1-world pos2-world)
+            (ig:with-tooltip
+              (ig:text (.name clip)))))
 
         (let ((pos1 (@+ pos1-world (@ 2.0 .0)))
               (pos2 (@+ pos2-world (@ -1.0 .0)))

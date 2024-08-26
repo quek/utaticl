@@ -121,6 +121,9 @@
               finally (setf (.clips-dragging sceen-matrix) map))))))
 
 (defmethod handle-mouse ((sceen-matrix sceen-matrix))
+  (unless *dd-srcs*
+    ;; arrangement にドロップしたときのクリア処理
+    (clrhash (.clips-dragging sceen-matrix)))
   (if (can-handle-mouse-p sceen-matrix)
       (cond #+TODO
             ((dragging-extern-p)
@@ -131,7 +134,14 @@
             ((plusp (hash-table-count (.clips-dragging sceen-matrix)))
              (handle-dragging sceen-matrix))
             ((ig:is-mouse-dragging ig:+im-gui-mouse-button-left+)
-             (handle-drag-start sceen-matrix)))))
+             (handle-drag-start sceen-matrix)))
+      (when (plusp (hash-table-count (.clips-dragging sceen-matrix)))
+        (let ((map (make-hash-table)))
+          (loop for value being the hash-value in (.clips-dragging sceen-matrix)
+                for (clip sceen-start lane-start clip-src) = value
+                do (setf (gethash (list sceen-start lane-start) map)
+                         value))
+          (setf (.clips-dragging sceen-matrix) map)))))
 
 (defmethod handle-shortcut ((sceen-matrix sceen-matrix))
   (defshortcut (ig:+im-gui-mod-ctrl+ ig:+im-gui-key-a+)
@@ -245,17 +255,7 @@
                 (unless (key-ctrl-p)
                   (setf (.clips-selected sceen-matrix) nil))
                 (push clip (.clips-selected sceen-matrix))
-                (edit clip))
-              #+nil
-              (ig:with-drag-drop-source ()
-                (ig:set-drag-drop-payload +dd-clips+)
-                (unless (member clip (.clips-selected sceen-matrix))
-                  (unless (key-ctrl-p)
-                    (setf (.clips-selected sceen-matrix) nil))
-                  (push clip (.clips-selected sceen-matrix)))
-                (setf *dd-at* clip)
-                (setf *dd-srcs* (.clips-selected sceen-matrix))
-                (ig:text (.name clip))))
+                (edit clip)))
             (ig:with-popup-context-item ()
               (when (ig:menu-item "Rename")
                 (setf (.clip-renaming sceen-matrix) clip))))
@@ -264,11 +264,7 @@
               (cmd-add *project* 'cmd-clip-add
                        :clip (make-instance 'clip-note :color (.color lane))
                        :sceen sceen
-                       :lane lane))
-            #+nil
-            (ig:with-drag-drop-target
-              (when (ig:accept-drag-drop-payload +dd-clips+)
-                (drag-drop-clips sceen-matrix sceen lane (key-ctrl-p)))))))
+                       :lane lane)))))
     (incf x (.width track))
     (when (.tracks-show-p track)
       (loop for each-track in (.tracks track)
