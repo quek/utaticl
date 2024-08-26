@@ -410,7 +410,6 @@
                         :accessor .audio-device-window)
    (color-window :initform (make-instance 'color-window)
                  :accessor .color-window)
-   (drop-files :initform nil :accessor .drop-files)
    (dragging-p :initform nil :accessor .dragging-p)
    (mutex :initform (sb-thread:make-mutex :name "APP") :accessor .mutex)
    (projects :initform nil :accessor .projects)

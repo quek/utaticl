@@ -14,7 +14,8 @@
              (cmd-run project))))
 
 (defmethod drag-enter ((app app) files)
-  (setf (.drop-files app) files)
+  (setf *dd-at* (car files))
+  (setf *dd-srcs* files)
   (setf (.dragging-p app) t))
 
 (defmethod drop ((app app))
@@ -48,7 +49,7 @@
       (ig:with-drag-drop-source (ig:+im-gui-drag-drop-flags-source-extern+)
         (ig:set-drag-drop-payload +dd-extern+)
         (ig:with-tooltip
-          (loop for file in (.drop-files app)
+          (loop for file in *dd-srcs*
                 do (ig:text file)))))
     (loop for project in (.projects app)
           do (let ((*project* project))

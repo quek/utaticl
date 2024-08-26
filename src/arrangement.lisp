@@ -205,7 +205,7 @@
     (ig:with-drag-drop-target
       ;; マウスボタン離してなくても accept しちゃう
       (when (ig:accept-drag-drop-payload +dd-extern+  ig:+im-gui-drag-drop-flags-source-extern+)
-        (setf (.dragging-source-extern arrangement) (.drop-files *app*))))))
+        (setf (.dragging-source-extern arrangement) *dd-srcs*)))))
 
 (defmethod handle-dragging-extern-drop ((arrangement arrangement))
   (when (ig:is-mouse-down-nil ig:+im-gui-mouse-button-left+)
@@ -217,6 +217,8 @@
                    :time time :lane lane :path path
                    :execute-after (lambda (cmd)
                                     (edit (.clip cmd)))))))
+    (setf *dd-at* nil)
+    (setf *dd-srcs* nil)
     (setf (.dragging-source-extern arrangement) nil)))
 
 (defmethod handle-dragging-intern ((arrangement arrangement))
@@ -240,6 +242,11 @@
           (diff (.lane *dd-at*) lane))))
 
 (defmethod handle-mouse ((self arrangement))
+  (unless *dd-srcs*
+    ;; sceen-matrix にドロップしたときのクリア処理
+    (loop for clip in (.clips-dragging self)
+          do (clip-delete (.lane clip) clip))
+    (setf (.clips-dragging self) nil))
   (if (can-handle-mouse-p self)
       (let* ((io (ig:get-io)))
         (cond ((dragging-extern-p)
