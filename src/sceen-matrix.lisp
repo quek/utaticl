@@ -18,14 +18,13 @@
                             (key-ctrl-p (eql t))
                             sceen)
   "sceen-matrix 内、または arrangement からのコピー"
-  (multiple-value-bind (sceen lane)
-      (world-pos-to-sceen-lane sceen-matrix *mouse-pos*)
-    (cmd-add *project* 'cmd-clips-d&d-copy
-             :clips (loop for (clip sceen-start lane-start clip-from)
-                            being the hash-value in (.clips-dragging sceen-matrix)
-                          ;; arrangement は clip-add 済なので合わせる
-                          do (clip-add sceen clip :lane lane)
-                          collect clip))))
+  (cmd-add *project* 'cmd-clips-d&d-copy
+           :clips (loop for (clip sceen-start lane-start clip-from)
+                          being the hash-value in (.clips-dragging sceen-matrix)
+                            using (hash-key (sceen lane))
+                        ;; arrangement は clip-add 済なので合わせる
+                        do (clip-add sceen clip :lane lane)
+                        collect clip)))
 
 (defmethod handle-drag-end ((sceen-matrix sceen-matrix)
                             drag-mode
