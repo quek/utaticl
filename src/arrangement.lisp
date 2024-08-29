@@ -377,6 +377,9 @@
     (setf (.clips-selected self)
           (map-lanes (.project self) (lambda (lane acc)
                                        (append acc (copy-list (.clips lane)))))))
+  (awhen (.clips-selected self)
+    (defshortcut (ig:+im-gui-key-e+)
+      (edit (car it) (reverse it))))
   (defshortcut (ig:+im-gui-key-delete+)
     (when (.clips-selected self)
       (cmd-add (.project self) 'cmd-clips-delete

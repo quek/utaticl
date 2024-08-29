@@ -361,7 +361,14 @@
 
   (ig:with-begin ("##piano-roll" :flags ig:+im-gui-window-flags-no-scrollbar+)
     (render-grid self)
-    (ig:text (.name (.clip self)))
+    (loop for clip in (.clips self)
+          for selected = (eq clip (.clip self))
+          with first-p = t
+          do (if first-p
+                 (setf first-p nil)
+                 (ig:same-line))
+             (when (button-toggle (.name clip) selected)
+               (setf (.clip self) clip)))
     (ig:with-child ("##canvas" :window-flags ig:+im-gui-window-flags-horizontal-scrollbar+)
 
       (render-time-ruler self)
