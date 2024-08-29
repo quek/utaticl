@@ -7,7 +7,7 @@
 (defmethod clip-add :after ((lane lane) (clip-audio clip-audio) &key)
   (update-duration clip-audio (.bpm *project*)))
 
-(defmethod edit ((clip-audio clip-audio))
+(defmethod edit ((clip-audio clip-audio) clips)
   ;; TODO
   (print "edit clip-audio."))
 

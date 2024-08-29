@@ -35,7 +35,7 @@
          (unless (key-ctrl-p)
            (unselect-all-tracks (.project self)))
          (setf (.select-p (.track (.lane it))) t)
-         (edit it))
+         (edit it (copy-list (.clips-selected self))))
        (progn
          (setf (.clips-selected self) nil)
          (let* ((time (max (world-y-to-time self (.y (ig:get-mouse-pos))) .0))
@@ -51,7 +51,7 @@
                  :clip (make-instance 'clip-note :time time :color (.color lane))
                  :lane lane
                  :execute-after (lambda (cmd)
-                                  (edit (.clip cmd))))))))
+                                  (edit (.clip cmd) (list (.clip cmd)))))))))
 
 (defmethod handle-drag-start ((arrangement arrangement))
   (cond ((and (typep *dd-at* 'clip) (.sceen *dd-at*))

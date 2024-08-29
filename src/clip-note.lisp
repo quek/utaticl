@@ -4,9 +4,9 @@
 ;; (defmethod initialize-instance :after ((self clip-note) &key seq)
 ;;   (setf (.seq self) (or seq (make-instance 'seq-note))))
 
-(defmethod edit ((self clip-note))
+(defmethod edit ((self clip-note) clips)
   (setf (.piano-roll (.project self))
-        (make-instance 'piano-roll :clip self)))
+        (make-instance 'piano-roll :clip self :clips clips)))
 
 (defmethod note-add ((self clip-note) (note note))
   (note-add (.seq self) note))

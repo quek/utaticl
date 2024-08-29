@@ -254,7 +254,7 @@
                 (unless (key-ctrl-p)
                   (setf (.clips-selected sceen-matrix) nil))
                 (push clip (.clips-selected sceen-matrix))
-                (edit clip)))
+                (edit clip (copy-list (.clips-selected sceen-matrix)))))
             (ig:with-popup-context-item ()
               (when (ig:menu-item "Rename")
                 (setf (.clip-renaming sceen-matrix) clip))))

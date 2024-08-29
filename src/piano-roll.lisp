@@ -375,7 +375,8 @@
           (render-keyboard self))
         (ig:with-clip-rect ((@+ window-pos (@ (.offset-x self) (.offset-y self)))
                             (@+ window-pos window-size))
-          (render-notes self)))
+          (loop for clip in (.clips self)
+                do (render-notes self clip))))
 
       (swhen (.render-first-p self)
         (setf it (view-fit self)))
@@ -411,9 +412,8 @@
                   (ig:set-cursor-pos (@- pos2 window-pos))
                   (ig:text ""))))
 
-(defmethod render-notes ((self piano-roll))
-  (loop with clip = (.clip self)
-        with draw-list = (ig:get-window-draw-list)
+(defmethod render-notes ((self piano-roll) (clip clip-note))
+  (loop with draw-list = (ig:get-window-draw-list)
         with key-width = (.zoom-x self)
         with mouse-pos = (ig:get-mouse-pos)
         for note in (.notes (.seq clip))
@@ -445,8 +445,12 @@
                   maximize key into max
                   minimize key into min
                   finally (return (values max min)))
-          (let* ((zoom-x (/ (- (ig:get-window-width) (.offset-x self))
-                            (+ (- key-max key-min) 3.0))))
+          (when (< (- key-max key-min) 12)
+            (incf key-max (ceiling (/ (- 12 (- key-max key-min)) 2)))
+            (decf key-min (ceiling (/ (- 12 (- key-max key-min)) 2))))
+          (let* ((scrollbar-size (c-ref (ig:get-style) ig:im-gui-style :scrollbar-size))
+                 (zoom-x (/ (- (ig:get-window-width) (.offset-x self) scrollbar-size)
+                               (+ (- key-max key-min) 3.0))))
             (if (/= (.zoom-x self) zoom-x)
                 (progn
                   (log:debug zoom-x)

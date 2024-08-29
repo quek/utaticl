@@ -116,6 +116,8 @@
 
 (defclass piano-roll (time-ruler-mixin grid-mixin offset-mixin scroll-mixin zoom-mixin view)
   ((clip :initarg :clip :accessor .clip)
+   (clips :initarg :clips :accessor .clips)
+   (clip-edit :initarg :clip-edit :accessor .clip-edit)
    (drag-mode :initform :move :accessor .drag-mode
               :type (member :start :move :end))
    (note-add-pos :initform nil :accessor .note-add-pos)

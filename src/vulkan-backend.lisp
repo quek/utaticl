@@ -496,8 +496,14 @@
                      (unwind-protect
                           (sdl2:with-sdl-event (e)
                             (loop until dgw::*done* do
-                              (dgw::with-debugger
-                                (vulkan-ui-loop main-window-data dgw::*app* window e))))
+                              (vulkan-ui-loop main-window-data dgw::*app* window e)
+                                  #+nil
+                                   (handler-case
+                                       (vulkan-ui-loop main-window-data dgw::*app* window e)
+                                     (error (e)
+                                       (log4cl:log-error "Error ~a!~%~a" e
+                                                         (with-output-to-string (out)
+                                                           (sb-debug:print-backtrace :stream out)))))))
                        (dgw::terminate dgw::*app*)))))
 
             (vk:device-wait-idle *device*)
