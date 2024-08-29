@@ -368,7 +368,8 @@
                  (setf first-p nil)
                  (ig:same-line))
              (when (button-toggle (.name clip) selected)
-               (setf (.clip self) clip)))
+               (setf (.clip self) clip)
+               (setf (.notes-selected self) nil)))
     (ig:with-child ("##canvas" :window-flags ig:+im-gui-window-flags-horizontal-scrollbar+)
 
       (render-time-ruler self)
@@ -429,14 +430,20 @@
         for pos1 = (@ x y)
         for pos2 = (@+ pos1 (@ key-width
                                (coerce (* (.duration note) (.zoom-y self)) 'single-float)))
+        for color-weight = (if (eq (.clip self) clip)
+                               1.0 0.5)
         do (ig:with-id (note)
              (ig:add-rect-filled draw-list
                                  (@+ pos1 (@ 2.0 .0))
                                  (@- pos2 (@ 1.0 .0))
-                                 (color-selected (.color note) (member note (.notes-selected self)))
+                                 (color*
+                                  (color-selected (.color note) (member note (.notes-selected self)))
+                                  1.0 color-weight)
                                  :rounding 2.5)
              (when (text-show-p self)
-               (ig:add-text draw-list (@+ pos1 (@ 2.0 4.0)) (.color-text *theme*) (.name note)))
+               (ig:add-text draw-list (@+ pos1 (@ 2.0 4.0))
+                            (color* (.color-text *theme*) 1.0 color-weight)
+                            (.name note)))
              (when (contain-p mouse-pos pos1 pos2)
                (setf (.note-at-mouse self) note)))))
 
