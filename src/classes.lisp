@@ -37,7 +37,7 @@
 (defclass time-ruler-mixin ()
   ((loop-selecting-p :initform nil :accessor .loop-selecting-p)
    (loop-selecting-time :initform nil :accessor .loop-selecting-time)
-   (time-ruler-threshold :initform 25.0 :accessor .time-ruler-threshold)))
+   (time-ruler-threshold :initform 15.0 :accessor .time-ruler-threshold)))
 
 (defclass zoom-mixin ()
   ((zoom-x :initarg :zoom-x :initform 25.0 :accessor .zoom-x)
@@ -138,8 +138,8 @@
    (render-first-p :initform t :accessor .render-first-p)
    (project :initarg :project :accessor .project)
    (threshold-text-hide :initform 18.0 :accessor .threshold-text-hide))
-  (:default-initargs :zoom-x 25.0 :zoom-y 25.0 :zoom-y-min 5.0
-                     :grid-unit +grid-beat+))
+  (:default-initargs :zoom-x 25.0 :zoom-y 60.0 :zoom-y-min 5.0
+                     :grid-unit +grid-1/16+))
 
 (defclass rack (view)
   ((plugin-selector :accessor .plugin-selector)

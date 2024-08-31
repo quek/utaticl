@@ -475,7 +475,7 @@
                   (ig:set-scroll-x-float scroll-x)
                   nil))))
         (progn
-          (ig:set-scroll-x-float (key-to-local-x self +c4+))
+          (ig:set-scroll-x-float (key-to-local-x self +a3+))
           nil))))
 
 (defmethod world-pos-to-time-key ((self piano-roll) pos)
