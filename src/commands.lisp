@@ -362,6 +362,7 @@
 (defmethod execute ((self cmd-module-add) project)
   (let ((track (find-track project (.track-id self)))
         (module (plugin-load (.plugin-info self))))
+    (setf (.module self) module)
     (module-add track module :before (.before self))))
 
 (defmethod undo ((self cmd-module-add) project)
