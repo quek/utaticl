@@ -339,9 +339,9 @@
                                                     #'ceiling
                                                     #'floor)))
       (let ((time1 (min time1 time2))
-            (key1 (max key1 key2))
+            (key1 (min key1 key2))
             (time2 (max time1 time2))
-            (key2 (1- (min key1 key2))))
+            (key2 (1+ (max key1 key2))))
         (values time1 key1 time2 key2)))))
 
 (defmethod range-selecting-region ((self piano-roll) pos1 pos2)
