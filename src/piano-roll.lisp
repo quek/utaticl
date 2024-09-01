@@ -20,8 +20,7 @@
           (setf (.drag-mode self) (drag-mode self note-at-mouse))
           (setf (.note-target self) note-at-mouse)
           (setf (.note-default-duration self) (.duration note-at-mouse))
-          (when (or (not (.range-selecting-pos1 self))
-                    (not (.range-selecting-pos2 self)))
+          (unless (range-selecting-p self)
             (when (and (not (member note-at-mouse (.notes-selected self)))
                        (not (key-ctrl-p)))
               (setf (.notes-selected self) (list note-at-mouse)))))
@@ -63,8 +62,7 @@
 
 (defmethod handle-drag-start ((self piano-roll))
   (cond ((and (.note-at-mouse self)
-              (.range-selecting-pos1 self)
-              (.range-selecting-pos2 self))
+              (range-selecting-p self))
          ;; リージョンのドラッグ開始
          (multiple-value-bind (time1 key1 time2 key2)
              (range-selecting-region-time-key
@@ -169,8 +167,7 @@
 
           (setf (.notes-dragging self) nil))
         ;; ドラッグ中の表示
-        (if (and (.range-selecting-pos1 self)
-                 (.range-selecting-pos2 self))
+        (if (range-selecting-p self)
             (multiple-value-bind (time key)
                 (world-pos-to-time-key self (@- (ig:get-mouse-pos)
                                                 (@ .0 (.note-drag-offset self))))
@@ -230,8 +227,7 @@
       (zoom-x-update self io)
       (zoom-y-update self io)))
 
-  (when (and (.range-selecting-pos1 self)
-             (.range-selecting-pos2 self))
+  (when (range-selecting-p self)
     (let ((draw-list (ig:get-window-draw-list)))
       (multiple-value-bind (pos1 pos2)
           (range-selecting-region self
@@ -297,8 +293,7 @@
                :notes (.notes-selected self)
                :clip (.clip self))))
   (defshortcut (ig:+im-gui-key-d+)
-    (if (and (.range-selecting-pos1 self)
-             (.range-selecting-pos2 self))
+    (if (range-selecting-p self)
         (cmd-add (.project self) 'cmd-notes-duplicate-region
                  :pos1 (.range-selecting-pos1 self)
                  :pos2 (.range-selecting-pos2 self)
@@ -326,6 +321,10 @@
       (time-to-local-y piano-roll (rem (.play-start (.project piano-roll))
                                        (.duration (.clip piano-roll))))
       (call-next-method)))
+
+(defmethod range-selecting-p ((piano-roll piano-roll))
+  (and (.range-selecting-pos1 piano-roll)
+       (.range-selecting-pos2 piano-roll)))
 
 (defmethod range-selecting-region-time-key ((self piano-roll) pos1 pos2)
   (multiple-value-bind (time1 key1)
