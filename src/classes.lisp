@@ -131,6 +131,7 @@
    (notes-selected :initform nil :accessor .notes-selected)
    (offset-x :initform 25.0 :accessor .offset-x)
    (offset-y :initform 30.0 :accessor .offset-y)
+   (range-dragging :initform nil :accessor .range-dragging)
    (range-selecting-mode :initform nil :accessor .range-selecting-mode
                          :type (member :note :region nil))
    (range-selecting-pos1 :initform nil :accessor .range-selecting-pos1)

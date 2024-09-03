@@ -14,20 +14,22 @@
           (t :end))))
 
 (defmethod handle-click ((self piano-roll))
-  (let ((note-at-mouse (.note-at-mouse self)))
-    (if note-at-mouse
-        (progn
-          (setf (.drag-mode self) (drag-mode self note-at-mouse))
-          (setf (.note-target self) note-at-mouse)
-          (setf (.note-default-duration self) (.duration note-at-mouse))
-          (unless (range-selecting-p self)
-            (when (and (not (member note-at-mouse (.notes-selected self)))
-                       (not (key-ctrl-p)))
-              (setf (.notes-selected self) (list note-at-mouse)))))
-        (progn
-          (setf (.notes-selected self) nil)
-          (setf (.range-selecting-pos1 self) nil)
-          (setf (.range-selecting-pos2 self) nil)))))
+  (if (range-selecting-p self)
+      nil
+      (let ((note-at-mouse (.note-at-mouse self)))
+        (if note-at-mouse
+            (unless (key-alt-p)    ;alt は region 選択しようとしているとき
+              (setf (.drag-mode self) (drag-mode self note-at-mouse))
+              (setf (.note-target self) note-at-mouse)
+              (setf (.note-default-duration self) (.duration note-at-mouse))
+              (unless (range-selecting-p self)
+                (when (and (not (member note-at-mouse (.notes-selected self)))
+                           (not (key-ctrl-p)))
+                  (setf (.notes-selected self) (list note-at-mouse)))))
+            (progn
+              (setf (.notes-selected self) nil)
+              (setf (.range-selecting-pos1 self) nil)
+              (setf (.range-selecting-pos2 self) nil))))))
 
 (defmethod handle-double-click ((self piano-roll))
   (if (.note-at-mouse self)
@@ -61,17 +63,27 @@
                                         (setf (.drag-mode self) :end)))))))))
 
 (defmethod handle-drag-start ((self piano-roll))
-  (cond ((and (.note-at-mouse self)
-              (range-selecting-p self))
+  (print 1)
+  (cond ((key-alt-p)
+         (setf (.range-selecting-mode self) :region)
+         (setf (.range-selecting-pos1 self) (ig:get-mouse-pos)))
+        ((range-selecting-p self)
          ;; リージョンのドラッグ開始
+         (setf (.range-dragging self)
+               (multiple-value-list (range-selecting-region-time-key
+                                     self
+                                     (.range-selecting-pos1 self)
+                                     (.range-selecting-pos2 self))))
+         ;; 消す？
          (multiple-value-bind (time1 key1 time2 key2)
              (range-selecting-region-time-key
               self
               (.range-selecting-pos1 self)
               (.range-selecting-pos2 self))
            (setf (.drag-mode self) :move)
-           (setf (.note-drag-offset self) (- (.y (ig:get-mouse-pos))
-                                             (time-to-world-y self (.time (.note-target self)))))
+           (setf (.note-drag-offset self)
+                 (@- (.range-selecting-pos1 self) (ig:get-mouse-pos)))
+           #+nil
            (setf (.notes-selected self)
                  (loop for note in (.notes (.seq (.clip self)))
                        if (and (<= time1 (+ (.time note) (.duration note)))
@@ -79,19 +91,23 @@
                                (<= key2 (.key note) key1))
                          collect note))
            (setf (.notes-dragging self)
-                 (loop for note in (.notes-selected self)
-                       collect (let ((note (copy note)))
-                                 (when (< (.time note) time1)
-                                   (let ((delta (- time1 (.time note))))
-                                     (decf (.duration note) delta)
-                                     (when (= (.time note) (.time (.note-target self)))
-                                       (decf (.note-drag-offset self) delta)))
-                                   (setf (.time note) time1))
-                                 (let ((time-end (+ (.time note) (.duration note))))
-                                   (when (< time2 time-end)
-                                     (decf (.duration note) (- time-end time2))))
-                                 (note-add (.clip self) note)
-                                 note)))))
+                 (print
+                  (loop for note in (.notes (.clip self))
+                        if (and (<= time1 (.time note))
+                                (< (.time note) time2)
+                                (<= key1 (.key note) key2))
+                          collect (let ((note (copy note)))
+                                    (when (< (.time note) time1)
+                                      (let ((delta (- time1 (.time note))))
+                                        (decf (.duration note) delta)
+                                        (when (= (.time note) (.time (.note-target self)))
+                                          (decf (.note-drag-offset self) delta)))
+                                      (setf (.time note) time1))
+                                    (let ((time-end (+ (.time note) (.duration note))))
+                                      (when (< time2 time-end)
+                                        (decf (.duration note) (- time-end time2))))
+                                    (note-add (.clip self) note)
+                                    note))))))
         ((.notes-selected self)
          ;; 選択ノートのドラッグ開始
          (progn
@@ -108,11 +124,8 @@
               (setf (.notes-dragging-time self) (mapcar #'.time (.notes-selected self)))
               (setf (.notes-dragging-duration self) (mapcar #'.duration (.notes-selected self)))))))
         (t
-         ;; 範囲選択の開始
-         (progn
-           (setf (.range-selecting-mode self)
-                 (if (key-shift-p) :region :note))
-           (setf (.range-selecting-pos1 self) (ig:get-mouse-pos))))))
+         (setf (.range-selecting-mode self) :note)
+         (setf (.range-selecting-pos1 self) (ig:get-mouse-pos)))))
 
 (defmethod handle-dragging ((self piano-roll))
   (labels ((%time ()
@@ -214,6 +227,8 @@
     (let* ((io (ig:get-io)))
       (cond ((.notes-dragging self)
              (handle-dragging self))
+            ((.range-dragging self)
+             (handle-range-dragging self))
             ((.range-selecting-mode self)
              (handle-range-selecting self))
             ((ig:is-mouse-dragging ig:+im-gui-mouse-button-left+ 0.1)
@@ -250,15 +265,22 @@
               (ig:set-mouse-cursor ig:+im-gui-mouse-cursor-resize-ns+)))
            (ig:set-mouse-cursor ig:+im-gui-mouse-cursor-arrow+))))
 
+(defmethod handle-range-dragging ((piano-roll piano-roll))
+  (if (ig:is-mouse-released ig:+im-gui-mouse-button-left+)
+      (progn
+        (range-selecting-clear piano-roll))))
+
 (defmethod handle-mouse-released ((self piano-roll))
-  (if (.note-at-mouse self)
-      (if (member (.note-at-mouse self) (.notes-selected self))
-          (if (key-ctrl-p)
-              (setf (.notes-selected self)
-                    (delete (.note-at-mouse self) (.notes-selected self)))
-              (setf (.notes-selected self) (list (.note-at-mouse self))))
-          (if (key-ctrl-p)
-              (push (.note-at-mouse self) (.notes-selected self))))))
+  (if (range-selecting-p self)
+      (range-selecting-clear self)
+      (if (.note-at-mouse self)
+          (if (member (.note-at-mouse self) (.notes-selected self))
+              (if (key-ctrl-p)
+                  (setf (.notes-selected self)
+                        (delete (.note-at-mouse self) (.notes-selected self)))
+                  (setf (.notes-selected self) (list (.note-at-mouse self))))
+              (if (key-ctrl-p)
+                  (push (.note-at-mouse self) (.notes-selected self)))))))
 
 (defmethod handle-range-selecting ((self piano-roll))
   (case (.range-selecting-mode self)
@@ -321,6 +343,11 @@
       (time-to-local-y piano-roll (rem (.play-start (.project piano-roll))
                                        (.duration (.clip piano-roll))))
       (call-next-method)))
+
+(defmethod range-selecting-clear ((piano-roll piano-roll))
+  (setf (.notes-selected piano-roll) nil)
+  (setf (.range-selecting-pos1 piano-roll) nil)
+  (setf (.range-selecting-pos2 piano-roll) nil))
 
 (defmethod range-selecting-p ((piano-roll piano-roll))
   (and (.range-selecting-pos1 piano-roll)
