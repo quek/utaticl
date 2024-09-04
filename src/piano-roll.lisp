@@ -74,7 +74,6 @@
                                      self
                                      (.range-selecting-pos1 self)
                                      (.range-selecting-pos2 self))))
-         ;; 消す？
          (multiple-value-bind (time1 key1 time2 key2)
              (range-selecting-region-time-key
               self
@@ -182,24 +181,37 @@
           (setf (.notes-dragging self) nil))
         ;; ドラッグ中の表示
         (if (range-selecting-p self)
-            (multiple-value-bind (time key)
-                (world-pos-to-time-key self (@- (ig:get-mouse-pos)
-                                                (.note-drag-offset self)))
-              (setf time (max (time-grid-applied self time #'floor) .0d0))
-              (let ((delta-time (- time (.time (.note-target self))))
-                    (delta-key (- key (.key (.note-target self)))))
-                (loop for dragging in (.notes-dragging self)
-                      for selected in (.notes-selected self)
-                      for time = (+ (.time selected) delta-time)
-                      for key = (+ (.key selected) delta-key)
-                      do (move dragging time key))))
+            (let* ((pos-delta (@- (.range-selecting-pos1 self)
+                                  (@+ *mouse-pos* (.note-drag-offset self))))
+                   (pos1 (@- (.range-selecting-pos1 self) pos-delta))
+                   (pos2 (@- (.range-selecting-pos2 self) pos-delta)))
+              (multiple-value-bind (pos1 pos2)
+                  (range-selecting-region self pos1 pos2)
+                (print (list *mouse-pos* pos1 pos2 pos-delta (.note-drag-offset self)))
+                (ig:add-rect-filled (ig:get-window-draw-list) pos1 pos2
+                                    (.color-selected-region *theme*)))
+              #+nil
+              (setf (.range-dragging self)
+                    (multiple-value-list (range-selecting-region-time-key
+                                          self pos1 pos2)))
+
+              (multiple-value-bind (time key)
+                  (world-pos-to-time-key self (@- (ig:get-mouse-pos)
+                                                  (.note-drag-offset self)))
+                (setf time (max (time-grid-applied self time #'floor) .0d0))
+                (let ((delta-time (- time (world-y-to-time self (.y (.range-selecting-pos1 self)))))
+                      (delta-key (- key (world-x-to-key self (.x (.range-selecting-pos1 self))))))
+                  (loop for dragging in (.notes-dragging self)
+                        for selected in (.notes-selected self)
+                        for time = (+ (.time selected) delta-time)
+                        for key = (+ (.key selected) delta-key)
+                        do (move dragging time key)))))
             (ecase (.drag-mode self)
               (:move
                (multiple-value-bind (time key)
                    (world-pos-to-time-key self (@- *mouse-pos*
                                                    (@ .0 (.y (.note-drag-offset self)))))
                  (setf time (max (time-grid-applied self time #'floor) .0d0))
-                 (print (list "dragging :move" time key))
                  (let ((delta-time (- time (.time (.note-target self))))
                        (delta-key (- key (.key (.note-target self)))))
                    (loop for dragging in (.notes-dragging self)
