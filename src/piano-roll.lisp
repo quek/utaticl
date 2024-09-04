@@ -184,17 +184,23 @@
             (let* ((pos-delta (@- (.range-selecting-pos1 self)
                                   (@+ *mouse-pos* (.note-drag-offset self))))
                    (pos1 (@- (.range-selecting-pos1 self) pos-delta))
-                   (pos2 (@- (.range-selecting-pos2 self) pos-delta)))
+                   (pos2 (@- (.range-selecting-pos2 self) pos-delta))
+                   (time-delta (- (world-y-to-time self (.y pos1))
+                                  (car (.range-dragging self))))
+                   (key-delta (- (world-x-to-key self (.x pos1))
+                                 (cadr (.range-dragging self)))))
               (multiple-value-bind (pos1 pos2)
                   (range-selecting-region self pos1 pos2)
-                (print (list *mouse-pos* pos1 pos2 pos-delta (.note-drag-offset self)))
                 (ig:add-rect-filled (ig:get-window-draw-list) pos1 pos2
                                     (.color-selected-region *theme*)))
-              #+nil
+              (loop for clip in (.notes-dragging self)
+                    for time = (+ (.time clip) time-delta)
+                    for key = (+ (.key clip) key-delta)
+                    do (move clip time key))
               (setf (.range-dragging self)
                     (multiple-value-list (range-selecting-region-time-key
                                           self pos1 pos2)))
-
+              #+nil
               (multiple-value-bind (time key)
                   (world-pos-to-time-key self (@- (ig:get-mouse-pos)
                                                   (.note-drag-offset self)))
