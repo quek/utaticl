@@ -66,7 +66,7 @@
   (print 1)
   (cond ((key-alt-p)
          (setf (.range-selecting-mode self) :region)
-         (setf (.range-selecting-pos1 self) (ig:get-mouse-pos)))
+         (setf (.range-selecting-pos1 self) *mouse-pos*))
         ((range-selecting-p self)
          ;; リージョンのドラッグ開始
          (setf (.range-dragging self)
@@ -125,7 +125,7 @@
               (setf (.notes-dragging-duration self) (mapcar #'.duration (.notes-selected self)))))))
         (t
          (setf (.range-selecting-mode self) :note)
-         (setf (.range-selecting-pos1 self) (ig:get-mouse-pos)))))
+         (setf (.range-selecting-pos1 self) *mouse-pos*))))
 
 (defmethod handle-dragging ((self piano-roll))
   (labels ((%time ()
@@ -186,15 +186,22 @@
                    (pos2 (@+ (.range-selecting-pos2 self) pos-delta))
                    (time-delta (- (world-y-to-time self (.y pos1))
                                   (world-y-to-time self (.y (.range-selecting-pos1 self)))))
-                   (time-delta (time-grid-applied self time-delta #'floor))
+                   (time-delta (time-grid-applied self time-delta
+                                                  (if (minusp time-delta)
+                                                      #'floor
+                                                      #'ceiling)))
                    (key-delta (- (world-x-to-key self (.x pos1))
                                  (world-x-to-key self (.x (.range-selecting-pos1 self))))))
-              (print (list "dragging" time-delta (.note-drag-offset self)
-                           ))
               (multiple-value-bind (pos1-grid pos2-grid)
                   (range-selecting-region self pos1 pos2)
                 (ig:add-rect-filled (ig:get-window-draw-list) pos1-grid pos2-grid
-                                    (.color-selected-region *theme*)))
+                                    (.color-selected-region *theme*))
+              (print (list "dragging" pos-delta pos1
+                           (.range-selecting-pos1 self)
+                           pos1-grid
+                           ))
+
+                )
               (loop for note-dragging in (.notes-dragging self)
                     for note-src in *dd-srcs*
                     for time = (max .0 (+ (.time note-src) time-delta))
@@ -322,7 +329,7 @@
        (ig:add-rect draw-list pos1 pos2
                     (.color-selecting-rect-border *theme*))))
     (:region
-     (setf (.range-selecting-pos2 self) (ig:get-mouse-pos))))
+     (setf (.range-selecting-pos2 self) *mouse-pos*)))
 
   (when (ig:is-mouse-released ig:+im-gui-mouse-button-left+)
     (setf (.range-selecting-mode self) nil)))
