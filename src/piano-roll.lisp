@@ -186,6 +186,7 @@
                    (pos2 (@+ (.range-selecting-pos2 self) pos-delta))
                    (time-delta (- (world-y-to-time self (.y pos1))
                                   (world-y-to-time self (.y (.range-selecting-pos1 self)))))
+                   (time-delta (time-grid-applied self time-delta #'floor))
                    (key-delta (- (world-x-to-key self (.x pos1))
                                  (world-x-to-key self (.x (.range-selecting-pos1 self))))))
               (print (list "dragging" time-delta (.note-drag-offset self)
