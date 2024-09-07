@@ -4,6 +4,23 @@
 ;; (defmethod initialize-instance :after ((self clip-note) &key seq)
 ;;   (setf (.seq self) (or seq (make-instance 'seq-note))))
 
+(defmethod range-copy ((clip-note clip-note) range)
+  (loop for note in (.notes clip-note)
+        with (time1 key1 time2 key2) = range
+        if (and (< time1 (time-end note))
+                (< (.time note) time2)
+                (<= key1 (.key note) key2))
+          collect (let ((note (copy note)))
+                    (when (< (.time note) time1)
+                      (let ((delta (- time1 (.time note))))
+                        (decf (.duration note) delta))
+                      (setf (.time note) time1))
+                    (let ((time-end (+ (.time note) (.duration note))))
+                      (when (< time2 time-end)
+                        (decf (.duration note) (- time-end time2))))
+                    (note-add clip-note note)
+                    note)))
+
 (defmethod edit ((self clip-note) clips)
   (setf (.piano-roll (.project self))
         (make-instance 'piano-roll :clip self :clips clips)))

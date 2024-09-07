@@ -62,50 +62,29 @@
                                         (setf (.notes-selected self) (list note))
                                         (setf (.drag-mode self) :end)))))))))
 
+
 (defmethod handle-drag-start ((self piano-roll))
-  (print 1)
   (cond ((key-alt-p)
          (setf (.range-selecting-mode self) :region)
          (setf (.range-selecting-pos1 self) *mouse-pos*))
         ((range-selecting-p self)
          ;; リージョンのドラッグ開始
          (setf (.range-dragging self)
-               (multiple-value-list (range-selecting-region-time-key
-                                     self
-                                     (.range-selecting-pos1 self)
-                                     (.range-selecting-pos2 self))))
-         (multiple-value-bind (time1 key1 time2 key2)
-             (range-selecting-region-time-key
-              self
-              (.range-selecting-pos1 self)
-              (.range-selecting-pos2 self))
-           (setf (.drag-mode self) :move)
-           (setf (.note-drag-offset self)
-                 (@- (.range-selecting-pos1 self) *mouse-pos*))
-           #+nil
-           (setf (.notes-selected self)
-                 (loop for note in (.notes (.seq (.clip self)))
-                       if (and (<= time1 (+ (.time note) (.duration note)))
-                               (< (.time note) time2)
-                               (<= key2 (.key note) key1))
-                         collect note))
-           (setf (.notes-dragging self)
-                 (loop for note in (.notes (.clip self))
-                       if (and (< time1 (time-end note))
-                               (< (.time note) time2)
-                               (<= key1 (.key note) key2))
-                         collect (let ((note (copy note)))
-                                   (when (< (.time note) time1)
-                                     (let ((delta (- time1 (.time note))))
-                                       (decf (.duration note) delta))
-                                     (setf (.time note) time1))
-                                   (let ((time-end (+ (.time note) (.duration note))))
-                                     (when (< time2 time-end)
-                                       (decf (.duration note) (- time-end time2))))
-                                   (note-add (.clip self) note)
-                                   note)))
-           (setf *dd-srcs* (mapcar #'copy (.notes-dragging self)))
-           (setf *dd-at* *mouse-pos*)))
+               (range-selecting-region-time-key
+                self
+                (.range-selecting-pos1 self)
+                (.range-selecting-pos2 self)))
+         (setf (.notes-dragging self)
+               (range-copy (.clip self)
+                           (range-selecting-region-time-key
+                            self
+                            (.range-selecting-pos1 self)
+                            (.range-selecting-pos2 self))))
+         (setf (.drag-mode self) :move)
+         (setf (.note-drag-offset self)
+               (@- (.range-selecting-pos1 self) *mouse-pos*))
+         (setf *dd-srcs* (mapcar #'copy (.notes-dragging self)))
+         (setf *dd-at* *mouse-pos*))
         ((.notes-selected self)
          ;; 選択ノートのドラッグ開始
          (progn
@@ -135,50 +114,61 @@
                   .0d0)))
     (if (ig:is-mouse-released ig:+im-gui-mouse-button-left+)
         ;; ドラッグの終了
-        (progn
-          (ecase (.drag-mode self)
-            (:move
-             (if (key-ctrl-p)
-                 ;; 複製
-                 (cmd-add (.project self) 'cmd-notes-d&d-copy
-                          :notes (.notes-dragging self)
-                          :clip-id (.neko-id (.clip self)))
-                 ;; 移動
-                 (progn
-                   (cmd-add (.project self) 'cmd-notes-d&d-move
-                            :notes (.notes-selected self)
-                            :times-to (mapcar #'.time (.notes-dragging self))
-                            :keys-to (mapcar #'.key (.notes-dragging self)))
+        (if (range-selecting-p self)
+            (progn
+              (loop for note in (.notes-dragging self)
+                    do (note-delete (.clip self) note))
+              (cmd-add (.project self) (if (key-ctrl-p)
+                                           'cmd-range-d&d-copy
+                                           'cmd-range-d&d-move)
+                       :clip (.clip self)
+                       :range-src (range-src-time-key self)
+                       :range-dst (range-dst-time-key self))
+              (range-selecting-clear self))
+            (progn
+              (ecase (.drag-mode self)
+                (:move
+                 (if (key-ctrl-p)
+                     ;; 複製
+                     (cmd-add (.project self) 'cmd-notes-d&d-copy
+                              :notes (.notes-dragging self)
+                              :clip-id (.neko-id (.clip self)))
+                     ;; 移動
+                     (progn
+                       (cmd-add (.project self) 'cmd-notes-d&d-move
+                                :notes (.notes-selected self)
+                                :times-to (mapcar #'.time (.notes-dragging self))
+                                :keys-to (mapcar #'.key (.notes-dragging self)))
+                       (loop for note in (.notes-dragging self)
+                             do (note-delete (.clip self) note)))))
+                (:start
+                 (let ((delta (- (.duration (car (.notes-dragging self)))
+                                 (car (.notes-dragging-duration self)))))
                    (loop for note in (.notes-dragging self)
-                         do (note-delete (.clip self) note)))))
-            (:start
-             (let ((delta (- (.duration (car (.notes-dragging self)))
-                             (car (.notes-dragging-duration self)))))
-               (loop for note in (.notes-dragging self)
-                     do (incf (.time note) delta)
-                        (decf (.duration note) delta))
-               (cmd-add (.project self) 'cmd-notes-start-change
-                        :notes (.notes-dragging self)
-                        :delta delta)))
-            (:end
-             (let ((delta (- (.duration (car (.notes-dragging self)))
-                             (car (.notes-dragging-duration self)))))
-               (loop for note in (.notes-dragging self)
-                     do (decf (.duration note) delta))
-               (cmd-add (.project self) 'cmd-notes-end-change
-                        :notes (.notes-dragging self)
-                        :delta delta)
-               (setf (.note-default-duration self)
-                     (+ (.duration (.note-target self))
-                        delta)))
-             ;; ノート追加後のドラッグで duration 変更からカーソル位置を戻す。
-             (swhen (.note-add-pos self)
-               (let ((sys-window-pos (sys-window-pos)))
-                 (sys-set-cursor-pos (round (+ (.x it) (.x sys-window-pos)))
-                                     (round (+ (.y it) (.y sys-window-pos)))))
-               (setf it nil))))
+                         do (incf (.time note) delta)
+                            (decf (.duration note) delta))
+                   (cmd-add (.project self) 'cmd-notes-start-change
+                            :notes (.notes-dragging self)
+                            :delta delta)))
+                (:end
+                 (let ((delta (- (.duration (car (.notes-dragging self)))
+                                 (car (.notes-dragging-duration self)))))
+                   (loop for note in (.notes-dragging self)
+                         do (decf (.duration note) delta))
+                   (cmd-add (.project self) 'cmd-notes-end-change
+                            :notes (.notes-dragging self)
+                            :delta delta)
+                   (setf (.note-default-duration self)
+                         (+ (.duration (.note-target self))
+                            delta)))
+                 ;; ノート追加後のドラッグで duration 変更からカーソル位置を戻す。
+                 (swhen (.note-add-pos self)
+                   (let ((sys-window-pos (sys-window-pos)))
+                     (sys-set-cursor-pos (round (+ (.x it) (.x sys-window-pos)))
+                                         (round (+ (.y it) (.y sys-window-pos)))))
+                   (setf it nil))))
 
-          (setf (.notes-dragging self) nil))
+              (setf (.notes-dragging self) nil)))
         ;; ドラッグ中の表示
         (if (range-selecting-p self)
             (let* ((pos-delta (@- *mouse-pos* *dd-at*))
@@ -196,10 +186,10 @@
                   (range-selecting-region self pos1 pos2)
                 (ig:add-rect-filled (ig:get-window-draw-list) pos1-grid pos2-grid
                                     (.color-selected-region *theme*))
-              (print (list "dragging" pos-delta pos1
-                           (.range-selecting-pos1 self)
-                           pos1-grid
-                           ))
+                (print (list "dragging" pos-delta pos1
+                             (.range-selecting-pos1 self)
+                             pos1-grid
+                             ))
 
                 )
               (loop for note-dragging in (.notes-dragging self)
@@ -372,6 +362,24 @@
                                        (.duration (.clip piano-roll))))
       (call-next-method)))
 
+(defmethod range-dst ((piano-roll piano-roll))
+  (let* ((pos-delta (@- *mouse-pos* *dd-at*))
+         (pos1 (@+ (.range-selecting-pos1 piano-roll) pos-delta))
+         (pos2 (@+ (.range-selecting-pos2 piano-roll) pos-delta)))
+    (multiple-value-bind (pos1-grid pos2-grid)
+        (range-selecting-region piano-roll pos1 pos2)
+      `(,@pos1-grid ,@pos2-grid))))
+
+(defmethod range-dst-time-key ((piano-roll piano-roll))
+  (let* ((pos-delta (@- *mouse-pos* *dd-at*))
+         (pos1 (@+ (.range-selecting-pos1 piano-roll) pos-delta))
+         (pos2 (@+ (.range-selecting-pos2 piano-roll) pos-delta)))
+    (multiple-value-bind (pos1-grid pos2-grid)
+        (range-selecting-region piano-roll pos1 pos2)
+      (range-selecting-region-time-key
+       piano-roll
+       pos1-grid pos2-grid))))
+
 (defmethod range-selecting-clear ((piano-roll piano-roll))
   (setf (.notes-selected piano-roll) nil)
   (setf (.range-selecting-pos1 piano-roll) nil)
@@ -398,10 +406,10 @@
             (key1 (min key1 key2))
             (time2 (max time1 time2))
             (key2 (1+ (max key1 key2))))
-        (values time1 key1 time2 key2)))))
+        (list time1 key1 time2 key2)))))
 
 (defmethod range-selecting-region ((self piano-roll) pos1 pos2)
-  (multiple-value-bind (time1 key1 time2 key2)
+  (destructuring-bind (time1 key1 time2 key2)
       (range-selecting-region-time-key self pos1 pos2)
     (let* ((x1 (key-to-world-x self key1))
            (y1 (time-to-world-y self time1))
@@ -410,6 +418,16 @@
            (pos1 (@ x1 y1))
            (pos2 (@ x2 y2)))
       (values pos1 pos2))))
+
+(defmethod range-src ((piano-roll piano-roll))
+  `(,@(.range-selecting-pos1 piano-roll)
+    ,@(.Range-selecting-pos2 piano-roll)))
+
+(defmethod range-src-time-key ((piano-roll piano-roll))
+  (range-selecting-region-time-key
+   piano-roll
+   (.range-selecting-pos1 piano-roll)
+   (.range-selecting-pos2 piano-roll)))
 
 (defmethod render ((self piano-roll))
   (setf (.note-at-mouse self) nil)

@@ -574,6 +574,44 @@
             do (write (serialize plugin-info) :stream out)
                (terpri out)))))
 
+
+
+(defcommand cmd-range-d&d (command)
+  ((clip :initarg :clip :accessor .clip)
+   (range-src :initarg :range-src :accessor .range-src)
+   (range-dst :initarg :range-dst :accessor .range-dst)
+   (notes :accessor .notes)))
+
+(defcommand cmd-range-d&d-copy (cmd-range-d&d)
+  ())
+
+(defmethod execute ((self cmd-range-d&d) project)
+  (let ((notes (range-copy (.clip self) (.range-src self))))
+    (loop for note in notes
+          with (time-delta key-delta)
+            = (mapcar #'- (.range-dst self) (.range-src self))
+          do (incf (.time note) time-delta)
+             (incf (.key note) key-delta)
+             (note-add (.clip self) note))
+    (setf (.notes self) notes)))
+
+(defmethod undo ((self cmd-range-d&d) project)
+  (loop for note in (.notes self)
+        do (note-delete (.clip self) note)))
+
+(defcommand cmd-range-d&d-move (cmd-range-d&d)
+  ())
+
+(defmethod execute ((self cmd-range-d&d-move) project)
+  (call-next-method)
+  ;; TODO
+  )
+
+(defmethod undo ((self cmd-range-d&d-move) project)
+  (call-next-method)
+  ;; TODO
+  )
+
 (defcommand cmd-redo (command)
   ()
   (:default-initargs :undo-p nil))
