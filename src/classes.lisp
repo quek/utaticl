@@ -5,6 +5,18 @@
    (name :initarg :name :initform "" :accessor .name)
    (color :initarg :color :initform (color #x80 #x80 #x80 #x80) :accessor .color)))
 
+(defclass rect ()
+  ((x1 :initform .0 :initarg :x1 :accessor .x1)
+   (y1 :initform .0 :initarg :y1 :accessor .y1)
+   (x2 :initform .0 :initarg :x2 :accessor .x2)
+   (y2 :initform .0 :initarg :y2 :accessor .y2)))
+
+(defclass rect-piano-roll (rect)
+  ((x1 :initform .0 :initarg :time-start :accessor .time-start)
+   (y1 :initform .0 :initarg :key-start :accessor .key-start)
+   (x2 :initform .0 :initarg :time-end :accessor .time-end)
+   (y2 :initform .0 :initarg :key-end :accessor .key-end)))
+
 (defclass project (neko)
   ((arrangement :accessor .arrangement)
    (sceen-matrix :accessor .sceen-matrix)

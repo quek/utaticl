@@ -597,20 +597,28 @@
 
 (defmethod undo ((self cmd-range-d&d) project)
   (loop for note in (.notes self)
-        do (note-delete (.clip self) note)))
+        do (note-delete (.clip self) note)))))
 
 (defcommand cmd-range-d&d-move (cmd-range-d&d)
-  ())
+  ((notes-src-serialized :accessor .notes-src-serialized)))
 
 (defmethod execute ((self cmd-range-d&d-move) project)
-  (call-next-method)
   ;; TODO
-  )
+  (let* ((notes-src (loop for note in (.notes (.clips self))
+                          if (in-p note (.range-src self))
+                            collect note))
+         (notes-src-serialized (with-serialize-context ()
+                                 (serialize notes-src))))
+    (loop forp note in notes-src
+          do (erase (or (.sceen note) (.lane note)) note))
+    (setf (.notes-src-serialized self) notes-src-serialized))
+  (call-next-method))
 
 (defmethod undo ((self cmd-range-d&d-move) project)
   (call-next-method)
-  ;; TODO
-  )
+  (loop for note in (with-serialize-context ()
+                      (deserialize (.notes-src-serialized self)))
+        do (note-add (or (.sceen note) (.lane note)) note)))
 
 (defcommand cmd-redo (command)
   ()

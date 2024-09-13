@@ -112,6 +112,17 @@
     (with-simple-restart (continue "Return from here.")
       (invoke-debugger e))))
 
+(defmethod include-p (x y)
+  (in-p y x))
+
+(defmethod in-p (x y)
+  (include-p y x))
+
+(defmethod in-p ((note note) (rect-piano-roll rect-piano-roll))
+  (and (< (time-end note) (.time-start rect-piano-roll))
+       (< (.time-end rect-piano-roll) (.time note))
+       (<= (.key-start rect-piano-roll) (.key note) (.key-end rect-piano-roll))))
+
 (defun key-alt-p ()
   (ig:ensure-to-bool (c-ref (ig:get-io) ig:im-gui-io :key-alt)))
 
