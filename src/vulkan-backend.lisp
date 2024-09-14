@@ -552,10 +552,12 @@
   (ig-backend::impl-sdl2-new-frame)
   (ig::new-frame)
 
-  (ig:show-demo-window (cffi:null-pointer))
-  (let ((dgw::*render-context* (make-instance 'dgw::render-context)))
-    (dgw::render app)
-    (dgw::cmd-run app))
+  (dgw::with-debugger
+    (progn
+        (ig:show-demo-window (cffi:null-pointer))
+        (let ((dgw::*render-context* (make-instance 'dgw::render-context)))
+          (dgw::render app)
+          (dgw::cmd-run app))))
 
   (ig::render)
 

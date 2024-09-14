@@ -604,7 +604,7 @@
 
 (defmethod execute ((self cmd-range-d&d-move) project)
   ;; TODO
-  (let* ((notes-src (loop for note in (.notes (.clips self))
+  (let* ((notes-src (loop for note in (.notes (.clip self))
                           if (in-p note (.range-src self))
                             collect note))
          (notes-src-serialized (with-serialize-context ()

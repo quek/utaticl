@@ -5,6 +5,12 @@
        (< (.time-end rect-piano-roll) (.time note))
        (<= (.key-start rect-piano-roll) (.key note) (.key-end rect-piano-roll))))
 
+(defmethod in-p ((note note) (rect cons))
+  (destructuring-bind (key-start time-start key-end time-end) rect
+   (and (< (time-end note) time-start)
+        (< time-end (.time note))
+        (<= key-start (.key note) key-end))))
+
 (defmethod move ((self note) time key)
   (setf (.time self) time)
   (setf (.key self) key))
