@@ -207,6 +207,7 @@
     (ig:set-cursor-pos (@ .0 y))
     (when (ig:button "▶")
       (play sceen))
+    (ig:same-line)
     (with-renaming (sceen (.sceen-renaming sceen-matrix) (.offset-x sceen-matrix))
       (ig:with-button-color ((.color sceen))
         (ig:button (.name sceen))))

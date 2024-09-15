@@ -1,3 +1,7 @@
+(defpackage :utaticl
+  (:use :cl)
+  (:export #:main))
+
 (defpackage :dgw
   (:use :cl :anaphora :plus-c)
   (:export #:main))
