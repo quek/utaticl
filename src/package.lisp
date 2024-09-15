@@ -37,3 +37,6 @@
 
 (defpackage :dd-ffi
   (:use :cl))
+
+(defpackage :dgw.glfw-opengl3
+  (:use :cl))

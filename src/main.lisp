@@ -19,5 +19,7 @@
      (sb-int:with-float-traps-masked (:invalid :inexact :overflow :divide-by-zero)
        (with-ole
          (with-thraed-pool
-           (vulkan-backend::vulkan-backend-main)))))
+           ;; (vulkan-backend::vulkan-backend-main)
+           (dgw.glfw-opengl3::main)
+           ))))
    :name "DGW"))

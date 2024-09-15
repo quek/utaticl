@@ -23,7 +23,9 @@
                "uuid"
                "qbase64"
                "cl-wav"
-               "cl-vorbis")
+               "cl-vorbis"
+               "cl-glfw3"
+               "cl-opengl")
   :serial t
   :pathname "src"
   :components
@@ -107,4 +109,5 @@
    (:file "plugin-selector")
    (:file "app")
    (:file "vulkan-backend")
+   (:file "glfw-opengl3")
    (:file "main")))
