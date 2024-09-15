@@ -175,6 +175,8 @@
            (loop for i below extensions-count
                  collect (cffi:foreign-string-to-lisp
                           (cffi:mem-aref extensions :pointer i))))
+         (enabled-extension-names
+           (print (cons VULKAN:+KHR-GET-PHYSICAL-DEVICE-PROPERTIES-2-EXTENSION-NAME+ enabled-extension-names)))
          (instance-create-info
            (vk:make-instance-create-info
             :enabled-extension-names enabled-extension-names)))
@@ -379,11 +381,11 @@
     (ftw:memset surface (cffi:foreign-type-size 'vulkan:surface-khr))
 
     (autowrap:with-alloc (glyph-ranges 'ig:im-wchar 3)
-      (sdl2:with-init (:video)
+      (sdl2:with-init (:video :timer)
         (sdl2:with-window (window :title "DGW"
                                   :x 10 :y 40
                                   :w 1600 :h 1200
-                                  :flags '(:vulkan :resizable))
+                                  :flags '(:vulkan :resizable :allow-highdpi))
           ;; 一度 hide しないと表示されない
           (sdl2:hide-window window)
           (sdl2:show-window window)
@@ -476,17 +478,17 @@
                        (setf device (vk:raw-handle *device*))
                        (setf queue-family *queue-family*)
                        (setf queue (vk:raw-handle *queue*))
+                       (setf pipeline-cache (cffi:null-pointer))
                        (setf descriptor-pool (vk:raw-handle *descriptor-pool*))
                        (setf render-pass wd-render-pass)
+                       (setf subpass 0)
                        (setf min-image-count *min-image-count*)
                        (setf image-count wd-image-count)
                        (setf msaa-samples :1)
-                       (setf pipeline-cache (cffi:null-pointer))
-                       (setf subpass 0)
-                       (setf use-dynamic-rendering nil)
                        (setf allocator vk:*default-allocator*)
                        (setf check-vk-result-fn (cffi:callback check-vk-result))
-                       (setf min-allocation-size 0)
+                       ;; (setf use-dynamic-rendering nil)
+                       ;; (setf min-allocation-size 0)
                        (imgui-impl-vulkan-init init-info))))
 
                  (setf dgw::*done* nil)
