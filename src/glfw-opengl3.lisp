@@ -54,10 +54,6 @@
             (glfw:make-context-current backup-current-context)))
         (glfw:swap-buffers))))
 
-#+nil
-(glfw:def-error-callback glfw-error-callback (message)
-  (log:error "GLFW ~a" message))
-
 (cffi:defcallback glfw-error-callback :void
     ((error :int)
      (description :string))
@@ -75,7 +71,7 @@
             (logior (plus-c:c-ref io ig:im-gui-io :config-flags)
                     ig:+im-gui-config-flags-nav-enable-keyboard+
                     ig:+im-gui-config-flags-docking-enable+))
-
+      ;; まだ調べてないけどアサーションに引っかかる
       #+nil
       (let ((font (namestring (merge-pathnames "factory/font/NotoSansJP-Regular.ttf"
                                                dgw::*working-directory*))))
