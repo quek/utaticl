@@ -1,3 +1,6 @@
+;; (defpackage :dgw.sceen-matrix
+;;   (:use :cl :dgw.core))
+
 (in-package :dgw)
 
 (defmethod initialize-instance :after ((sceen-matrix sceen-matrix) &key)
@@ -202,6 +205,8 @@
 (defmethod render-sceen ((sceen-matrix sceen-matrix) (sceen sceen) y)
   (ig:with-id (sceen)
     (ig:set-cursor-pos (@ .0 y))
+    (when (ig:button "▶")
+      (play sceen))
     (with-renaming (sceen (.sceen-renaming sceen-matrix) (.offset-x sceen-matrix))
       (ig:with-button-color ((.color sceen))
         (ig:button (.name sceen))))

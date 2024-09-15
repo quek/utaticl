@@ -21,6 +21,14 @@
   (- (position a (.sceens (.sceen-matrix a)))
      (position b (.sceens (.sceen-matrix b)))))
 
+(defmethod play ((sceen sceen))
+  (map-lanes *project*
+             (lambda (lane acc)
+               (declare (ignore acc))
+               (let ((clip (gethash lane (.clips sceen))))
+                 (when clip
+                   (enqueue (.sceen-matrix sceen) clip))))))
+
 (defmethod (setf .play-p) (value (sceen sceen))
   (unless value
     (loop for clip being each hash-value of (.clips sceen)

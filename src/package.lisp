@@ -2,6 +2,12 @@
   (:use :cl :anaphora :plus-c)
   (:export #:main))
 
+(defpackage :dgw.core
+  (:use :cl :anaphora)
+  (:export
+   #:note
+   ))
+
 (defpackage :dgw.ffi)
 
 (defpackage :src-ffi
