@@ -11,14 +11,15 @@
         (glfw:swap-interval 1) ;Enable vsync
         (let ((ig-context (ig-init glyph-ranges)))
 
-          ;; ImGui_ImplGlfw_InitForOpenGL(window, true);
           (ImGui_ImplGlfw_InitForOpenGL glfw:*window* t)
-          ;; ImGui_ImplOpenGL3_Init("#version 130");
           (ImGui_ImplOpenGL3_Init "#version 130")
 
           (setf dgw::*app* (make-instance 'dgw::app :window glfw:*window*))
+          (setf dgw::*hwnd* (glfwGetWin32Window glfw:*window*))
+
           (loop until (glfw:window-should-close-p)
                 do (main-loop))
+
           (ImGui_ImplOpenGL3_Shutdown)
           (ImGui_ImplGlfw_Shutdown)
           (ig:destroy-context ig-context))))))
@@ -111,3 +112,7 @@
 
 ;;; void ImGui_ImplGlfw_Shutdown(void);
 (cffi:defcfun ("ImGui_ImplGlfw_Shutdown" ImGui_ImplGlfw_Shutdown) :void)
+
+;;; HWND glfwGetWin32Window (GLFWwindow *window)
+(cffi:defcfun ("glfwGetWin32Window" glfwGetWin32Window) :pointer
+  (window :pointer))
