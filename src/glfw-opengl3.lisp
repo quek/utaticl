@@ -71,8 +71,6 @@
             (logior (plus-c:c-ref io ig:im-gui-io :config-flags)
                     ig:+im-gui-config-flags-nav-enable-keyboard+
                     ig:+im-gui-config-flags-docking-enable+))
-      ;; まだ調べてないけどアサーションに引っかかる
-      #+nil
       (let ((font (namestring (merge-pathnames "factory/font/NotoSansJP-Regular.ttf"
                                                dgw::*working-directory*))))
         (setf (plus-c:c-ref glyph-ranges ig:im-wchar 0) #x0020
