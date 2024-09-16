@@ -62,6 +62,7 @@
    #:prepare
    #:preset
    #:preset-vst3
+   #:process
    #:process-data
    #:project
    #:rack

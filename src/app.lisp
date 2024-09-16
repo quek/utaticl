@@ -67,3 +67,13 @@
   (sb-thread:with-mutex ((.mutex self))
     (loop for project in (.projects self)
           do (process project))))
+
+(defmethod sys-window-pos ((app app))
+  (sys-window-pos% (.backend app) (.window app)))
+
+(defmethod sys-window-pos% ((backend (eql :glfw-opengl3)) window)
+  (glfw:get-window-position window))
+
+(defmethod sys-window-pos% ((backend (eql :sdl-vulkan)) window)
+  (multiple-value-list (sdl2:get-window-position window)))
+

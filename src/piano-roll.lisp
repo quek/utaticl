@@ -40,7 +40,7 @@
         (setf time (time-grid-applied self time #'floor))
         (when (and (not (minusp time)) key)
           (let* ((duration (.note-default-duration self))
-                 (sys-window-pos (sys-window-pos))
+                 (sys-window-pos (sys-window-pos *app*))
                  (x (round (+ (key-to-world-x self key)
                               (/ (.zoom-x self) ;key width
                                  2)
@@ -163,7 +163,7 @@
                             delta)))
                  ;; ノート追加後のドラッグで duration 変更からカーソル位置を戻す。
                  (swhen (.note-add-pos self)
-                   (let ((sys-window-pos (sys-window-pos)))
+                   (let ((sys-window-pos (sys-window-pos *app*)))
                      (sys-set-cursor-pos (round (+ (.x it) (.x sys-window-pos)))
                                          (round (+ (.y it) (.y sys-window-pos)))))
                    (setf it nil))))

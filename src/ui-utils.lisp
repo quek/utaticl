@@ -135,9 +135,6 @@
   (defshortcut (ig:+im-gui-mod-ctrl+ ig:+im-gui-key-z+)
     (cmd-add project 'cmd-undo)))
 
-(defun sys-window-pos ()
-  (multiple-value-list (sdl2:get-window-position (.window *app*))))
-
 (cffi:defcfun ("SetCursorPos" sys-set-cursor-pos) :int
   (x :int)
   (y :int))
