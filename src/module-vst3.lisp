@@ -156,12 +156,13 @@
   (declare (ignore id)))
 
 (defmethod perform-edit ((self module-vst3) id value-normalized)
-  (declare (ignore id value-normalized)))
+  (param-editing self id value-normalized))
 
 (defmethod end-edit ((self module-vst3) id)
   (declare (ignore id)))
 
 (defmethod params-prepare ((module-vst3 module-vst3))
+  (params-clear module-vst3)
   (loop with controller = (.controller module-vst3)
         for i below (vst3-ffi::get-parameter-count controller)
         do (autowrap:with-alloc (info '(:struct (sb:vst-parameter-info)))
@@ -169,12 +170,22 @@
              (param-add module-vst3
                         (make-instance 'param :vst-parameter-info info)))))
 
+(defmethod params-value-changed ((module-vst3 module-vst3))
+  (loop with controller = (.controller module-vst3)
+        for param in (.params-ordered module-vst3)
+        for value = (vst3-ffi::get-param-normalized controller (.id param))
+        do (setf (.value param) value)))
+
 (defmethod restart-component ((self module-vst3) flags)
   (declare (ignorable flags))
   (log:trace self flags)
   (stop self)
   (start self)
-  ;; TODO flags に応じた処理
+  (when (plusp (logand flags sb:+vst-restart-flags-k-param-values-changed+))
+    (params-value-changed self))
+  (when (plusp (logand flags sb:+vst-restart-flags-k-param-titles-changed+))
+    (params-prepare self))
+  ;; TODO 他にも flags に応じていろいろしなきゃいけない
   )
 
 (defmethod start ((self module-vst3))

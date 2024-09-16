@@ -58,6 +58,17 @@
   (setf (.params-ordered module)
         (append (.params-ordered module) (list param))))
 
+(defmethod param-editing ((module module) id value)
+  (param-editing module (gethash id (.params module)) value))
+
+(defmethod param-editing ((module module) (param param) value)
+  (setf (.value param) value))
+
+(defmethod params-clear ((module module))
+  (clrhash (.params module))
+  ;; TODO 順番は保持したいからクリアすべきではない？
+  (setf (.params-ordered module) ()))
+
 (defmethod params-prepare ((module module))
   )
 
