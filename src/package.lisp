@@ -10,6 +10,8 @@
    #:*dd-srcs*
    #:*default-lane-width*
    #:*done*
+   #:drag-enter
+   #:drop
    #:*hwnd*
    #:*hwnd-module-vst3-map*
    #:*invoke-debugger-p*
@@ -122,7 +124,9 @@
   (:use :cl))
 
 (defpackage :vst3
-  (:use :cl :cffi))
+  (:use :cl :cffi)
+  (:export
+   #:from-string128))
 
 (defpackage :win32
   (:use :cl))

@@ -198,3 +198,17 @@ sb:+k-out-of-memory+
 #+nil
 (sb-int:with-float-traps-masked (:invalid :inexact :overflow :divide-by-zero)
   (plugin-scan-vst3))
+
+(defun from-string128 (string128)
+  (let* ((buffer (make-array (* 128 2) :element-type '(unsigned-byte 8) :initial-element 0))
+         (length (loop for i below 128
+                       for c = (cffi:mem-aref string128 :uint16 i)
+                       while (plusp c)
+                       do (setf (aref buffer (* i 2)) (ldb (byte 8 0) c))
+                          (setf (aref buffer (1+ (* i 2))) (ldb (byte 8 8) c))
+                       finally (return (* i 2)))))
+    (sb-ext:octets-to-string buffer
+                             :external-format :utf-16le
+                             :end length)))
+
+
