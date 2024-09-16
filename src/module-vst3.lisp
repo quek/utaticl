@@ -1,4 +1,4 @@
-(in-package :dgw)
+(in-package :utaticl.core)
 
 (sb-ext:defglobal *hwnd-module-vst3-map* (make-hash-table :weakness :value))
 

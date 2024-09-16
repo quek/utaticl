@@ -1,4 +1,4 @@
-(in-package :dgw)
+(in-package :utaticl.core)
 
 (defun @ (x y)
     (list x y))
@@ -101,7 +101,7 @@
          (scroll-x (ig:get-scroll-x))
          (p1 (@+ pos window-pos (@ (- scroll-x) 0.0)))
          (p2 (@+ p1 (@ 0.0 (- window-height
-                              (c-ref (ig:get-style) ig:im-gui-style :scrollbar-size))))))
+                              (plus-c:c-ref (ig:get-style) ig:im-gui-style :scrollbar-size))))))
     (ig:add-line draw-list p1 p2 (.color-line *theme*))))
 
 (defun error-handler (e)
@@ -113,13 +113,13 @@
       (invoke-debugger e))))
 
 (defun key-alt-p ()
-  (ig:ensure-to-bool (c-ref (ig:get-io) ig:im-gui-io :key-alt)))
+  (ig:ensure-to-bool (plus-c:c-ref (ig:get-io) ig:im-gui-io :key-alt)))
 
 (defun key-ctrl-p ()
-  (ig:ensure-to-bool (c-ref (ig:get-io) ig:im-gui-io :key-ctrl)))
+  (ig:ensure-to-bool (plus-c:c-ref (ig:get-io) ig:im-gui-io :key-ctrl)))
 
 (defun key-shift-p ()
-  (ig:ensure-to-bool (c-ref (ig:get-io) ig:im-gui-io :key-shift)))
+  (ig:ensure-to-bool (plus-c:c-ref (ig:get-io) ig:im-gui-io :key-shift)))
 
 (defun shortcut-common (project)
   (defshortcut (ig:+im-gui-key-space+)

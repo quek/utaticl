@@ -1,4 +1,4 @@
-(in-package :dgw)
+(in-package :utaticl.core)
 
 (defserialize neko neko-id name color)
 

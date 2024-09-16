@@ -1,4 +1,4 @@
-(in-package :dgw)
+(in-package :utaticl.core)
 
 ;; TODO これいらないよね
 ;; (defmethod initialize-instance :after ((self clip-note) &key seq)

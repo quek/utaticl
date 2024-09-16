@@ -1,4 +1,4 @@
-(in-package :dgw)
+(in-package :utaticl.core)
 
 (defmethod (setf .latency-pdc) :around (value (self connection))
   (when (/= (.latency-pdc self) value)

@@ -1,4 +1,4 @@
-(in-package :dgw)
+(in-package :utaticl.core)
 
 (defmethod initialize-instance :after ((self rack) &key)
   (let ((plugin-selector (make-instance 'plugin-selector :rack self)))

@@ -1,5 +1,5 @@
-(defsystem #:dgw-test
-  :depends-on ("dgw" "fiasco")
+(defsystem #:utaticl-test
+  :depends-on ("utaticl" "fiasco")
   :serial t
   :pathname "test"
   :components

@@ -1,3 +1,3 @@
-(in-package :dgw)
+(in-package :utaticl.core)
 
 (defgeneric process (self))

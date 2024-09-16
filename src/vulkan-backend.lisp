@@ -382,7 +382,7 @@
 
     (autowrap:with-alloc (glyph-ranges 'ig:im-wchar 3)
       (sdl2:with-init (:video :timer)
-        (sdl2:with-window (window :title "DGW"
+        (sdl2:with-window (window :title "UTATICL"
                                   :x 10 :y 40
                                   :w 1600 :h 1200
                                   :flags '(:vulkan :resizable :allow-highdpi))
@@ -396,7 +396,7 @@
             (sdl2-ffi.functions:sdl-get-window-wm-info window wm-info)
             ;; なんで :win :windows がないの？ しかたないので :x11 :display を使う
             ;; たぶんメモリレイアウト的に大丈夫なはず
-            (setf dgw::*hwnd* (plus-c:c-ref wm-info sdl2-ffi:sdl-syswm-info :info :x11 :display)))
+            (setf utaticl.core:*hwnd* (plus-c:c-ref wm-info sdl2-ffi:sdl-syswm-info :info :x11 :display)))
 
           (unwind-protect
                (cffi:with-foreign-slots ((render-pass image-count)
@@ -424,9 +424,9 @@
                  (ig:create-context (cffi:null-pointer))
 
                  (let ((io (ig:get-io)))
-                   (ensure-directories-exist (merge-pathnames "user/config/" dgw::*working-directory*))
+                   (ensure-directories-exist (merge-pathnames "user/config/" utaticl.core:*working-directory*))
                    (setf (plus-c:c-ref io ig:im-gui-io :ini-filename)
-                         (namestring (merge-pathnames "user/config/imgui.ini" dgw::*working-directory*)))
+                         (namestring (merge-pathnames "user/config/imgui.ini" utaticl.core:*working-directory*)))
                    (setf (plus-c:c-ref io ig:im-gui-io :config-docking-with-shift) 1)
                    (setf (plus-c:c-ref io ig:im-gui-io :config-windows-move-from-title-bar-only) 1)
                    (setf (plus-c:c-ref io ig:im-gui-io :config-flags)
@@ -438,7 +438,7 @@
                    ;;  (plus-c:c-ref io ig:im-gui-io :fonts)
                    ;;  (cffi:null-pointer))
                    (let ((font (namestring (merge-pathnames "factory/font/NotoSansJP-Regular.ttf"
-                                                            dgw::*working-directory*))))
+                                                            utaticl.core:*working-directory*))))
                      (setf (plus-c:c-ref glyph-ranges ig:im-wchar 0) #x0020
                            (plus-c:c-ref glyph-ranges ig:im-wchar 1) #xfffd
                            (plus-c:c-ref glyph-ranges ig:im-wchar 2) 0)
@@ -491,22 +491,22 @@
                        ;; (setf min-allocation-size 0)
                        (imgui-impl-vulkan-init init-info))))
 
-                 (setf dgw::*done* nil)
+                 (setf utaticl.core:*done* nil)
                  (pa:with-audio
-                   (setf dgw::*app* (make-instance 'dgw::app :window window))
-                   (dd-ffi::with-drag-drop-handler (dgw::*hwnd*)
+                   (setf utaticl.core:*app* (make-instance 'utaticl.core:app :window window))
+                   (dd-ffi::with-drag-drop-handler (utaticl.core:*hwnd*)
                      (unwind-protect
                           (sdl2:with-sdl-event (e)
-                            (loop until dgw::*done* do
-                              (vulkan-ui-loop main-window-data dgw::*app* window e)
+                            (loop until utaticl.core:*done* do
+                              (vulkan-ui-loop main-window-data utaticl.core:*app* window e)
                                   #+nil
                                    (handler-case
-                                       (vulkan-ui-loop main-window-data dgw::*app* window e)
+                                       (vulkan-ui-loop main-window-data utaticl.core:*app* window e)
                                      (error (e)
                                        (log4cl:log-error "Error ~a!~%~a" e
                                                          (with-output-to-string (out)
                                                            (sb-debug:print-backtrace :stream out)))))))
-                       (dgw::terminate dgw::*app*)))))
+                       (utaticl.core:terminate utaticl.core:*app*)))))
 
             (vk:device-wait-idle *device*)
             (imgui-impl-vulkan-shutdown)
@@ -519,13 +519,13 @@
   (loop while (/= (sdl2-ffi.functions:sdl-poll-event e) 0)
         do (ig-backend::impl-sdl2-process-event (autowrap:ptr e))
            (if (eq (sdl2:get-event-type e) :quit)
-               (setf dgw::*done* t)
+               (setf utaticl.core:*done* t)
                (if (and (eq (sdl2:get-event-type e) :windowevent)
                         (sdl2::c-let ((event sdl2-ffi:sdl-event :from e))
                           (sdl2::c-let ((we sdl2-ffi:sdl-window-event :from (event :window)))
                             (and (= (we :event) sdl2-ffi::+sdl-windowevent-close+)
                                  (= (we :window-id) (sdl2:get-window-id window))))))
-                   (setf dgw::*done* t))))
+                   (setf utaticl.core:*done* t))))
 
   (multiple-value-bind (width height) (sdl2:get-window-size window)
     (when (and (plusp width) (plusp height)
@@ -554,12 +554,12 @@
   (ig-backend::impl-sdl2-new-frame)
   (ig::new-frame)
 
-  (dgw::with-debugger
+  (utaticl.core:with-debugger
     (progn
         (ig:show-demo-window (cffi:null-pointer))
-        (let ((dgw::*render-context* (make-instance 'dgw::render-context)))
-          (dgw::render app)
-          (dgw::cmd-run app))))
+        (let ((utaticl.core:*render-context* (make-instance 'utaticl.core:render-context)))
+          (utaticl.core:render app)
+          (utaticl.core:cmd-run app))))
 
   (ig::render)
 

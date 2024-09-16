@@ -1,4 +1,4 @@
-(in-package :dgw)
+(in-package :utaticl.core)
 
 (defmethod render-grid ((self grid-mixin))
   (ig:set-next-item-width 60.0)

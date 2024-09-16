@@ -1,7 +1,7 @@
-;; (defpackage :dgw.sceen-matrix
-;;   (:use :cl :dgw.core))
+;; (defpackage :utaticl.sceen-matrix
+;;   (:use :cl :utaticl.core))
 
-(in-package :dgw)
+(in-package :utaticl.core)
 
 (defmethod initialize-instance :after ((sceen-matrix sceen-matrix) &key)
   (sceen-add sceen-matrix (make-instance 'sceen)))

@@ -1,4 +1,4 @@
-(in-package :dgw)
+(in-package :utaticl.core)
 
 (defmethod note-add ((self seq-note) (note note))
   (setf (.seq-note note) self)

@@ -1,5 +1,5 @@
 ;;; export してないシンボルもテストしたいのでテスト用のパッケージは作らない
-(in-package #:dgw)
+(in-package #:utaticl)
 
 (setf *config* (make-instance 'config))
 

@@ -1,4 +1,4 @@
-(in-package :dgw)
+(in-package :utaticl.core)
 
 (defmethod initialize-instance :before ((self app) &key)
   (clrhash *neko-map*)

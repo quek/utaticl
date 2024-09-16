@@ -56,8 +56,8 @@
                 (error (src-strerror ret)))))))))
 
 #+nil
-(let ((audio (make-instance 'dgw::seq-audio :path "d:/Samples/AU5 Sample/Kick/Au5-Kick Tight 1.wav")))
-  (simple (dgw::.data audio) 44100.0d0 48000.0d0 (dgw::.nchannels audio)))
+(let ((audio (make-instance 'utaticl::seq-audio :path "d:/Samples/AU5 Sample/Kick/Au5-Kick Tight 1.wav")))
+  (simple (utaticl::.data audio) 44100.0d0 48000.0d0 (utaticl::.nchannels audio)))
 
 #+nil
 (src-strerror 16)

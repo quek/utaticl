@@ -1,8 +1,8 @@
-(in-package :dgw)
+(in-package :utaticl.core)
 
 (log:config :trace)
 
-(defparameter *working-directory* (asdf:system-source-directory :dgw))
+(defparameter *working-directory* (asdf:system-source-directory :utaticl))
 
 (sb-ext:defglobal *thread-pool* nil)
 (sb-ext:defglobal *app* nil)

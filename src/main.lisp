@@ -1,4 +1,4 @@
-(in-package :dgw)
+(in-package :utaticl)
 
 (cffi:load-foreign-library "ole32.dll")
 
@@ -18,8 +18,8 @@
    (lambda ()
      (sb-int:with-float-traps-masked (:invalid :inexact :overflow :divide-by-zero)
        (with-ole
-         (with-thraed-pool
+         (utaticl.core:with-thraed-pool
            ;; (vulkan-backend::vulkan-backend-main)
-           (dgw.glfw-opengl3::main)
+           (utaticl.glfw-opengl3::main)
            ))))
-   :name "DGW"))
+   :name "UTATICL"))

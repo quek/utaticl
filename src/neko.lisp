@@ -1,4 +1,4 @@
-(in-package :dgw)
+(in-package :utaticl.core)
 
 (defvar *neko-map* (make-hash-table :weakness :value :test 'equal))
 

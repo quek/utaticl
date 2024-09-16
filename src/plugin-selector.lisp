@@ -1,4 +1,4 @@
-(in-package :dgw)
+(in-package :utaticl.core)
 
 (defun open-plugin-selector (self)
   (let ((plugin-infos (plugin-info-load-all)))

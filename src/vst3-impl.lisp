@@ -202,7 +202,7 @@
    (query-interface (.component-handler self) iid obj)))
 
 (defmethod get-name ((self host-application) name)
-  (let* ((host-name "DGW")
+  (let* ((host-name "UTATICL")
          (array (sb-ext:string-to-octets host-name :external-format :utf16le))
          (length (length array)))
     (loop for i below length
@@ -272,7 +272,7 @@
           (autowrap:callback 'restart-component))))
 
 (defmethod begin-edit ((self component-handler) id)
-  (dgw::begin-edit (.module self) id)
+  (utaticl.core:begin-edit (.module self) id)
   sb:+k-result-ok+)
 
 (autowrap:defcallback begin-edit sb:tresult
@@ -282,7 +282,7 @@
               id))
 
 (defmethod perform-edit ((self component-handler) id value-normalized)
-  (dgw::perform-edit (.module self) id value-normalized)
+  (utaticl.core:perform-edit (.module self) id value-normalized)
   sb:+k-result-ok+)
 
 (autowrap:defcallback perform-edit sb:tresult
@@ -293,7 +293,7 @@
                id value-normalized))
 
 (defmethod end-edit ((self component-handler) id)
-  (dgw::end-edit (.module self) id)
+  (utaticl.core:end-edit (.module self) id)
   sb:+k-result-ok+)
 
 (autowrap:defcallback end-edit sb:tresult
@@ -303,7 +303,7 @@
             id))
 
 (defmethod restart-component ((self component-handler) flags)
-  (dgw::restart-component (.module self) flags)
+  (utaticl.core:restart-component (.module self) flags)
   sb:+k-result-ok+)
 
 (autowrap:defcallback restart-component sb:tresult
@@ -695,7 +695,7 @@
                 sb:tresult
                 (declare (ignore view))
                 ;; TODO 実装
-                (let ((hwnd (dgw::.hwnd (.module self)))
+                (let ((hwnd (utaticl.core:.hwnd (.module self)))
                       (width (- (plus-c:c-ref new-size (:struct (sb:view-rect)) :right)
                                 (plus-c:c-ref new-size (:struct (sb:view-rect)) :left)))
                       (heigth (- (plus-c:c-ref new-size (:struct (sb:view-rect)) :bottom)
@@ -723,7 +723,7 @@
   :iid vst3-ffi::+vst-iparameter-changes-iid+
   :vst3-c-api-class sb:vst-i-parameter-changes)
 
-(defmethod dgw::prepare ((self parameter-changes))
+(defmethod utaticl.core:prepare ((self parameter-changes))
   (loop for change in (.changes self)
         do (autowrap:free change))
   (setf (.changes self) nil))
@@ -731,7 +731,7 @@
 (defmethod release :around ((self parameter-changes))
   (let ((ref-count (call-next-method)))
     (when (zerop ref-count)
-      (dgw::prepare self))
+      (utaticl.core:prepare self))
     ref-count))
 
 (def-vst3-impl event-list (unknown)
@@ -742,14 +742,14 @@
    (get-event ((index :int)
                (e :pointer))
               sb:tresult
-              (dgw::memcpy e
+              (utaticl.core:memcpy e
                            (autowrap:ptr (nth index (.events self)))
                            (autowrap:sizeof '(:struct (sb:vst-event))))
               sb:+k-result-ok+)
    (add-event ((e :pointer))
               sb:tresult
               (let ((event (autowrap:alloc '(:struct (sb:vst-event)))))
-                (dgw::memcpy (autowrap:ptr event)
+                (utaticl.core:memcpy (autowrap:ptr event)
                              e
                              (autowrap:sizeof '(:struct (sb:vst-event))))
                 (setf (.events self) (append (.events self) (list event))))
@@ -757,7 +757,7 @@
   :iid vst3-ffi::+vst-ievent-list-iid+
   :vst3-c-api-class sb:vst-i-event-list)
 
-(defmethod dgw::prepare ((self event-list))
+(defmethod utaticl.core:prepare ((self event-list))
   (loop for event in (.events self)
         do (autowrap:free event))
   (setf (.events self) nil))
@@ -765,5 +765,5 @@
 (defmethod release :around ((self event-list))
   (let ((ref-count (call-next-method)))
     (when (zerop ref-count)
-      (dgw::prepare self))
+      (utaticl.core:prepare self))
     ref-count))

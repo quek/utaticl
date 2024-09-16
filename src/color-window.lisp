@@ -1,4 +1,4 @@
-(in-package :dgw)
+(in-package :utaticl.core)
 
 (defun color-window (neko)
   (setf (.neko (.color-window *app*)) neko)

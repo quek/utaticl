@@ -1,4 +1,4 @@
-(in-package :dgw)
+(in-package :utaticl.core)
 
 (defvar *serialize-context*)
 
@@ -25,7 +25,7 @@
                  collect
                  (cond ((atom spec)
                         `((eq slot ',spec)
-                          ,(let ((accessor (find-symbol (format nil ".~a" spec) :dgw)))
+                          ,(let ((accessor (find-symbol (format nil ".~a" spec) :utaticl)))
                              `(if (and (consp value) (eq :ref (car value)))
                                   (after-add *serialize-context*
                                              (lambda ()

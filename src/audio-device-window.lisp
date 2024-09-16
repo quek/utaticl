@@ -1,4 +1,4 @@
-(in-package :dgw)
+(in-package :utaticl.core)
 
 (defparameter *standard-sample-reates* '(44100.0d0 48000.0d0 88200.0d0 96000.0d0 192000.0d0))
 

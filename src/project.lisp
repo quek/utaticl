@@ -1,4 +1,4 @@
-(in-package :dgw)
+(in-package :utaticl.core)
 
 (defmethod initialize-instance :after ((self project) &key)
   (setf (.bpm self) 128.0)

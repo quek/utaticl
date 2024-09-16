@@ -1,4 +1,4 @@
-(in-package :dgw)
+(in-package :utaticl.core)
 
 (defclass ring-buffer ()
   ((buffer :initarg :size :accessor .buffer)

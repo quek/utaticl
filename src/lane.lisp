@@ -1,4 +1,4 @@
-(in-package :dgw)
+(in-package :utaticl.core)
 
 (defmethod clip-add ((self lane) clip &key)
   (setf (.lane clip) self)

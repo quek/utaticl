@@ -1,4 +1,4 @@
-(in-package :dgw)
+(in-package :utaticl.core)
 
 (defmethod .color :around ((self clip))
   (or (call-next-method)

@@ -1,4 +1,4 @@
-(in-package :dgw)
+(in-package :utaticl.core)
 
 (defmethod param-add ((self module-builtin) symbol name value)
   (let ((param (make-instance 'param :name name :value value)))

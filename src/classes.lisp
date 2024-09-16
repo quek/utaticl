@@ -1,4 +1,4 @@
-(in-package :dgw)
+(in-package :utaticl.core)
 
 (defclass neko ()
   ((neko-id :initarg :neko-id :accessor .neko-id)

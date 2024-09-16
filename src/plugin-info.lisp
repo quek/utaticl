@@ -1,4 +1,4 @@
-(in-package :dgw)
+(in-package :utaticl.core)
 
 (defmethod plugin-info-find (id)
   (find id (plugin-info-load-all) :key #'.id :test #'equalp))

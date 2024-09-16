@@ -2,17 +2,94 @@
   (:use :cl)
   (:export #:main))
 
-(defpackage :dgw
-  (:use :cl :anaphora :plus-c)
-  (:export #:main))
-
-(defpackage :dgw.core
+(defpackage :utaticl.core
   (:use :cl :anaphora)
   (:export
+   #:*app*
+   #:*dd-at*
+   #:*dd-srcs*
+   #:*default-lane-
+   #:*done*
+   #:*hwnd*
+   #:*invoke-debugger-p*
+   #:*mouse-pos*
+   #:*process-data*
+   #:*project*
+   #:*render-context*
+   #:*thread-pool*
+   #:*working-directory*
+   #:+side-threshold+
+   #:.hwnd
+   #:app
+   #:arrangement
+   #:audio-bus-buffers
+   #:audio-device
+   #:audio-device-window
+   #:begin-edit
+   #:clip
+   #:clip-audio
+   #:clip-note
+   #:cmd-add
+   #:cmd-redo
+   #:cmd-run
+   #:cmd-undo
+   #:color-window
+   #:commander
+   #:connection
+   #:end-edit
+   #:grid-mixin
+   #:lane
+   #:master-track
+   #:memcpy
+   #:module
+   #:module-builtin
+   #:module-fader
+   #:module-fader-track
+   #:module-gain
+   #:module-gain-track
+   #:module-track-mixin
+   #:module-vst3
+   #:neko
+   #:neko-id
    #:note
+   #:offset-mixin
+   #:param
+   #:perform-edit
+   #:piano-roll
+   #:plugin-info
+   #:plugin-info-vst3
+   #:plugin-selector
+   #:prepare
+   #:preset
+   #:preset-vst3
+   #:process-data
+   #:project
+   #:rack
+   #:rect
+   #:rect-piano-roll
+   #:render
+   #:render-context
+   #:report-window
+   #:restart-component
+   #:sceen
+   #:sceen-matrix
+   #:scroll-mixin
+   #:seq
+   #:seq-audio
+   #:seq-note
+   #:show-mixin
+   #:terminate
+   #:time-ruler-mixin
+   #:time-thing
+   #:track
+   #:transposer
+   #:view
+   #:with-debugger
+   #:with-thraed-pool
+   #:zoom-mixin
    ))
 
-(defpackage :dgw.ffi)
+(defpackage :utaticl.ffi)
 
 (defpackage :src-ffi
   (:use :cl))
@@ -48,5 +125,5 @@
 (defpackage :dd-ffi
   (:use :cl))
 
-(defpackage :dgw.glfw-opengl3
+(defpackage :utaticl.glfw-opengl3
   (:use :cl))

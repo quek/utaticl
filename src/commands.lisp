@@ -1,4 +1,4 @@
-(in-package :dgw)
+(in-package :utaticl.core)
 
 (defmacro defcommand (name super slots &optional class-options)
   `(defclass ,name ,super

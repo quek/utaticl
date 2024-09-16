@@ -1,4 +1,4 @@
-(in-package :dgw)
+(in-package :utaticl.core)
 
 (defmethod connect ((from module) (to module))
   (let ((connection (make-instance 'connection

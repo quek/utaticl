@@ -261,7 +261,7 @@
                           collect file)))
             (when files
               (setf (cffi:mem-ref effect :unsigned-long) +dropeffect-copy+)
-              (dgw::drag-enter dgw::*app* files)))))
+              (utaticl::drag-enter utaticl::*app* files)))))
       (global-unlock (cffi:foreign-slot-value stgmedium '(:struct stgmedium) 'u))
       (release-stg-medium stgmedium)))
   +ok+)
@@ -295,7 +295,7 @@
   (drag-leave (gethash (cffi:pointer-address this) *ptr-object-map*)))
 
 (defmethod drop ((drop-target drop-target) data state pt effect)
-  (dgw::drop dgw::*app*)
+  (utaticl::drop utaticl::*app*)
   (setf (cffi:mem-ref effect :unsigned-long) +dropeffect-copy+)
   +ok+)
 

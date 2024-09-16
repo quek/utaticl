@@ -1,4 +1,4 @@
-(in-package :dgw)
+(in-package :utaticl.core)
 
 (cffi:defcallback get-extension :pointer
     ((host :pointer)
@@ -19,8 +19,8 @@
   (declare (ignore host)))
 
 
-(alexandria:define-constant +host-name+ "DGW" :test 'equal)
-(alexandria:define-constant +host-url+ "https://github.com/quek/dgw" :test 'equal)
+(alexandria:define-constant +host-name+ "UTATICL" :test 'equal)
+(alexandria:define-constant +host-url+ "https://github.com/quek/utaticl" :test 'equal)
 (alexandria:define-constant +host-version+ "0.0.1" :test 'equal)
 
 (sb-int:with-float-traps-masked (:invalid :inexact :overflow :divide-by-zero)

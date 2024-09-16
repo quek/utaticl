@@ -1,4 +1,4 @@
-(in-package :dgw)
+(in-package :utaticl.core)
 
 (defgeneric cmd-add (project cmd-class &rest args)
   (:method ((project null) cmd-class &rest args)

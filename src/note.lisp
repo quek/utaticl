@@ -1,4 +1,4 @@
-(in-package :dgw)
+(in-package :utaticl.core)
 
 (defmethod in-p ((note note) (rect-piano-roll rect-piano-roll))
   (and (< (time-end note) (.time-start rect-piano-roll))

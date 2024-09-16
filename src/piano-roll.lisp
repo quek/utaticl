@@ -1,4 +1,4 @@
-(in-package :dgw)
+(in-package :utaticl.core)
 
 (defmethod drag-mode ((self piano-roll) note)
   (let* ((mouse-pos (ig:get-mouse-pos))
@@ -451,7 +451,7 @@
             (window-size (ig:get-window-size)))
         (ig:with-clip-rect ((@+ window-pos (@ (.offset-x self) .0))
                             (@- (@+ window-pos window-size)
-                                (@ (c-ref (ig:get-style) ig:im-gui-style :scrollbar-size)
+                                (@ (plus-c:c-ref (ig:get-style) ig:im-gui-style :scrollbar-size)
                                    .0)))
           (render-keyboard self))
         (ig:with-clip-rect ((@+ window-pos (@ (.offset-x self) (.offset-y self)))
@@ -535,7 +535,7 @@
           (when (< (- key-max key-min) 12)
             (incf key-max (ceiling (/ (- 12 (- key-max key-min)) 2)))
             (decf key-min (ceiling (/ (- 12 (- key-max key-min)) 2))))
-          (let* ((scrollbar-size (c-ref (ig:get-style) ig:im-gui-style :scrollbar-size))
+          (let* ((scrollbar-size (plus-c:c-ref (ig:get-style) ig:im-gui-style :scrollbar-size))
                  (zoom-x (/ (- (ig:get-window-width) (.offset-x self) scrollbar-size)
                                (+ (- key-max key-min) 3.0))))
             (if (/= (.zoom-x self) zoom-x)

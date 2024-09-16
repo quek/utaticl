@@ -1,4 +1,4 @@
-(in-package :dgw)
+(in-package :utaticl.core)
 
 (defmethod render ((self transposer))
   (when (ig:begin "##transponser")
@@ -18,7 +18,7 @@
     (ig:text (.audio-device-name *config*))
     (ig:same-line)
     (let* ((io (ig:get-io))
-           (framerate (c-ref io ig:im-gui-io :framerate))
+           (framerate (plus-c:c-ref io ig:im-gui-io :framerate))
            (ms (/ 1000.0  framerate)))
       (ig:text (format nil "   ~,3f ms/frame (~,1f FPS)" ms framerate)))
     (ig:text (.statistic-summary (.audio-device *app*)))

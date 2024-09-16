@@ -1,11 +1,11 @@
-(in-package :dgw.glfw-opengl3)
+(in-package :utaticl.glfw-opengl3)
 
 (defun main ()
   (glfw:set-error-callback 'glfw-error-callback)
 
   (pa:with-audio
     (autowrap:with-alloc(glyph-ranges 'ig:im-wchar 3)
-      (glfw:with-init-window (:title "DGW" :width 1600 :height 1200
+      (glfw:with-init-window (:title "UTATICL" :width 1600 :height 1200
                               :context-version-major 3
                               :context-version-minor 0)
         (glfw:swap-interval 1) ;Enable vsync
@@ -14,11 +14,12 @@
           (ImGui_ImplGlfw_InitForOpenGL glfw:*window* t)
           (ImGui_ImplOpenGL3_Init "#version 130")
 
-          (setf dgw::*app* (make-instance 'dgw::app :window glfw:*window*))
-          (setf dgw::*hwnd* (glfwGetWin32Window glfw:*window*))
-
-          (loop until (glfw:window-should-close-p)
-                do (main-loop))
+          (setf utaticl.core:*hwnd* (glfwGetWin32Window glfw:*window*))
+          (setf utaticl.core:*app* (make-instance 'utaticl.core:app :window glfw:*window*))
+          (unwind-protect
+               (loop until (glfw:window-should-close-p)
+                     do (main-loop))
+            (utaticl.core:terminate utaticl.core:*app*))
 
           (ImGui_ImplOpenGL3_Shutdown)
           (ImGui_ImplGlfw_Shutdown)
@@ -32,11 +33,11 @@
         (ImGui_ImplOpenGL3_NewFrame)
         (ImGui_ImplGlfw_NewFrame)
         (ig:new-frame)
-        (dgw::with-debugger
+        (utaticl.core:with-debugger
           (ig:show-demo-window (cffi:null-pointer))
-          (let ((dgw::*render-context* (make-instance 'dgw::render-context)))
-            (dgw::render dgw::*app*)
-            (dgw::cmd-run dgw::*app*)))
+          (let ((utaticl.core:*render-context* (make-instance 'utaticl.core:render-context)))
+            (utaticl.core:render utaticl.core:*app*)
+            (utaticl.core:cmd-run utaticl.core:*app*)))
         (ig::render)
         (handler-case
             (progn
@@ -62,9 +63,9 @@
 (defun ig-init (glyph-ranges)
   (prog1 (ig:create-context (cffi:null-pointer))
     (let ((io (ig:get-io)))
-      (ensure-directories-exist (merge-pathnames "user/config/" dgw::*working-directory*))
+      (ensure-directories-exist (merge-pathnames "user/config/" utaticl.core:*working-directory*))
       (setf (plus-c:c-ref io ig:im-gui-io :ini-filename)
-            (namestring (merge-pathnames "user/config/imgui.ini" dgw::*working-directory*)))
+            (namestring (merge-pathnames "user/config/imgui.ini" utaticl.core:*working-directory*)))
       (setf (plus-c:c-ref io ig:im-gui-io :config-docking-with-shift) 1)
       (setf (plus-c:c-ref io ig:im-gui-io :config-windows-move-from-title-bar-only) 1)
       (setf (plus-c:c-ref io ig:im-gui-io :config-flags)
@@ -72,7 +73,7 @@
                     ig:+im-gui-config-flags-nav-enable-keyboard+
                     ig:+im-gui-config-flags-docking-enable+))
       (let ((font (namestring (merge-pathnames "factory/font/NotoSansJP-Regular.ttf"
-                                               dgw::*working-directory*))))
+                                               utaticl.core:*working-directory*))))
         (setf (plus-c:c-ref glyph-ranges ig:im-wchar 0) #x0020
               (plus-c:c-ref glyph-ranges ig:im-wchar 1) #xfffd
               (plus-c:c-ref glyph-ranges ig:im-wchar 2) 0)

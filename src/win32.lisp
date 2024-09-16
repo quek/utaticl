@@ -7,7 +7,7 @@
   (dw-ex-style :uint32))
 
 (ftw:defwndproc wnd-proc (hwnd msg wparam lparam)
-  (let ((module (gethash (cffi:pointer-address hwnd) dgw::*hwnd-module-vst3-map*)))
+  (let ((module (gethash (cffi:pointer-address hwnd) utaticl::*hwnd-module-vst3-map*)))
     (when module
       (ftw:switch msg
         (ftw::+wm-size+
@@ -15,9 +15,9 @@
            (let* ((rect (ftw:get-client-rect hwnd))
                   (width (- (ftw:rect-right rect) (ftw:rect-left rect)))
                   (height (- (ftw:rect-bottom rect) (ftw:rect-top rect))))
-             (dgw::on-resize module width height))))
+             (utaticl::on-resize module width height))))
         (ftw::+wm-destroy+
-         (dgw::editor-close module)))))
+         (utaticl::editor-close module)))))
   (ftw:default-window-proc hwnd msg wparam lparam))
 
 (sb-ext:defglobal *registered-class* nil)
@@ -54,7 +54,7 @@
                                       :height height
                                       :width width
                                       ;; エディタウインドが前面にとどまるように
-                                      :parent dgw::*hwnd*)))
+                                      :parent utaticl::*hwnd*)))
         (ftw:set-window-pos hwnd :top 0 0 0 0
                             '(:no-size :no-move :no-copy-bits :show-window))
         hwnd))))

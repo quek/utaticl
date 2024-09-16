@@ -1,4 +1,4 @@
-(in-package :dgw)
+(in-package :utaticl.core)
 
 (defmethod initialize-instance :after ((clip-audio clip-audio) &key path)
   (when path

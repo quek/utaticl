@@ -1,4 +1,4 @@
-(in-package :dgw)
+(in-package :utaticl.core)
 
 (defconstant +grid-bar+ 4)
 (defconstant +grid-beat+ 1)

@@ -1,4 +1,4 @@
-(in-package :dgw)
+(in-package :utaticl.core)
 
 (defun fuzzy= (x y)
   (let ((end (length y)))

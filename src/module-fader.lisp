@@ -1,4 +1,4 @@
-(in-package :dgw)
+(in-package :utaticl.core)
 
 (defmethod initialize-instance :after ((self module-fader) &key)
   (param-add self 'mute "Mute" .0d0)

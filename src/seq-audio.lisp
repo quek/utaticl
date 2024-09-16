@@ -1,4 +1,4 @@
-(in-package :dgw)
+(in-package :utaticl.core)
 
 (defmethod initialize-instance :after ((seq-audio seq-audio) &key name path)
   (when path

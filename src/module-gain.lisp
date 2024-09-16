@@ -1,4 +1,4 @@
-(in-package :dgw)
+(in-package :utaticl.core)
 
 (defmethod initialize-instance :after ((self module-gain) &key)
   (param-add self 'volume "Volume" 1.0d0))
