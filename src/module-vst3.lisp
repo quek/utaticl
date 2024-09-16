@@ -101,7 +101,8 @@
           do (loop for i below count
                    do (vst3-ffi::activate-bus (.component self)
                                               type direction i 1))))
-  (params-prepare self))
+  (params-prepare self)
+  (params-value-changed self))
 
 (defmethod terminate ((self module-vst3))
   (when (.component self)

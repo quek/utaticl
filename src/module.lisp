@@ -1,3 +1,20 @@
+(defpackage :utaticl.module
+  (:use :cl :utaticl.core))
+
+(in-package :utaticl.module)
+
+(defmethod render-params ((module module))
+  (loop for i below 4
+        for param in (.params-ordered module)
+        do (ig:set-next-item-width 200.0)
+           (ig:drag-scalar (.name param)
+                           ig:+im-gui-data-type-double+
+                           (.value param)
+                           :speed .005
+                           :min .0d0
+                           :max 1.0d0
+                           :format "%.2f")))
+
 (in-package :utaticl.core)
 
 (defmethod connect ((from module) (to module))
@@ -137,21 +154,3 @@
   (some (lambda (connection)
           (not (.process-done (.to connection))))
         (connections-to self)))
-
-
-(defpackage :utaticl.module
-  (:use :cl :utaticl.core))
-
-(in-package :utaticl.module)
-
-(defmethod render-params ((module module))
-  (loop for i below 4
-        for param in (.params-ordered module)
-        do (ig:set-next-item-width 200.0)
-           (ig:drag-scalar (.name param)
-                           ig:+im-gui-data-type-double+
-                           (.value param)
-                           :speed .01
-                           :min .0d0
-                           :max 1.0d0
-                           :format "%.2f")))
