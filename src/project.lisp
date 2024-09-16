@@ -116,6 +116,7 @@
 
 (defmethod (setf .master-track) :after (master-track (self project))
   (setf (.project master-track) self)
+  (break "(setf .master-track) ~a ~a" (.project master-track) master-track)
   (setf (.target-track self) master-track))
 
 (defmethod modules-sorted ((self project))

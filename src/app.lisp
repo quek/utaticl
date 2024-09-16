@@ -76,4 +76,3 @@
 
 (defmethod sys-window-pos% ((backend (eql :sdl-vulkan)) window)
   (multiple-value-list (sdl2:get-window-position window)))
-

@@ -1,8 +1,5 @@
 (in-package :vulkan-backend)
 
-;; TODO cimgui-autowrap/src/lib.lisp で読み込んでいる
-;; (cffi:load-foreign-library "c:/Users/ancient/quicklisp/local-projects/cimgui-autowrap/lib/cimgui/backend_test/example_sdl_vulkan/build/cimgui_sdl.dll")
-
 (defconstant +uint64-max+ (1- (expt 2 64)))
 
 (cffi:defcstruct imgui-impl-vulkan-init-info
@@ -374,7 +371,7 @@
   (vk:destroy-device *device*)
   (vk:destroy-instance *instance*))
 
-(defun vulkan-backend-main ()
+(defmethod utaticl.core:run-with-backend (app (backend (eql :sdl-vulkan)))
   (cffi:with-foreign-objects ((main-window-data '(:struct imgui-impl-vulkan-h-window))
                               (surface 'vulkan:surface-khr))
     (ftw:memset main-window-data (cffi:foreign-type-size '(:struct imgui-impl-vulkan-h-window)))
@@ -492,21 +489,19 @@
                        (imgui-impl-vulkan-init init-info))))
 
                  (setf utaticl.core:*done* nil)
-                 (pa:with-audio
-                   (setf utaticl.core:*app* (make-instance 'utaticl.core:app :window window))
-                   (dd-ffi::with-drag-drop-handler (utaticl.core:*hwnd*)
-                     (unwind-protect
-                          (sdl2:with-sdl-event (e)
-                            (loop until utaticl.core:*done* do
-                              (vulkan-ui-loop main-window-data utaticl.core:*app* window e)
-                                  #+nil
-                                   (handler-case
-                                       (vulkan-ui-loop main-window-data utaticl.core:*app* window e)
-                                     (error (e)
-                                       (log4cl:log-error "Error ~a!~%~a" e
-                                                         (with-output-to-string (out)
-                                                           (sb-debug:print-backtrace :stream out)))))))
-                       (utaticl.core:terminate utaticl.core:*app*)))))
+                 (setf (utaticl.core:.window app) window)
+                 (dd-ffi::with-drag-drop-handler (utaticl.core:*hwnd*)
+                   (unwind-protect
+                        (sdl2:with-sdl-event (e)
+                          (loop until utaticl.core:*done* do
+                            (vulkan-ui-loop main-window-data app window e)
+                                #+nil
+                                 (handler-case
+                                     (vulkan-ui-loop main-window-data app window e)
+                                   (error (e)
+                                     (log4cl:log-error "Error ~a!~%~a" e
+                                                       (with-output-to-string (out)
+                                                         (sb-debug:print-backtrace :stream out))))))))))
 
             (vk:device-wait-idle *device*)
             (imgui-impl-vulkan-shutdown)

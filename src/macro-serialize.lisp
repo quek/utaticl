@@ -25,7 +25,7 @@
                  collect
                  (cond ((atom spec)
                         `((eq slot ',spec)
-                          ,(let ((accessor (find-symbol (format nil ".~a" spec) :utaticl)))
+                          ,(let ((accessor (find-symbol (format nil ".~a" spec) :utaticl.core)))
                              `(if (and (consp value) (eq :ref (car value)))
                                   (after-add *serialize-context*
                                              (lambda ()

@@ -8,9 +8,10 @@
    #:*app*
    #:*dd-at*
    #:*dd-srcs*
-   #:*default-lane-
+   #:*default-lane-width*
    #:*done*
    #:*hwnd*
+   #:*hwnd-module-vst3-map*
    #:*invoke-debugger-p*
    #:*mouse-pos*
    #:*process-data*
@@ -19,7 +20,9 @@
    #:*thread-pool*
    #:*working-directory*
    #:+side-threshold+
+   #:.backend
    #:.hwnd
+   #:.window
    #:app
    #:arrangement
    #:audio-bus-buffers
@@ -36,6 +39,7 @@
    #:color-window
    #:commander
    #:connection
+   #:editor-close
    #:end-edit
    #:grid-mixin
    #:lane
@@ -53,6 +57,7 @@
    #:neko-id
    #:note
    #:offset-mixin
+   #:on-resize
    #:param
    #:perform-edit
    #:piano-roll
@@ -72,6 +77,7 @@
    #:render-context
    #:report-window
    #:restart-component
+   #:run-with-backend
    #:sceen
    #:sceen-matrix
    #:scroll-mixin

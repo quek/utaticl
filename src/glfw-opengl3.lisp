@@ -1,29 +1,26 @@
 (in-package :utaticl.glfw-opengl3)
 
-(defun main ()
+(defmethod utaticl.core:run-with-backend (app (backend (eql :glfw-opengl3)))
   (glfw:set-error-callback 'glfw-error-callback)
 
-  (pa:with-audio
-    (autowrap:with-alloc(glyph-ranges 'ig:im-wchar 3)
-      (glfw:with-init-window (:title "UTATICL" :width 1600 :height 1200
-                              :context-version-major 3
-                              :context-version-minor 0)
-        (glfw:swap-interval 1) ;Enable vsync
-        (let ((ig-context (ig-init glyph-ranges)))
+  (autowrap:with-alloc(glyph-ranges 'ig:im-wchar 3)
+    (glfw:with-init-window (:title "UTATICL" :width 1600 :height 1200
+                            :context-version-major 3
+                            :context-version-minor 0)
+      (glfw:swap-interval 1) ;Enable vsync
+      (let ((ig-context (ig-init glyph-ranges)))
 
-          (ImGui_ImplGlfw_InitForOpenGL glfw:*window* t)
-          (ImGui_ImplOpenGL3_Init "#version 130")
+        (ImGui_ImplGlfw_InitForOpenGL glfw:*window* t)
+        (ImGui_ImplOpenGL3_Init "#version 130")
 
-          (setf utaticl.core:*hwnd* (glfwGetWin32Window glfw:*window*))
-          (setf utaticl.core:*app* (make-instance 'utaticl.core:app :window glfw:*window*))
-          (unwind-protect
-               (loop until (glfw:window-should-close-p)
-                     do (main-loop))
-            (utaticl.core:terminate utaticl.core:*app*))
+        (setf utaticl.core:*hwnd* (glfwGetWin32Window glfw:*window*))
+        (setf (utaticl.core:.window app) glfw:*window*)
+        (loop until (glfw:window-should-close-p)
+              do (main-loop))
 
-          (ImGui_ImplOpenGL3_Shutdown)
-          (ImGui_ImplGlfw_Shutdown)
-          (ig:destroy-context ig-context))))))
+        (ImGui_ImplOpenGL3_Shutdown)
+        (ImGui_ImplGlfw_Shutdown)
+        (ig:destroy-context ig-context)))))
 
 (defun main-loop ()
   (glfw:poll-events)

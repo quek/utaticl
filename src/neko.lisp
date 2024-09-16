@@ -1,6 +1,7 @@
 (in-package :utaticl.core)
 
-(defvar *neko-map* (make-hash-table :weakness :value :test 'equal))
+(defvar *neko-map* (make-hash-table :weakness :value :test 'equal
+                                    :synchronized t))
 
 (defun find-neko (neko-id)
   (gethash neko-id *neko-map*))
