@@ -160,9 +160,8 @@
     (setf (.project piano-roll) self)))
 
 (defmethod (setf .play-p) :after (value (self project))
-  (unless (.play-p self)
-    (setf (.play-just-stop-p self) t))
   (unless value
+    (setf (.play-just-stop-p self) t)
     (setf (.play-p (.sceen-matrix self)) nil)))
 
 (defmethod process :around ((project project))
@@ -172,12 +171,12 @@
 (defmethod process ((self project))
   (prepare (.master-track self))
 
+  (when (.play-just-stop-p self)
+    (note-off-all (.master-track self))
+    (setf (.play-just-stop-p self) nil))
+
   (when (.play-p self)
     (update-play-position self)
-
-    (when (.play-just-stop-p self)
-      (note-off-all (.master-track self))
-      (setf (.play-just-stop-p self) nil))
 
     (if (< (.play-start self) (.play-end self))
         (progn
