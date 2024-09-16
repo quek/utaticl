@@ -101,7 +101,7 @@
                          :type (member nil :region :clip))
    (range-selecting-pos1 :initform nil :accessor .range-selecting-pos1)
    (range-selecting-pos2 :initform nil :accessor .range-selecting-pos2)
-   (time-ruler-width :initform 50.0
+   (time-ruler-width :initform 60.0
                      :accessor .time-ruler-width
                      :accessor .offset-x)
    (track-renaming :initform nil :accessor .track-renaming))
