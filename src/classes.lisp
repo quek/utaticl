@@ -275,6 +275,7 @@
    (latency :initform 0 :accessor .latency)
    (latency-pdc :initform 0 :accessor .latency-pdc)
    (params :initform (make-hash-table) :accessor .params)
+   (params-ordered :initform () :accessor .params-ordered)
    (process-done :initform nil :accessor .process-done)
    (start-p :initform nil :accessor .start-p)
    (track :initarg :track :initform nil :accessor .track)))

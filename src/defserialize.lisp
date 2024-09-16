@@ -5,8 +5,7 @@
 (defserialize project bpm loop-start loop-end loop-p
   master-track sceen-matrix)
 
-(defserialize track
-    (:list lanes :writer lane-add)
+(defserialize track (:list lanes :writer lane-add)
   (:list modules :writer module-add)
   (:list tracks :writer track-add-without-connect))
 
@@ -26,7 +25,8 @@
 
 (defserialize plugin-info id name path file-write-date)
 
-(defserialize module connections)
+(defserialize module connections
+  (:list params :writer param-add))
 
 (defserialize connection (:ref from) (:ref to) from-bus-index to-bus-index)
 

@@ -54,7 +54,9 @@
                        0))))
 
 (defmethod param-add ((module module) (param param))
-  (setf (gethash (.id param) (.params module)) param))
+  (setf (gethash (.id param) (.params module)) param)
+  (setf (.params-ordered module)
+        (append (.params-ordered module) (list param))))
 
 (defmethod params-prepare ((module module))
   )
@@ -90,7 +92,8 @@
         (let ((state (ig:get-clipboard-text)))
           (setf (state module) state))))
 
-    (render-module-delete-button module)))
+    (render-module-delete-button module)
+    (utaticl.module::render-params module)))
 
 (defmethod render-module-delete-button ((module module))
   (when (ig:button "x")
@@ -124,3 +127,20 @@
           (not (.process-done (.to connection))))
         (connections-to self)))
 
+
+(defpackage :utaticl.module
+  (:use :cl :utaticl.core))
+
+(in-package :utaticl.module)
+
+(defmethod render-params ((module module))
+  (loop for i below 4
+        for param in (.params-ordered module)
+        do (ig:set-next-item-width 200.0)
+           (ig:drag-scalar (.name param)
+                           ig:+im-gui-data-type-double+
+                           (.value param)
+                           :speed .01
+                           :min .0d0
+                           :max 1.0d0
+                           :format "%.2f")))

@@ -23,7 +23,10 @@
    #:*working-directory*
    #:+side-threshold+
    #:.backend
+   #:.name
+   #:.params-ordered
    #:.hwnd
+   #:.value
    #:.window
    #:app
    #:arrangement
