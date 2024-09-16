@@ -1,10 +1,10 @@
 (in-package :utaticl.core)
 
 (defmethod initialize-instance :after ((self module-fader) &key)
-  (param-add self 'mute "Mute" .0d0)
-  (param-add self 'pan "Pan" .5d0)
-  (param-add self 'solo "Solo" .0d0)
-  (param-add self 'volume "Volume" 1.0d0))
+  (param-add self (make-instance 'param :id 'mute :name "Mute" :value .0d0))
+  (param-add self (make-instance 'param :id 'pan :name "Pan" :value .5d0))
+  (param-add self (make-instance 'param :id 'solo :name "Solo" :value .0d0))
+  (param-add self (make-instance 'param :id 'volume :name "Volume" :value 1.0d0)))
 
 (defmethod render ((module-fader module-fader))
   (ig:drag-scalar "VOL"

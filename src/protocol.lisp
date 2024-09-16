@@ -11,6 +11,8 @@
 (defgeneric in-p (x y)
   (:method (x y) (include-p y x)))
 
+(defgeneric params-prepare (module))
+
 (defgeneric .parent (x)
   (:method ((x null))
     nil))

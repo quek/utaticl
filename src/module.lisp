@@ -53,6 +53,12 @@
                        (- value (.latency-pdc (.from connection)))
                        0))))
 
+(defmethod param-add ((module module) (param param))
+  (setf (gethash (.id param) (.params module)) param))
+
+(defmethod params-prepare ((module module))
+  )
+
 (defmethod prepare ((self module))
   (setf (.process-done self) nil))
 

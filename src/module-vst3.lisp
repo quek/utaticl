@@ -101,8 +101,7 @@
           do (loop for i below count
                    do (vst3-ffi::activate-bus (.component self)
                                               type direction i 1))))
-  ;; prepareParameterInfo();
-  )
+  (params-prepare self))
 
 (defmethod terminate ((self module-vst3))
   (when (.component self)
@@ -161,6 +160,14 @@
 
 (defmethod end-edit ((self module-vst3) id)
   (declare (ignore id)))
+
+(defmethod params-prepare ((module-vst3 module-vst3))
+  (loop with controller = (.controller module-vst3)
+        for i below (vst3-ffi::get-parameter-count controller)
+        do (autowrap:with-alloc (info '(:struct (sb:vst-parameter-info)))
+             (vst3-ffi::get-parameter-info controller i (autowrap:ptr info))
+             (param-add module-vst3
+                        (make-instance 'param :vst-parameter-info info)))))
 
 (defmethod restart-component ((self module-vst3) flags)
   (declare (ignorable flags))

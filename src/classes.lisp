@@ -340,6 +340,13 @@
 
 (defclass param (neko)
   ((id :initarg :id :initform nil :accessor .id)
+   (short-title :initarg :short-title :initform nil :accessor .short-title)
+   (units :initarg :units :initform nil :accessor .units)
+   (step-count :initarg :step-count :initform nil :accessor .step-count)
+   (default-normalized-value :initarg :default-normalized-value :initform nil
+                             :accessor .default-normalized-value)
+   (unit-id :initarg :unit-id :initform nil :accessor .unit-id)
+   (flags :initarg :flags :initform nil :accessor .flags)
    (value :initarg :value :initform .0d0 :accessor .value)))
 
 (defclass process-data ()

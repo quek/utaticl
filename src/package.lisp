@@ -59,6 +59,7 @@
    #:offset-mixin
    #:on-resize
    #:param
+   #:params-prepare
    #:perform-edit
    #:piano-roll
    #:plugin-info
