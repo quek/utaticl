@@ -175,7 +175,7 @@
 (defmethod (setf .play-p) (value (sceen-matrix sceen-matrix))
   (unless value
     (loop for sceen in (.sceens sceen-matrix)
-          do (setf (.play-p sceen) nil))
+          do (stop-immediate sceen))
     (setf (.queue sceen-matrix) nil)))
 
 (defmethod prepare-event ((sceen-matrix sceen-matrix) start end loop-p offset-samples)
@@ -205,8 +205,10 @@
 (defmethod render-sceen ((sceen-matrix sceen-matrix) (sceen sceen) y)
   (ig:with-id (sceen)
     (ig:set-cursor-pos (@ .0 y))
-    (when (ig:button "▶")
-      (play sceen))
+    (when (ig:button (format nil "~:[▶~;■~]" (.play-p sceen)))
+      (if (.play-p sceen)
+          (stop sceen)
+          (play sceen)))
     (ig:same-line)
     (with-renaming (sceen (.sceen-renaming sceen-matrix) (.offset-x sceen-matrix))
       (ig:with-button-color ((.color sceen))

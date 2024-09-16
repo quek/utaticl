@@ -242,9 +242,10 @@
   (:default-initargs :color (color #x30 #xc0 #x30 #x80)))
 
 (defclass sceen (neko)
-  ((height :initarg :height :initform 30.0 :accessor .height)
-   (sceen-matrix :accessor .sceen-matrix)
-   (clips :initform (make-hash-table) :accessor .clips)))
+  ((clips :initform (make-hash-table) :accessor .clips)
+   (height :initarg :height :initform 30.0 :accessor .height)
+   (play-p :initform nil :accessor .play-p)
+   (sceen-matrix :accessor .sceen-matrix)))
 
 (defclass plugin-info ()
   ((id :initarg :id :accessor .id)

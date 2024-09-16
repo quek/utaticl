@@ -27,12 +27,8 @@
                (declare (ignore acc))
                (let ((clip (gethash lane (.clips sceen))))
                  (when clip
-                   (enqueue (.sceen-matrix sceen) clip))))))
-
-(defmethod (setf .play-p) (value (sceen sceen))
-  (unless value
-    (loop for clip being each hash-value of (.clips sceen)
-          do (setf (.play-p clip) nil))))
+                   (enqueue (.sceen-matrix sceen) clip)))))
+  (print (list (setf (.play-p sceen) t) (.play-p sceen) t)))
 
 (defmethod prepare-event ((sceen sceen) start end loop-p offset-samples)
   (loop for lane being the hash-key in (.clips sceen)
@@ -63,3 +59,14 @@
         (nth (min (max (+ pos delta) 0)
                   (1- (length all)))
              all))))
+
+(defmethod stop ((sceen sceen))
+  (loop for clip being the hash-value of (.clips sceen)
+        do (when (.play-p clip)
+             (setf (.will-stop clip) t)))
+  (setf (.play-p sceen) nil))
+
+(defmethod stop-immediate ((sceen sceen))
+  (loop for clip being the hash-value of (.clips sceen)
+        do (stop-immediate clip))
+  (setf (.play-p sceen) nil))

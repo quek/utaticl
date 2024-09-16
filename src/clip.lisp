@@ -38,6 +38,12 @@
 (defmethod (setf .seq) :after ((seq seq) (self clip))
   (push self (.clips seq)))
 
+(defmethod stop ((clip clip))
+  (setf (.will-stop clip) t))
+
+(defmethod stop-immediate ((clip clip))
+  (setf (.play-p clip) nil))
+
 (defmethod terminate ((self clip))
   (let ((seq (.seq self)))
     (when seq
