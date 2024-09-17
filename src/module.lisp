@@ -7,13 +7,13 @@
   (loop for i below 4
         for param in (.params-ordered module)
         do (ig:set-next-item-width 200.0)
-           (when (ig:drag-scalar (.name param)
+           (when (ig:drag-scalar (format nil "~a ~d" (.name param) (.step-count param))
                                  ig:+im-gui-data-type-double+
                                  (.value param)
                                  :speed .005
                                  :min .0d0
                                  :max 1.0d0
-                                 :format (value-text param))
+                                 :format (format nil "%.2f (~a)" (value-text param)))
              (value-changed-by-host param))))
 
 (in-package :utaticl.core)

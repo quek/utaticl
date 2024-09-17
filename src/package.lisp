@@ -26,6 +26,7 @@
    #:.name
    #:.params-ordered
    #:.hwnd
+   #:.step-count
    #:.value
    #:.window
    #:app
