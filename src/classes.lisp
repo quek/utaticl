@@ -341,6 +341,7 @@
 
 (defclass param (neko)
   ((id :initarg :id :initform nil :accessor .id)
+   (module :initarg :module :initform nil :accessor .module)
    (short-title :initarg :short-title :initform nil :accessor .short-title)
    (units :initarg :units :initform nil :accessor .units)
    (step-count :initarg :step-count :initform nil :accessor .step-count)

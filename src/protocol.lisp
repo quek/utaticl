@@ -23,4 +23,4 @@
 (defgeneric render (x)
   (:method ((x null))))
 
-(defgeneric value-text (x &key &allow-other-keys))
+(defgeneric value-text (x))

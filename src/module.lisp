@@ -7,13 +7,14 @@
   (loop for i below 4
         for param in (.params-ordered module)
         do (ig:set-next-item-width 200.0)
-           (ig:drag-scalar (.name param)
-                           ig:+im-gui-data-type-double+
-                           (.value param)
-                           :speed .005
-                           :min .0d0
-                           :max 1.0d0
-                           :format (value-text param :module module))))
+           (when (ig:drag-scalar (.name param)
+                                 ig:+im-gui-data-type-double+
+                                 (.value param)
+                                 :speed .005
+                                 :min .0d0
+                                 :max 1.0d0
+                                 :format (value-text param))
+             (value-changed-by-host param))))
 
 (in-package :utaticl.core)
 
@@ -73,7 +74,8 @@
 (defmethod param-add ((module module) (param param))
   (setf (gethash (.id param) (.params module)) param)
   (setf (.params-ordered module)
-        (append (.params-ordered module) (list param))))
+        (append (.params-ordered module) (list param)))
+  (setf (.module param) module))
 
 (defmethod param-editing ((module module) id value)
   (param-editing module (gethash id (.params module)) value))

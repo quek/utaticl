@@ -220,7 +220,7 @@
           (cmd-add (.project arrangement) 'cmd-clip-audio-add
                    :time time :lane lane :path path
                    :execute-after (lambda (cmd)
-                                    (edit (.clip cmd)))))))
+                                    (edit (.clip cmd) (list (.clip cmd))))))))
     (setf *dd-at* nil)
     (setf *dd-srcs* nil)
     (setf (.dragging-source-extern arrangement) nil)))

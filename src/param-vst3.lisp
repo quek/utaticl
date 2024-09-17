@@ -20,9 +20,14 @@
   (plusp (logand (.flags param-vst3)
                  sb:+vst-parameter-info-parameter-flags-k-can-automate+)))
 
-(defmethod value-text ((param-vst3 param-vst3) &key module)
+(defmethod value-changed-by-host ((param-vst3 param-vst3))
+  (vst3-ffi::set-param-normalized (.controller (.module param-vst3))
+                                  (.id param-vst3)
+                                  (.value param-vst3)))
+
+(defmethod value-text ((param-vst3 param-vst3))
   (let ((text (autowrap:with-alloc (string128 'sb:vst-string128)
-                (vst3-ffi::get-param-string-by-value (.controller module)
+                (vst3-ffi::get-param-string-by-value (.controller (.module param-vst3))
                                                      (.id param-vst3)
                                                      (.value param-vst3)
                                                      string128)

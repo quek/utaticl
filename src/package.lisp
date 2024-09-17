@@ -96,6 +96,7 @@
    #:time-thing
    #:track
    #:transposer
+   #:value-changed-by-host
    #:value-text
    #:view
    #:with-debugger
