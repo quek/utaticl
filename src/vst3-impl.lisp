@@ -706,33 +706,75 @@
   :vst3-c-api-class sb:i-plug-frame)
 
 (def-vst3-impl parameter-changes (unknown)
-  ((changes :initform nil :accessor .changes))
+  ((changes :initform (make-array 16 :fill-pointer 0) :accessor .changes))
   ((get-parameter-count ()
                         :int
-                        ;; TODO
-                        0)
-   (get-parameter-data ((id (:pointer :unsigned-int))
+                        (length (.changes self)))
+   (get-parameter-data ((index :int))
+                       :pointer
+                       (ptr (get-parameter-data-wrap self index)))
+   (add-parameter-data ((id (:pointer :unsigned-int))
                         (index (:pointer :int)))
                        :pointer
-                       ;; TODO
-                       (cffi:null-pointer))
-   (add-parameter-data ((index :int))
-                       :pointer
-                       ;; TODO
-                       (cffi:null-pointer)))
+                       (ptr (add-parameter-data-wrap self id index))))
   :iid vst3-ffi::+vst-iparameter-changes-iid+
   :vst3-c-api-class sb:vst-i-parameter-changes)
 
+(defmethod get-parameter-data-wrap ((self parameter-changes) index)
+  (aref (.changes self) index))
+
+(defmethod add-parameter-data-wrap ((self parameter-changes) id index)
+  (let ((queue (make-instance 'param-value-queue
+                              :id (cffi:mem-ref id :uint))))
+    (unless (cffi:null-pointer-p index)
+      (setf (cffi:mem-ref index :int) (length (.changes self))))
+    (vector-push-extend queue (.changes self))
+    queue))
+
 (defmethod utaticl.core:prepare ((self parameter-changes))
-  (loop for change in (.changes self)
-        do (autowrap:free change))
-  (setf (.changes self) nil))
+  (loop for change across (.changes self)
+        do (release change))
+  (setf (fill-pointer (.changes self)) 0))
 
 (defmethod release :around ((self parameter-changes))
   (let ((ref-count (call-next-method)))
     (when (zerop ref-count)
       (utaticl.core:prepare self))
     ref-count))
+
+(def-vst3-impl param-value-queue (unknown)
+  ((id :initarg :id :accessor .id)
+   (sample-offsets :initform (make-array 16 :fill-pointer 0) :accessor .sample-offsets)
+   (values :initform (make-array 16 :fill-pointer 0) :accessor .values))
+  ((get-parameter-id ()
+                     :unsigned-int
+                     (.id self))
+   (get-point-count ()
+                    :int
+                    (length (.values self)))
+   (get-point ((index :int)
+               (sample-offset (:pointer :int))
+               (value (:pointer :double)))
+              sb:tresult
+              (if (< index (length (.values self)))
+                  (progn
+                    (setf (cffi:mem-ref sample-offset :int)
+                          (aref (.sample-offsets self) index))
+                    (setf (cffi:mem-ref value :double)
+                          (aref (.values self) index))
+                    sb:+k-result-ok+)
+                  sb:+k-result-false+))
+   (add-point ((sample-offset :int)
+               (value :double)
+               (index (:pointer :int)))
+              sb:tresult
+              (unless (cffi:null-pointer-p index)
+                (setf (cffi:mem-ref index :int) (length (.values self))))
+              (vector-push-extend sample-offset (.sample-offsets self))
+              (vector-push-extend value (.values self))
+              sb:+k-result-ok+))
+  :iid vst3-ffi::+vst-iparam-value-queue-iid+
+  :vst3-c-api-class sb:vst-i-param-value-queue)
 
 (def-vst3-impl event-list (unknown)
   ((events :initform nil :accessor .events))

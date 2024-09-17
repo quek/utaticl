@@ -23,7 +23,8 @@
 (defmethod value-changed-by-host ((param-vst3 param-vst3))
   (vst3-ffi::set-param-normalized (.controller (.module param-vst3))
                                   (.id param-vst3)
-                                  (.value param-vst3)))
+                                  (.value param-vst3))
+  (param-change-add (.module param-vst3) param-vst3))
 
 (defmethod value-text ((param-vst3 param-vst3))
   (let ((text (autowrap:with-alloc (string128 'sb:vst-string128)

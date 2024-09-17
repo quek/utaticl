@@ -162,51 +162,6 @@
 (defmethod end-edit ((self module-vst3) id)
   (declare (ignore id)))
 
-(defmethod params-prepare ((module-vst3 module-vst3))
-  (params-clear module-vst3)
-  (loop with controller = (.controller module-vst3)
-        for i below (vst3-ffi::get-parameter-count controller)
-        do (autowrap:with-alloc (info '(:struct (sb:vst-parameter-info)))
-             (vst3-ffi::get-parameter-info controller i (autowrap:ptr info))
-             (param-add module-vst3
-                        (make-instance 'param-vst3 :vst-parameter-info info)))))
-
-(defmethod params-value-changed ((module-vst3 module-vst3))
-  (loop with controller = (.controller module-vst3)
-        for param in (.params-ordered module-vst3)
-        for value = (vst3-ffi::get-param-normalized controller (.id param))
-        do (setf (.value param) value)))
-
-(defmethod restart-component ((self module-vst3) flags)
-  (declare (ignorable flags))
-  (log:trace self flags)
-  (stop self)
-  (start self)
-  (when (plusp (logand flags sb:+vst-restart-flags-k-param-values-changed+))
-    (params-value-changed self))
-  (when (plusp (logand flags sb:+vst-restart-flags-k-param-titles-changed+))
-    (params-prepare self))
-  ;; TODO 他にも flags に応じていろいろしなきゃいけない
-  )
-
-(defmethod start ((self module-vst3))
-  (unless (.start-p self)
-    (vst3-ffi::set-active (.component self) 1)
-
-    (let ((latency (vst3-ffi::get-latency-samples (.audio-processor self))))
-      (when t ;; (/= (.latency self) latency)
-        (setf (.latency self) latency)
-        (cmd-add (.project self) 'cmd-latency-compute)))
-
-    (vst3-ffi::set-processing (.audio-processor self) 1)
-    (call-next-method)))
-
-(defmethod stop ((self module-vst3))
-  (when (.start-p self)
-    (vst3-ffi::set-processing (.audio-processor self) 0)
-    (vst3-ffi::set-active (.component self) 0)
-    (call-next-method)))
-
 (defmethod editor-open ((self module-vst3))
   (unless (.editor-open-p self)
     (let* ((view-ptr (vst3-ffi::create-view (.controller self)
@@ -269,6 +224,32 @@
         (setf (sb:view-rect.bottom rect) height)
         (vst3-ffi::on-size view (autowrap:ptr rect))))))
 
+(defmethod param-change-add ((module-vst3 module-vst3) (param-vst3 param-vst3)
+                             &optional (sample-offset 0))
+  (sb-concurrency:send-message (.param-changes-mbox module-vst3)
+                               (list (.id param-vst3)
+                                     (.value param-vst3)
+                                     sample-offset)))
+
+(defmethod param-editing :after ((module-vst3 module-vst3) (param-vst3 param-vst3)
+                                 value)
+  (param-change-add module-vst3 param-vst3))
+
+(defmethod params-prepare ((module-vst3 module-vst3))
+  (params-clear module-vst3)
+  (loop with controller = (.controller module-vst3)
+        for i below (vst3-ffi::get-parameter-count controller)
+        do (autowrap:with-alloc (info '(:struct (sb:vst-parameter-info)))
+             (vst3-ffi::get-parameter-info controller i (autowrap:ptr info))
+             (param-add module-vst3
+                        (make-instance 'param-vst3 :vst-parameter-info info)))))
+
+(defmethod params-value-changed ((module-vst3 module-vst3))
+  (loop with controller = (.controller module-vst3)
+        for param in (.params-ordered module-vst3)
+        for value = (vst3-ffi::get-param-normalized controller (.id param))
+        do (setf (.value param) value)))
+
 (defmethod process ((self module-vst3))
   (let ((context (.context *process-data*))
         (bpm (.bpm (.project self)))
@@ -284,12 +265,61 @@
           (coerce (floor (/ play-time 4)) 'double-float))
     (setf (sb:vst-process-context.project-time-samples context)
           ;; TODO これあってる？
-          (floor (* (/ play-time (/ bpm 60.0)) (.sample-rate *config*)))))
+          (floor (* (/ play-time (/ bpm 60.0)) (.sample-rate *config*))))
+    (setf (sb:vst-process-data.input-parameter-changes (.wrap *process-data*))
+          (vst3-impl::ptr (.parameter-changes-out self)))
+    (setf (sb:vst-process-data.output-parameter-changes (.wrap *process-data*))
+          (vst3-impl::ptr (.parameter-changes-in self))))
+
+  (prepare (.parameter-changes-in self))
+  (prepare (.parameter-changes-out self))
+
+  (loop for message = (sb-concurrency:receive-message-no-hang
+                       (.param-changes-mbox self))
+        with changes = (.parameter-changes-out self)
+        while message
+        do (destructuring-bind (id value sample-offset) message
+             (let ((queue (or (loop for i below (vst3-impl::get-parameter-count changes)
+                                    for queue = (vst3-impl::get-parameter-data-wrap changes i)
+                                      thereis (and (= (vst3-impl::get-parameter-id queue)
+                                                      id)
+                                                   queue))
+                              (cffi:with-foreign-object (id-ptr :uint)
+                                (setf (cffi:mem-ref id-ptr :uint) id)
+                                (vst3-impl::add-parameter-data-wrap
+                                 changes id-ptr (cffi:null-pointer))))))
+               (vst3-impl::add-point queue sample-offset value (cffi:null-pointer)))))
 
   (vst3-ffi::process (.audio-processor self)
                      (autowrap:ptr (.wrap *process-data*)))
 
+  ;; TODO apply (.parameter-changes-in self)
+
   (call-next-method))
+
+(defmethod restart-component ((self module-vst3) flags)
+  (declare (ignorable flags))
+  (log:trace self flags)
+  (stop self)
+  (start self)
+  (when (plusp (logand flags sb:+vst-restart-flags-k-param-values-changed+))
+    (params-value-changed self))
+  (when (plusp (logand flags sb:+vst-restart-flags-k-param-titles-changed+))
+    (params-prepare self))
+  ;; TODO 他にも flags に応じていろいろしなきゃいけない
+  )
+
+(defmethod start ((self module-vst3))
+  (unless (.start-p self)
+    (vst3-ffi::set-active (.component self) 1)
+
+    (let ((latency (vst3-ffi::get-latency-samples (.audio-processor self))))
+      (when t ;; (/= (.latency self) latency)
+        (setf (.latency self) latency)
+        (cmd-add (.project self) 'cmd-latency-compute)))
+
+    (vst3-ffi::set-processing (.audio-processor self) 1)
+    (call-next-method)))
 
 (defmethod state ((self module-vst3))
   (let ((preset (make-instance 'preset-vst3)))
@@ -302,6 +332,12 @@
       (load-by-id self (cid preset))
       (initialize self))
     (preset-load preset self)))
+
+(defmethod stop ((self module-vst3))
+  (when (.start-p self)
+    (vst3-ffi::set-processing (.audio-processor self) 0)
+    (vst3-ffi::set-active (.component self) 0)
+    (call-next-method)))
 
 
 #+nil
