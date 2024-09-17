@@ -169,7 +169,7 @@
         do (autowrap:with-alloc (info '(:struct (sb:vst-parameter-info)))
              (vst3-ffi::get-parameter-info controller i (autowrap:ptr info))
              (param-add module-vst3
-                        (make-instance 'param :vst-parameter-info info)))))
+                        (make-instance 'param-vst3 :vst-parameter-info info)))))
 
 (defmethod params-value-changed ((module-vst3 module-vst3))
   (loop with controller = (.controller module-vst3)

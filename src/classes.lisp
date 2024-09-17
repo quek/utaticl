@@ -350,6 +350,9 @@
    (flags :initarg :flags :initform nil :accessor .flags)
    (value :initarg :value :initform .0d0 :accessor .value)))
 
+(defclass param-vst3 (param)
+  ())
+
 (defclass process-data ()
   ((bpm :accessor .bpm)
    (wrap  :accessor .wrap)

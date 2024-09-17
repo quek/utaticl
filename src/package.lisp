@@ -96,6 +96,7 @@
    #:time-thing
    #:track
    #:transposer
+   #:value-text
    #:view
    #:with-debugger
    #:with-thraed-pool

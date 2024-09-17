@@ -13,7 +13,7 @@
                            :speed .005
                            :min .0d0
                            :max 1.0d0
-                           :format "%.2f")))
+                           :format (value-text param :module module))))
 
 (in-package :utaticl.core)
 

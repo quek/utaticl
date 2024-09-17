@@ -1,16 +1,7 @@
 (in-package :utaticl.core)
 
-(defmethod initialize-instance :after ((param param) &key vst-parameter-info)
-  (setf *x* vst-parameter-info)
-  (when vst-parameter-info
-    (setf (.id param) (sb:vst-parameter-info.id vst-parameter-info))
-    (setf (.name param) (vst3:from-string128 (sb:vst-parameter-info.title& vst-parameter-info)))
-    (setf (.short-title param)
-          (vst3:from-string128 (sb:vst-parameter-info.short-title& vst-parameter-info)))
-    (setf (.units param)
-          (vst3:from-string128 (sb:vst-parameter-info.units& vst-parameter-info)))
-    (setf (.step-count param) (sb:vst-parameter-info.step-count vst-parameter-info))
-    (setf (.default-normalized-value param)
-          (sb:vst-parameter-info.default-normalized-value vst-parameter-info))
-    (setf (.unit-id param) (sb:vst-parameter-info.unit-id vst-parameter-info))
-    (setf (.flags param) (sb:vst-parameter-info.flags vst-parameter-info))))
+(defmethod automate-p ((param param))
+  t)
+
+(defmethod value-text ((param param) &key)
+  (format nil "~,2f" (.value param)))

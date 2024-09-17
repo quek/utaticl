@@ -1,0 +1,31 @@
+(in-package :utaticl.core)
+
+(defmethod initialize-instance :after ((param-vst3 param-vst3) &key vst-parameter-info)
+  (when vst-parameter-info
+    (setf (.id param-vst3) (sb:vst-parameter-info.id vst-parameter-info))
+    (setf (.name param-vst3)
+          (vst3:from-string128 (sb:vst-parameter-info.title& vst-parameter-info)))
+    (setf (.short-title param-vst3)
+          (vst3:from-string128 (sb:vst-parameter-info.short-title& vst-parameter-info)))
+    (setf (.units param-vst3)
+          (vst3:from-string128 (sb:vst-parameter-info.units& vst-parameter-info)))
+    (setf (.step-count param-vst3)
+          (sb:vst-parameter-info.step-count vst-parameter-info))
+    (setf (.default-normalized-value param-vst3)
+          (sb:vst-parameter-info.default-normalized-value vst-parameter-info))
+    (setf (.unit-id param-vst3) (sb:vst-parameter-info.unit-id vst-parameter-info))
+    (setf (.flags param-vst3) (sb:vst-parameter-info.flags vst-parameter-info))))
+
+(defmethod automate-p ((param-vst3 param-vst3))
+  (plusp (logand (.flags param-vst3)
+                 sb:+vst-parameter-info-parameter-flags-k-can-automate+)))
+
+(defmethod value-text ((param-vst3 param-vst3) &key module)
+  (let ((text (autowrap:with-alloc (string128 'sb:vst-string128)
+                (vst3-ffi::get-param-string-by-value (.controller module)
+                                                     (.id param-vst3)
+                                                     (.value param-vst3)
+                                                     string128)
+                (vst3:from-string128 string128))))
+    ;; Khz のプラグイン ナローノンブレイクスペース U+202F が入っていて化けるので
+    (delete (code-char #x202F) text)))

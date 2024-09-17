@@ -68,6 +68,7 @@
    (:file "preset-vst3")
    (:file "connection")
    (:file "param")
+   (:file "param-vst3")
    (:file "midi")
    (:file "commands")
    (:file "theme")
