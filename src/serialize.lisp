@@ -25,6 +25,12 @@
                          else
                            do (setf (nth i list) (deserialize x)))
                    list))
+                ((eq 'hash-table (car sexp))
+                 (let ((map (make-hash-table :test (cadr sexp))))
+                   (loop for (key value) in (cddr sexp)
+                         do (setf (gethash (deserialize key) map)
+                                  (deserialize value)))
+                   map))
                 (t
                  (deserialize-neko (make-instance (car sexp)) (cdr sexp))))
     (deserialize-after it)))
@@ -51,13 +57,13 @@
                  collect (serialize x))))
 
 (defmethod serialize ((self hash-table))
-  `(hash-table ',(hash-table-test self)
-               ,@ (let (xs)
-                    (maphash (lambda (key value)
-                               (push (list (serialize key) (serialize value))
-                                     xs))
-                             self)
-                    xs)))
+  `(hash-table ,(hash-table-test self)
+               ,@(let (xs)
+                   (maphash (lambda (key value)
+                              (push (list (serialize key) (serialize value))
+                                    xs))
+                            self)
+                   xs)))
 
 (defmethod serialize-slots ((self t))
   nil)

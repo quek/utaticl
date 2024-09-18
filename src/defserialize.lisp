@@ -26,7 +26,9 @@
 (defserialize plugin-info id name path file-write-date)
 
 (defserialize module connections
-  (:list params :writer param-add))
+  (:hash params :writer (lambda (module id param)
+                          (declare (ignore id))
+                          (param-add module param))))
 
 (defserialize connection (:ref from) (:ref to) from-bus-index to-bus-index)
 
