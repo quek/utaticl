@@ -26,6 +26,12 @@
                                   (.value param-vst3))
   (param-change-add (.module param-vst3) param-vst3))
 
+(defmethod value-changed-by-processor ((param-vst3 param-vst3))
+  (break "value-changed-by-processor ~a" param-vst3)
+  (vst3-ffi::set-param-normalized (.controller (.module param-vst3))
+                                  (.id param-vst3)
+                                  (.value param-vst3)))
+
 (defmethod value-text ((param-vst3 param-vst3))
   (let ((text (autowrap:with-alloc (string128 'sb:vst-string128)
                 (vst3-ffi::get-param-string-by-value (.controller (.module param-vst3))

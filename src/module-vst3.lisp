@@ -121,6 +121,14 @@
   (vst3-impl::release (.host-applicaiton self))
   (vst3::unload-library (.library self)))
 
+(defmethod param-changes-mbox-out ((module-vst3 module-vst3))
+  (loop for (id value sample-offset) = (sb-concurrency:receive-message-no-hang
+                                        (.param-changes-mbox-out module-vst3))
+        while id
+        do (let ((param (gethash id (.params module-vst3))))
+             (setf (.value param) value)
+             (value-changed-by-processor param))))
+
 (defmethod connect-componet-controller ((self module-vst3))
   (unless (.single-component-p self)
     (handler-case
@@ -226,7 +234,7 @@
 
 (defmethod param-change-add ((module-vst3 module-vst3) (param-vst3 param-vst3)
                              &optional (sample-offset 0))
-  (sb-concurrency:send-message (.param-changes-mbox module-vst3)
+  (sb-concurrency:send-message (.param-changes-mbox-in module-vst3)
                                (list (.id param-vst3)
                                      (.value param-vst3)
                                      sample-offset)))
@@ -275,7 +283,7 @@
   (prepare (.parameter-changes-out self))
 
   (loop for message = (sb-concurrency:receive-message-no-hang
-                       (.param-changes-mbox self))
+                       (.param-changes-mbox-in self))
         with changes = (.parameter-changes-out self)
         while message
         do (destructuring-bind (id value sample-offset) message
@@ -293,7 +301,17 @@
   (vst3-ffi::process (.audio-processor self)
                      (autowrap:ptr (.wrap *process-data*)))
 
-  ;; TODO apply (.parameter-changes-in self)
+  (loop with changes = (.parameter-changes-out self)
+        for queue-index below (vst3-impl::get-parameter-count changes)
+        for queue = (vst3-impl::get-parameter-data-wrap changes queue-index)
+        for param-id = (vst3-impl::get-parameter-id queue)
+        do (loop for point-index below (vst3-impl::get-point-count queue)
+                 do (multiple-value-bind (value sample-offset)
+                        (vst3-impl::get-value-and-smaple-offset queue point-index)
+                      (sb-concurrency:send-message (.param-changes-mbox-out self)
+                                                   (list param-id
+                                                         value
+                                                         sample-offset)))))
 
   (call-next-method))
 

@@ -776,6 +776,13 @@
   :iid vst3-ffi::+vst-iparam-value-queue-iid+
   :vst3-c-api-class sb:vst-i-param-value-queue)
 
+(defmethod get-value-and-smaple-offset ((self param-value-queue) index)
+  (if (< index (length (.values self)))
+      (values
+        (aref (.values self) index)
+        (aref (.sample-offsets self) index))
+      nil))
+
 (def-vst3-impl event-list (unknown)
   ((events :initform nil :accessor .events))
   ((get-event-count ()
