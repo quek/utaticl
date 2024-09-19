@@ -346,6 +346,21 @@
         else
           do (decf (.duration clip) delta)))
 
+(defcommand cmd-lane-add (command)
+  ((track :initarg :track :accessor .track)
+   (lane :initform :nil :accessor .lane)))
+
+(defmethod execute ((self cmd-lane-add) project)
+  (let* ((track (.track self))
+         (lane (make-instance 'lane :color (.color track))))
+    (lane-add track lane)
+    (setf (.lane self) lane)))
+
+(defmethod undo ((self cmd-lane-add) project)
+  (let ((lane (.lane self)))
+    (lane-delete (.track self) lane)
+    (setf (.lane self) nil)))
+
 (defcommand cmd-latency-compute (command)
   ()
   (:default-initargs :undo-p nil))
