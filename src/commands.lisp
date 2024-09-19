@@ -379,11 +379,12 @@
    (note-id :accessor .note-id)))
 
 (defmethod execute ((self cmd-note-add) project)
-  (let ((clip (find-neko (.clip-id self)))
-        (note (make-instance 'note
-                             :time (.time self)
-                             :key (.key self)
-                             :duration (.duration self))))
+  (let* ((clip (find-neko (.clip-id self)))
+         (note (make-instance 'note
+                              :time (.time self)
+                              :key (.key self)
+                              :duration (.duration self)
+                              :color (.color clip))))
     (setf (.note-id self) (.neko-id note))
     (note-add clip note)))
 
