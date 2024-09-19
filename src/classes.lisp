@@ -201,6 +201,10 @@
    (velocity :initarg :velocity :initform .8 :accessor .velocity))
   (:default-initargs :duration 1.0d0 :color (color #x30 #xc0 #x30 #x80)))
 
+(defclass automation-point (time-thing)
+  ((value :initarg :value :initform .5d0 :accessor .value))
+  (:default-initargs :duration .0d0))
+
 (defmethod print-object ((self note) stream)
   (print-unreadable-object (self stream :type t :identity t)
     (format stream "~d ~d ~d"
@@ -221,6 +225,9 @@
 (defclass clip-audio (clip)
   ())
 
+(defclass clip-automation (clip)
+  ())
+
 (defclass clip-note (clip)
   ()
   (:default-initargs :seq (make-instance 'seq-note)))
@@ -236,6 +243,9 @@
    (duration-original :initform nil :accessor .duration-original)
    (path :initform nil :accessor .path)
    (waveform-cache :initform nil :accessor .waveform-cache)))
+
+(defclass seq-automation (seq)
+  ((points :initarg :points :initform nil :accessor .points)))
 
 (defclass seq-note (seq)
   ((notes :initarg :notes :initform nil :accessor .notes))
@@ -358,7 +368,10 @@
    (value :initarg :value :initform .0d0 :accessor .value)))
 
 (defclass param-vst3 (param)
-  ())
+  ((begin-edit-p :initform nil :accessor .begin-edit-p)
+   (begin-edit-value :initform .0d0 :accessor .begin-edit-value)
+   (editing-p :initform nil :accessor .editing-p)
+   (perform-at :initform (get-internal-real-time) :accessor .perform-at)))
 
 (defclass process-data ()
   ((bpm :accessor .bpm)
