@@ -2,7 +2,8 @@
 
 (defparameter *standard-sample-reates* '(44100.0d0 48000.0d0 88200.0d0 96000.0d0 192000.0d0))
 
-(defun supported-standard-sample-reates (input-parameters output-parameters)
+(defun supported-standard-sample-reates (input-parameters output-parameters
+                                         device-info-host-api device-info-name)
   (loop for sample-rate in *standard-sample-reates*
         if (ignore-errors
             (pa::is-format-supported input-parameters
@@ -11,9 +12,8 @@
             t)
           collect sample-rate
         else
-          do (describe (pa::get-last-host-error-info))))
-
-
+          do (print (list device-info-host-api device-info-name))
+             (describe (pa::get-last-host-error-info))))
 
 (defmethod render :before ((self audio-device-window))
   (unless (.host-apis self)
@@ -29,6 +29,10 @@
                 for device-info = (pa:get-device-info i)
                 for input-parameters = (pa:make-stream-parameters)
                 for output-parameters = (pa:make-stream-parameters)
+                for device-info-host-api = (pa:host-api-info-name
+                                            (nth (pa:device-info-host-api device-info)
+                                                 (.host-apis self)))
+                for device-info-name = (pa:device-info-name device-info)
                 collect
                 (progn
                   (setf (pa:stream-parameters-device input-parameters) i)
@@ -43,11 +47,17 @@
                   (setf (pa:stream-parameters-suggested-latency output-parameters) .0d0)
                   (cond ((and (plusp (pa:stream-parameters-channel-count input-parameters))
                               (plusp (pa:stream-parameters-channel-count output-parameters)))
-                         (supported-standard-sample-reates input-parameters output-parameters))
+                         (supported-standard-sample-reates input-parameters output-parameters
+                                                           device-info-host-api
+                                                           device-info-name))
                         ((plusp (pa:stream-parameters-channel-count input-parameters))
-                         (supported-standard-sample-reates input-parameters nil))
+                         (supported-standard-sample-reates input-parameters nil
+                                                           device-info-host-api
+                                                           device-info-name))
                         (t
-                         (supported-standard-sample-reates nil output-parameters))))))))
+                         (supported-standard-sample-reates nil output-parameters
+                                                           device-info-host-api
+                                                           device-info-name))))))))
 
 
 (defmethod render ((self audio-device-window))
@@ -80,11 +90,11 @@
 
     (ig:separator)
 
-    (ig:with-disabled ((.processing (.audio-device *app*)))
+    (ig:with-disabled ((and (.audio-device *app*) (.processing (.audio-device *app*))))
       (when (ig:button "Start Audio Engine")
         (cmd-add (car (.projects *app* )) 'cmd-audio-engine-start)))
     (ig:same-line)
-    (ig:with-disabled ((not (.processing (.audio-device *app*))))
+    (ig:with-disabled ((and (.audio-device *app*) (not (.processing (.audio-device *app*)))))
       (when (ig:button "Stop Audio Engine")
         (cmd-add (car (.projects *app* )) 'cmd-audio-engine-stop)))
 
@@ -103,7 +113,16 @@
         (start-audio-device it)))
     (ig:same-line)
     (when (ig:button "Close")
-      (setf (.render-audio-device-window-p *app*) nil))))
+      (setf (.render-audio-device-window-p *app*) nil))
+    (when (ig:button "Reload Devices")
+      (setf (.host-apis self) nil)
+      (setf (.device-infos self) nil))
+    (when (and (.audio-device *app*)
+               (ig:button "Open"))
+      (open-audio-device (.audio-device *app*)))
+    (when (and (.audio-device *app*)
+               (ig:button "Close"))
+      (close-audio-device (.audio-device *app*)))))
 
 (defun preferred-buffer-size (device-index)
   (cffi:with-foreign-objects ((min-size :long)
