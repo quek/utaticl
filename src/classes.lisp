@@ -426,9 +426,6 @@
                     :initform 2
                     :type fixnum
                     :accessor .output-channels)
-   (master-buffer :initform (list (make-array 1024 :element-type 'single-float :initial-element 0.0)
-                                  (make-array 1024 :element-type 'single-float :initial-element 0.0))
-                  :accessor .master-buffer)
    (statistic-enter-time :initform (get-internal-real-time)
                          :accessor .statistic-enter-time)
    (statistic-leave-time :initform (get-internal-real-time)

@@ -82,41 +82,21 @@
     (setf (.processing self) nil)
     (pa::stop-stream (.stream self))))
 
-(defun write-master-buffer (self buffer)
-  (flet ((limit (value)
-           (cond ((< 1.0 value)
-                  (warn "音大きすぎ ~a" value)
-                  1.0)
-                 ((< value -1.0)
-                  (warn "音大きすぎ ~a" value)
-                  -1.0)
-                 (t value))))
-    (let* ((left (car (.master-buffer self)))
-           (right (cadr (.master-buffer self)))
-           (volume 1.0))
-      (loop for i below (.frames-per-buffer *config*)
-            do (setf (cffi:mem-aref buffer :float (* i 2))
-                     (limit (* (aref left i) volume)))
-               (setf  (cffi:mem-aref buffer :float (1+ (* i 2)))
-                      (limit (* (aref right i) volume)))
-               (setf (aref left i) 0.0
-                     (aref right i) 0.0)))))
-
-(defun audio-loop ()
+(defun audio-loop (output-buffer)
   (let ((audio-device (.audio-device *app*)))
-   (statistic-enter audio-device)
-   (process *app*)
+    (statistic-enter audio-device)
+    (process *app*)
 
-   ;; TODO かんぜんに暫定
-   (let ((master-track (.master-track (car (.projects *app*)))))
-     (loop for channel-index below 2
-           for in = (buffer (.outputs (.process-data master-track)) 0 channel-index)
-           for out = (nth channel-index (.master-buffer audio-device))
-           do (loop for i below (.frames-per-buffer *config*)
-                    do (setf (aref out i)
-                             (cffi:mem-aref in :float i)))))
+    (let ((master-track (.master-track (car (.projects *app*)))))
+      (loop with in-left = (buffer (.outputs (.process-data master-track)) 0 0)
+            with in-right = (buffer (.outputs (.process-data master-track)) 0 1)
+            for i below (.frames-per-buffer *config*)
+            do (setf (cffi:mem-aref output-buffer :float (* i 2))
+                     (cffi:mem-aref in-left :float i))
+               (setf (cffi:mem-aref output-buffer :float (1+ (* i 2)))
+                     (cffi:mem-aref in-right :float i))))
 
-   (statistic-leave audio-device)))
+      (statistic-leave audio-device)))
 
 
 (cffi:defcallback audio-callback :int ((input-buffer :pointer)
@@ -130,8 +110,7 @@
                    frame-per-buffer))
   ;; sb-sys:without-gcing しなくてもたいして変わらない気もする
   (sb-sys:without-gcing
-    (audio-loop)
-    (write-master-buffer (.audio-device *app*) output-buffer)
+    (audio-loop output-buffer)
     0))
 
 (defun statistic-enter (self)
