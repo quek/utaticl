@@ -15,8 +15,8 @@
 
 (defun main ()
   (setf utaticl.core:*app* (make-instance 'utaticl.core:app :backend
-                                          :glfw-opengl3
-                                          ;:sdl-vulkan
+                                          ;;:glfw-opengl3
+                                          :sdl-vulkan
                                           ))
   (sb-thread:make-thread
    (lambda ()
@@ -25,7 +25,7 @@
          (pa:with-audio
            (utaticl.core:with-thraed-pool
              (unwind-protect
-                  (utaticl.core:Run-with-backend
+                  (utaticl.core:run-with-backend
                    utaticl.core:*app*
                    (utaticl.core:.backend utaticl.core:*app*))
                (utaticl.core:terminate utaticl.core:*app*)))))))

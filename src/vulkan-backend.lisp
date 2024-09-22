@@ -41,7 +41,6 @@
   (surface-format (:struct vulkan:surface-format-khr))
   (present-mode vulkan:present-mode-khr)
   (render-pass vulkan:render-pass)
-  (pipeline vulkan:pipeline)
   (use-dynamic-rendering :bool)
   (clear-enable :bool)
   (clear-value (:union vulkan:clear-value))
@@ -196,7 +195,7 @@
                         :queue-priorities '(1.0)))
            (create-info (vk:make-device-create-info
                          :queue-create-infos (list queue-info)
-                         :enabled-extension-names '("VK_KHR_swapchain"))))
+                         :enabled-extension-names (list vk:+khr-swapchain-extension-name+))))
       (setf *device* (vk:create-device *physical-device* create-info))
       (setf *queue* (vk:get-device-queue *device* *queue-family* 0)))
 
@@ -272,11 +271,7 @@
      (vk:raw-handle *instance*) (vk:raw-handle *physical-device*)
      (vk:raw-handle *device*) main-window-data
      *queue-family* vk:*default-allocator*
-     width height *min-image-count*)
-    #+nil
-    (break "after first imgui-impl-vulkan-h-create-or-resize-window ~a"
-           (cffi:foreign-slot-value main-window-data '(:struct imgui-impl-vulkan-h-window)
-                                    'image-count))))
+     width height *min-image-count*)))
 
 (defun semaphore (main-window-data which)
   (cffi:with-foreign-slots ((frame-semaphores semaphore-index)
@@ -396,9 +391,7 @@
             (setf utaticl.core:*hwnd* (plus-c:c-ref wm-info sdl2-ffi:sdl-syswm-info :info :x11 :display)))
 
           (unwind-protect
-               (cffi:with-foreign-slots ((render-pass image-count)
-                                         main-window-data
-                                         (:struct imgui-impl-vulkan-h-window))
+               (progn
                  (cffi:with-foreign-object (extensions-count :uint32)
                    (sdl-vulkan-get-instance-extensions (autowrap:ptr window)
                                                        extensions-count
@@ -451,42 +444,44 @@
                    (loop for i below (cffi:foreign-type-size '(:struct imgui-impl-vulkan-init-info))
                          do (setf (cffi:mem-ref init-info :char i) 0))
 
-                   (let ((wd-render-pass render-pass)
-                         (wd-image-count image-count))
-                     (cffi:with-foreign-slots ((instance
-                                                physical-device
-                                                device
-                                                queue-family
-                                                queue
-                                                pipeline-cache
-                                                descriptor-pool
-                                                render-pass
-                                                subpass
-                                                min-image-count
-                                                image-count
-                                                msaa-samples
-                                                use-dynamic-rendering
-                                                allocator
-                                                check-vk-result-fn
-                                                min-allocation-size) init-info
-                                               (:struct imgui-impl-vulkan-init-info))
-                       (setf instance (vk:raw-handle *instance*))
-                       (setf physical-device (vk:raw-handle *physical-device*))
-                       (setf device (vk:raw-handle *device*))
-                       (setf queue-family *queue-family*)
-                       (setf queue (vk:raw-handle *queue*))
-                       (setf pipeline-cache (cffi:null-pointer))
-                       (setf descriptor-pool (vk:raw-handle *descriptor-pool*))
-                       (setf render-pass wd-render-pass)
-                       (setf subpass 0)
-                       (setf min-image-count *min-image-count*)
-                       (setf image-count wd-image-count)
-                       (setf msaa-samples :1)
-                       (setf allocator vk:*default-allocator*)
-                       (setf check-vk-result-fn (cffi:callback check-vk-result))
-                       ;; (setf use-dynamic-rendering nil)
-                       ;; (setf min-allocation-size 0)
-                       (imgui-impl-vulkan-init init-info))))
+                   (cffi:with-foreign-slots ((instance
+                                              physical-device
+                                              device
+                                              queue-family
+                                              queue
+                                              pipeline-cache
+                                              descriptor-pool
+                                              render-pass
+                                              subpass
+                                              min-image-count
+                                              image-count
+                                              msaa-samples
+                                              use-dynamic-rendering
+                                              allocator
+                                              check-vk-result-fn
+                                              min-allocation-size) init-info
+                                             (:struct imgui-impl-vulkan-init-info))
+                     (setf instance (vk:raw-handle *instance*))
+                     (setf physical-device (vk:raw-handle *physical-device*))
+                     (setf device (vk:raw-handle *device*))
+                     (setf queue-family *queue-family*)
+                     (setf queue (vk:raw-handle *queue*))
+                     (setf pipeline-cache (cffi:null-pointer))
+                     (setf descriptor-pool (vk:raw-handle *descriptor-pool*))
+                     (setf render-pass (cffi:foreign-slot-value main-window-data
+                                                                '(:struct imgui-impl-vulkan-h-window)
+                                                                'render-pass))
+                     (setf subpass 0)
+                     (setf min-image-count *min-image-count*)
+                     (setf image-count (print (cffi:foreign-slot-value main-window-data
+                                                                       '(:struct imgui-impl-vulkan-h-window)
+                                                                       'image-count)))
+                     (setf msaa-samples :1)
+                     (setf allocator vk:*default-allocator*)
+                     (setf check-vk-result-fn (cffi:callback check-vk-result))
+                     ;; (setf use-dynamic-rendering nil)
+                     ;; (setf min-allocation-size 0)
+                     (imgui-impl-vulkan-init init-info)))
 
                  (setf utaticl.core:*done* nil)
                  (setf (utaticl.core:.window app) window)
