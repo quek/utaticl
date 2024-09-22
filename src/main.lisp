@@ -14,16 +14,16 @@
        (ole-uninitialize))))
 
 (defun main ()
-  (setf utaticl.core:*app* (make-instance 'utaticl.core:app :backend
-                                          ;;:glfw-opengl3
-                                          :sdl-vulkan
-                                          ))
   (sb-thread:make-thread
    (lambda ()
      (sb-int:with-float-traps-masked (:invalid :inexact :overflow :divide-by-zero)
        (with-ole
          (pa:with-audio
            (utaticl.core:with-thraed-pool
+             (setf utaticl.core:*app* (make-instance 'utaticl.core:app :backend
+                                                     ;;:glfw-opengl3
+                                                     :sdl-vulkan
+                                                     ))
              (unwind-protect
                   (utaticl.core:run-with-backend
                    utaticl.core:*app*
