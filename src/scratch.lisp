@@ -1,6 +1,7 @@
 (in-package :utaticl.core)
 
 (setf x (make-instance 'module-clap :id "org.surge-synth-team.surge-xt"))
+(editor-open x)
 (terminate x)
 
 

@@ -24,6 +24,15 @@
 (alexandria:define-constant +host-name+ "UTATICL" :test 'equal)
 (alexandria:define-constant +host-url+ "https://github.com/quek/utaticl" :test 'equal)
 (alexandria:define-constant +host-version+ "0.0.1" :test 'equal)
+(defvar +window-api-win32+ (cffi:foreign-string-alloc "win32"))
+
+
+(defmacro call (function &rest args-and-return-type)
+  `(cffi:foreign-funcall-pointer
+    ,function
+    ()
+    :pointer (autowrap:ptr (utaticl.core::.plugin utaticl.core::module-clap))
+    ,@args-and-return-type))
 
 (defun get-factory (path)
   (sb-int:with-float-traps-masked (:invalid :inexact :overflow :divide-by-zero)
@@ -66,6 +75,38 @@
                       :pointer)))
         (values (clap::make-clap-plugin :ptr plugin) host)))))
 
+(defun query-audio-ports (module-clap)
+  (let ((ext (.ext-audio-ports module-clap)))
+    (if ext
+        (progn
+          (setf (.audio-input-bus-count module-clap)
+                (utaticl.clap::call (clap:clap-plugin-audio-ports.count ext)
+                                    :bool t
+                                    :unsigned-int))
+          (setf (.audio-output-bus-count module-clap)
+                (utaticl.clap::call (clap:clap-plugin-audio-ports.count ext)
+                                    :bool nil
+                                    :unsigned-int)))
+        (progn
+          (setf (.audio-input-bus-count module-clap) 0)
+          (setf (.audio-output-bus-count module-clap) 0)))))
+
+(defun query-note-ports (module-clap)
+  (let ((ext (.ext-note-ports module-clap)))
+    (if ext
+        (progn
+          (setf (.event-input-bus-count module-clap)
+                (utaticl.clap::call (clap:clap-plugin-note-ports.count ext)
+                                    :bool t
+                                    :unsigned-int))
+          (setf (.event-output-bus-count module-clap)
+                (utaticl.clap::call (clap:clap-plugin-note-ports.count ext)
+                                    :bool nil
+                                    :unsigned-int)))
+        (progn
+          (setf (.event-input-bus-count module-clap) 0)
+          (setf (.event-output-bus-count module-clap) 0)))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (in-package :utaticl.core)
 
@@ -100,10 +141,53 @@
                      (funcall writer (funcall make :ptr ptr) module-clap)))))
           (extension "clap.audio-ports" #'clap::make-clap-plugin-audio-ports
                      (fdefinition '(setf .ext-audio-ports)))
-          (extension "clap.state" #'clap::make-clap-plugin-state
-                     (fdefinition '(setf .ext-state)))
+          (extension "clap.gui" #'clap::make-clap-plugin-gui
+                     (fdefinition '(setf .ext-gui)))
           (extension "clap.latency" #'clap::make-clap-plugin-latency
-                     (fdefinition '(setf .ext-latency))))))))
+                     (fdefinition '(setf .ext-latency)))
+          (extension "clap.note-ports" #'clap::make-clap-plugin-note-ports
+                     (fdefinition '(setf .ext-note-ports)))
+          (extension "clap.state" #'clap::make-clap-plugin-state
+                     (fdefinition '(setf .ext-state))))
+        (utaticl.clap::query-audio-ports module-clap)
+        (utaticl.clap::query-note-ports module-clap)))))
+
+(defmethod editor-open ((module-clap module-clap))
+  (let ((ext (.ext-gui module-clap)))
+    (when (and (not (.editor-open-p module-clap))
+               ext
+               (utaticl.clap::call (clap:clap-plugin-gui.is-api-supported ext)
+                                   :pointer utaticl.clap::+window-api-win32+
+                                   :bool nil
+                                   :bool))
+      (utaticl.clap::call (clap:clap-plugin-gui.create ext)
+                          :pointer utaticl.clap::+window-api-win32+
+                          :bool nil
+                          :bool)
+      (utaticl.clap::call (clap:clap-plugin-gui.set-scale ext)
+                          :double 1d0
+                          :bool)
+      (let* ((resize-p (utaticl.clap::call (clap:clap-plugin-gui.can-resize ext)
+                                           :bool))
+             (size (cffi:with-foreign-objects ((width :unsigned-int)
+                                               (height :unsigned-int))
+                     (utaticl.clap::call (clap:clap-plugin-gui.get-size ext)
+                                         :pointer width
+                                         :pointer height
+                                         :bool)
+                     (@ (cffi:mem-ref width :unsigned-int)
+                        (cffi:mem-ref height :unsigned-int))))
+             (hwnd (win32::make-window (.x size) (.y size) resize-p))
+             (clap-window (.clap-window module-clap)))
+        (setf (clap:clap-window.api clap-window) utaticl.clap::+window-api-win32+)
+        (setf (clap:clap-window.win32 clap-window) hwnd)
+        (utaticl.clap::call (clap:clap-plugin-gui.set-parent ext)
+                            :pointer (autowrap:ptr clap-window)
+                            :bool)
+        (utaticl.clap::call (clap:clap-plugin-gui.show ext)
+                            :bool)
+        )
+      (call-next-method))))
 
 (defun plugin-scan-clap (&optional (dir "c:\\Program Files\\Common Files\\CLAP"))
   (loop for %path in (directory (merge-pathnames "**/*.clap" dir))
@@ -137,6 +221,7 @@
    ()
    :pointer (autowrap:ptr (.plugin module-clap))
    :void)
+  (autowrap:free (.clap-window module-clap))
   (autowrap:free (.host module-clap))
   (cffi:foreign-funcall "FreeLibrary" :pointer (.library module-clap) :int))
 

@@ -22,7 +22,13 @@
    #:*thread-pool*
    #:*working-directory*
    #:+side-threshold+
+   #:.audio-input-bus-count
+   #:.audio-output-bus-count
    #:.backend
+   #:.event-input-bus-count
+   #:.event-output-bus-count
+   #:.ext-audio-ports
+   #:.ext-note-ports
    #:.name
    #:.params-ordered
    #:.hwnd
@@ -53,6 +59,7 @@
    #:memcpy
    #:module
    #:module-builtin
+   #:module-clap
    #:module-fader
    #:module-fader-track
    #:module-gain
