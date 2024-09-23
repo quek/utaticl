@@ -586,7 +586,8 @@
 (defmethod execute ((self cmd-plugin-scan) project)
   (let ((path (merge-pathnames "user/config/plugins.lisp" *working-directory*)))
     (with-open-file (out path :direction :output :if-exists :supersede)
-      (loop for plugin-info in (vst3::plugin-scan-vst3)
+      (loop for plugin-info in (append (plugin-scan-clap)
+                                       (vst3::plugin-scan-vst3))
             do (write (serialize plugin-info) :stream out)
                (terpri out)))))
 

@@ -52,6 +52,7 @@
    (:file "ig")
    (:file "ig-backend")
    (:file "plugin-info")
+   (:file "plugin-info-clap")
    (:file "vst3-macro")
    (:file "vst3-walk")
    (:file "vst3-ffi")

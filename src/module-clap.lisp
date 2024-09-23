@@ -1,4 +1,7 @@
-(in-package :utaticl.core)
+(defpackage :utaticl.clap
+  (:use :cl :utaticl.core))
+
+(in-package :utaticl.clap)
 
 (cffi:defcallback get-extension :pointer
     ((host :pointer)
@@ -18,24 +21,71 @@
     ((host :pointer))
   (declare (ignore host)))
 
-
 (alexandria:define-constant +host-name+ "UTATICL" :test 'equal)
 (alexandria:define-constant +host-url+ "https://github.com/quek/utaticl" :test 'equal)
 (alexandria:define-constant +host-version+ "0.0.1" :test 'equal)
+
+(defun get-factory (path)
+  (sb-int:with-float-traps-masked (:invalid :inexact :overflow :divide-by-zero)
+    (let* ((lib (cffi:foreign-funcall "LoadLibraryA" :string path :pointer))
+           (clap-entry (cffi:foreign-funcall "GetProcAddress" :pointer lib :string "clap_entry" :pointer))
+           (clap-entry (clap::make-clap-plugin-entry :ptr clap-entry))
+           (init (clap:clap-plugin-entry.init clap-entry)))
+      (cffi:foreign-funcall-pointer init ()
+                                    :string path
+                                    :bool)
+      (let* ((factory (cffi:foreign-funcall-pointer
+                       (clap:clap-plugin-entry.get-factory clap-entry) ()
+                       :string "clap.plugin-factory"
+                       :pointer))
+             (factory (clap::make-clap-plugin-factory :ptr factory)))
+        (values factory lib)))))
+
+;(get-factory "c:/Program Files/Common Files/CLAP/Surge Synth Team/Surge XT.clap")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(in-package :utaticl.core)
+
+(defun plugin-scan-clap (&optional (dir "c:\\Program Files\\Common Files\\CLAP"))
+  (loop for %path in (directory (merge-pathnames "**/*.clap" dir))
+        for path = (namestring %path)
+        for file-write-date = (file-write-date path)
+        unless (uiop:directory-pathname-p path)
+          nconc (multiple-value-bind (factory library) (utaticl.clap::get-factory path)
+                  (unwind-protect
+                       (loop for index below (cffi:foreign-funcall-pointer
+                                              (clap:clap-plugin-factory.get-plugin-count factory)
+                                              ()
+                                              :pointer (autowrap:ptr factory)
+                                              :unsigned-int)
+                             for descriptor = (clap::make-clap-plugin-descriptor
+                                               :ptr (cffi:foreign-funcall-pointer
+                                                     (clap:clap-plugin-factory.get-plugin-descriptor factory)
+                                                     ()
+                                                     :pointer (autowrap:ptr factory)
+                                                     :unsigned-int index
+                                                     :pointer))
+                             collect (make-instance 'plugin-info-clap
+                                                    :descriptor descriptor
+                                                    :path path
+                                                    :file-write-date file-write-date))
+                    (cffi:foreign-funcall "FreeLibrary" :pointer library :int)))))
+;(mapc #'describe (plugin-scan-clap))
+
 
 (sb-int:with-float-traps-masked (:invalid :inexact :overflow :divide-by-zero)
   (autowrap:with-alloc (host '(:struct (clap:clap-host)))
     (setf (clap:clap-host.clap-version.major host) 1
           (clap:clap-host.clap-version.minor host) 1
           (clap:clap-host.clap-version.revision host) 10)
-    (setf (clap:clap-host.name host) (sb-sys:vector-sap +host-name+))
-    (setf (clap:clap-host.vendor host) (sb-sys:vector-sap +host-name+))
-    (setf (clap:clap-host.url host) (sb-sys:vector-sap +host-url+))
-    (setf (clap:clap-host.version host) (sb-sys:vector-sap +host-version+))
-    (setf (clap:clap-host.get-extension host) (cffi:callback get-extension))
-    (setf (clap:clap-host.request-restart host) (cffi:callback request-restart))
-    (setf (clap:clap-host.request-process host) (cffi:callback request-process))
-    (setf (clap:clap-host.request-callback host) (cffi:callback request-callback))
+    (setf (clap:clap-host.name host) (sb-sys:vector-sap utaticl.clap::+host-name+))
+    (setf (clap:clap-host.vendor host) (sb-sys:vector-sap utaticl.clap::+host-name+))
+    (setf (clap:clap-host.url host) (sb-sys:vector-sap utaticl.clap::+host-url+))
+    (setf (clap:clap-host.version host) (sb-sys:vector-sap utaticl.clap::+host-version+))
+    (setf (clap:clap-host.get-extension host) (cffi:callback utaticl.clap::get-extension))
+    (setf (clap:clap-host.request-restart host) (cffi:callback utaticl.clap::request-restart))
+    (setf (clap:clap-host.request-process host) (cffi:callback utaticl.clap::request-process))
+    (setf (clap:clap-host.request-callback host) (cffi:callback utaticl.clap::request-callback))
     
     (let* ((path "c:/Program Files/Common Files/CLAP/Surge Synth Team/Surge XT.clap")
            (lib (cffi:foreign-funcall "LoadLibraryA" :string path :pointer))

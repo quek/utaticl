@@ -181,7 +181,7 @@ sb:+k-out-of-memory+
                                                         :ptr (autowrap:ptr %class-info)))
                                if (equal (vst3::.category class-info) "Audio Module Class")
                                  collect (make-instance
-                                          'utaticl::plugin-info-vst3
+                                          'utaticl.core:plugin-info-vst3
                                           :id (let ((cid (make-array 16 :element-type '(unsigned-byte 8)))
                                                     (p (sb:p-class-info.cid& class-info)))
                                                 (loop for i below 16 do

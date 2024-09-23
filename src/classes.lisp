@@ -266,6 +266,9 @@
 (defclass plugin-info-vst3 (plugin-info)
   ())
 
+(defclass plugin-info-clap (plugin-info)
+  ())
+
 (defclass module (neko)
   ((audio-input-bus-count :initarg :audio-input-bus-count
                           :initform 0

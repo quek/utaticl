@@ -70,6 +70,7 @@
    #:piano-roll
    #:plugin-info
    #:plugin-info-vst3
+   #:plugin-info-clap
    #:plugin-selector
    #:prepare
    #:preset
