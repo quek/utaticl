@@ -34,7 +34,9 @@
                    ((eq message :stop)
                     (stop-audio-device (.audio-device *app*)))
                    ((eq message :open)
-                    (open-audio-device (.audio-device *app*)))
+                    (handler-case (open-audio-device (.audio-device *app*))
+                      (error (e)
+                        (report "open-audio-device failed ~a" e))))
                    ((eq message :close)
                     (close-audio-device (.audio-device *app*)))))))
 
@@ -60,7 +62,6 @@
               (setf (pa:stream-parameters-channel-count output-parameters) (.output-channels self)
                     (pa:stream-parameters-sample-format output-parameters) (.sample-format self)
                     (pa::stream-parameters-suggested-latency output-parameters) latency)
-              (describe output-parameters)
               (setf (.stream self)
                     (progn
                       (pa::raise-if-error
