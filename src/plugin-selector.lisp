@@ -23,7 +23,7 @@
                                 :flags (logior ig:+im-gui-input-text-flags-auto-select-all+
                                                ig:+im-gui-input-text-flags-enter-returns-true+))))
       (loop for plugin-info in (.plugin-infos self)
-            if (fuzzy= (.name plugin-info) (.query self))
+            if (fuzzy= (name-with-api plugin-info) (.query self))
               do (if run-p
                      #1=(progn
                           (cmd-add (.project self) 'cmd-module-add
@@ -35,7 +35,7 @@
                           (ig:close-current-popup)
                           (loop-finish))
                      (progn
-                       (when (ig:button (.name plugin-info))
+                       (when (ig:button (name-with-api plugin-info))
                          #1#)))))
 
     (when (ig:is-key-pressed ig:+im-gui-key-escape+)

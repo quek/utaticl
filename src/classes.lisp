@@ -293,6 +293,9 @@
    (start-p :initform nil :accessor .start-p)
    (track :initarg :track :initform nil :accessor .track)))
 
+(defclass modcule-clap (module)
+  ())
+
 (defclass module-vst3 (module)
   ((audio-processor :accessor .audio-processor)
    (component :initarg :conponent :initform nil :accessor .component)

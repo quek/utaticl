@@ -1,5 +1,11 @@
 (in-package :utaticl.core)
 
+(defmethod api ((plugin-info plugin-info))
+  "builtin")
+
+(defmethod name-with-api ((plugin-info plugin-info))
+  (format nil "~a ~a" (.name plugin-info) (api plugin-info)))
+
 (defmethod plugin-info-find (id)
   (find id (plugin-info-load-all) :key #'.id :test #'equalp))
 
@@ -10,10 +16,3 @@
         (loop for sexp = (read in nil nil)
               while sexp
               collect (deserialize sexp))))))
-
-
-(defmethod plugin-load ((self plugin-info-vst3))
-  (let ((module (module-vst3-load (.path self))))
-    (setf (.name module) (.name self))
-    module))
-
