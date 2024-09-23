@@ -100,7 +100,7 @@
         (class (type-of self)))
     (sb-ext:finalize self
                      (lambda ()
-                       (print (list 'finalize class vtbl wrap))
+                       (log:trace 'finalize class vtbl wrap)
                        (when (autowrap:valid-p vtbl)
                          (autowrap:free vtbl)
                          (autowrap:invalidate vtbl))
@@ -118,7 +118,7 @@
 (defmethod release ((self unknown))
   (let ((ref-count (decf (.ref-count self))))
     (when (zerop ref-count)
-        (print (list 'free-in-release self (.vtbl self) (.wrap self)))
+        (log:trace 'free-in-release self (.vtbl self) (.wrap self))
         (autowrap:free (.vtbl self))
         (autowrap:invalidate (.vtbl self))
         (autowrap:free (.wrap self))
@@ -129,9 +129,10 @@
 (autowrap:defcallback release sb:uint32
     ((this-interface :pointer))
   (let ((obj (gethash (cffi:pointer-address this-interface) *ptr-object-map*)))
-    (print (list 'release obj this-interface))
     (if obj
-        (release obj)
+        (let ((ret (release obj)))
+          (log:trace 'release obj this-interface ret)
+          ret)
         ;; finalizer で削除済
         0)))
 
@@ -157,7 +158,6 @@
     ((this-interface :pointer)
      (iid :pointer)
      (obj :pointer))
-  (print-uid-ptr iid)
   (query-interface (gethash (cffi:pointer-address this-interface) *ptr-object-map*)
                    iid obj))
 
