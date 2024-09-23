@@ -64,7 +64,7 @@
                       :pointer (autowrap:ptr host)
                       :string id
                       :pointer)))
-        (values plugin host)))))
+        (values (clap::make-clap-plugin :ptr plugin) host)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (in-package :utaticl.core)
@@ -80,7 +80,11 @@
         (setf (.factory module-clap) factory)
         (setf (.library module-clap) library)
         (setf (.plugin module-clap) plugin)
-        (setf (.host module-clap) host)))))
+        (setf (.host module-clap) host)
+        (cffi:foreign-funcall-pointer
+         (clap:clap-plugin.init plugin) ()
+         :pointer (autowrap:ptr plugin)
+         :bool)))))
 
 (defun plugin-scan-clap (&optional (dir "c:\\Program Files\\Common Files\\CLAP"))
   (loop for %path in (directory (merge-pathnames "**/*.clap" dir))
@@ -109,6 +113,11 @@
 ;(mapc #'describe (plugin-scan-clap))
 
 (defmethod terminate ((module-clap module-clap))
+  (cffi:foreign-funcall-pointer
+   (clap:clap-plugin.destroy (.plugin module-clap))
+   ()
+   :pointer (autowrap:ptr (.plugin module-clap))
+   :void)
   (autowrap:free (.host module-clap))
   (cffi:foreign-funcall "FreeLibrary" :pointer (.library module-clap) :int))
 
