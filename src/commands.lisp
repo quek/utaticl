@@ -24,7 +24,7 @@
   (:default-initargs :undo-p nil))
 
 (defmethod execute ((self cmd-audio-engine-start) project)
-  (start-audio-device (.audio-device *app*)))
+  (audio-device-start *app*))
 
 (defcommand cmd-audio-device-window (command)
   ()
@@ -38,7 +38,7 @@
   (:default-initargs :undo-p nil))
 
 (defmethod execute ((self cmd-audio-engine-stop) project)
-  (stop-audio-device (.audio-device *app*)))
+  (audio-device-stop *app*))
 
 (defcommand cmd-clip-add (command)
   ((clip :initarg :clip :accessor .clip)

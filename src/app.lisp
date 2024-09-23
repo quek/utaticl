@@ -6,7 +6,38 @@
   (config-load *config*)
   (setf *theme* (make-instance 'theme))
   (config-load *theme*)
-  (setf *report-window* (make-instance 'report-window)))
+  (setf *report-window* (make-instance 'report-window))
+
+  (setf (.projects self) (list (make-instance 'project)))
+  )
+
+(defmethod audio-device-close ((app app))
+  (sb-concurrency:send-message (.audio-thread-mailbox app)
+                               :close))
+
+(defmethod audio-device-open ((app app))
+  (sb-concurrency:send-message (.audio-thread-mailbox app)
+                               :open))
+
+(defmethod audio-device-start ((app app))
+  (sb-concurrency:send-message (.audio-thread-mailbox app)
+                               :start))
+
+(defmethod audio-device-stop ((app app))
+  (sb-concurrency:send-message (.audio-thread-mailbox app)
+                               :stop))
+
+(defmethod audio-thread-start ((app app))
+  (setf (.audio-thread app)
+        (sb-thread:make-thread
+         (lambda ()
+           (audio-thread-loop))))
+  (loop until (.audio-device app)
+        do (sleep .001)))
+
+(defmethod audio-thread-stop ((app app))
+  (sb-concurrency:send-message (.audio-thread-mailbox app)
+                               :terminate))
 
 (defmethod cmd-run ((self app))
   (loop for project in (.projects self)
@@ -22,26 +53,10 @@
   (setf (.dragging-p app) nil))
 
 (defmethod render :around ((self app))
-  (if (null (.audio-device self))
-      (if (or (null (.audio-device-api *config*))
-              (null (.audio-device-name *config*))
-              (null (.sample-rate *config*)))
-          (render (.audio-device-window self))
-          (progn
-            ;; サンプルレートとバッファサイズが決まったのでプロジェクトが作れる
-            (push (make-instance 'project) (.projects self))
-            ;; オーディオデバイスを開いてオーディオイベントループを開始
-            (setf (.audio-device self)
-                  (make-instance 'audio-device
-                                 :device-api (.audio-device-api *config*)
-                                 :device-name (.audio-device-name *config*)))
-            (if (open-audio-device (.audio-device self))
-                (start-audio-device (.audio-device self))
-                (setf (.render-audio-device-window-p self) t))))
-      (progn
-        (call-next-method)
-        (when (.render-audio-device-window-p self)
-          (render (.audio-device-window self))))))
+  (call-next-method)
+  (when (or (not (.processing (.audio-device self)))
+            (.render-audio-device-window-p self))
+    (render (.audio-device-window self))))
 
 (defmethod render ((app app))
   (let ((*mouse-pos* (ig:get-mouse-pos)))
@@ -57,12 +72,6 @@
     (render (.color-window app))
     (render *report-window*)))
 
-(defmethod terminate ((self app))
-  (when (.audio-device self)
-    (close-audio-device (.audio-device self)))
-  (loop for project in (.projects self)
-        do (terminate project)))
-
 (defmethod process ((self app))
   (sb-thread:with-mutex ((.mutex self))
     (loop for project in (.projects self)
@@ -76,3 +85,8 @@
 
 (defmethod sys-window-pos% ((backend (eql :sdl-vulkan)) window)
   (multiple-value-list (sdl2:get-window-position window)))
+
+(defmethod terminate ((self app))
+  (audio-thread-stop self)
+  (loop for project in (.projects self)
+        do (terminate project)))

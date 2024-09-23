@@ -11,9 +11,10 @@
                                      sample-rate)
             t)
           collect sample-rate
-        else
-          do (print (list device-info-host-api device-info-name))
-             (describe (pa::get-last-host-error-info))))
+        ;; else
+        ;;   do (print (list device-info-host-api device-info-name))
+        ;;      (describe (pa::get-last-host-error-info))
+        ))
 
 (defmethod render :before ((self audio-device-window))
   (unless (.host-apis self)
@@ -119,10 +120,10 @@
       (setf (.device-infos self) nil))
     (when (and (.audio-device *app*)
                (ig:button "Open"))
-      (open-audio-device (.audio-device *app*)))
+      (audio-device-open *app*))
     (when (and (.audio-device *app*)
                (ig:button "Close"))
-      (close-audio-device (.audio-device *app*)))))
+      (audio-device-close *app*))))
 
 (defun preferred-buffer-size (device-index)
   (cffi:with-foreign-objects ((min-size :long)

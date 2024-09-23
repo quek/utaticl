@@ -450,6 +450,8 @@
   ((audio-device :initform nil :accessor .audio-device)
    (audio-device-window :initform (make-instance 'audio-device-window)
                         :accessor .audio-device-window)
+   (audio-thread :accessor .audio-thread)
+   (audio-thread-mailbox :initform (sb-concurrency:make-mailbox) :accessor .audio-thread-mailbox)
    (backend :initarg :backend :initform :glfw-opengl3 :reader .backend
             :type (member :glfw-opengl3 :sdl-vulkan))
    (color-window :initform (make-instance 'color-window)

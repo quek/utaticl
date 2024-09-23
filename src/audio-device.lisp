@@ -15,6 +15,29 @@
   (:output-overflow #x00000008)
   (:priming-output #x00000010))
 
+(defun audio-thread-loop ()
+  (pa:with-audio
+    (setf (.audio-device *app*)
+          (make-instance 'audio-device
+                         :device-api (.audio-device-api *config*)
+                         :device-name (.audio-device-name *config*)))
+    (and (ignore-errors (open-audio-device (.audio-device *app*)))
+         (start-audio-device (.audio-device *app*)))
+
+    (loop for message = (sb-concurrency:receive-message (.audio-thread-mailbox *app*))
+          do (cond ((eq message :terminate)
+                    (when (.audio-device *app*)
+                      (close-audio-device (.audio-device *app*)))
+                    (loop-finish))
+                   ((eq message :start)
+                    (start-audio-device (.audio-device *app*)))
+                   ((eq message :stop)
+                    (stop-audio-device (.audio-device *app*)))
+                   ((eq message :open)
+                    (open-audio-device (.audio-device *app*)))
+                   ((eq message :close)
+                    (close-audio-device (.audio-device *app*)))))))
+
 (defmethod open-audio-device ((self audio-device))
   (if (and (.audio-device-api *config*)
            (.audio-device-name *config*))
@@ -37,6 +60,7 @@
               (setf (pa:stream-parameters-channel-count output-parameters) (.output-channels self)
                     (pa:stream-parameters-sample-format output-parameters) (.sample-format self)
                     (pa::stream-parameters-suggested-latency output-parameters) latency)
+              (describe output-parameters)
               (setf (.stream self)
                     (progn
                       (pa::raise-if-error
@@ -132,7 +156,7 @@
           (min (.statistic-min-process-time self) delta))
     (setf (.statistic-max-process-time self)
           (max (.statistic-max-process-time self) delta))
-    (when (<= (* (/ (.sample-rate *config*) (.frames-per-buffer *config*)) 10)
+    (when (<= (* (/ (.sample-rate *config*) (.frames-per-buffer *config*)) 2)
               (incf (.statistic-count self)))
       (let ((cpu (* (/ (.statistic-total-process-time self)
                        (+ (.statistic-total-process-time self)

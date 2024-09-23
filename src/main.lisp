@@ -18,15 +18,15 @@
    (lambda ()
      (sb-int:with-float-traps-masked (:invalid :inexact :overflow :divide-by-zero)
        (with-ole
-         (pa:with-audio
-           (utaticl.core:with-thraed-pool
-             (setf utaticl.core:*app* (make-instance 'utaticl.core:app :backend
-                                                     ;;:glfw-opengl3
-                                                     :sdl-vulkan
-                                                     ))
-             (unwind-protect
-                  (utaticl.core:run-with-backend
-                   utaticl.core:*app*
-                   (utaticl.core:.backend utaticl.core:*app*))
-               (utaticl.core:terminate utaticl.core:*app*)))))))
+         (utaticl.core:with-thraed-pool
+           (setf utaticl.core:*app* (make-instance 'utaticl.core:app :backend
+                                                   ;;:glfw-opengl3
+                                                   :sdl-vulkan
+                                                   ))
+           (utaticl.core::audio-thread-start utaticl.core:*app*)
+           (unwind-protect
+                (utaticl.core:run-with-backend
+                 utaticl.core:*app*
+                 (utaticl.core:.backend utaticl.core:*app*))
+             (utaticl.core:terminate utaticl.core:*app*))))))
    :name "UTATICL"))
