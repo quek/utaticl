@@ -14,11 +14,4 @@
   "clap")
 
 (defmethod plugin-load ((plugin-info-clap plugin-info-clap))
-  (multiple-value-bind (factory library)
-      (utaticl.clap::get-factory (.path plugin-info-clap))
-    (make-instance 'module-clap
-                   :id (.id plugin-info-clap)
-                   :name (.name plugin-info-clap)
-                   :library library
-                   :factory factory
-                   )))
+  (make-instance 'module-clap :plugin-info-clap plugin-info-clap))

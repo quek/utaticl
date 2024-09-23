@@ -293,8 +293,11 @@
    (start-p :initform nil :accessor .start-p)
    (track :initarg :track :initform nil :accessor .track)))
 
-(defclass modcule-clap (module)
-  ())
+(defclass module-clap (module)
+  ((factory :accessor .factory)
+   (host :accessor .host)
+   (library :accessor .library)
+   (plugin :accessor .plugin)))
 
 (defclass module-vst3 (module)
   ((audio-processor :accessor .audio-processor)

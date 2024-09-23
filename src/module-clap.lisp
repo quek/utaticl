@@ -43,8 +43,44 @@
 
 ;(get-factory "c:/Program Files/Common Files/CLAP/Surge Synth Team/Surge XT.clap")
 
+(defun create-plugin (factory id)
+  (sb-int:with-float-traps-masked (:invalid :inexact :overflow :divide-by-zero)
+    (let ((host (autowrap:alloc '(:struct (clap:clap-host)))))
+      (setf (clap:clap-host.clap-version.major host) 1
+            (clap:clap-host.clap-version.minor host) 1
+            (clap:clap-host.clap-version.revision host) 10)
+      (setf (clap:clap-host.name host) (sb-sys:vector-sap utaticl.clap::+host-name+))
+      (setf (clap:clap-host.vendor host) (sb-sys:vector-sap utaticl.clap::+host-name+))
+      (setf (clap:clap-host.url host) (sb-sys:vector-sap utaticl.clap::+host-url+))
+      (setf (clap:clap-host.version host) (sb-sys:vector-sap utaticl.clap::+host-version+))
+      (setf (clap:clap-host.get-extension host) (cffi:callback utaticl.clap::get-extension))
+      (setf (clap:clap-host.request-restart host) (cffi:callback utaticl.clap::request-restart))
+      (setf (clap:clap-host.request-process host) (cffi:callback utaticl.clap::request-process))
+      (setf (clap:clap-host.request-callback host) (cffi:callback utaticl.clap::request-callback))
+
+      (let* ((plugin (cffi:foreign-funcall-pointer
+                      (clap:clap-plugin-factory.create-plugin factory) ()
+                      :pointer (autowrap:ptr factory)
+                      :pointer (autowrap:ptr host)
+                      :string id
+                      :pointer)))
+        (values plugin host)))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (in-package :utaticl.core)
+
+(defmethod initialize-instance :after ((module-clap module-clap) &key plugin-info-clap)
+  (when plugin-info-clap
+    (multiple-value-bind (factory library)
+        (utaticl.clap::get-factory (.path plugin-info-clap))
+      (multiple-value-bind (plugin host)
+          (utaticl.clap::create-plugin factory (.id plugin-info-clap))
+        (setf (.id module-clap) (.id plugin-info-clap))
+        (setf (.name module-clap) (.name plugin-info-clap))
+        (setf (.factory module-clap) factory)
+        (setf (.library module-clap) library)
+        (setf (.plugin module-clap) plugin)
+        (setf (.host module-clap) host)))))
 
 (defun plugin-scan-clap (&optional (dir "c:\\Program Files\\Common Files\\CLAP"))
   (loop for %path in (directory (merge-pathnames "**/*.clap" dir))
@@ -72,6 +108,9 @@
                     (cffi:foreign-funcall "FreeLibrary" :pointer library :int)))))
 ;(mapc #'describe (plugin-scan-clap))
 
+(defmethod terminate ((module-clap module-clap))
+  (autowrap:free (.host module-clap))
+  (cffi:foreign-funcall "FreeLibrary" :pointer (.library module-clap) :int))
 
 (sb-int:with-float-traps-masked (:invalid :inexact :overflow :divide-by-zero)
   (autowrap:with-alloc (host '(:struct (clap:clap-host)))
