@@ -69,7 +69,12 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (in-package :utaticl.core)
 
-(defmethod initialize-instance :after ((module-clap module-clap) &key plugin-info-clap)
+(defmethod initialize-instance :after ((module-clap module-clap) &key id plugin-info-clap)
+  (when (and id (not plugin-info-clap))
+    (setf plugin-info-clap
+          (loop for plugin-info in (plugin-info-load-all)
+                  thereis (and (equal id (.id plugin-info))
+                               plugin-info))))
   (when plugin-info-clap
     (multiple-value-bind (factory library)
         (utaticl.clap::get-factory (.path plugin-info-clap))
@@ -84,7 +89,21 @@
         (cffi:foreign-funcall-pointer
          (clap:clap-plugin.init plugin) ()
          :pointer (autowrap:ptr plugin)
-         :bool)))))
+         :bool)
+        (flet ((extension (id make writer)
+                 (let ((ptr (cffi:foreign-funcall-pointer
+                             (clap:clap-plugin.get-extension plugin) ()
+                             :pointer (autowrap:ptr plugin)
+                             :string id
+                             :pointer)))
+                   (unless (cffi:null-pointer-p ptr)
+                     (funcall writer (funcall make :ptr ptr) module-clap)))))
+          (extension "clap.audio-ports" #'clap::make-clap-plugin-audio-ports
+                     (fdefinition '(setf .ext-audio-ports)))
+          (extension "clap.state" #'clap::make-clap-plugin-state
+                     (fdefinition '(setf .ext-state)))
+          (extension "clap.latency" #'clap::make-clap-plugin-latency
+                     (fdefinition '(setf .ext-latency))))))))
 
 (defun plugin-scan-clap (&optional (dir "c:\\Program Files\\Common Files\\CLAP"))
   (loop for %path in (directory (merge-pathnames "**/*.clap" dir))

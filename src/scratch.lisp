@@ -1,5 +1,10 @@
 (in-package :utaticl.core)
 
+(setf x (make-instance 'module-clap :id "org.surge-synth-team.surge-xt"))
+(terminate x)
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (wav:read-wav-file "D:\\Samples\\Audiolatry - Anime Vocals\\Vocal_Shots\\Audiolatry_AV_Vocal_One_Shot_Female_Yuck.wav")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

@@ -295,6 +295,10 @@
 
 (defclass module-clap (module)
   ((factory :accessor .factory)
+   (ext-gui :initform nil :accessor .ext-gui)
+   (ext-audio-ports :initform nil :accessor .ext-audio-ports)
+   (ext-state :initform nil :accessor .ext-state)
+   (ext-latency :initform nil :accessor .ext-latency)
    (host :accessor .host)
    (library :accessor .library)
    (plugin :accessor .plugin)))
