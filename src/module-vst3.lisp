@@ -1,7 +1,5 @@
 (in-package :utaticl.core)
 
-(sb-ext:defglobal *hwnd-module-vst3-map* (make-hash-table :weakness :value))
-
 (defmethod initialize-instance :after ((self module-vst3) &key)
   (let ((host-applicaiton (make-instance 'vst3-impl::host-application :module self)))
     (setf (slot-value self 'host-applicaiton) host-applicaiton)))
@@ -176,7 +174,7 @@
     (vst3-ffi::removed (.view self))
     (vst3-ffi::release (.view self))
     (setf (.view self) nil)
-    (remhash (cffi:pointer-address (.hwnd self)) *hwnd-module-vst3-map*)
+    (remhash (cffi:pointer-address (.hwnd self)) *hwnd-module-map*)
     (ftw:destroy-window (.hwnd self))
     (setf (.hwnd self) nil)
     t))
@@ -197,7 +195,7 @@
                         (sb:view-rect.top size)))
              (hwnd (win32::make-window width height resizable)))
         (setf (.hwnd self) hwnd)
-        (setf (gethash (cffi:pointer-address hwnd) *hwnd-module-vst3-map*) self)
+        (setf (gethash (cffi:pointer-address hwnd) *hwnd-module-map*) self)
         (vst3::ensure-ok (vst3-ffi::attached view hwnd vst3-ffi::+k-platform-type-hwnd+))
         t))))
 

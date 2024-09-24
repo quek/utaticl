@@ -209,7 +209,9 @@
   (when (.clap-window module-clap)
     (utaticl.clap::call (clap:clap-plugin-gui.destroy (.ext-gui module-clap))
                         :void)
-    (ftw:destroy-window (clap:clap-window.win32 (.clap-window module-clap)))
+    (let ((hwnd (clap:clap-window.win32 (.clap-window module-clap))))
+      (remhash (cffi:pointer-address hwnd) *hwnd-module-map*)
+      (ftw:destroy-window hwnd))
     (autowrap:free (.clap-window module-clap))
     (setf (.clap-window module-clap) nil)))
 
@@ -253,6 +255,8 @@
                             (cffi:mem-ref height :unsigned-int))))
                  (hwnd (win32::make-window (.x size) (.y size) resize-p))
                  (clap-window (autowrap:alloc '(:struct (clap:clap-window)))))
+            (setf (gethash (cffi:pointer-address hwnd) *hwnd-module-map*)
+                  module-clap)
             (setf (.clap-window module-clap) clap-window)
             (setf (clap:clap-window.api clap-window) utaticl.clap::+window-api-win32+)
             (setf (clap:clap-window.win32 clap-window) hwnd)
@@ -262,6 +266,11 @@
             (utaticl.clap::call (clap:clap-plugin-gui.show ext)
                                 :bool)
             t)))))
+
+(defmethod on-resize ((module-clap module-clap) width height)
+  "called from wnd-proc wm-size"
+  ;; TODO
+  )
 
 (defun plugin-scan-clap (&optional (dir "c:\\Program Files\\Common Files\\CLAP"))
   (loop for %path in (directory (merge-pathnames "**/*.clap" dir))

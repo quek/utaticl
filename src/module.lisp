@@ -16,7 +16,10 @@
                                  :format (format nil "%.2f (~a)" (value-text param)))
              (value-changed-by-host param))))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (in-package :utaticl.core)
+
+(sb-ext:defglobal *hwnd-module-map* (make-hash-table :weakness :value))
 
 (defmethod connect ((from module) (to module))
   (let ((connection (make-instance 'connection

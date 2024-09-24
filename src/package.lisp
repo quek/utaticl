@@ -13,7 +13,7 @@
    #:drag-enter
    #:drop
    #:*hwnd*
-   #:*hwnd-module-vst3-map*
+   #:*hwnd-module-map*
    #:*invoke-debugger-p*
    #:*mouse-pos*
    #:*process-data*
