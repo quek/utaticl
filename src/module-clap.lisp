@@ -7,33 +7,39 @@
 
 (cffi:defcallback gui.resize-hints-changed :void
     ((host :pointer))
+  (log:trace "gui.resize-hints-changed" host)
   (resize-hints-changed (gethash (cffi:pointer-address host) *host-map*)))
 
 (cffi:defcallback gui.request-resize :bool
     ((host :pointer)
      (width :unsigned-int)
      (height :unsigned-int))
+  (log:trace "gui.request-resize" host)
   (request-resize (gethash (cffi:pointer-address host) *host-map*)
                   width height))
 
 (cffi:defcallback gui.request-show :bool
     ((host :pointer))
+  (log:trace "gui.request-show" host)
   (editor-open (gethash (cffi:pointer-address host) *host-map*))
   t)
 
 (cffi:defcallback gui.request-hide :bool
     ((host :pointer))
+  (log:trace "gui.request-hide" host)
   (editor-close (gethash (cffi:pointer-address host) *host-map*))
   t)
 
 (cffi:defcallback gui.closed :void
     ((host :pointer)
      (was-destroyed :bool))
+  (log:trace "gui.request-closed" host)
   (closed (gethash (cffi:pointer-address host) *host-map*) was-destroyed))
 
 (cffi:defcallback host.get-extension :pointer
     ((host :pointer)
      (extension-id :string))
+  (log:trace "host.get-extension" host extension-id)
   (let ((module-clap (gethash (cffi:pointer-address host) *host-map*)))
     (cond ((equal extension-id "clap.gui")
            (autowrap:ptr (.clap-host-gui module-clap)))
@@ -41,15 +47,15 @@
 
 (cffi:defcallback host.request-restart :void
     ((host :pointer))
-  (declare (ignore host)))
+  (log:trace "host.request-restart" host))
 
 (cffi:defcallback host.request-process :void
     ((host :pointer))
-  (declare (ignore host)))
+  (log:trace "host.request-process" host))
 
 (cffi:defcallback host.request-callback :void
     ((host :pointer))
-  (declare (ignore host)))
+  (log:trace "host.request-callback" host))
 
 (alexandria:define-constant +host-name+ "UTATICL" :test 'equal)
 (alexandria:define-constant +host-url+ "https://github.com/quek/utaticl" :test 'equal)
@@ -200,18 +206,18 @@
     (utaticl.clap::prepare-callbacks module-clap)))
 
 (defmethod closed ((module-clap module-clap) was-destroyed)
-  (editor-close module-clap)
   (when (.clap-window module-clap)
     (utaticl.clap::call (clap:clap-plugin-gui.destroy (.ext-gui module-clap))
                         :void)
+    (ftw:destroy-window (clap:clap-window.win32 (.clap-window module-clap)))
     (autowrap:free (.clap-window module-clap))
     (setf (.clap-window module-clap) nil)))
 
 (defmethod editor-close ((module-clap module-clap))
-  ;; TODO t を返すはずなのに nil を返す
-  (print (utaticl.clap::call (clap:clap-plugin-gui.hide (.ext-gui module-clap))
-                             :bool))
+  (utaticl.clap::call (clap:clap-plugin-gui.hide (.ext-gui module-clap))
+                      :bool)
   (win32::hide (clap:clap-window.win32 (.clap-window module-clap)))
+  (closed module-clap t)
   t)
 
 (defmethod editor-open ((module-clap module-clap))
@@ -219,9 +225,8 @@
         (clap-window (.clap-window module-clap)))
     (if clap-window
         (progn
-          ;; TODO t を返すはずなのに nil を返す
-          (print (utaticl.clap::call (clap:clap-plugin-gui.show ext)
-                                     :bool))
+          (utaticl.clap::call (clap:clap-plugin-gui.show ext)
+                              :bool)
           (win32::show (clap:clap-window.win32 clap-window))
           t)
         (when (and ext
