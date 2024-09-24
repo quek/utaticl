@@ -25,6 +25,7 @@
    #:.audio-input-bus-count
    #:.audio-output-bus-count
    #:.backend
+   #:.clap-host-gui
    #:.event-input-bus-count
    #:.event-output-bus-count
    #:.ext-audio-ports
@@ -44,6 +45,7 @@
    #:clip
    #:clip-audio
    #:clip-note
+   #:closed
    #:cmd-add
    #:cmd-redo
    #:cmd-run
@@ -52,6 +54,7 @@
    #:commander
    #:connection
    #:editor-close
+   #:editor-open
    #:end-edit
    #:grid-mixin
    #:lane
@@ -91,6 +94,10 @@
    #:render
    #:render-context
    #:report-window
+   #:request-hide
+   #:request-resize
+   #:request-show
+   #:resize-hints-changed
    #:restart-component
    #:run-with-backend
    #:sceen

@@ -25,7 +25,7 @@
 (defun make-window (width height resizable)
   (unless *registered-class*
     (setf *registered-class*
-          (ftw:register-class "VST3 Editor" (cffi:callback wnd-proc)
+          (ftw:register-class "Plugin Editor" (cffi:callback wnd-proc)
                               :styles ftw::+cs-dblclks+)))
 
   (let ((ex-styles ftw::+ws-ex-appwindow+)
@@ -47,16 +47,15 @@
       (let* ((rect (ftw:foreign-rect rect (ftw:make-rect)))
              (height (- (ftw:rect-bottom rect) (ftw:rect-top rect)))
              (width (- (ftw:rect-right rect) (ftw:rect-left rect)))
-             (hwnd (ftw:create-window "VST3 Editor"
-                                      :window-name "VST3 Editor"
+             (hwnd (ftw:create-window "Plugin Editor"
+                                      :window-name "Plugin Editor"
                                       :ex-styles ex-styles
                                       :styles styles
                                       :height height
                                       :width width
                                       ;; エディタウインドが前面にとどまるように
                                       :parent utaticl.core:*hwnd*)))
-        (ftw:set-window-pos hwnd :top 0 0 0 0
-                            '(:no-size :no-move :no-copy-bits :show-window))
+        (show hwnd)
         hwnd))))
 
 (defun resize (hwnd width height)
@@ -79,6 +78,11 @@
                                 (- (ftw:rect-bottom rect) (ftw:rect-top rect))
                                 '(:no-move :no-copy-bits :no-activate))))))))
 
+(defun show (hwnd)
+  (ftw:show-window hwnd :show-normal))
+
+(defun hide (hwnd)
+  (ftw:show-window hwnd :hide))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;; nphysical-cpus
 (cffi:defcstruct system-logical-processor-information

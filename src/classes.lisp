@@ -295,8 +295,9 @@
 
 (defclass module-clap (module)
   ((factory :accessor .factory)
-   (clap-window :initform (autowrap:alloc '(:struct (clap:clap-window)))
-                :accessor .clap-window)
+   (clap-host-gui :initform (autowrap:alloc '(:struct (clap:clap-host-gui)))
+                  :accessor .clap-host-gui)
+   (clap-window :initform nil :accessor .clap-window)
    (ext-audio-ports :initform nil :accessor .ext-audio-ports)
    (ext-gui :initform nil :accessor .ext-gui)
    (ext-latency :initform nil :accessor .ext-latency)

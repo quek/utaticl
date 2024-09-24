@@ -55,11 +55,19 @@
     (setf (.connections to)
           (delete-if #'pred (.connections to)))))
 
-(defmethod editor-open ((self module))
-  (setf (.editor-open-p self) t))
+(defmethod editor-open :around ((module module))
+  (unless (.editor-open-p module)
+    (when (call-next-method)
+      (setf (.editor-open-p module) t))))
 
-(defmethod editor-close ((self module))
-  (setf (.editor-open-p self) nil))
+(defmethod editor-open ((module module)))
+
+(defmethod editor-close :around ((self module))
+  (when (.editor-open-p self)
+    (when (call-next-method)
+      (setf (.editor-open-p self) nil))))
+
+(defmethod editor-close ((module module)))
 
 (defmethod initialize ((self module)))
 
