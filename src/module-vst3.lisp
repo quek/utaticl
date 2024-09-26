@@ -98,7 +98,12 @@
                                            ,sb:+vst-bus-directions-k-output+))
           do (loop for i below count
                    do (vst3-ffi::activate-bus (.component self)
-                                              type direction i 1))))
+                                              type direction i 1)))
+
+    (setf (.process-data self)
+          (make-instance 'process-data-vst3
+                         :audio-input-bus-count audio-input-bus-count
+                         :audio-output-bus-count audio-output-bus-count)))
   (params-prepare self)
   (params-value-changed self))
 
@@ -114,6 +119,8 @@
       (vst3-ffi::terminate (.component self))
       (when (and (.controller self) terminate-controller-p)
         (vst3-ffi::terminate (.controller self)))))
+
+  (terminate (.process-buffer self))
 
   (vst3-ffi::release (.factory self))
   (vst3-impl::release (.host-applicaiton self))
@@ -254,10 +261,53 @@
         for value = (vst3-ffi::get-param-normalized controller (.id param))
         do (setf (.value param) value)))
 
+(defun note-buffer->vst3 (module-vst3)
+  (loop with note-buffer = (.input-events *process-data*)
+        with process-data = (.process-data module-vst3)
+        for event across (.events note-buffer)
+        for note across (.notes note-buffer)
+        for sample-offset across (.sample-offset note-buffer)
+        do (case event
+             (:on
+              (autowrap:with-alloc (event '(:struct (sb:vst-event)))
+                (setf (sb:vst-event.bus-index event) 0) ;TODO
+                (setf (sb:vst-event.sample-offset event) sample-offset)
+                (setf (sb:vst-event.ppq-position event) .0d0) ;TODO
+                (setf (sb:vst-event.flags event) sb:+vst-event-event-flags-k-is-live+) ;TODO
+                (setf (sb:vst-event.type event) sb:+vst-event-event-types-k-note-on-event+)
+                (setf (sb:vst-event.vst-event-note-on.channel event) (.channel note))
+                (setf (sb:vst-event.vst-event-note-on.pitch event) (.key note))
+                (setf (sb:vst-event.vst-event-note-on.tuning event) .0)
+                (setf (sb:vst-event.vst-event-note-on.velocity event) (.velocity note))
+                (setf (sb:vst-event.vst-event-note-on.note-id event) -1)
+                (setf (sb:vst-event.vst-event-note-on.length event) 0)
+                (vst3-impl::add-event (.input-events process-data)
+                                      (autowrap:ptr event)))
+              (pushnew (cons (.key note) (.channel note))
+                       (.notes-on process-data) :test #'equal))
+             (:off
+              (autowrap:with-alloc (event '(:struct (sb:vst-event)))
+                (setf (sb:vst-event.bus-index event) 0) ;TODO
+                (setf (sb:vst-event.sample-offset event) sample-offset)
+                (setf (sb:vst-event.ppq-position event) .0d0) ;TODO
+                (setf (sb:vst-event.flags event) sb:+vst-event-event-flags-k-is-live+) ;TODO
+                (setf (sb:vst-event.type event) sb:+vst-event-event-types-k-note-off-event+)
+                (setf (sb:vst-event.vst-event-note-off.channel event) (.channel note))
+                (setf (sb:vst-event.vst-event-note-off.pitch event) (.key note))
+                (setf (sb:vst-event.vst-event-note-off.velocity event) 1.0)
+                (setf (sb:vst-event.vst-event-note-off.note-id event) -1)
+                (setf (sb:vst-event.vst-event-note-off.tuning event) .0)
+                (vst3-impl::add-event (.input-events process-data) (autowrap:ptr event)))
+              (setf (.notes-on module-vst3)
+                    (delete (cons (.key note) (.channel note))
+                            (.notes-on process-data)
+                            :test #'equal))))))
+
 (defmethod process ((self module-vst3))
-  (let ((context (.context *process-data*))
-        (bpm (.bpm (.project self)))
-        (play-time (.play-start (.project self))))
+  (let* ((process-data (.process-data self))
+         (context (.context process-data))
+         (bpm (.bpm (.project self)))
+         (play-time (.play-start (.project self))))
     (setf (sb:vst-process-context.state context)
           (logand (if (.play-p (.project self)) sb:+vst-process-context-states-and-flags-k-playing+ 0)
                   sb:+vst-process-context-states-and-flags-k-tempo-valid+
@@ -270,46 +320,50 @@
     (setf (sb:vst-process-context.project-time-samples context)
           ;; TODO これあってる？
           (floor (* (/ play-time (/ bpm 60.0)) (.sample-rate *config*))))
-    (setf (sb:vst-process-data.input-parameter-changes (.wrap *process-data*))
+
+    (setup-audio-buffer (.inputs process-data)
+                        (.inputs *process-data*))
+
+    (setf (sb:vst-process-data.input-parameter-changes (.wrap process-data))
           (vst3-impl::ptr (.parameter-changes-out self)))
-    (setf (sb:vst-process-data.output-parameter-changes (.wrap *process-data*))
-          (vst3-impl::ptr (.parameter-changes-in self))))
+    (setf (sb:vst-process-data.output-parameter-changes (.wrap process-data))
+          (vst3-impl::ptr (.parameter-changes-in self)))
 
-  (prepare (.parameter-changes-in self))
-  (prepare (.parameter-changes-out self))
+    (prepare (.parameter-changes-in self))
+    (prepare (.parameter-changes-out self))
 
-  (loop for message = (sb-concurrency:receive-message-no-hang
-                       (.param-changes-mbox-in self))
-        with changes = (.parameter-changes-out self)
-        while message
-        do (destructuring-bind (id value sample-offset) message
-             (let ((queue (or (loop for i below (vst3-impl::get-parameter-count changes)
-                                    for queue = (vst3-impl::get-parameter-data-wrap changes i)
-                                      thereis (and (= (vst3-impl::get-parameter-id queue)
-                                                      id)
-                                                   queue))
-                              (cffi:with-foreign-object (id-ptr :uint)
-                                (setf (cffi:mem-ref id-ptr :uint) id)
-                                (vst3-impl::add-parameter-data-wrap
-                                 changes id-ptr (cffi:null-pointer))))))
-               (vst3-impl::add-point queue sample-offset value (cffi:null-pointer)))))
+    (loop for message = (sb-concurrency:receive-message-no-hang
+                         (.param-changes-mbox-in self))
+          with changes = (.parameter-changes-out self)
+          while message
+          do (destructuring-bind (id value sample-offset) message
+               (let ((queue (or (loop for i below (vst3-impl::get-parameter-count changes)
+                                      for queue = (vst3-impl::get-parameter-data-wrap changes i)
+                                        thereis (and (= (vst3-impl::get-parameter-id queue)
+                                                        id)
+                                                     queue))
+                                (cffi:with-foreign-object (id-ptr :uint)
+                                  (setf (cffi:mem-ref id-ptr :uint) id)
+                                  (vst3-impl::add-parameter-data-wrap
+                                   changes id-ptr (cffi:null-pointer))))))
+                 (vst3-impl::add-point queue sample-offset value (cffi:null-pointer)))))
 
-  (vst3-ffi::process (.audio-processor self)
-                     (autowrap:ptr (.wrap *process-data*)))
+    (vst3-ffi::process (.audio-processor self)
+                       (autowrap:ptr (.wrap process-data)))
 
-  (loop with changes = (.parameter-changes-out self)
-        for queue-index below (vst3-impl::get-parameter-count changes)
-        for queue = (vst3-impl::get-parameter-data-wrap changes queue-index)
-        for param-id = (vst3-impl::get-parameter-id queue)
-        do (loop for point-index below (vst3-impl::get-point-count queue)
-                 do (multiple-value-bind (value sample-offset)
-                        (vst3-impl::get-value-and-smaple-offset queue point-index)
-                      (sb-concurrency:send-message (.param-changes-mbox-out self)
-                                                   (list param-id
-                                                         value
-                                                         sample-offset)))))
+    (loop with changes = (.parameter-changes-out self)
+          for queue-index below (vst3-impl::get-parameter-count changes)
+          for queue = (vst3-impl::get-parameter-data-wrap changes queue-index)
+          for param-id = (vst3-impl::get-parameter-id queue)
+          do (loop for point-index below (vst3-impl::get-point-count queue)
+                   do (multiple-value-bind (value sample-offset)
+                          (vst3-impl::get-value-and-smaple-offset queue point-index)
+                        (sb-concurrency:send-message (.param-changes-mbox-out self)
+                                                     (list param-id
+                                                           value
+                                                           sample-offset)))))
 
-  (call-next-method))
+    (call-next-method)))
 
 (defmethod restart-component ((self module-vst3) flags)
   (declare (ignorable flags))

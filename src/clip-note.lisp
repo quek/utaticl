@@ -58,25 +58,19 @@
         do (cond ((and (<= start note-start)
                        (< note-start end))
                   (note-on *process-data*
-                           (.key note)
-                           (.channel note)
-                           (.velocity note)
+                           note
                            (+ offset-samples (time-to-sample (.project self) (- note-start start)))))
                  ((and (< start note-end)
                        (<= note-end end))
                   (note-off *process-data*
-                            (.key note)
-                            (.channel note)
-                            1.0
+                            note
                             (+ offset-samples (time-to-sample (.project self) (- note-end start)))))
                  ((and loop-p
                        (< note-start end)
                        (<= end note-end))
                   ;; ノートの途中でループの折り返しなので note off する
                   (note-off *process-data*
-                            (.key note)
-                            (.channel note)
-                            1.0
+                            note
                             (+ offset-samples (time-to-sample (.project self) (- end start)))))
                  ((<= end note-start)
                   ;; note は time 順にソートされている

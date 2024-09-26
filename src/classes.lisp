@@ -325,6 +325,7 @@
                          :accessor .parameter-changes-in)
    (parameter-changes-out :initform (make-instance 'vst3-impl::parameter-changes)
                           :accessor .parameter-changes-out)
+   (process-data :accessor .process-data)
    (single-component-p :initarg :single-component-p :accessor .single-component-p)
    (view :initform :nil :accessor .view)))
 
@@ -392,14 +393,27 @@
 
 (defclass process-data ()
   ((bpm :accessor .bpm)
+   (inputs :accessor .inputs)
+   (outputs :accessor .outputs)
+   (input-events :initform (make-instance 'note-buffer) :accessor .input-events)
+   (output-events :initform (make-instance 'note-buffer) :accessor .output-events)
+   (notes-on :initform nil :accessor .notes-on)
+   (pdc-buffer :initform nil :accessor .pdc-buffer)))
+
+(defclass process-data-vst3 ()
+  ((bpm :accessor .bpm)
    (wrap  :accessor .wrap)
    (inputs :accessor .inputs)
    (outputs :accessor .outputs)
    (input-events :accessor .input-events)
    (output-events :accessor .output-events)
    (context :accessor .context)
-   (notes-on :initform nil :accessor .notes-on)
-   (pdc-buffer :initform nil :accessor .pdc-buffer)))
+   (notes-on :initform nil :accessor .notes-on)))
+
+(defclass audio-bus ()
+  ((buffer :accessor .buffer)
+   (const :initform 0 :accessor .const)
+   (nchannels :initarg :nchannels :initform 2 :accessor .nchannels)))
 
 (defclass audio-bus-buffers ()
   ((ptr :accessor .ptr)
@@ -413,6 +427,22 @@
    (sample-rate :initform nil :accessor .sample-rate)
    (supported-standard-sample-reates :initform nil
                                      :accessor .supported-standard-sample-reates)))
+
+(defclass note-buffer ()
+  ((events :initform (make-array 16 :fill-pointer 0) :accessor .events)
+   (notes :initform (make-array 16 :fill-pointer 0) :accessor .notes)
+   (sample-offsets :initform (make-array 16 :fill-pointer 0 :element-type 'fixnum)
+                   :accessor .sample-offsets)))
+
+(defclass event-note ()
+  ((note :initarg :note :accessor .note)
+   (sample-offset :initarg :sample-offset :accessor .sample-offset)))
+
+(defclass event-note-on (event-note)
+  ())
+
+(defclass event-note-off (event-note)
+  ())
 
 (defclass color-window (show-mixin view)
   ((neko :initform nil :accessor .neko)

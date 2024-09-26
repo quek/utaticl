@@ -3,65 +3,16 @@
 (defmethod initialize-instance :after ((self process-data)
                                        &key (audio-input-bus-count 1)
                                          (audio-output-bus-count 1))
-  (let ((wrap (autowrap:alloc '(:struct (sb:vst-process-data))))
-        (inputs (make-instance 'audio-bus-buffers :nbuses audio-input-bus-count))
-        (outputs (make-instance 'audio-bus-buffers :nbuses audio-output-bus-count))
-        (input-events (make-instance 'vst3-impl::event-list))
-        (output-events (make-instance 'vst3-impl::event-list))
-        (context (autowrap:calloc '(:struct (sb:vst-process-context)))))
-    (setf (.wrap self) wrap)
-    (setf (sb:vst-process-data.process-mode wrap)
-          sb:+vst-process-modes-k-realtime+)
-    (setf (sb:vst-process-data.symbolic-sample-size wrap)
-          sb:+vst-symbolic-sample-sizes-k-sample32+)
-    (setf (sb:vst-process-data.num-samples wrap)
-          (.frames-per-buffer *config*))
+  (setf (.inputs self) (loop repeat audio-input-bus-count
+                             collect (make-instance 'audio-bus :nchannels 2)))
+  (setf (.outputs self) (loop repeat audio-output-bus-count
+                              collect (make-instance 'audio-bus :nchannels 2))))
 
-    (setf (.inputs self) inputs)
-    (setf (sb:vst-process-data.num-inputs wrap) audio-input-bus-count)
-    (setf (sb:vst-process-data.inputs wrap) (.ptr inputs))
-    (setf (.outputs self) outputs)
-    (setf (sb:vst-process-data.num-outputs wrap) audio-output-bus-count)
-    (setf (sb:vst-process-data.outputs wrap) (.ptr outputs))
+(defmethod .audio-input-bus-count ((process-data process-data))
+  (length (.buffer (.inputs process-data))))
 
-    (setf (.input-events self) input-events)
-    (setf (sb:vst-process-data.input-events wrap) (vst3-impl::ptr input-events))
-    (setf (.output-events self) output-events)
-    (setf (sb:vst-process-data.output-events wrap) (vst3-impl::ptr output-events))
-
-    (setf (.context self) context)
-    (setf (sb:vst-process-data.process-context wrap) (autowrap:ptr context))
-    (setf (sb:vst-process-context.state context) 0)
-    (setf (sb:vst-process-context.sample-rate context) (.sample-rate *config*))
-    (setf (sb:vst-process-context.time-sig-numerator context) 4)
-    (setf (sb:vst-process-context.time-sig-denominator context) 4)
-
-    (sb-ext:finalize self (lambda ()
-                            (log:trace "process-data finalize free" wrap)
-                            (autowrap:free context)
-                            (autowrap:free wrap)
-                            (vst3-impl::release input-events)
-                            (vst3-impl::release output-events)))))
-
-(defmethod p ((self process-data))
-  (flet ((f (label audio-bus-buffer nbuses)
-           (let ((ptr (sb:vst-audio-bus-buffers.vst-audio-bus-buffers-channel-buffers32 audio-bus-buffer)))
-             (unless (autowrap:wrapper-null-p ptr)
-               (loop for i below nbuses
-                     do (format t "~a ~b" label (sb:vst-audio-bus-buffers.silence-flags audio-bus-buffer))
-                        (loop for j below 10
-                              with p = (autowrap:c-aref ptr i :pointer)
-                              do (format t " ~2f" (autowrap:c-aref p j :float)))
-                        (terpri))))))
-    (f "in" (sb:vst-process-data.inputs* (.wrap self)) (sb:vst-process-data.num-inputs (.wrap self)))
-    (f "out" (sb:vst-process-data.outputs* (.wrap self)) (sb:vst-process-data.num-outputs (.wrap self)))))
-
-
-(defmethod .audio-input-bus-count ((self process-data))
-  (sb:vst-process-data.num-inputs (.wrap self)))
-
-(defmethod .audio-output-bus-count ((self process-data))
-  (sb:vst-process-data.num-outputs (.wrap self)))
+(defmethod .audio-output-bus-count ((process-data process-data))
+  (length (.buffer (.outputs process-data))))
 
 (defmethod prepare ((self process-data))
   (prepare (.inputs self))
@@ -69,20 +20,8 @@
   (prepare (.input-events self))
   (prepare (.output-events self)))
 
-(defmethod note-off ((self process-data) key channel velocity sample-offset)
-  (autowrap:with-alloc (event '(:struct (sb:vst-event)))
-    (setf (sb:vst-event.bus-index event) 0) ;TODO
-    (setf (sb:vst-event.sample-offset event) sample-offset)
-    (setf (sb:vst-event.ppq-position event) .0d0) ;TODO
-    (setf (sb:vst-event.flags event) sb:+vst-event-event-flags-k-is-live+) ;TODO
-    (setf (sb:vst-event.type event) sb:+vst-event-event-types-k-note-off-event+)
-    (setf (sb:vst-event.vst-event-note-off.channel event) channel)
-    (setf (sb:vst-event.vst-event-note-off.pitch event) key)
-    (setf (sb:vst-event.vst-event-note-off.velocity event) velocity)
-    (setf (sb:vst-event.vst-event-note-off.note-id event) -1)
-    (setf (sb:vst-event.vst-event-note-off.tuning event) .0)
-    (vst3-impl::add-event (.input-events self) (autowrap:ptr event)))
-  (setf (.notes-on self) (delete key (.notes-on self) :test #'equal))
+(defmethod note-off ((process-data process-data) note sample-offset)
+  (note-off (.input-events process-data) note sample-offset)
   (values))
 
 (defmethod note-off-all ((self process-data))
@@ -90,21 +29,8 @@
         do (note-off self key channel 1.0 0))
   (setf (.notes-on self) nil))
 
-(defmethod note-on ((self process-data) key channel velocity sample-offset)
-  (autowrap:with-alloc (event '(:struct (sb:vst-event)))
-    (setf (sb:vst-event.bus-index event) 0) ;TODO
-    (setf (sb:vst-event.sample-offset event) sample-offset)
-    (setf (sb:vst-event.ppq-position event) .0d0) ;TODO
-    (setf (sb:vst-event.flags event) sb:+vst-event-event-flags-k-is-live+) ;TODO
-    (setf (sb:vst-event.type event) sb:+vst-event-event-types-k-note-on-event+)
-    (setf (sb:vst-event.vst-event-note-on.channel event) channel)
-    (setf (sb:vst-event.vst-event-note-on.pitch event) key)
-    (setf (sb:vst-event.vst-event-note-on.tuning event) .0)
-    (setf (sb:vst-event.vst-event-note-on.velocity event) velocity)
-    (setf (sb:vst-event.vst-event-note-on.note-id event) -1)
-    (setf (sb:vst-event.vst-event-note-on.length event) 0)
-    (vst3-impl::add-event (.input-events self) (autowrap:ptr event)))
-  (pushnew (cons key channel) (.notes-on self) :test #'equal)
+(defmethod note-on ((process-data process-data) note sample-offset)
+  (note-on (.input-events process-data) note sample-offset)
   (values))
 
 (defmethod swap-in-out ((self process-data))
