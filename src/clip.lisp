@@ -44,7 +44,7 @@
 (defmethod stop-immediate ((clip clip))
   (setf (.play-p clip) nil))
 
-(defmethod terminate ((self clip))
+(defmethod terminate ((self clip) &key)
   (let ((seq (.seq self)))
     (when seq
       (setf (.clips seq) (delete self (.clips seq))))))

@@ -86,7 +86,7 @@
 (defmethod sys-window-pos% ((backend (eql :sdl-vulkan)) window)
   (multiple-value-list (sdl2:get-window-position window)))
 
-(defmethod terminate ((self app))
+(defmethod terminate ((self app) &key)
   (audio-thread-stop self)
   (loop for project in (.projects self)
         do (terminate project)))

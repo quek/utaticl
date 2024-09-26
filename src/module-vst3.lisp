@@ -107,7 +107,7 @@
   (params-prepare self)
   (params-value-changed self))
 
-(defmethod terminate ((self module-vst3))
+(defmethod terminate ((self module-vst3) &key)
   (when (.component self)
     (disconnect-componet-controller self)
     (let ((terminate-controller-p

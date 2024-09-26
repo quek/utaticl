@@ -1,5 +1,5 @@
 (defpackage :utaticl.clap
-  (:use :cl :utaticl.core))
+  (:use :cl :anaphora :utaticl.core))
 
 (in-package :utaticl.clap)
 
@@ -67,7 +67,7 @@
   `(cffi:foreign-funcall-pointer
     ,function
     ()
-    :pointer (autowrap:ptr (utaticl.core::.plugin utaticl.core::module-clap))
+    :pointer (autowrap:ptr (utaticl.core::.plugin self))
     ,@args-and-return-type))
 
 (defun get-factory (path)
@@ -90,7 +90,7 @@
 
 (defun create-plugin (factory id)
   (sb-int:with-float-traps-masked (:invalid :inexact :overflow :divide-by-zero)
-    (let ((host (autowrap:alloc '(:struct (clap:clap-host)))))
+    (let ((host (autowrap:alloc 'clap:clap-host-t)))
       (setf (clap:clap-host.clap-version.major host) 1
             (clap:clap-host.clap-version.minor host) 1
             (clap:clap-host.clap-version.revision host) 10)
@@ -124,42 +124,42 @@
     (setf (clap:clap-host-gui.closed clap-host-gui)
           (cffi:callback gui.closed))))
 
-(defun query-audio-ports (module-clap)
-  (let ((ext (.ext-audio-ports module-clap)))
+(defun query-audio-ports (self)
+  (let ((ext (.ext-audio-ports self)))
     (if ext
         (progn
-          (setf (.audio-input-bus-count module-clap)
+          (setf (.audio-input-bus-count self)
                 (call (clap:clap-plugin-audio-ports.count ext)
                                     :bool t
                                     :unsigned-int))
-          (setf (.audio-output-bus-count module-clap)
+          (setf (.audio-output-bus-count self)
                 (call (clap:clap-plugin-audio-ports.count ext)
                                     :bool nil
                                     :unsigned-int)))
         (progn
-          (setf (.audio-input-bus-count module-clap) 0)
-          (setf (.audio-output-bus-count module-clap) 0)))))
+          (setf (.audio-input-bus-count self) 0)
+          (setf (.audio-output-bus-count self) 0)))))
 
-(defun query-note-ports (module-clap)
-  (let ((ext (.ext-note-ports module-clap)))
+(defun query-note-ports (self)
+  (let ((ext (.ext-note-ports self)))
     (if ext
         (progn
-          (setf (.event-input-bus-count module-clap)
+          (setf (.event-input-bus-count self)
                 (call (clap:clap-plugin-note-ports.count ext)
                                     :bool t
                                     :unsigned-int))
-          (setf (.event-output-bus-count module-clap)
+          (setf (.event-output-bus-count self)
                 (call (clap:clap-plugin-note-ports.count ext)
                                     :bool nil
                                     :unsigned-int)))
         (progn
-          (setf (.event-input-bus-count module-clap) 0)
-          (setf (.event-output-bus-count module-clap) 0)))))
+          (setf (.event-input-bus-count self) 0)
+          (setf (.event-output-bus-count self) 0)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (in-package :utaticl.core)
 
-(defmethod initialize-instance :after ((module-clap module-clap) &key id plugin-info-clap)
+(defmethod initialize-instance :after ((self module-clap) &key id plugin-info-clap)
   (when (and id (not plugin-info-clap))
     (setf plugin-info-clap
           (loop for plugin-info in (plugin-info-load-all)
@@ -172,13 +172,13 @@
           (utaticl.clap::create-plugin factory (.id plugin-info-clap))
         (setf (gethash (cffi:pointer-address (autowrap:ptr host))
                        utaticl.clap::*host-map*)
-              module-clap)
-        (setf (.id module-clap) (.id plugin-info-clap))
-        (setf (.name module-clap) (.name plugin-info-clap))
-        (setf (.factory module-clap) factory)
-        (setf (.library module-clap) library)
-        (setf (.plugin module-clap) plugin)
-        (setf (.host module-clap) host)
+              self)
+        (setf (.id self) (.id plugin-info-clap))
+        (setf (.name self) (.name plugin-info-clap))
+        (setf (.factory self) factory)
+        (setf (.library self) library)
+        (setf (.plugin self) plugin)
+        (setf (.host self) host)
         (cffi:foreign-funcall-pointer
          (clap:clap-plugin.init plugin) ()
          :pointer (autowrap:ptr plugin)
@@ -190,7 +190,7 @@
                              :string id
                              :pointer)))
                    (unless (cffi:null-pointer-p ptr)
-                     (funcall writer (funcall make :ptr ptr) module-clap)))))
+                     (funcall writer (funcall make :ptr ptr) self)))))
           (extension "clap.audio-ports" #'clap::make-clap-plugin-audio-ports
                      (fdefinition '(setf .ext-audio-ports)))
           (extension "clap.gui" #'clap::make-clap-plugin-gui
@@ -200,31 +200,48 @@
           (extension "clap.note-ports" #'clap::make-clap-plugin-note-ports
                      (fdefinition '(setf .ext-note-ports)))
           (extension "clap.state" #'clap::make-clap-plugin-state
-                     (fdefinition '(setf .ext-state))))
-        (utaticl.clap::query-audio-ports module-clap)
-        (utaticl.clap::query-note-ports module-clap)))
-    (utaticl.clap::prepare-callbacks module-clap)))
+                     (fdefinition '(setf .ext-state))))))
 
-(defmethod closed ((module-clap module-clap) was-destroyed)
-  (when (.clap-window module-clap)
-    (utaticl.clap::call (clap:clap-plugin-gui.destroy (.ext-gui module-clap))
+    (utaticl.clap::prepare-callbacks self)
+
+    (audio-buffer-setup self)
+    (event-buffer-setup self)
+
+    (params-prepare self)
+    (params-value-changed self)))
+
+(defmethod audio-buffer-setup ((self module-clap))
+  (utaticl.clap::query-audio-ports self)
+  (let* ((clap-process (.clap-process self))
+         (audio-inputs (clap:clap-process.audio-inputs clap-process))
+         (audio-outputs (clap:clap-process.audio-outputs clap-process)))
+    (unless (autowrap:wrapper-null-p audio-inputs)
+      ))
+  (terminate-audio-buffer self))
+
+(defmethod event-buffer-setup ((self module-clap))
+  (utaticl.clap::query-note-ports self))
+
+(defmethod closed ((self module-clap) was-destroyed)
+  (when (.clap-window self)
+    (utaticl.clap::call (clap:clap-plugin-gui.destroy (.ext-gui self))
                         :void)
-    (let ((hwnd (clap:clap-window.win32 (.clap-window module-clap))))
+    (let ((hwnd (clap:clap-window.win32 (.clap-window self))))
       (remhash (cffi:pointer-address hwnd) *hwnd-module-map*)
       (ftw:destroy-window hwnd))
-    (autowrap:free (.clap-window module-clap))
-    (setf (.clap-window module-clap) nil)))
+    (autowrap:free (.clap-window self))
+    (setf (.clap-window self) nil)))
 
-(defmethod editor-close ((module-clap module-clap))
-  (utaticl.clap::call (clap:clap-plugin-gui.hide (.ext-gui module-clap))
+(defmethod editor-close ((self module-clap))
+  (utaticl.clap::call (clap:clap-plugin-gui.hide (.ext-gui self))
                       :bool)
-  (win32::hide (clap:clap-window.win32 (.clap-window module-clap)))
-  (closed module-clap t)
+  (win32::hide (clap:clap-window.win32 (.clap-window self)))
+  (closed self t)
   t)
 
-(defmethod editor-open ((module-clap module-clap))
-  (let ((ext (.ext-gui module-clap))
-        (clap-window (.clap-window module-clap)))
+(defmethod editor-open ((self module-clap))
+  (let ((ext (.ext-gui self))
+        (clap-window (.clap-window self)))
     (if clap-window
         (progn
           (utaticl.clap::call (clap:clap-plugin-gui.show ext)
@@ -254,10 +271,10 @@
                          (@ (cffi:mem-ref width :unsigned-int)
                             (cffi:mem-ref height :unsigned-int))))
                  (hwnd (win32::make-window (.x size) (.y size) resize-p))
-                 (clap-window (autowrap:alloc '(:struct (clap:clap-window)))))
+                 (clap-window (autowrap:alloc 'clap:clap-window-t)))
             (setf (gethash (cffi:pointer-address hwnd) *hwnd-module-map*)
-                  module-clap)
-            (setf (.clap-window module-clap) clap-window)
+                  self)
+            (setf (.clap-window self) clap-window)
             (setf (clap:clap-window.api clap-window) utaticl.clap::+window-api-win32+)
             (setf (clap:clap-window.win32 clap-window) hwnd)
             (utaticl.clap::call (clap:clap-plugin-gui.set-parent ext)
@@ -267,7 +284,7 @@
                                 :bool)
             t)))))
 
-(defmethod on-resize ((module-clap module-clap) width height)
+(defmethod on-resize ((self module-clap) width height)
   "called from wnd-proc wm-size"
   ;; TODO
   )
@@ -298,25 +315,41 @@
                     (cffi:foreign-funcall "FreeLibrary" :pointer library :int)))))
 ;(mapc #'describe (plugin-scan-clap))
 
-(defmethod request-resize ((module-clap module-clap) width height)
-  (when (.editor-open-p module-clap)
-    (ftw:set-window-pos (clap:clap-window.win32 (.clap-window module-clap))
+(defmethod request-resize ((self module-clap) width height)
+  (when (.editor-open-p self)
+    (ftw:set-window-pos (clap:clap-window.win32 (.clap-window self))
                         nil 0 0 width height
                         '(:no-zorder :no-move)))
   t)
 
-(defmethod resize-hints-changed ((module-clap module-clap))
-  (autowrap:with-alloc (hints '(:struct (clap:clap-gui-resize-hints)))
-    (utaticl.clap::call (clap:clap-plugin-gui.get-resize-hints (.ext-gui module-clap))
+(defmethod resize-hints-changed ((self module-clap))
+  (autowrap:with-alloc (hints 'clap:clap-gui-resize-hints-t)
+    (utaticl.clap::call (clap:clap-plugin-gui.get-resize-hints (.ext-gui self))
                         :pointer (autowrap:ptr hints)
                         :bool)
     ;; TODO なにするの？
     ))
 
-(defmethod terminate ((module-clap module-clap))
-  (closed module-clap t)
-  (utaticl.clap::call (clap:clap-plugin.destroy (.plugin module-clap))
+(defmethod terminate ((self module-clap) &key)
+  (closed self t)
+  (utaticl.clap::call (clap:clap-plugin.destroy (.plugin self))
                       :void)
-  (autowrap:free (.clap-host-gui module-clap))
-  (autowrap:free (.host module-clap))
-  (cffi:foreign-funcall "FreeLibrary" :pointer (.library module-clap) :int))
+  (terminate (.clap-process self))
+  (autowrap:free (.clap-host-gui self))
+  (autowrap:free (.host self))
+  (cffi:foreign-funcall "FreeLibrary" :pointer (.library self) :int))
+
+(defmethod terminate ((self clap:clap-process) &key)
+  (terminate (clap:clap-process.audio-inputs self)
+             :count (clap:clap-process.audio-inputs-count self))
+  (terminate (clap:clap-process.audio-outputs self)
+             :count (clap:clap-process.audio-outputs-count self))
+  ;; TODO event buffer
+  (autowrap:free self))
+
+(defmethod terminate ((self clap:clap-audio-buffer) &key count)
+  "*data32 は process-data 管理"
+  (loop for i below count
+        for x = (autowrap:c-aref self i 'clap:clap-audio-buffer-t)
+        do (autowrap:free (clap:clap-audio-buffer.data32 x)))
+  (autowrap:free self))

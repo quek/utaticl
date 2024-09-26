@@ -1,5 +1,9 @@
 (in-package :utaticl.core)
 
+(defgeneric prepare (self))
+(defgeneric terminate (self &key &allow-other-keys))
+
+
 (defgeneric cmd-add (project cmd-class &rest args)
   (:method ((project null) cmd-class &rest args)
     (declare (ignore args))))

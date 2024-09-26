@@ -152,11 +152,11 @@
 (defmethod stop ((self module))
   (setf (.start-p self) nil))
 
-(defmethod terminate :before ((self module))
+(defmethod terminate :before ((self module) &key)
   (editor-close self)
   (stop self))
 
-(defmethod terminate ((self module)))
+(defmethod terminate ((self module) &key))
 
 (defmethod wait-for-from-p ((self module))
   (some (lambda (connection)

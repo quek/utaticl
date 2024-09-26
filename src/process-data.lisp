@@ -24,6 +24,7 @@
   (note-off (.input-events process-data) note sample-offset)
   (values))
 
+;;; TODO これ系は vst3 じゃなくて、ここでよかったかも
 (defmethod note-off-all ((self process-data))
   (loop for (key . channel) in (.notes-on self)
         do (note-off self key channel 1.0 0))
@@ -37,18 +38,10 @@
   (let ((wrap (.wrap self)))
     (psetf (.inputs self)
            (.outputs self)
-           (sb:vst-process-data.inputs wrap)
-           (sb:vst-process-data.outputs wrap)
            (.outputs self)
            (.inputs self)
-           (sb:vst-process-data.outputs wrap)
-           (sb:vst-process-data.inputs wrap)
 
            (.input-events self)
            (.output-events self)
-           (sb:vst-process-data.input-events wrap)
-           (sb:vst-process-data.output-events wrap)
            (.output-events self)
-           (.input-events self)
-           (sb:vst-process-data.output-events wrap)
-           (sb:vst-process-data.input-events wrap))))
+           (.input-events self))))

@@ -248,7 +248,7 @@
 (defmethod (setf .sceen-matrix) :after ((sceen-matrix sceen-matrix) (project project))
   (setf (.project sceen-matrix) project))
 
-(defmethod terminate ((self project))
+(defmethod terminate ((self project) &key)
   (terminate (.master-track self)))
 
 (defmethod time-to-sample ((self project) time)

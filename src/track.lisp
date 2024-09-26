@@ -149,7 +149,7 @@
 (defmethod (setf .select-p) :after ((value (eql t)) (self track))
   (setf (.target-track (.project self)) self))
 
-(defmethod terminate ((self track))
+(defmethod terminate ((self track) &key)
   (loop for module in (.modules self)
         do (stop module)
            (terminate module))
