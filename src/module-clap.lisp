@@ -313,7 +313,19 @@
                                                     :path path
                                                     :file-write-date file-write-date))
                     (cffi:foreign-funcall "FreeLibrary" :pointer library :int)))))
-;(mapc #'describe (plugin-scan-clap))
+;;(mapc #'describe (plugin-scan-clap))
+
+(defmethod process ((self module-clap))
+  (let* ((plugin (.plugin self))
+         (clap-process (.clap-process self)))
+
+    (set-to-clap-process *process-data* clap-process)
+
+    (case (utaticl.clap::call (clap:clap-plugin.process plugin)
+                              :pointer clap-process
+                              :int)
+      (#.clap:+clap-process-error+
+       (report "failed clap process")))))
 
 (defmethod request-resize ((self module-clap) width height)
   (when (.editor-open-p self)
@@ -339,7 +351,7 @@
   (autowrap:free (.host self))
   (cffi:foreign-funcall "FreeLibrary" :pointer (.library self) :int))
 
-(defmethod terminate ((self clap:clap-process) &key)
+(defmethod terminate ((self clap:clap-process-t) &key)
   (terminate (clap:clap-process.audio-inputs self)
              :count (clap:clap-process.audio-inputs-count self))
   (terminate (clap:clap-process.audio-outputs self)
@@ -347,7 +359,7 @@
   ;; TODO event buffer
   (autowrap:free self))
 
-(defmethod terminate ((self clap:clap-audio-buffer) &key count)
+(defmethod terminate ((self clap:clap-audio-buffer-t) &key count)
   "*data32 は process-data 管理"
   (loop for i below count
         for x = (autowrap:c-aref self i 'clap:clap-audio-buffer-t)

@@ -34,7 +34,25 @@
   (note-on (.input-events process-data) note sample-offset)
   (values))
 
-(defmethod swap-in-out ((self process-data))
+(defmethod set-to-clap-process ((self process-data) clap-process)
+  (loop for input in (.inputs self)
+        for bus below (clap:clap-process.audio-inputs-count clap-process)
+        for clap-audio-buffer = (autowrap:c-aref
+                                 (clap:clap-process.audio-inputs clap-process)
+                                 bus
+                                 'clap:clap-audio-buffer-t)
+        do (buffer-set-to-clap-audio-buffer
+            input clap-audio-buffer))
+  (loop for output in (.outputs self)
+        for bus below (clap:clap-process.audio-outputs-count clap-process)
+        for clap-audio-buffer = (autowrap:c-aref
+                                 (clap:clap-process.audio-outputs clap-process)
+                                 bus
+                                 'clap:clap-audio-buffer-t)
+        do (buffer-set-to-clap-audio-buffer
+            output clap-audio-buffer)))
+
+(Defmethod swap-in-out ((self process-data))
   (let ((wrap (.wrap self)))
     (psetf (.inputs self)
            (.outputs self)
