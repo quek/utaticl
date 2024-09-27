@@ -3,44 +3,57 @@
 
 (in-package :utaticl.clap)
 
-(defvar *host-map* (make-hash-table :weakness :value))
+(defvar *object-map* (make-hash-table :weakness :value))
+
+(defmethod object-get ((pointer sb-sys:system-area-pointer))
+  (gethash (cffi:pointer-address pointer) *object-map*))
+
+(defmethod object-get ((wrap structure-object))
+  (object-get (autowrap:ptr wrap)))
+
+(defmethod object-insert ((pointer sb-sys:system-area-pointer) object)
+  (setf (gethash (cffi:pointer-address pointer) *object-map*)
+        object))
+
+(defmethod object-insert ((wrap structure-object) object)
+  (object-insert (autowrap:ptr wrap) object))
 
 (cffi:defcallback gui.resize-hints-changed :void
     ((host :pointer))
   (log:trace "gui.resize-hints-changed" host)
-  (resize-hints-changed (gethash (cffi:pointer-address host) *host-map*)))
+  (resize-hints-changed (gethash (cffi:pointer-address host) *object-map*)))
 
 (cffi:defcallback gui.request-resize :bool
     ((host :pointer)
      (width :unsigned-int)
      (height :unsigned-int))
   (log:trace "gui.request-resize" host)
-  (request-resize (gethash (cffi:pointer-address host) *host-map*)
+  (request-resize (gethash (cffi:pointer-address host) *object-map*)
                   width height))
 
 (cffi:defcallback gui.request-show :bool
     ((host :pointer))
   (log:trace "gui.request-show" host)
-  (editor-open (gethash (cffi:pointer-address host) *host-map*))
+  (editor-open (gethash (cffi:pointer-address host) *object-map*))
   t)
 
 (cffi:defcallback gui.request-hide :bool
     ((host :pointer))
   (log:trace "gui.request-hide" host)
-  (editor-close (gethash (cffi:pointer-address host) *host-map*))
+  (editor-close (gethash (cffi:pointer-address host) *object-map*))
   t)
 
 (cffi:defcallback gui.closed :void
     ((host :pointer)
      (was-destroyed :bool))
   (log:trace "gui.request-closed" host)
-  (closed (gethash (cffi:pointer-address host) *host-map*) was-destroyed))
+  (closed (gethash (cffi:pointer-address host) *object-map*) was-destroyed))
 
 (cffi:defcallback host.get-extension :pointer
     ((host :pointer)
      (extension-id :string))
   (log:trace "host.get-extension" host extension-id)
-  (let ((module-clap (gethash (cffi:pointer-address host) *host-map*)))
+  (let ((module-clap (gethash (cffi:pointer-address host) *object-map*)))
     (cond ((equal extension-id "clap.gui")
            (autowrap:ptr (.clap-host-gui module-clap)))
           (t (cffi:null-pointer)))))
@@ -56,6 +69,60 @@
 (cffi:defcallback host.request-callback :void
     ((host :pointer))
   (log:trace "host.request-callback" host))
+
+
+(defun %def-clap-method (method class args return-type body)
+  (let ((this (gensym "SELF"))
+        (method (intern (format nil "~a.~a" class method))))
+    `(progn
+       (defmethod ,method ((self ,class) ,@(mapcar #'car args))
+         ,@body)
+       (cffi:defcallback ,method ,return-type
+           ((,this :pointer)
+            ,@args)
+         (,method (object-get ,this) ,@(mapcar #'car args))))))
+
+(defun %set-clap-struct-callback (struct field)
+  (let* ((writer (intern (format nil "CLAP-~a.~a" struct field) :clap))
+         (callback (intern (format nil "~a.~a" struct field))))
+   `(setf (,writer it)
+          (cffi:callback ,callback))))
+
+(defmacro def-clap-struct (name slots methods)
+  `(progn
+     (defstruct (,name (:include ,(intern (format nil "CLAP-~a-T" name) :clap))
+                       (:constructor ,(intern
+                                       (format nil "%MAKE-~a" name))))
+       ,@slots)
+     (defun ,(intern (format nil "MAKE-~a" name)) (&key ptr)
+       (anaphora:aprog1
+           (,(intern (format nil "%MAKE-~a" name))
+            :ptr (or ptr
+                     (autowrap:ptr
+                      (aprog1
+                          (autowrap:calloc
+                           ',(intern (format nil "CLAP-~a-T" name) :clap))
+                        ,@(loop for (method-name) in methods
+                                collect (%set-clap-struct-callback name method-name))))))
+         (object-insert (autowrap:ptr it) it)))
+     ,@ (loop for (method-name args return-type . body) in methods
+              collect (%def-clap-method method-name name args return-type body))))
+
+(def-clap-struct input-events
+    ((list (make-array 16 :fill-pointer 0)))
+  ((size () :unsigned-int
+         (length (input-events-list self)))
+   (get ((index :unsigned-int)) :pointer
+        (autowrap:ptr (aref (input-events-list self) index)))))
+
+(def-clap-struct output-events
+    ((list (make-array 16 :fill-pointer 0)))
+  ((try-push ((event :pointer)) ;const clap_event_header_t *event
+             :bool
+             (vector-push-extend (clap::make-clap-event-header-t :ptr event)
+                                 (output-events-list self))
+             t)))
+
 
 (alexandria:define-constant +host-name+ "UTATICL" :test 'equal)
 (alexandria:define-constant +host-url+ "https://github.com/quek/utaticl" :test 'equal)
@@ -171,7 +238,7 @@
       (multiple-value-bind (plugin host)
           (utaticl.clap::create-plugin factory (.id plugin-info-clap))
         (setf (gethash (cffi:pointer-address (autowrap:ptr host))
-                       utaticl.clap::*host-map*)
+                       utaticl.clap::*object-map*)
               self)
         (setf (.id self) (.id plugin-info-clap))
         (setf (.name self) (.name plugin-info-clap))
