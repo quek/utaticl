@@ -29,7 +29,7 @@
   (plusp (ldb (byte 1 channel) (.const self))))
 
 (defmethod prepare ((self audio-bus))
-  (loop for buffer in (.buffer self)
+  (loop with buffer = (.buffer self)
         for i below (.nchannels self)
         do (setf (cffi:mem-aref buffer :float 0) .0)
-        do (const-set self i t)))
+           (const-set self i t)))

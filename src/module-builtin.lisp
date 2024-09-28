@@ -4,8 +4,8 @@
   (gethash symbol (.params self)))
 
 (defmethod process ((self module-builtin))
-  (if (and (plusp (.nbuses (.inputs *process-data*)))
-           (plusp (.nbuses (.outputs *process-data*))))
+  (if (and (plusp (length (.inputs *process-data*)))
+           (plusp (length (.outputs *process-data*))))
       (loop for channel-index below 2
             for input-channel = (buffer (.inputs *process-data*) 0 channel-index)
             for output-channel = (buffer (.outputs *process-data*) 0 channel-index)
