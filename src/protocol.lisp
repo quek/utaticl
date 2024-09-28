@@ -36,8 +36,6 @@
 (defgeneric .project (x)
   (:method ((x null))))
 
-(defgeneric realloc (x &key &allow-other-keys))
-
 (defgeneric render (x)
   (:method ((x null))))
 
