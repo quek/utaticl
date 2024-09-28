@@ -297,7 +297,7 @@
   ((factory :accessor .factory)
    (clap-host-gui :initform (autowrap:calloc 'clap:clap-host-gui-t)
                   :accessor .clap-host-gui)
-   (clap-process :initform (autowrap:calloc 'clap:clap-process-t)
+   (clap-process :initform (utaticl.clap::make-process)
                  :accessor .clap-process)
    (clap-window :initform nil :accessor .clap-window)
    (ext-audio-ports :initform nil :accessor .ext-audio-ports)

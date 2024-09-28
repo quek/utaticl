@@ -266,7 +266,7 @@
         with process-data = (.process-data module-vst3)
         for event across (.events note-buffer)
         for note across (.notes note-buffer)
-        for sample-offset across (.sample-offset note-buffer)
+        for sample-offset across (.sample-offsets note-buffer)
         do (case event
              (:on
               (autowrap:with-alloc (event '(:struct (sb:vst-event)))

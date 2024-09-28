@@ -104,9 +104,87 @@
                            ',(intern (format nil "CLAP-~a-T" name) :clap))
                         ,@(loop for (method-name) in methods
                                 collect (%set-clap-struct-callback name method-name))))))
-         (object-insert (autowrap:ptr it) it)))
+         (object-insert (autowrap:ptr it) it)
+         (initialize it)))
      ,@ (loop for (method-name args return-type . body) in methods
               collect (%def-clap-method method-name name args return-type body))))
+
+(defgeneric initialize (clap-struct))
+
+(def-clap-struct process
+    ((transport (make-event-transport))
+     (audio-inputs (make-audio-buffer :ptr (cffi:null-pointer)))
+     (audio-outputs (make-audio-buffer :ptr (cffi:null-pointer)))
+     (input-events (make-input-events))
+     (output-events (make-output-events)))
+  ())
+
+(defmethod initialize ((self process))
+  "calloc してるから何もすることない？")
+
+(defmethod terminate ((self process) &key)
+  (terminate (process-transport self))
+  (terminate (process-audio-inputs self))
+  (terminate (process-audio-outputs self))
+  (terminate (process-input-events self))
+  (terminate (process-output-events self)))
+
+(defmethod realloc ((self process) &key)
+  (let ((nbuses (clap:clap-process.audio-inputs-count self))
+        (audio-inputs (process-audio-inputs self))
+        (audio-outputs (process-audio-outputs self)))
+    (when (/= nbuses
+              (audio-buffer-nbuses audio-inputs))
+      (realloc audio-inputs :channels (loop repeat nbuses collect 2))
+      (setf (clap:clap-process-t.audio-inputs self) audio-inputs))
+    (when (/= nbuses
+              (audio-buffer-nbuses audio-outputs))
+      (realloc audio-outputs :channels (loop repeat nbuses collect 2))
+      (setf (clap:clap-process-t.audio-outputs self) audio-outputs))))
+
+(defmethod apply-from ((self process) (process-data process-data) &key)
+  (loop for input in (.inputs process-data)
+        for bus below (clap:clap-process.audio-inputs-count self)
+        do (apply-from (process-audio-inputs self) input :bus bus))
+  (loop for output in (.outputs process-data)
+        for bus below (clap:clap-process.audio-outputs-count self)
+        do (apply-from (process-audio-outputs self) output :bus bus))
+
+  (loop with from-events = (.input-events process-data)
+        with input-events = (process-input-events self)
+        for event across (.events from-events)
+        for note across (.notes from-events)
+        for sample-offset across (.sample-offsets from-events)
+        do (event-add input-events event note sample-offset)))
+
+(def-clap-struct event-transport () ())
+
+(def-clap-struct audio-buffer
+    ((nbuses 0))
+  ())
+
+(defmethod apply-from ((self audio-buffer) (audio-bus audio-bus) &key bus)
+  (loop with clap-audio-buffer = (autowrap:c-aref self bus 'clap:clap-audio-buffer-t)
+        for channel below (.nchannels audio-bus)
+        do (setf (cffi:mem-aref (clap:clap-audio-buffer.data32 clap-audio-buffer)
+                                :pointer channel)
+                 (buffer-at audio-bus channel))))
+
+(defmethod bus-at ((self audio-buffer) bus)
+  (autowrap:c-aref self bus 'clap:clap-audio-buffer-t))
+
+(defmethod realloc ((self audio-buffer) &key channels)
+  (terminate self)
+  (let ((nbuses (length channels)))
+    (autowrap:free self)
+    (setf (audio-buffer-ptr self) (autowrap:calloc 'audio-buffer nbuses))
+    (setf (audio-buffer-nbuses self) nbuses)
+    (loop for bus below nbuses
+          for x = (autowrap:c-aref self bus 'clap:clap-audio-buffer-t)
+          for nchannels in channels
+          do (setf (clap:clap-audio-buffer.channel-count x) nchannels)
+             (setf (clap:clap-audio-buffer.data32 x)
+                   (autowrap:calloc :pointer nchannels)))))
 
 (def-clap-struct input-events
     ((list (make-array 16 :fill-pointer 0)))
@@ -114,6 +192,40 @@
          (length (input-events-list self)))
    (get ((index :unsigned-int)) :pointer
         (autowrap:ptr (aref (input-events-list self) index)))))
+
+(defmethod terminate ((self input-events) &key)
+  (loop for event across (input-events-list self)
+        do (terminate event)))
+
+(defmethod event-add ((self input-events) event note sample-offset)
+  (let ((event (autowrap:calloc 'clap:clap-event-note)))
+    (setf (clap:clap-event-note.header.size event)
+          (autowrap:sizeof 'clap:clap-event-note))
+    (setf (clap:clap-event-note.header.time event)
+          sample-offset)
+    (setf (clap:clap-event-note.header.space-id event)
+          clap:+clap-core-event-space-id+)
+    (setf (clap:clap-event-note.header.type event)
+          (ecase event
+            (:on clap:+clap-event-note-on+)
+            (:off clap:+clap-event-note-off+)))
+    (setf (clap:clap-event-note.header.flags event)
+          0)
+
+    (setf (clap:clap-event-note.note-id event)
+          -1)
+    (setf (clap:clap-event-note.port-index event)
+          -1)
+    (setf (clap:clap-event-note.channel event)
+          (.channel note))
+    (setf (clap:clap-event-note.key event)
+          (.key note))
+    (setf (clap:clap-event-note.velocity event)
+          (ecase event
+            (:on (.velocity note))
+            (:off 1.0d0)))
+
+    (vector-push-extend event (input-events-list self))))
 
 (def-clap-struct output-events
     ((list (make-array 16 :fill-pointer 0)))
@@ -386,7 +498,7 @@
   (let* ((plugin (.plugin self))
          (clap-process (.clap-process self)))
 
-    (set-to-clap-process *process-data* clap-process)
+    (apply-from clap-process *process-data*)
 
     (case (utaticl.clap::call (clap:clap-plugin.process plugin)
                               :pointer clap-process

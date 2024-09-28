@@ -25,23 +25,37 @@
    #:.audio-input-bus-count
    #:.audio-output-bus-count
    #:.backend
+   #:.channel
    #:.clap-host-gui
+   #:.events
    #:.event-input-bus-count
    #:.event-output-bus-count
    #:.ext-audio-ports
    #:.ext-note-ports
-   #:.name
-   #:.params-ordered
+   #:.inputs
+   #:.input-events
+   #:.key
    #:.hwnd
+   #:.name
+   #:.nchannels
+   #:.notes
+   #:.outputs
+   #:.output-events
+   #:.params-ordered
+   #:.sample-offsets
    #:.step-count
    #:.value
+   #:.velocity
    #:.window
    #:app
+   #:apply-from
    #:arrangement
+   #:audio-bus
    #:audio-bus-buffers
    #:audio-device
    #:audio-device-window
    #:begin-edit
+   #:buffer-at
    #:clip
    #:clip-audio
    #:clip-note
