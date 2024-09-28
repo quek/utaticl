@@ -7,17 +7,13 @@
   (if (and (plusp (length (.inputs *process-data*)))
            (plusp (length (.outputs *process-data*))))
       (loop for channel-index below 2
-            for input-channel = (buffer (.inputs *process-data*) 0 channel-index)
-            for output-channel = (buffer (.outputs *process-data*) 0 channel-index)
-            for input-silent-p = (silence-flags (.inputs *process-data*) 0 channel-index)
-            if input-silent-p
-              do (setf (silence-flags (.outputs *process-data*) 0 channel-index) t)
-            else
-              do (loop for i below (.frames-per-buffer *config*)
-                       do (setf (cffi:mem-aref output-channel :float i)
-                                (process-sample self (cffi:mem-aref input-channel :float i))))
-                 (setf (silence-flags (.outputs *process-data*) 0 channel-index) nil))
-      (setf (silence-flags (.outputs *process-data*) 0) (1- (ash 1 2))))
+            for input-channel = (buffer-at (car (.inputs *process-data*)) channel-index)
+            for output-channel = (buffer-at (car (.outputs *process-data*)) channel-index)
+            for input-const-p = (const-get (car (.inputs *process-data*)) channel-index)
+            do (loop for i below (.frames-per-buffer *config*)
+                     do (setf (cffi:mem-aref output-channel :float i)
+                              (process-sample self (cffi:mem-aref input-channel :float i))))
+               (const-set (car (.outputs *process-data*)) channel-index nil)))
   (call-next-method))
 
 (defmethod state ((self module-builtin))
