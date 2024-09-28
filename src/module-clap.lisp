@@ -71,22 +71,23 @@
   (log:trace "host.request-callback" host))
 
 
-(defun %def-clap-method (method class args return-type body)
-  (let ((this (gensym "SELF"))
-        (method (intern (format nil "~a.~a" class method))))
-    `(progn
-       (defmethod ,method ((self ,class) ,@(mapcar #'car args))
-         ,@body)
-       (cffi:defcallback ,method ,return-type
-           ((,this :pointer)
-            ,@args)
-         (,method (object-get ,this) ,@(mapcar #'car args))))))
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defun %def-clap-method (method class args return-type body)
+    (let ((this (gensym "SELF"))
+          (method (intern (format nil "~a.~a" class method))))
+      `(progn
+         (defmethod ,method ((self ,class) ,@(mapcar #'car args))
+           ,@body)
+         (cffi:defcallback ,method ,return-type
+             ((,this :pointer)
+              ,@args)
+           (,method (object-get ,this) ,@(mapcar #'car args))))))
 
-(defun %set-clap-struct-callback (struct field)
-  (let* ((writer (intern (format nil "CLAP-~a.~a" struct field) :clap))
-         (callback (intern (format nil "~a.~a" struct field))))
-   `(setf (,writer it)
-          (cffi:callback ,callback))))
+  (defun %set-clap-struct-callback (struct field)
+    (let* ((writer (intern (format nil "CLAP-~a.~a" struct field) :clap))
+           (callback (intern (format nil "~a.~a" struct field))))
+      `(setf (,writer it)
+             (cffi:callback ,callback)))))
 
 (defmacro def-clap-struct (name slots methods)
   `(progn
@@ -110,52 +111,6 @@
               collect (%def-clap-method method-name name args return-type body))))
 
 (defgeneric initialize (clap-struct))
-
-(def-clap-struct process
-    ((transport (make-event-transport))
-     (audio-inputs (make-audio-buffer :ptr (cffi:null-pointer)))
-     (audio-outputs (make-audio-buffer :ptr (cffi:null-pointer)))
-     (input-events (make-input-events))
-     (output-events (make-output-events)))
-  ())
-
-(defmethod initialize ((self process))
-  "calloc してるから何もすることない？")
-
-(defmethod terminate ((self process) &key)
-  (terminate (process-transport self))
-  (terminate (process-audio-inputs self))
-  (terminate (process-audio-outputs self))
-  (terminate (process-input-events self))
-  (terminate (process-output-events self)))
-
-(defmethod realloc ((self process) &key)
-  (let ((nbuses (clap:clap-process.audio-inputs-count self))
-        (audio-inputs (process-audio-inputs self))
-        (audio-outputs (process-audio-outputs self)))
-    (when (/= nbuses
-              (audio-buffer-nbuses audio-inputs))
-      (realloc audio-inputs :channels (loop repeat nbuses collect 2))
-      (setf (clap:clap-process-t.audio-inputs self) audio-inputs))
-    (when (/= nbuses
-              (audio-buffer-nbuses audio-outputs))
-      (realloc audio-outputs :channels (loop repeat nbuses collect 2))
-      (setf (clap:clap-process-t.audio-outputs self) audio-outputs))))
-
-(defmethod apply-from ((self process) (process-data process-data) &key)
-  (loop for input in (.inputs process-data)
-        for bus below (clap:clap-process.audio-inputs-count self)
-        do (apply-from (process-audio-inputs self) input :bus bus))
-  (loop for output in (.outputs process-data)
-        for bus below (clap:clap-process.audio-outputs-count self)
-        do (apply-from (process-audio-outputs self) output :bus bus))
-
-  (loop with from-events = (.input-events process-data)
-        with input-events = (process-input-events self)
-        for event across (.events from-events)
-        for note across (.notes from-events)
-        for sample-offset across (.sample-offsets from-events)
-        do (event-add input-events event note sample-offset)))
 
 (def-clap-struct event-transport () ())
 
@@ -234,6 +189,59 @@
              (vector-push-extend (clap::make-clap-event-header-t :ptr event)
                                  (output-events-list self))
              t)))
+
+(def-clap-struct process
+    ((transport (make-event-transport))
+     (audio-inputs (make-audio-buffer :ptr (cffi:null-pointer)))
+     (audio-outputs (make-audio-buffer :ptr (cffi:null-pointer)))
+     (input-events (make-input-events))
+     (output-events (make-output-events)))
+  ())
+
+(defmethod initialize ((self process))
+  "calloc してるから何もすることない？")
+
+(defmethod terminate ((self process) &key)
+  (terminate (process-transport self))
+  (terminate (process-audio-inputs self))
+  (terminate (process-audio-outputs self))
+  (terminate (process-input-events self))
+  (terminate (process-output-events self)))
+
+(defmethod apply-from :before ((self process) (process-data process-data) &key)
+  (setf (clap:clap-process.audio-inputs-count self)
+        (length (.inputs process-data)))
+  (setf (clap:clap-process.audio-outputs-count self)
+        (length (.outputs process-data)))
+  (realloc self))
+
+(defmethod apply-from ((self process) (process-data process-data) &key)
+  (loop for input in (.inputs process-data)
+        for bus below (clap:clap-process.audio-inputs-count self)
+        do (apply-from (process-audio-inputs self) input :bus bus))
+  (loop for output in (.outputs process-data)
+        for bus below (clap:clap-process.audio-outputs-count self)
+        do (apply-from (process-audio-outputs self) output :bus bus))
+
+  (loop with from-events = (.input-events process-data)
+        with input-events = (process-input-events self)
+        for event across (.events from-events)
+        for note across (.notes from-events)
+        for sample-offset across (.sample-offsets from-events)
+        do (event-add input-events event note sample-offset)))
+
+(defmethod realloc ((self process) &key)
+  (let ((nbuses (clap:clap-process.audio-inputs-count self))
+        (audio-inputs (process-audio-inputs self))
+        (audio-outputs (process-audio-outputs self)))
+    (when (/= nbuses
+              (audio-buffer-nbuses audio-inputs))
+      (realloc audio-inputs :channels (loop repeat nbuses collect 2))
+      (setf (clap:clap-process-t.audio-inputs self) audio-inputs))
+    (when (/= nbuses
+              (audio-buffer-nbuses audio-outputs))
+      (realloc audio-outputs :channels (loop repeat nbuses collect 2))
+      (setf (clap:clap-process-t.audio-outputs self) audio-outputs))))
 
 
 (alexandria:define-constant +host-name+ "UTATICL" :test 'equal)
@@ -383,23 +391,11 @@
 
     (utaticl.clap::prepare-callbacks self)
 
-    (audio-buffer-setup self)
-    (event-buffer-setup self)
+    (setf (.clap-host-gui self) (autowrap:calloc 'clap:clap-host-gui-t))
+    (setf (.clap-process self) (utaticl.clap::make-process))
 
     (params-prepare self)
     (params-value-changed self)))
-
-(defmethod audio-buffer-setup ((self module-clap))
-  (utaticl.clap::query-audio-ports self)
-  (let* ((clap-process (.clap-process self))
-         (audio-inputs (clap:clap-process.audio-inputs clap-process))
-         (audio-outputs (clap:clap-process.audio-outputs clap-process)))
-    (unless (autowrap:wrapper-null-p audio-inputs)
-      ))
-  (terminate-audio-buffer self))
-
-(defmethod event-buffer-setup ((self module-clap))
-  (utaticl.clap::query-note-ports self))
 
 (defmethod closed ((self module-clap) was-destroyed)
   (when (.clap-window self)

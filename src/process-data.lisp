@@ -9,10 +9,10 @@
                               collect (make-instance 'audio-bus :nchannels 2))))
 
 (defmethod .audio-input-bus-count ((process-data process-data))
-  (length (.buffer (.inputs process-data))))
+  (length (.inputs process-data)))
 
 (defmethod .audio-output-bus-count ((process-data process-data))
-  (length (.buffer (.outputs process-data))))
+  (length (.outputs process-data)))
 
 (defmethod prepare ((self process-data))
   (prepare (.inputs self))
@@ -35,13 +35,12 @@
   (values))
 
 (Defmethod swap-in-out ((self process-data))
-  (let ((wrap (.wrap self)))
-    (psetf (.inputs self)
-           (.outputs self)
-           (.outputs self)
-           (.inputs self)
+  (psetf (.inputs self)
+         (.outputs self)
+         (.outputs self)
+         (.inputs self)
 
-           (.input-events self)
-           (.output-events self)
-           (.output-events self)
-           (.input-events self))))
+         (.input-events self)
+         (.output-events self)
+         (.output-events self)
+         (.input-events self)))

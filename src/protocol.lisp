@@ -1,6 +1,10 @@
 (in-package :utaticl.core)
 
-(defgeneric prepare (self))
+(defgeneric prepare (self)
+  (:method ((self list))
+    (loop for x in self
+          do (prepare x))))
+
 (defgeneric terminate (self &key &allow-other-keys)
   (:method ((self null) &key))
   (:method :around ((self sb-sys:system-area-pointer) &key)

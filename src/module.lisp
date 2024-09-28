@@ -21,6 +21,8 @@
 
 (sb-ext:defglobal *hwnd-module-map* (make-hash-table :weakness :value))
 
+(defmethod bus-changed ((self module) nbuses))
+
 (defmethod connect ((from module) (to module))
   (let ((connection (make-instance 'connection
                                         :from from
