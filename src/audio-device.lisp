@@ -113,8 +113,8 @@
     (process *app*)
 
     (let ((master-track (.master-track (car (.projects *app*)))))
-      (loop with in-left = (buffer (.outputs (.process-data master-track)) 0 0)
-            with in-right = (buffer (.outputs (.process-data master-track)) 0 1)
+      (loop with in-left = (buffer-at (car (.outputs (.process-data master-track))) 0)
+            with in-right = (buffer-at (car (.outputs (.process-data master-track))) 1)
             for i below (.frames-per-buffer *config*)
             do (setf (cffi:mem-aref output-buffer :float (* i 2))
                      (cffi:mem-aref in-left :float i))
