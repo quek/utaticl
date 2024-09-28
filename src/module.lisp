@@ -99,8 +99,9 @@
   ;; TODO 順番は保持したいからクリアすべきではない？
   (setf (.params-ordered module) ()))
 
-(defmethod params-prepare ((module module))
-  )
+(defmethod params-prepare ((module module)))
+
+(defmethod params-value-changed ((module module)))
 
 (defmethod prepare ((self module))
   (setf (.process-done self) nil))

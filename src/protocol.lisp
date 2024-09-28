@@ -6,7 +6,7 @@
           do (prepare x))))
 
 (defgeneric terminate (self &key &allow-other-keys)
-  (:method ((self null) &key))
+  (:method (self &key))
   (:method :around ((self sb-sys:system-area-pointer) &key)
     (unless (cffi:null-pointer-p self)
       (call-next-method)))

@@ -110,7 +110,8 @@
      ,@ (loop for (method-name args return-type . body) in methods
               collect (%def-clap-method method-name name args return-type body))))
 
-(defgeneric initialize (clap-struct))
+(defgeneric initialize (clap-struct)
+  (:method (x)))
 
 (def-clap-struct event-transport () ())
 
@@ -131,8 +132,8 @@
 (defmethod realloc ((self audio-buffer) &key channels)
   (terminate self)
   (let ((nbuses (length channels)))
-    (autowrap:free self)
-    (setf (audio-buffer-ptr self) (autowrap:calloc 'audio-buffer nbuses))
+    (setf (audio-buffer-ptr self)
+          (autowrap:ptr (autowrap:calloc 'clap:clap-audio-buffer-t nbuses)))
     (setf (audio-buffer-nbuses self) nbuses)
     (loop for bus below nbuses
           for x = (autowrap:c-aref self bus 'clap:clap-audio-buffer-t)
@@ -140,6 +141,11 @@
           do (setf (clap:clap-audio-buffer.channel-count x) nchannels)
              (setf (clap:clap-audio-buffer.data32 x)
                    (autowrap:calloc :pointer nchannels)))))
+
+(defmethod terminate ((self audio-buffer) &key)
+  (loop for bus below (audio-buffer-nbuses self)
+        for x = (autowrap:c-aref self bus 'clap:clap-audio-buffer-t)
+        do (autowrap:free (clap:clap-audio-buffer.data32 x))))
 
 (def-clap-struct input-events
     ((list (make-array 16 :fill-pointer 0)))
@@ -353,6 +359,12 @@
                   thereis (and (equal id (.id plugin-info))
                                plugin-info))))
   (when plugin-info-clap
+
+    (setf (.clap-host-gui self) (autowrap:calloc 'clap:clap-host-gui-t))
+    (utaticl.clap::prepare-callbacks self)
+    (setf (.clap-process self) (utaticl.clap::make-process))
+
+
     (multiple-value-bind (factory library)
         (utaticl.clap::get-factory (.path plugin-info-clap))
       (multiple-value-bind (plugin host)
@@ -388,11 +400,6 @@
                      (fdefinition '(setf .ext-note-ports)))
           (extension "clap.state" #'clap::make-clap-plugin-state
                      (fdefinition '(setf .ext-state))))))
-
-    (utaticl.clap::prepare-callbacks self)
-
-    (setf (.clap-host-gui self) (autowrap:calloc 'clap:clap-host-gui-t))
-    (setf (.clap-process self) (utaticl.clap::make-process))
 
     (params-prepare self)
     (params-value-changed self)))
@@ -526,17 +533,3 @@
   (autowrap:free (.host self))
   (cffi:foreign-funcall "FreeLibrary" :pointer (.library self) :int))
 
-(defmethod terminate ((self clap:clap-process-t) &key)
-  (terminate (clap:clap-process.audio-inputs self)
-             :count (clap:clap-process.audio-inputs-count self))
-  (terminate (clap:clap-process.audio-outputs self)
-             :count (clap:clap-process.audio-outputs-count self))
-  ;; TODO event buffer
-  (autowrap:free self))
-
-(defmethod terminate ((self clap:clap-audio-buffer-t) &key count)
-  "*data32 は process-data 管理"
-  (loop for i below count
-        for x = (autowrap:c-aref self i 'clap:clap-audio-buffer-t)
-        do (autowrap:free (clap:clap-audio-buffer.data32 x)))
-  (autowrap:free self))
