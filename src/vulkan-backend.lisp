@@ -172,7 +172,7 @@
                  collect (cffi:foreign-string-to-lisp
                           (cffi:mem-aref extensions :pointer i))))
          (enabled-extension-names
-           (print (cons VULKAN:+KHR-GET-PHYSICAL-DEVICE-PROPERTIES-2-EXTENSION-NAME+ enabled-extension-names)))
+           (cons VULKAN:+KHR-GET-PHYSICAL-DEVICE-PROPERTIES-2-EXTENSION-NAME+ enabled-extension-names))
          (instance-create-info
            (vk:make-instance-create-info
             :enabled-extension-names enabled-extension-names)))
@@ -473,9 +473,9 @@
                                                                 'render-pass))
                      (setf subpass 0)
                      (setf min-image-count *min-image-count*)
-                     (setf image-count (print (cffi:foreign-slot-value main-window-data
-                                                                       '(:struct imgui-impl-vulkan-h-window)
-                                                                       'image-count)))
+                     (setf image-count (cffi:foreign-slot-value main-window-data
+                                                                '(:struct imgui-impl-vulkan-h-window)
+                                                                'image-count))
                      (setf msaa-samples :1)
                      (setf allocator vk:*default-allocator*)
                      (setf check-vk-result-fn (cffi:callback check-vk-result))
