@@ -289,7 +289,8 @@
     (log:trace "host.request-process" self))
    (request-callback
     () :void
-    (log:trace "host.request-callback" self))))
+    (log:trace "host.request-callback" self)
+    (request-callback (host-module self)))))
 
 (defmethod initialize ((self host))
   (setf (clap:clap-host.clap-version.major self) 1

@@ -644,6 +644,13 @@
 (defmethod execute ((self cmd-redo) project)
   (cmd-redo project))
 
+(defcommand cmd-request-callback (command)
+  ((module :initarg :module :accessor .module))
+  (:default-initargs :undo-p nil))
+
+(defmethod execute ((self cmd-request-callback) project)
+  (request-callback-run (.module self)))
+
 (defcommand cmd-save (command)
   ()
   (:default-initargs :undo-p nil :with-mutex-p nil))

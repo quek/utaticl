@@ -157,6 +157,14 @@
       (#.clap:+clap-process-error+
        (report "failed clap process")))))
 
+(defmethod request-callback ((self module-clap))
+  (cmd-add (.project self)              ;callback なので *project* は使えない
+           'cmd-request-callback
+           :module self))
+
+(defmethod request-callback-run ((self module-clap))
+  (utaticl.clap::call (clap:clap-plugin.on-main-thread (.plugin self))))
+
 (defmethod request-resize ((self module-clap) width height)
   (when (.editor-open-p self)
     (ftw:set-window-pos (clap:clap-window.win32 (.clap-window self))

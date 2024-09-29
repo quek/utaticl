@@ -111,6 +111,7 @@
    #:render
    #:render-context
    #:report-window
+   #:request-callback
    #:request-hide
    #:request-resize
    #:request-show
