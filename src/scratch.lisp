@@ -1,5 +1,37 @@
 (in-package :utaticl.core)
 
+(let ((n 0))
+ (defun foo ()
+   (print (list (incf n) (.steady-time *app*) (.play-start (car (.projects *app*)))))))
+
+(sb-thread:make-thread
+ (lambda ()
+   (sb-int:with-float-traps-masked (:invalid :inexact :overflow :divide-by-zero)
+     (utaticl::with-ole
+       (with-thraed-pool
+         (setf *app* (make-instance 'app :backend :sdl-vulkan))
+         (unwind-protect
+              (progn
+                (audio-thread-start *app*)
+                (setf (.play-p (car (.projects *app*))) t)
+                (loop do (sleep 1) (foo)))
+           (utaticl.core:terminate utaticl.core:*app*)))))
+   )
+ :name "UTATICL")
+;;⇒ #<SB-THREAD:THREAD tid=23588 "UTATICL" RUNNING {10704A1003}>
+
+
+;;; ok 落ちない
+(cffi:with-foreign-object (buffer :float 1024)
+  (loop while (.play-p (car (.projects *app*)))
+        do (audio-loop buffer)
+           (sleep .01)))
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (let* ((module (cadr (.modules (.master-track (car (.projects *app*))))))
        (process (.clap-process module))
        (audio-inputs (clap::make-clap-audio-buffer :ptr (clap:clap-process.audio-inputs process)))
