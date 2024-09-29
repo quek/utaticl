@@ -133,10 +133,9 @@
   (declare (optimize (speed 3) (safety 0))
            (ignore input-buffer time-info status-flags user-data
                    frame-per-buffer))
-  ;; sb-sys:without-gcing しなくてもたいして変わらない気もする
-  (sb-sys:without-gcing
-    (audio-loop output-buffer)
-    0))
+  ;; sb-sys:without-gcing するとフリーズする
+  (audio-loop output-buffer)
+  0)
 
 (defun statistic-enter (self)
   (let* ((now (get-internal-real-time))
