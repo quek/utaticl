@@ -211,5 +211,14 @@
   (terminate (.clap-host-audio-ports self))
   (terminate (.clap-host-gui self))
   (autowrap:free (.host self))
+
+  (let* ((clap-entry (cffi:foreign-funcall "GetProcAddress"
+                                           :pointer (.library self)
+                                           :string "clap_entry"
+                                           :pointer))
+         (clap-entry (clap::make-clap-plugin-entry :ptr clap-entry))
+         (deinit (clap:clap-plugin-entry.deinit clap-entry)))
+    (cffi:foreign-funcall-pointer deinit () :void))
+
   (cffi:foreign-funcall "FreeLibrary" :pointer (.library self) :int))
 

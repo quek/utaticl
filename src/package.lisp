@@ -30,6 +30,7 @@
    #:.channel
    #:.clap-host-audio-ports
    #:.clap-host-gui
+   #:.clap-process
    #:.events
    #:.event-input-bus-count
    #:.event-output-bus-count

@@ -170,29 +170,6 @@
   (terminate (process-input-events self))
   (terminate (process-output-events self)))
 
-(defmethod apply-from :before ((self process) (process-data process-data) &key)
-  (let ((nbuses-input (length (.inputs process-data)))
-        (audio-inputs (process-audio-inputs self))
-        (nbuses-output (length (.outputs process-data)))
-        (audio-outputs (process-audio-outputs self)))
-    (assert (= nbuses-input nbuses-output)
-            (nbuses-input nbuses-output)
-            "swap-in-out するので同じはず")
-    (setf (clap:clap-process.audio-inputs-count self)
-          nbuses-input)
-    (setf (clap:clap-process.audio-outputs-count self)
-          nbuses-output)
-    (when (/= nbuses-input (audio-buffer-nbuses audio-inputs))
-      (terminate audio-inputs)
-      (setf (process-audio-inputs self)
-            (make-audio-buffer :nbuses nbuses-input))
-      (pointer-set self))
-    (when (/= nbuses-output (audio-buffer-nbuses audio-outputs))
-      (terminate audio-outputs)
-      (setf (process-audio-outputs self)
-            (make-audio-buffer :nbuses nbuses-output))
-      (pointer-set self))))
-
 (defmethod apply-from ((self process) (process-data process-data) &key)
   (loop for input in (.inputs process-data)
         for bus below (clap:clap-process.audio-inputs-count self)
@@ -341,20 +318,36 @@
       (clap::make-clap-plugin :ptr plugin))))
 
 (defun query-audio-ports (self)
-  (let ((ext (.ext-audio-ports self)))
-    (if ext
-        (progn
-          (setf (.audio-input-bus-count self)
-                (call (clap:clap-plugin-audio-ports.count ext)
-                                    :bool t
-                                    :unsigned-int))
-          (setf (.audio-output-bus-count self)
-                (call (clap:clap-plugin-audio-ports.count ext)
-                                    :bool nil
-                                    :unsigned-int)))
-        (progn
-          (setf (.audio-input-bus-count self) 0)
-          (setf (.audio-output-bus-count self) 0)))))
+  (let* ((ext (.ext-audio-ports self))
+         (nbuses-input (if ext
+                           (call (clap:clap-plugin-audio-ports.count ext)
+                                 :bool t
+                                 :unsigned-int)
+                           0))
+         (nbuses-output (if ext
+                           (call (clap:clap-plugin-audio-ports.count ext)
+                                 :bool nil
+                                 :unsigned-int)
+                           0))
+         (process (.clap-process self))
+         (audio-inputs (process-audio-inputs process))
+         (audio-outputs (process-audio-outputs process)))
+
+    (when (/= nbuses-input (audio-buffer-nbuses audio-inputs))
+      (terminate audio-inputs)
+      (setf (process-audio-inputs process)
+            (make-audio-buffer :nbuses nbuses-input))
+      (pointer-set process))
+    (when (/= nbuses-output (audio-buffer-nbuses audio-outputs))
+      (terminate audio-outputs)
+      (setf (process-audio-outputs process)
+            (make-audio-buffer :nbuses nbuses-output))
+      (pointer-set process))
+
+    (setf (clap:clap-process.audio-inputs-count process) nbuses-input)
+    (setf (clap:clap-process.audio-outputs-count process) nbuses-output)
+    (setf (.audio-input-bus-count self) nbuses-input)
+    (setf (.audio-output-bus-count self) nbuses-output)))
 
 (defun query-note-ports (self)
   (let ((ext (.ext-note-ports self)))
