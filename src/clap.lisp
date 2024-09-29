@@ -159,34 +159,39 @@
         do (terminate event)))
 
 (defmethod event-add ((self input-events) event note sample-offset)
-  (let ((event (autowrap:calloc 'clap:clap-event-note-t)))
-    (setf (clap:clap-event-note.header.size event)
-          (autowrap:sizeof 'clap:clap-event-note))
-    (setf (clap:clap-event-note.header.time event)
+  (let ((clap-event-note (autowrap:calloc 'clap:clap-event-note-t)))
+    (setf (clap:clap-event-note.header.size clap-event-note)
+          (autowrap:sizeof 'clap:clap-event-note-t))
+    (setf (clap:clap-event-note.header.time clap-event-note)
           sample-offset)
-    (setf (clap:clap-event-note.header.space-id event)
+    (setf (clap:clap-event-note.header.space-id clap-event-note)
           clap:+clap-core-event-space-id+)
-    (setf (clap:clap-event-note.header.type event)
+    (setf (clap:clap-event-note.header.type clap-event-note)
           (ecase event
             (:on clap:+clap-event-note-on+)
             (:off clap:+clap-event-note-off+)))
-    (setf (clap:clap-event-note.header.flags event)
+    (setf (clap:clap-event-note.header.flags clap-event-note)
           0)
 
-    (setf (clap:clap-event-note.note-id event)
+    (setf (clap:clap-event-note.note-id clap-event-note)
           -1)
-    (setf (clap:clap-event-note.port-index event)
+    (setf (clap:clap-event-note.port-index clap-event-note)
           -1)
-    (setf (clap:clap-event-note.channel event)
+    (setf (clap:clap-event-note.channel clap-event-note)
           (.channel note))
-    (setf (clap:clap-event-note.key event)
+    (setf (clap:clap-event-note.key clap-event-note)
           (.key note))
-    (setf (clap:clap-event-note.velocity event)
+    (setf (clap:clap-event-note.velocity clap-event-note)
           (ecase event
             (:on (.velocity note))
             (:off 1.0d0)))
 
-    (vector-push-extend event (input-events-list self))))
+    (vector-push-extend clap-event-note (input-events-list self))))
+
+(defmethod prepare ((self input-events))
+  (loop for x across (input-events-list self)
+        do (autowrap:free x))
+  (setf (fill-pointer (input-events-list self)) 0))
 
 (def-clap-struct output-events
     ((list (make-array 16 :fill-pointer 0)))
@@ -195,6 +200,9 @@
              (vector-push-extend (clap::make-clap-event-header-t :ptr event)
                                  (output-events-list self))
              t)))
+
+(defmethod prepare ((self output-events))
+  (setf (fill-pointer (output-events-list self)) 0))
 
 (def-clap-struct process
     ((transport (make-event-transport))
@@ -251,6 +259,10 @@
         for note across (.notes from-events)
         for sample-offset across (.sample-offsets from-events)
         do (event-add input-events event note sample-offset)))
+
+(defmethod prepare ((self process))
+  (prepare (process-input-events self))
+  (prepare (process-output-events self)))
 
 (defmethod pointer-set ((self process))
   (setf (clap:clap-process.transport self)

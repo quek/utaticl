@@ -195,10 +195,13 @@
    (duration :initarg :duration :initform 16.0d0 :accessor .duration)))
 
 (defclass note (time-thing)
-  ((key :initarg :key :initform +c4+ :accessor .key)
-   (channel :initarg :channel :initform 0 :accessor .channel)
+  ((key :initarg :key :type (mod 128)
+        :initform +c4+ :accessor .key)
+   (channel :initarg :channel :type (mod 16)
+            :initform 0 :accessor .channel)
    (seq-note :initarg :seq-note :accessor .seq-note)
-   (velocity :initarg :velocity :initform .8 :accessor .velocity))
+   (velocity :initarg :velocity :type double-float
+             :initform .8d0 :accessor .velocity))
   (:default-initargs :duration 1.0d0 :color (color #x30 #xc0 #x30 #x80)))
 
 (defclass automation-point (time-thing)

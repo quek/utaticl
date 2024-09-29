@@ -49,6 +49,7 @@
           (extension "clap.state" #'clap::make-clap-plugin-state
                      (fdefinition '(setf .ext-state))))))
 
+    (utaticl.clap::query-audio-ports self)
     (params-prepare self)
     (params-value-changed self)))
 
@@ -144,6 +145,9 @@
                                                     :file-write-date file-write-date))
                     (cffi:foreign-funcall "FreeLibrary" :pointer library :int)))))
 ;;(mapc #'describe (plugin-scan-clap))
+
+(defmethod prepare ((self module-clap))
+  (prepare (.clap-process self)))
 
 (defmethod process ((self module-clap))
   (let* ((plugin (.plugin self))
