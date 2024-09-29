@@ -75,7 +75,8 @@
 (defmethod process ((self app))
   (sb-thread:with-mutex ((.mutex self))
     (loop for project in (.projects self)
-          do (process project))))
+          do (process project)))
+  (incf (.steady-time self) (.frames-per-buffer *config*)))
 
 (defmethod sys-window-pos ((app app))
   (sys-window-pos% (.backend app) (.window app)))

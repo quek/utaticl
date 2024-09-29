@@ -161,6 +161,7 @@
   ())
 
 (defmethod initialize ((self process))
+  (setf (clap:clap-process.frames-count self) (.frames-per-buffer *config*))
   (pointer-set self))
 
 (defmethod terminate ((self process) &key)
@@ -171,6 +172,7 @@
   (terminate (process-output-events self)))
 
 (defmethod apply-from ((self process) (process-data process-data) &key)
+  (setf (clap:clap-process.steady-time self) (.steady-time *app*))
   (loop for input in (.inputs process-data)
         for bus below (clap:clap-process.audio-inputs-count self)
         do (apply-from (process-audio-inputs self) input :bus bus))

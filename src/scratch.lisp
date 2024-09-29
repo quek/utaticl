@@ -1,8 +1,40 @@
 (in-package :utaticl.core)
 
-(setf x (make-instance 'module-clap :id "org.surge-synth-team.surge-xt"))
-(editor-open x)
-(terminate x)
+(let* ((module (cadr (.modules (.master-track (car (.projects *app*))))))
+       (process (.clap-process module))
+       (audio-inputs (clap::make-clap-audio-buffer :ptr (clap:clap-process.audio-inputs process)))
+       (audio-outputs (clap::make-clap-audio-buffer :ptr (clap:clap-process.audio-outputs process)))
+       (audio-outputs2 (clap::make-clap-audio-buffer
+                        :ptr (cffi:inc-pointer (clap:clap-process.audio-outputs process)
+                                               (autowrap:sizeof 'clap:clap-audio-buffer-t))))
+       (audio-outputs3 (clap::make-clap-audio-buffer
+                        :ptr (cffi:inc-pointer (clap:clap-process.audio-outputs process)
+                                               (* 2 (autowrap:sizeof 'clap:clap-audio-buffer-t)))))
+       (ao (utaticl.clap::process-audio-outputs process)))
+  (values
+   (clap:clap-process.audio-inputs-count process)
+   (clap:clap-process.audio-outputs-count process)
+   (clap:clap-process.audio-outputs*.data32  process)
+   (cffi:mem-aref (clap:clap-process.audio-outputs*.data32 process) :pointer 0)
+   (cffi:mem-aref (clap:clap-audio-buffer.data32 audio-outputs) :pointer 0)
+   (cffi:mem-aref (clap:clap-audio-buffer.data32 audio-outputs2) :pointer 0)
+   (cffi:mem-aref (clap:clap-audio-buffer.data32 audio-outputs3) :pointer 0)
+
+   (mapcar #'.buffer (.inputs (.process-data (.track module))))
+   (mapcar #'.buffer (.outputs (.process-data (.track module))))
+   (.buffer (car (.outputs (.process-data (.track module)))))))
+;;⇒ 1
+;;   3
+;;   #.(SB-SYS:INT-SAP #X1E2B7120)
+;;   #.(SB-SYS:INT-SAP #X1E2B8260)
+;;   #.(SB-SYS:INT-SAP #X1E2B8260)
+;;   #.(SB-SYS:INT-SAP #X1E2B9270)
+;;   #.(SB-SYS:INT-SAP #X1E2BA280)
+;;   (#.(SB-SYS:INT-SAP #X1E2B8260) #.(SB-SYS:INT-SAP #X1E2B9270)
+;;    #.(SB-SYS:INT-SAP #X1E2BA280))
+;;   (#.(SB-SYS:INT-SAP #X1E2BB290) #.(SB-SYS:INT-SAP #X1E2BC2A0)
+;;    #.(SB-SYS:INT-SAP #X1E2BD2B0))
+;;   #.(SB-SYS:INT-SAP #X1E2BB290)
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

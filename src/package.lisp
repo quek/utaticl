@@ -8,6 +8,7 @@
   (:use :cl :anaphora)
   (:export
    #:*app*
+   #:*config*
    #:*dd-at*
    #:*dd-srcs*
    #:*default-lane-width*
@@ -36,6 +37,7 @@
    #:.event-output-bus-count
    #:.ext-audio-ports
    #:.ext-note-ports
+   #:.frames-per-buffer
    #:.inputs
    #:.input-events
    #:.key
@@ -47,6 +49,7 @@
    #:.output-events
    #:.params-ordered
    #:.sample-offsets
+   #:.steady-time
    #:.step-count
    #:.value
    #:.velocity
