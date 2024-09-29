@@ -18,37 +18,6 @@
 (defmethod object-insert ((wrap structure-object) object)
   (object-insert (autowrap:ptr wrap) object))
 
-(cffi:defcallback gui.resize-hints-changed :void
-    ((host :pointer))
-  (log:trace "gui.resize-hints-changed" host)
-  (resize-hints-changed (gethash (cffi:pointer-address host) *object-map*)))
-
-(cffi:defcallback gui.request-resize :bool
-    ((host :pointer)
-     (width :unsigned-int)
-     (height :unsigned-int))
-  (log:trace "gui.request-resize" host)
-  (request-resize (gethash (cffi:pointer-address host) *object-map*)
-                  width height))
-
-(cffi:defcallback gui.request-show :bool
-    ((host :pointer))
-  (log:trace "gui.request-show" host)
-  (editor-open (gethash (cffi:pointer-address host) *object-map*))
-  t)
-
-(cffi:defcallback gui.request-hide :bool
-    ((host :pointer))
-  (log:trace "gui.request-hide" host)
-  (editor-close (gethash (cffi:pointer-address host) *object-map*))
-  t)
-
-(cffi:defcallback gui.closed :void
-    ((host :pointer)
-     (was-destroyed :bool))
-  (log:trace "gui.request-closed" host)
-  (closed (gethash (cffi:pointer-address host) *object-map*) was-destroyed))
-
 (cffi:defcallback host.get-extension :pointer
     ((host :pointer)
      (extension-id :string))
@@ -56,6 +25,8 @@
   (let ((module-clap (gethash (cffi:pointer-address host) *object-map*)))
     (cond ((equal extension-id "clap.gui")
            (autowrap:ptr (.clap-host-gui module-clap)))
+          ((equal extension-id "clap.audio-ports")
+           (autowrap:ptr (.clap-host-audio-ports module-clap)))
           (t (cffi:null-pointer)))))
 
 (cffi:defcallback host.request-restart :void
@@ -195,11 +166,12 @@
 
 (def-clap-struct output-events
     ((list (make-array 16 :fill-pointer 0)))
-  ((try-push ((event :pointer)) ;const clap_event_header_t *event
-             :bool
-             (vector-push-extend (clap::make-clap-event-header-t :ptr event)
-                                 (output-events-list self))
-             t)))
+  ((try-push
+    ((event :pointer)) ;const clap_event_header_t *event
+    :bool
+    (vector-push-extend (clap::make-clap-event-header-t :ptr event)
+                        (output-events-list self))
+    t)))
 
 (defmethod prepare ((self output-events))
   (setf (fill-pointer (output-events-list self)) 0))
@@ -278,6 +250,45 @@
   (setf (clap:clap-process.out-events self)
         (autowrap:ptr (process-output-events self))))
 
+(def-clap-struct host-audio-ports
+    ()
+  ((is-rescan-flag-supported
+    ((flag :unsigned-int)) :bool
+    ;; TODO
+    (break "~a" flag)
+    nil)
+   (rescan
+    ((flags :unsigned-int)) :void
+    ;; TODO
+    (break "~a" flags)
+    )))
+
+(def-clap-struct host-gui
+    ()
+  ((resize-hints-changed
+    () :void
+    (log:trace "gui.resize-hints-changed" self)
+    (resize-hints-changed self))
+   (request-resize
+    ((width :unsigned-int)
+     (height :unsigned-int)) :bool
+    (log:trace "gui.request-resize" self)
+    (request-resize self
+                    width height))
+   (request-show
+    () :bool
+    (log:trace "gui.request-show" self)
+    (editor-open self)
+    t)
+   (request-hide
+    () :bool
+    (log:trace "gui.request-hide" self)
+    (editor-close self)
+    t)
+   (closed
+    ((was-destroyed :bool)) :void
+    (log:trace "gui.request-closed" self)
+    (closed self was-destroyed))))
 
 (alexandria:define-constant +host-name+ "UTATICL" :test 'equal)
 (alexandria:define-constant +host-url+ "https://github.com/quek/utaticl" :test 'equal)
@@ -336,19 +347,6 @@
                       :string id
                       :pointer)))
         (values (clap::make-clap-plugin :ptr plugin) host)))))
-
-(defun prepare-callbacks (module-clap)
-  (let ((clap-host-gui (.clap-host-gui module-clap)))
-    (setf (clap:clap-host-gui.resize-hints-changed clap-host-gui)
-          (cffi:callback gui.resize-hints-changed))
-    (setf (clap:clap-host-gui.request-resize clap-host-gui)
-          (cffi:callback gui.request-resize))
-    (setf (clap:clap-host-gui.request-show clap-host-gui)
-          (cffi:callback gui.request-show))
-    (setf (clap:clap-host-gui.request-hide clap-host-gui)
-          (cffi:callback gui.request-hide))
-    (setf (clap:clap-host-gui.closed clap-host-gui)
-          (cffi:callback gui.closed))))
 
 (defun query-audio-ports (self)
   (let ((ext (.ext-audio-ports self)))

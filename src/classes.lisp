@@ -299,6 +299,7 @@
 (defclass module-clap (module)
   ((factory :accessor .factory)
    (clap-host-gui :accessor .clap-host-gui)
+   (clap-host-audio-ports :accessor .clap-host-audio-ports)
    (clap-process :accessor .clap-process)
    (clap-window :initform nil :accessor .clap-window)
    (ext-audio-ports :initform nil :accessor .ext-audio-ports)

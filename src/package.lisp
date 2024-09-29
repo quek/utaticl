@@ -28,6 +28,7 @@
    #:.audio-output-bus-count
    #:.backend
    #:.channel
+   #:.clap-host-audio-ports
    #:.clap-host-gui
    #:.events
    #:.event-input-bus-count

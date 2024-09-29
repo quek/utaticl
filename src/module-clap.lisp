@@ -8,8 +8,8 @@
                                plugin-info))))
   (when plugin-info-clap
 
-    (setf (.clap-host-gui self) (autowrap:calloc 'clap:clap-host-gui-t))
-    (utaticl.clap::prepare-callbacks self)
+    (setf (.clap-host-gui self) (utaticl.clap::make-host-gui))
+    (setf (.clap-host-audio-ports self) (utaticl.clap::make-host-audio-ports))
     (setf (.clap-process self) (utaticl.clap::make-process))
 
 
@@ -204,7 +204,8 @@
   (utaticl.clap::call (clap:clap-plugin.destroy (.plugin self))
                       :void)
   (terminate (.clap-process self))
-  (autowrap:free (.clap-host-gui self))
+  (terminate (.clap-host-audio-ports self))
+  (terminate (.clap-host-gui self))
   (autowrap:free (.host self))
   (cffi:foreign-funcall "FreeLibrary" :pointer (.library self) :int))
 
