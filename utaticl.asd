@@ -65,6 +65,7 @@
    (:file "process-data")
    (:file "process-data-vst3")
    (:file "module-vst3")
+   (:file "clap")
    (:file "module-clap")
    (:file "module-builtin")
    (:file "module-fader")
