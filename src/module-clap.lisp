@@ -8,24 +8,20 @@
                                plugin-info))))
   (when plugin-info-clap
 
-    (setf (.clap-host-gui self) (utaticl.clap::make-host-gui))
-    (setf (.clap-host-audio-ports self) (utaticl.clap::make-host-audio-ports))
+    (setf (.host self) (utaticl.clap::make-host :module self))
+    (setf (.clap-host-gui self) (utaticl.clap::make-host-gui :module self))
+    (setf (.clap-host-audio-ports self) (utaticl.clap::make-host-audio-ports :module self))
     (setf (.clap-process self) (utaticl.clap::make-process))
-
 
     (multiple-value-bind (factory library)
         (utaticl.clap::get-factory (.path plugin-info-clap))
-      (multiple-value-bind (plugin host)
-          (utaticl.clap::create-plugin factory (.id plugin-info-clap))
-        (setf (gethash (cffi:pointer-address (autowrap:ptr host))
-                       utaticl.clap::*object-map*)
-              self)
+
+      (let ((plugin (utaticl.clap::create-plugin factory (.id plugin-info-clap) (.host self))))
+        (setf (.plugin self) plugin)
         (setf (.id self) (.id plugin-info-clap))
         (setf (.name self) (.name plugin-info-clap))
         (setf (.factory self) factory)
         (setf (.library self) library)
-        (setf (.plugin self) plugin)
-        (setf (.host self) host)
         (cffi:foreign-funcall-pointer
          (clap:clap-plugin.init plugin) ()
          :pointer (autowrap:ptr plugin)

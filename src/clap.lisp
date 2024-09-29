@@ -18,30 +18,6 @@
 (defmethod object-insert ((wrap structure-object) object)
   (object-insert (autowrap:ptr wrap) object))
 
-(cffi:defcallback host.get-extension :pointer
-    ((host :pointer)
-     (extension-id :string))
-  (log:trace "host.get-extension" host extension-id)
-  (let ((module-clap (gethash (cffi:pointer-address host) *object-map*)))
-    (cond ((equal extension-id "clap.gui")
-           (autowrap:ptr (.clap-host-gui module-clap)))
-          ((equal extension-id "clap.audio-ports")
-           (autowrap:ptr (.clap-host-audio-ports module-clap)))
-          (t (cffi:null-pointer)))))
-
-(cffi:defcallback host.request-restart :void
-    ((host :pointer))
-  (log:trace "host.request-restart" host))
-
-(cffi:defcallback host.request-process :void
-    ((host :pointer))
-  (log:trace "host.request-process" host))
-
-(cffi:defcallback host.request-callback :void
-    ((host :pointer))
-  (log:trace "host.request-callback" host))
-
-
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defun %def-clap-method (method class args return-type body)
     (let ((this (gensym "SELF"))
@@ -238,7 +214,7 @@
 
 (defmethod pointer-set ((self process))
   (setf (clap:clap-process.transport self)
-        ;; (autowrap:ptr (process-transport self))
+        ;; TODO (autowrap:ptr (process-transport self))
         (cffi:null-pointer)
         )
   (setf (clap:clap-process.audio-inputs self)
@@ -251,7 +227,7 @@
         (autowrap:ptr (process-output-events self))))
 
 (def-clap-struct host-audio-ports
-    ()
+    ((module nil))
   ((is-rescan-flag-supported
     ((flag :unsigned-int)) :bool
     ;; TODO
@@ -264,37 +240,65 @@
     )))
 
 (def-clap-struct host-gui
-    ()
+    ((module nil))
   ((resize-hints-changed
     () :void
     (log:trace "gui.resize-hints-changed" self)
-    (resize-hints-changed self))
+    (resize-hints-changed (host-gui-module self)))
    (request-resize
     ((width :unsigned-int)
      (height :unsigned-int)) :bool
     (log:trace "gui.request-resize" self)
-    (request-resize self
-                    width height))
+    (request-resize (host-gui-module self) width height))
    (request-show
     () :bool
     (log:trace "gui.request-show" self)
-    (editor-open self)
+    (editor-open (host-gui-module self))
     t)
    (request-hide
     () :bool
     (log:trace "gui.request-hide" self)
-    (editor-close self)
+    (editor-close (host-gui-module self))
     t)
    (closed
     ((was-destroyed :bool)) :void
     (log:trace "gui.request-closed" self)
-    (closed self was-destroyed))))
+    (closed (host-gui-module self) was-destroyed))))
 
 (alexandria:define-constant +host-name+ "UTATICL" :test 'equal)
 (alexandria:define-constant +host-url+ "https://github.com/quek/utaticl" :test 'equal)
 (alexandria:define-constant +host-version+ "0.0.1" :test 'equal)
 (defvar +window-api-win32+ (cffi:foreign-string-alloc "win32"))
 
+(def-clap-struct host
+    ((module nil))
+  ((get-extension
+    ((extension-id :string)) :pointer
+    (log:trace "host.get-extension" self extension-id)
+    (let ((module (host-module self)))
+      (cond ((equal extension-id "clap.gui")
+             (autowrap:ptr (.clap-host-gui module)))
+            ((equal extension-id "clap.audio-ports")
+             (autowrap:ptr (.clap-host-audio-ports module)))
+            (t (cffi:null-pointer)))))
+   (request-restart
+    () :void
+    (log:trace "host.request-restart" self))
+   (request-process
+    () :void
+    (log:trace "host.request-process" self))
+   (request-callback
+    () :void
+    (log:trace "host.request-callback" self))))
+
+(defmethod initialize ((self host))
+  (setf (clap:clap-host.clap-version.major self) 1
+        (clap:clap-host.clap-version.minor self) 1
+        (clap:clap-host.clap-version.revision self) 10)
+  (setf (clap:clap-host.name self) (sb-sys:vector-sap +host-name+))
+  (setf (clap:clap-host.vendor self) (sb-sys:vector-sap +host-name+))
+  (setf (clap:clap-host.url self) (sb-sys:vector-sap +host-url+))
+  (setf (clap:clap-host.version self) (sb-sys:vector-sap +host-version+)))
 
 (defmacro call (function &rest args-and-return-type)
   `(cffi:foreign-funcall-pointer
@@ -325,28 +329,15 @@
 
 ;(get-factory "c:/Program Files/Common Files/CLAP/Surge Synth Team/Surge XT.clap")
 
-(defun create-plugin (factory id)
+(defun create-plugin (factory id host)
   (sb-int:with-float-traps-masked (:invalid :inexact :overflow :divide-by-zero)
-    (let ((host (autowrap:alloc 'clap:clap-host-t)))
-      (setf (clap:clap-host.clap-version.major host) 1
-            (clap:clap-host.clap-version.minor host) 1
-            (clap:clap-host.clap-version.revision host) 10)
-      (setf (clap:clap-host.name host) (sb-sys:vector-sap +host-name+))
-      (setf (clap:clap-host.vendor host) (sb-sys:vector-sap +host-name+))
-      (setf (clap:clap-host.url host) (sb-sys:vector-sap +host-url+))
-      (setf (clap:clap-host.version host) (sb-sys:vector-sap +host-version+))
-      (setf (clap:clap-host.get-extension host) (cffi:callback host.get-extension))
-      (setf (clap:clap-host.request-restart host) (cffi:callback host.request-restart))
-      (setf (clap:clap-host.request-process host) (cffi:callback host.request-process))
-      (setf (clap:clap-host.request-callback host) (cffi:callback host.request-callback))
-
-      (let* ((plugin (cffi:foreign-funcall-pointer
-                      (clap:clap-plugin-factory.create-plugin factory) ()
-                      :pointer (autowrap:ptr factory)
-                      :pointer (autowrap:ptr host)
-                      :string id
-                      :pointer)))
-        (values (clap::make-clap-plugin :ptr plugin) host)))))
+    (let* ((plugin (cffi:foreign-funcall-pointer
+                    (clap:clap-plugin-factory.create-plugin factory) ()
+                    :pointer (autowrap:ptr factory)
+                    :pointer (autowrap:ptr host)
+                    :string id
+                    :pointer)))
+      (clap::make-clap-plugin :ptr plugin))))
 
 (defun query-audio-ports (self)
   (let ((ext (.ext-audio-ports self)))
