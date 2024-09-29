@@ -266,7 +266,9 @@
 
 (defmethod pointer-set ((self process))
   (setf (clap:clap-process.transport self)
-        (autowrap:ptr (process-transport self)))
+        ;; (autowrap:ptr (process-transport self))
+        (cffi:null-pointer)
+        )
   (setf (clap:clap-process.audio-inputs self)
         (autowrap:ptr (process-audio-inputs self)))
   (setf (clap:clap-process.audio-outputs self)
@@ -289,6 +291,10 @@
     ()
     :pointer (autowrap:ptr (utaticl.core::.plugin self))
     ,@args-and-return-type))
+
+(defmacro ecall (function &rest args-and-return-type)
+  `(unless (call ,function ,@args-and-return-type)
+     (error "~a ~a" ',function ',args-and-return-type)))
 
 (defun get-factory (path)
   (sb-int:with-float-traps-masked (:invalid :inexact :overflow :divide-by-zero)

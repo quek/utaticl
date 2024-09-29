@@ -84,10 +84,10 @@
                                        :pointer utaticl.clap::+window-api-win32+
                                        :bool nil
                                        :bool))
-          (utaticl.clap::call (clap:clap-plugin-gui.create ext)
-                              :pointer utaticl.clap::+window-api-win32+
-                              :bool nil
-                              :bool)
+          (utaticl.clap::ecall (clap:clap-plugin-gui.create ext)
+                               :pointer utaticl.clap::+window-api-win32+
+                               :bool nil
+                               :bool)
           (utaticl.clap::call (clap:clap-plugin-gui.set-scale ext)
                               :double 1d0
                               :bool)
@@ -95,10 +95,10 @@
                                                :bool))
                  (size (cffi:with-foreign-objects ((width :unsigned-int)
                                                    (height :unsigned-int))
-                         (utaticl.clap::call (clap:clap-plugin-gui.get-size ext)
-                                             :pointer width
-                                             :pointer height
-                                             :bool)
+                         (utaticl.clap::ecall (clap:clap-plugin-gui.get-size ext)
+                                              :pointer width
+                                              :pointer height
+                                              :bool)
                          (@ (cffi:mem-ref width :unsigned-int)
                             (cffi:mem-ref height :unsigned-int))))
                  (hwnd (win32::make-window (.x size) (.y size) resize-p))
@@ -108,7 +108,7 @@
             (setf (.clap-window self) clap-window)
             (setf (clap:clap-window.api clap-window) utaticl.clap::+window-api-win32+)
             (setf (clap:clap-window.win32 clap-window) hwnd)
-            (utaticl.clap::call (clap:clap-plugin-gui.set-parent ext)
+            (utaticl.clap::ecall (clap:clap-plugin-gui.set-parent ext)
                                 :pointer (autowrap:ptr clap-window)
                                 :bool)
             (utaticl.clap::call (clap:clap-plugin-gui.show ext)
@@ -178,18 +178,25 @@
 
 (defmethod start ((self module-clap))
   (unless (.start-p self)
-    (utaticl.clap::call (clap:clap-plugin.activate (.plugin self))
+    (utaticl.clap::ecall (clap:clap-plugin.activate (.plugin self))
                         :double (.sample-rate *config*)
                         :unsigned-int (.frames-per-buffer *config*)
                         :unsigned-int (.frames-per-buffer *config*)
                         :bool)
 
-    (utaticl.clap::call (clap:clap-plugin.start-processing (.plugin self))
-                        :double (.sample-rate *config*)
+    (utaticl.clap::ecall (clap:clap-plugin.start-processing (.plugin self))
                         :bool)
 
     ;; どこかでレイテンシーの計算が必要かな
 
+    (call-next-method)))
+
+(defmethod stop ((self module-clap))
+  (when (.start-p self)
+    (utaticl.clap::call (clap:clap-plugin.stop-processing (.plugin self))
+                        :void)
+    (utaticl.clap::call (clap:clap-plugin.deactivate (.plugin self))
+                        :void)
     (call-next-method)))
 
 (defmethod terminate ((self module-clap) &key)
