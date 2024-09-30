@@ -368,13 +368,17 @@
           (setf (.event-output-bus-count self) 0)))))
 
 (def-clap-struct istream
-    ((buffer (make-array 1024 :element-type '(unsigned-byte 8) :fill-pointer 0)))
+    ((buffer (make-array 1024 :element-type '(unsigned-byte 8) :fill-pointer 0))
+     (cursor 0))
   ((read
     ((buffer :pointer) (size :unsigned-long-long)) :unsigned-long-long
-    (let ((size-read (min size (length (istream-buffer self)))))
+    (let* ((cursor (istream-cursor self))
+           (size-read (min size (- (length (istream-buffer self))
+                                   cursor))))
       (loop for i below size-read
             do (setf (cffi:mem-aref buffer :unsigned-char i)
-                     (aref (istream-buffer self) i)))
+                     (aref (istream-buffer self) (+ i cursor))))
+      (incf (istream-cursor self) size-read)
       size-read))))
 
 (defmacro with-istream ((var &key buffer) &body body)
