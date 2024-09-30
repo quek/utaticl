@@ -291,49 +291,9 @@
                             :test #'equal))))))
 
 (defmethod process ((self module-vst3))
-  (let* ((process-data (.process-data self))
-         (context (.context process-data))
-         (bpm (.bpm (.project self)))
-         (play-time (.play-start (.project self))))
-    (setf (sb:vst-process-context.state context)
-          (logand (if (.play-p (.project self)) sb:+vst-process-context-states-and-flags-k-playing+ 0)
-                  sb:+vst-process-context-states-and-flags-k-tempo-valid+
-                  sb:+vst-process-context-states-and-flags-k-project-time-music-valid+
-                  sb:+vst-process-context-states-and-flags-k-bar-position-valid+))
-    (setf (sb:vst-process-context.tempo context) (coerce bpm 'double-float))
-    (setf (sb:vst-process-context.project-time-music context) play-time)
-    (setf (sb:vst-process-context.bar-position-music context)
-          (coerce (floor (/ play-time 4)) 'double-float))
-    (setf (sb:vst-process-context.project-time-samples context)
-          ;; TODO これあってる？
-          (floor (* (/ play-time (/ bpm 60.0)) (.sample-rate *config*))))
+  (let ((process-data (.process-data self)))
 
-    (setup-audio-buffer (.inputs process-data)
-                        (.inputs *process-data*))
-
-    (setf (sb:vst-process-data.input-parameter-changes (.wrap process-data))
-          (vst3-impl::ptr (.parameter-changes-out self)))
-    (setf (sb:vst-process-data.output-parameter-changes (.wrap process-data))
-          (vst3-impl::ptr (.parameter-changes-in self)))
-
-    (prepare (.parameter-changes-in self))
-    (prepare (.parameter-changes-out self))
-
-    (loop for message = (sb-concurrency:receive-message-no-hang
-                         (.param-changes-mbox-in self))
-          with changes = (.parameter-changes-out self)
-          while message
-          do (destructuring-bind (id value sample-offset) message
-               (let ((queue (or (loop for i below (vst3-impl::get-parameter-count changes)
-                                      for queue = (vst3-impl::get-parameter-data-wrap changes i)
-                                        thereis (and (= (vst3-impl::get-parameter-id queue)
-                                                        id)
-                                                     queue))
-                                (cffi:with-foreign-object (id-ptr :uint)
-                                  (setf (cffi:mem-ref id-ptr :uint) id)
-                                  (vst3-impl::add-parameter-data-wrap
-                                   changes id-ptr (cffi:null-pointer))))))
-                 (vst3-impl::add-point queue sample-offset value (cffi:null-pointer)))))
+    (apply-from process-data *process-data* :module self)
 
     (vst3-ffi::process (.audio-processor self)
                        (autowrap:ptr (.wrap process-data)))

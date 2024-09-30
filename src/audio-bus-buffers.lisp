@@ -51,8 +51,7 @@
 
 
 (defmethod setup-audio-buffer ((self audio-bus-buffers) audio-buffers)
-  (assert (= (.nbuses self) (length audio-buffers)))
-  (loop for index-bus from 0
+  (loop for index-bus below (.nbuses self)
         for bus = (bus self index-bus)
         for buffer-ptr = (plus-c:c-ref bus (:struct (sb:vst-audio-bus-buffers))
                                        :vst-audio-bus-buffers-channel-buffers32)

@@ -406,8 +406,7 @@
    (pdc-buffer :initform nil :accessor .pdc-buffer)))
 
 (defclass process-data-vst3 ()
-  ((bpm :accessor .bpm)
-   (wrap  :accessor .wrap)
+  ((wrap  :accessor .wrap)
    (inputs :accessor .inputs)
    (outputs :accessor .outputs)
    (input-events :accessor .input-events)

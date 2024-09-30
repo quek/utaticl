@@ -156,7 +156,9 @@
                               :pointer (autowrap:ptr clap-process)
                               :int)
       (#.clap:+clap-process-error+
-       (report "failed clap process")))))
+       (report "failed clap process")))
+
+    (call-next-method)))
 
 (defmethod request-callback ((self module-clap))
   (cmd-add (.project self)              ;callback なので *project* は使えない
