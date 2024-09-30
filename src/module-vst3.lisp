@@ -207,6 +207,8 @@
                                  (vst3::no-interface-error () (f))
                                  (vst3::false-error () (f))))))
             (setf (.id self) id)
+            (when (equal (.name self) "")
+              (setf (.name self) (.name plugin-info)))
             (setf (.library self) library)
             (setf (.factory self) factory)
             (setf (.component self) component)
@@ -344,7 +346,7 @@
 (defmethod (setf state) (state (self module-vst3))
   (let* ((preset (preset-vst3-from-base64 state)))
     (unless (.component self)
-      (load-by-id self (cid preset)))
+      (load-plugin self))
     (preset-load preset self)))
 
 (defmethod stop ((self module-vst3))

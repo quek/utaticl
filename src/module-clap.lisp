@@ -82,7 +82,8 @@
         (let ((plugin (utaticl.clap::create-plugin factory (.id plugin-info) (.host self))))
           (setf (.plugin self) plugin)
           (setf (.id self) (.id plugin-info))
-          (setf (.name self) (.name plugin-info))
+          (when (equal "" (.name self))
+           (setf (.name self) (.name plugin-info)))
           (setf (.factory self) factory)
           (setf (.library self) library)
           (cffi:foreign-funcall-pointer
