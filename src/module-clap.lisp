@@ -195,6 +195,19 @@
 
     (call-next-method)))
 
+(defmethod state ((self module-clap))
+  (utaticl.clap::with-ostream (out)
+    (utaticl.clap::ecall (clap:clap-plugin-state.save (.ext-state self))
+                         :pointer (autowrap:ptr out)
+                         :bool)
+    (qbase64:encode-bytes (utaticl.clap::ostream-buffer out))))
+
+(defmethod (setf state) (state (self module-clap))
+  (utaticl.clap::with-istream (in :buffer (qbase64:decode-string state))
+    (utaticl.clap::ecall (clap:clap-plugin-state.load (.ext-state self))
+                         :pointer (autowrap:ptr in)
+                         :bool)))
+
 (defmethod stop ((self module-clap))
   (when (.start-p self)
     (utaticl.clap::call (clap:clap-plugin.stop-processing (.plugin self))

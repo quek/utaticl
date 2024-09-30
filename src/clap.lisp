@@ -56,8 +56,8 @@
                     nconc `(,(intern (symbol-name arg) :keyword) ,arg)))
          (object-insert (autowrap:ptr it) it)
          (initialize it)))
-     ,@ (loop for (method-name args return-type . body) in methods
-              collect (%def-clap-method method-name name args return-type body))))
+     ,@(loop for (method-name args return-type . body) in methods
+             collect (%def-clap-method method-name name args return-type body))))
 
 (defgeneric initialize (clap-struct)
   (:method (x)))
@@ -366,4 +366,33 @@
         (progn
           (setf (.event-input-bus-count self) 0)
           (setf (.event-output-bus-count self) 0)))))
+
+(def-clap-struct istream
+    ((buffer (make-array 1024 :element-type '(unsigned-byte 8) :fill-pointer 0)))
+  ((read
+    ((buffer :pointer) (size :unsigned-long-long)) :unsigned-long-long
+    (let ((size-read (min size (length (istream-buffer self)))))
+      (loop for i below size-read
+            do (setf (cffi:mem-aref buffer :unsigned-char i)
+                     (aref (istream-buffer self) i)))
+      size-read))))
+
+(defmacro with-istream ((var &key buffer) &body body)
+  `(let ((,var (make-istream :buffer ,buffer)))
+     (unwind-protect (progn ,@body)
+       (terminate ,var))))
+
+(def-clap-struct ostream
+    ((buffer (make-array 1024 :element-type '(unsigned-byte 8) :fill-pointer 0)))
+  ((write
+    ((buffer :pointer) (size :unsigned-long-long)) :unsigned-long-long
+    (loop for i below size
+          do (vector-push-extend (cffi:mem-aref buffer :unsigned-char i)
+                                 (ostream-buffer self)))
+    size)))
+
+(defmacro with-ostream ((var) &body body)
+  `(let ((,var (make-ostream)))
+     (unwind-protect (progn ,@body)
+       (terminate ,var))))
 
