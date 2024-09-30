@@ -144,7 +144,8 @@
 ;;(mapc #'describe (plugin-scan-clap))
 
 (defmethod prepare ((self module-clap))
-  (prepare (.clap-process self)))
+  (prepare (.clap-process self))
+  (call-next-method))
 
 (defmethod process ((self module-clap))
   (let* ((plugin (.plugin self))
