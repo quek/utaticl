@@ -130,10 +130,7 @@
                   collect x)
             (append (.modules self)
                     (list module))))
-  (initialize module)
-
   (maybe-recreate-process-data self module)
-
   (start module))
 
 (defmethod module-delete ((self track) module)

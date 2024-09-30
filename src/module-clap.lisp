@@ -68,10 +68,7 @@
 (defmethod load-plugin ((self module-clap))
   (with-slots (id plugin-info) self
     (when (and id (not plugin-info))
-      (setf plugin-info
-            (loop for plugin-info in (plugin-info-load-all)
-                    thereis (and (equal id (.id plugin-info))
-                                 plugin-info))))
+      (setf plugin-info (plugin-info-find id)))
     (when plugin-info
       (setf id (.id plugin-info))
       (setf (.host self) (utaticl.clap::make-host :module self))

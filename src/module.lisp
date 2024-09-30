@@ -41,7 +41,6 @@
           collect connection))
 
 (defmethod deserialize-after ((self module))
-  (initialize self)
   (start self))
 
 (defmethod deserialize-slot ((self module) (slot (eql 'state)) value)

@@ -83,36 +83,6 @@
       (with-serialize-context ()
         (serialize (list clip1 clip2)))))))
 
-
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(sb-int:with-float-traps-masked (:invalid :inexact :overflow :divide-by-zero)
-  (let ((module (module-vst3-load
-                 "c:/Program Files/Common Files/VST3/Dexed.vst3"
-                 ;; "c:/Program Files/Common Files/VST3/DS Thorn.vst3"
-                 ;; "c:/Program Files/Common Files/VST3/MeldaProduction/MSoundFactory.vst3"
-                 ;; "c:/Program Files/Common Files/VST3/Vital.vst3"
-                 ))
-        (buffer (make-instance 'vst3-impl::bstream)))
-    (unwind-protect
-         (progn
-           (vst3-impl::add-ref buffer)
-           (initialize module)
-           (start module)
-
-           (let ((result (vst3-ffi::get-state (.component module) (vst3-impl::ptr buffer))))
-             (assert (= result sb:+k-result-ok+)))
-
-           (setf (vst3-impl::.cursor buffer) 0)
-           (let ((result (vst3-ffi::set-state (.component module) (vst3-impl::ptr buffer))))
-             (assert (= result sb:+k-result-ok+))))
-
-      (stop module)
-      (terminate module))
-    module))
-
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (pa:initialize)
 

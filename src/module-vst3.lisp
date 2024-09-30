@@ -1,31 +1,10 @@
 (in-package :utaticl.core)
 
 (defmethod initialize-instance :after ((self module-vst3) &key)
-  (let ((host-applicaiton (make-instance 'vst3-impl::host-application :module self)))
-    (setf (slot-value self 'host-applicaiton) host-applicaiton)))
-
-(defun module-vst3-load (path)
-  (multiple-value-bind (factory library) (vst3::get-plugin-factory path)
-    (multiple-value-bind (component id) (vst3::create-component factory)
-      (let* ((single-component-p t)
-             (controller (labels ((f ()
-                                    (setf single-component-p nil)
-                                    (vst3::create-instance factory
-                                                           (vst3::get-controller-class-id component)
-                                                           vst3-ffi::+vst-iedit-controller-iid+)))
-                           (handler-case (vst3::query-interface component vst3-ffi::+vst-iedit-controller-iid+)
-                             (vst3::no-interface-error () (f))
-                             (vst3::false-error () (f))))))
-        (make-instance 'module-vst3
-                       :id id
-                       :library library
-                       :factory factory
-                       :conponent component
-                       :controller controller
-                       :single-component-p single-component-p)))))
+  (load-plugin self))
 
 ;;; できたらなくしたい。load-plugin へ統合
-(defmethod initialize ((self module-vst3))
+(defmethod %initialize ((self module-vst3))
   (vst3-ffi::initialize (.component self)
                         (vst3-impl::ptr (.host-applicaiton self)))
   (vst3-ffi::initialize (.controller self)
@@ -121,7 +100,7 @@
       (when (and (.controller self) terminate-controller-p)
         (vst3-ffi::terminate (.controller self)))))
 
-  (terminate (.process-buffer self))
+  (terminate (.process-data self))
 
   (vst3-ffi::release (.factory self))
   (vst3-impl::release (.host-applicaiton self))
@@ -207,26 +186,33 @@
         (vst3::ensure-ok (vst3-ffi::attached view hwnd vst3-ffi::+k-platform-type-hwnd+))
         t))))
 
-(defmethod load-by-id ((self module-vst3) id)
-  (let* ((plugin-info (plugin-info-find id))
-         (path (.path plugin-info)))
-    (multiple-value-bind (factory library) (vst3::get-plugin-factory path)
-      (let* ((component (vst3::create-component-by-id factory id))
-             (single-component-p t)
-             (controller (labels ((f ()
-                                    (setf single-component-p nil)
-                                    (vst3::create-instance factory
-                                                           (vst3::get-controller-class-id component)
-                                                           vst3-ffi::+vst-iedit-controller-iid+)))
-                           (handler-case (vst3::query-interface component vst3-ffi::+vst-iedit-controller-iid+)
-                             (vst3::no-interface-error () (f))
-                             (vst3::false-error () (f))))))
-        (setf (.id self) id)
-        (setf (.library self) library)
-        (setf (.factory self) factory)
-        (setf (.component self) component)
-        (setf (.controller self) controller)
-        (setf (.single-component-p self) single-component-p)))))
+(defmethod load-plugin ((self module-vst3))
+  (with-slots (id plugin-info) self
+    (when (and id (not plugin-info))
+      (setf plugin-info (plugin-info-find id)))
+    (when plugin-info
+      (setf id (.id plugin-info))
+      (let ((host-applicaiton (make-instance 'vst3-impl::host-application :module self)))
+        (setf (slot-value self 'host-applicaiton) host-applicaiton))
+      (let ((path (.path plugin-info)))
+        (multiple-value-bind (factory library) (vst3::get-plugin-factory path)
+          (let* ((component (vst3::create-component-by-id factory id))
+                 (single-component-p t)
+                 (controller (labels ((f ()
+                                        (setf single-component-p nil)
+                                        (vst3::create-instance factory
+                                                               (vst3::get-controller-class-id component)
+                                                               vst3-ffi::+vst-iedit-controller-iid+)))
+                               (handler-case (vst3::query-interface component vst3-ffi::+vst-iedit-controller-iid+)
+                                 (vst3::no-interface-error () (f))
+                                 (vst3::false-error () (f))))))
+            (setf (.id self) id)
+            (setf (.library self) library)
+            (setf (.factory self) factory)
+            (setf (.component self) component)
+            (setf (.controller self) controller)
+            (setf (.single-component-p self) single-component-p)
+            (%initialize self)))))))
 
 (defmethod on-resize ((self module-vst3) width height)
   (when (.editor-open-p self)
@@ -398,8 +384,7 @@
 (defmethod (setf state) (state (self module-vst3))
   (let* ((preset (preset-vst3-from-base64 state)))
     (unless (.component self)
-      (load-by-id self (cid preset))
-      (initialize self))
+      (load-by-id self (cid preset)))
     (preset-load preset self)))
 
 (defmethod stop ((self module-vst3))
@@ -407,21 +392,3 @@
     (vst3-ffi::set-processing (.audio-processor self) 0)
     (vst3-ffi::set-active (.component self) 0)
     (call-next-method)))
-
-
-#+nil
-(sb-int:with-float-traps-masked (:invalid :inexact :overflow :divide-by-zero)
- (let ((module (module-vst3-load
-                "c:/Program Files/Common Files/VST3/Dexed.vst3"
-                ;;"c:/Program Files/Common Files/VST3/DS Thorn.vst3"
-                ;;"c:/Program Files/Common Files/VST3/MeldaProduction/MSoundFactory.vst3"
-                ;;"c:/Program Files/Common Files/VST3/Vital.vst3"
-                )))
-   (initialize module)
-   (start module)
-   (editor-open module)
-   (sleep 5)
-   (editor-close module)
-   (stop module)
-   (terminate module)
-   module))
