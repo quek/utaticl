@@ -14,4 +14,4 @@
   "clap")
 
 (defmethod plugin-load ((plugin-info-clap plugin-info-clap))
-  (make-instance 'module-clap :plugin-info-clap plugin-info-clap))
+  (make-instance 'module-clap :plugin-info plugin-info-clap))

@@ -25,7 +25,7 @@
 
 (defserialize plugin-info id name path file-write-date)
 
-(defserialize module connections)
+(defserialize module id connections)
 
 (defserialize connection (:ref from) (:ref to) from-bus-index to-bus-index)
 

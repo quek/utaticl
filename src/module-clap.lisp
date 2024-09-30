@@ -1,53 +1,7 @@
 (in-package :utaticl.core)
 
-(defmethod initialize-instance :after ((self module-clap) &key id plugin-info-clap)
-  (when (and id (not plugin-info-clap))
-    (setf plugin-info-clap
-          (loop for plugin-info in (plugin-info-load-all)
-                  thereis (and (equal id (.id plugin-info))
-                               plugin-info))))
-  (when plugin-info-clap
-
-    (setf (.host self) (utaticl.clap::make-host :module self))
-    (setf (.clap-host-gui self) (utaticl.clap::make-host-gui :module self))
-    (setf (.clap-host-audio-ports self) (utaticl.clap::make-host-audio-ports :module self))
-    (setf (.clap-process self) (utaticl.clap::make-process))
-
-    (multiple-value-bind (factory library)
-        (utaticl.clap::get-factory (.path plugin-info-clap))
-
-      (let ((plugin (utaticl.clap::create-plugin factory (.id plugin-info-clap) (.host self))))
-        (setf (.plugin self) plugin)
-        (setf (.id self) (.id plugin-info-clap))
-        (setf (.name self) (.name plugin-info-clap))
-        (setf (.factory self) factory)
-        (setf (.library self) library)
-        (cffi:foreign-funcall-pointer
-         (clap:clap-plugin.init plugin) ()
-         :pointer (autowrap:ptr plugin)
-         :bool)
-        (flet ((extension (id make writer)
-                 (let ((ptr (cffi:foreign-funcall-pointer
-                             (clap:clap-plugin.get-extension plugin) ()
-                             :pointer (autowrap:ptr plugin)
-                             :string id
-                             :pointer)))
-                   (unless (cffi:null-pointer-p ptr)
-                     (funcall writer (funcall make :ptr ptr) self)))))
-          (extension "clap.audio-ports" #'clap::make-clap-plugin-audio-ports
-                     (fdefinition '(setf .ext-audio-ports)))
-          (extension "clap.gui" #'clap::make-clap-plugin-gui
-                     (fdefinition '(setf .ext-gui)))
-          (extension "clap.latency" #'clap::make-clap-plugin-latency
-                     (fdefinition '(setf .ext-latency)))
-          (extension "clap.note-ports" #'clap::make-clap-plugin-note-ports
-                     (fdefinition '(setf .ext-note-ports)))
-          (extension "clap.state" #'clap::make-clap-plugin-state
-                     (fdefinition '(setf .ext-state))))))
-
-    (utaticl.clap::query-audio-ports self)
-    (params-prepare self)
-    (params-value-changed self)))
+(defmethod initialize-instance :after ((self module-clap) &key)
+  (load-plugin self))
 
 (defmethod closed ((self module-clap) was-destroyed)
   (when (.clap-window self)
@@ -110,6 +64,56 @@
             (utaticl.clap::call (clap:clap-plugin-gui.show ext)
                                 :bool)
             t)))))
+
+(defmethod load-plugin ((self module-clap))
+  (with-slots (id plugin-info) self
+    (when (and id (not plugin-info))
+      (setf plugin-info
+            (loop for plugin-info in (plugin-info-load-all)
+                    thereis (and (equal id (.id plugin-info))
+                                 plugin-info))))
+    (when plugin-info
+      (setf id (.id plugin-info))
+      (setf (.host self) (utaticl.clap::make-host :module self))
+      (setf (.clap-host-gui self) (utaticl.clap::make-host-gui :module self))
+      (setf (.clap-host-audio-ports self) (utaticl.clap::make-host-audio-ports :module self))
+      (setf (.clap-process self) (utaticl.clap::make-process))
+
+      (multiple-value-bind (factory library)
+          (utaticl.clap::get-factory (.path plugin-info))
+
+        (let ((plugin (utaticl.clap::create-plugin factory (.id plugin-info) (.host self))))
+          (setf (.plugin self) plugin)
+          (setf (.id self) (.id plugin-info))
+          (setf (.name self) (.name plugin-info))
+          (setf (.factory self) factory)
+          (setf (.library self) library)
+          (cffi:foreign-funcall-pointer
+           (clap:clap-plugin.init plugin) ()
+           :pointer (autowrap:ptr plugin)
+           :bool)
+          (flet ((extension (id make writer)
+                   (let ((ptr (cffi:foreign-funcall-pointer
+                               (clap:clap-plugin.get-extension plugin) ()
+                               :pointer (autowrap:ptr plugin)
+                               :string id
+                               :pointer)))
+                     (unless (cffi:null-pointer-p ptr)
+                       (funcall writer (funcall make :ptr ptr) self)))))
+            (extension "clap.audio-ports" #'clap::make-clap-plugin-audio-ports
+                       (fdefinition '(setf .ext-audio-ports)))
+            (extension "clap.gui" #'clap::make-clap-plugin-gui
+                       (fdefinition '(setf .ext-gui)))
+            (extension "clap.latency" #'clap::make-clap-plugin-latency
+                       (fdefinition '(setf .ext-latency)))
+            (extension "clap.note-ports" #'clap::make-clap-plugin-note-ports
+                       (fdefinition '(setf .ext-note-ports)))
+            (extension "clap.state" #'clap::make-clap-plugin-state
+                       (fdefinition '(setf .ext-state))))))
+
+      (utaticl.clap::query-audio-ports self)
+      (params-prepare self)
+      (params-value-changed self))))
 
 (defmethod on-resize ((self module-clap) width height)
   "called from wnd-proc wm-size"
@@ -203,6 +207,8 @@
     (qbase64:encode-bytes (utaticl.clap::ostream-buffer out))))
 
 (defmethod (setf state) (state (self module-clap))
+  (unless (.plugin self)
+    (load-plugin self))
   (utaticl.clap::with-istream (in :buffer (qbase64:decode-string state))
     (utaticl.clap::ecall (clap:clap-plugin-state.load (.ext-state self))
                          :pointer (autowrap:ptr in)

@@ -287,7 +287,7 @@
    (event-output-bus-count :initarg :event-output-bus-count
                            :initform 0
                            :accessor .event-output-bus-count)
-   (id :initarg :id :accessor .id)
+   (id :initarg :id :initform nil :accessor .id)
    (latency :initform 0 :accessor .latency)
    (latency-pdc :initform 0 :accessor .latency-pdc)
    (params :initform (make-hash-table) :accessor .params)
@@ -309,7 +309,8 @@
    (ext-state :initform nil :accessor .ext-state)
    (host :accessor .host)
    (library :accessor .library)
-   (plugin :accessor .plugin)))
+   (plugin :initform nil :accessor .plugin)
+   (plugin-info :initarg :plugin-info :initform nil :accessor .plugin-info)))
 
 (defclass module-vst3 (module)
   ((audio-processor :accessor .audio-processor)

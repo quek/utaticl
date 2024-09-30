@@ -24,6 +24,7 @@
                        :controller controller
                        :single-component-p single-component-p)))))
 
+;;; できたらなくしたい。load-plugin へ統合
 (defmethod initialize ((self module-vst3))
   (vst3-ffi::initialize (.component self)
                         (vst3-impl::ptr (.host-applicaiton self)))
