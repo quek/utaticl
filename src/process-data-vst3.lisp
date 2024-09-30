@@ -63,6 +63,8 @@
 
   (setup-audio-buffer (.inputs self)
                       (.inputs process-data))
+  (setup-audio-buffer (.outputs self)
+                      (.outputs process-data))
 
   (setf (sb:vst-process-data.input-parameter-changes (.wrap self))
         (vst3-impl::ptr (.parameter-changes-out module)))

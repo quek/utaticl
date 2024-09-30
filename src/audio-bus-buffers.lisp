@@ -60,10 +60,7 @@
                       (.nchannels audio-buffer)))
            (loop for index-channel below (.nchannels audio-buffer)
                  do (setf (cffi:mem-aref buffer-ptr '(:pointer :float) index-channel)
-                          (cffi:inc-pointer (.buffer audio-buffer)
-                                            (* (cffi:foreign-type-size :float)
-                                               (.frames-per-buffer *config*)
-                                               index-channel))))))
+                          (buffer-at audio-buffer index-channel)))))
 
 (defmethod silence-flags ((self audio-bus-buffers) bus-index &optional channel-index)
   (let* ((bus (bus self bus-index))

@@ -1,5 +1,45 @@
 (in-package :utaticl.core)
 
+(let* ((process-data (.process-data (.master-track (car (.projects *app*)))))
+       (module (cadr (.modules (.master-track (car (.projects *app*))))))
+       (pd (.process-data module))
+       (p (.wrap pd))
+       (in (sb::make-vst-audio-bus-buffers :ptr (sb:vst-process-data.inputs p)))
+       (out (sb::make-vst-audio-bus-buffers :ptr (sb:vst-process-data.outputs p))))
+  (values (sb:vst-audio-bus-buffers.num-channels in)
+          (sb:vst-audio-bus-buffers.silence-flags in)
+          (sb:vst-audio-bus-buffers.vst-audio-bus-buffers-channel-buffers32* in)
+          (buffer-at (car (.inputs process-data)) 0)
+          (cffi:mem-aref (sb:vst-audio-bus-buffers.vst-audio-bus-buffers-channel-buffers32 in) :pointer 0)
+          (cffi:mem-aref (sb:vst-audio-bus-buffers.vst-audio-bus-buffers-channel-buffers32 in) :pointer 1)
+          (buffer-at (car (.inputs process-data)) 1)
+          "--"
+          (sb:vst-audio-bus-buffers.vst-audio-bus-buffers-channel-buffers32* out)
+          (buffer-at (car (.outputs process-data)) 0)
+          (cffi:mem-aref (sb:vst-audio-bus-buffers.vst-audio-bus-buffers-channel-buffers32 out) :pointer 0)
+          (cffi:mem-aref (sb:vst-audio-bus-buffers.vst-audio-bus-buffers-channel-buffers32 out) :pointer 1)
+          (buffer-at (car (.outputs process-data)) 1)))
+;;⇒ 2
+;;   0
+;;   #.(SB-SYS:INT-SAP #X1E30B4F0)
+;;   #.(SB-SYS:INT-SAP #X02ABE260)
+;;   #.(SB-SYS:INT-SAP #X1E30B4F0)
+;;   #.(SB-SYS:INT-SAP #X1E30BCF0)
+;;   #.(SB-SYS:INT-SAP #X02ABEA60)
+;;   "--"
+;;   #.(SB-SYS:INT-SAP #X02ABE260)
+;;   #.(SB-SYS:INT-SAP #X1E30B4F0)
+;;   #.(SB-SYS:INT-SAP #X02ABE260)
+;;   #.(SB-SYS:INT-SAP #X02ABEA60)
+;;   #.(SB-SYS:INT-SAP #X1E30BCF0)
+
+
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (let ((n 0))
  (defun foo ()
    (print (list (incf n) (.steady-time *app*) (.play-start (car (.projects *app*)))))))
@@ -26,10 +66,6 @@
   (loop while (.play-p (car (.projects *app*)))
         do (audio-loop buffer)
            (sleep .01)))
-
-
-
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (let* ((module (cadr (.modules (.master-track (car (.projects *app*))))))
