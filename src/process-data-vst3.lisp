@@ -109,13 +109,16 @@
                 (setf (sb:vst-event.vst-event-note-on.channel event) (.channel note))
                 (setf (sb:vst-event.vst-event-note-on.pitch event) (.key note))
                 (setf (sb:vst-event.vst-event-note-on.tuning event) .0)
-                (setf (sb:vst-event.vst-event-note-on.velocity event) (.velocity note))
+                (setf (sb:vst-event.vst-event-note-on.velocity event)
+                      (coerce (.velocity note) 'single-float))
                 (setf (sb:vst-event.vst-event-note-on.note-id event) -1)
                 (setf (sb:vst-event.vst-event-note-on.length event) 0)
                 (vst3-impl::add-event (.input-events process-data)
                                       (autowrap:ptr event)))
-              (pushnew (cons (.key note) (.channel note))
-                       (.notes-on process-data) :test #'equal))
+              ;; FIXME
+              ;; (pushnew (cons (.key note) (.channel note))
+              ;;          (.notes-on process-data) :test #'equal)
+              )
              (:off
               (autowrap:with-alloc (event '(:struct (sb:vst-event)))
                 (setf (sb:vst-event.bus-index event) 0) ;TODO
@@ -129,8 +132,10 @@
                 (setf (sb:vst-event.vst-event-note-off.note-id event) -1)
                 (setf (sb:vst-event.vst-event-note-off.tuning event) .0)
                 (vst3-impl::add-event (.input-events process-data) (autowrap:ptr event)))
-              (setf (.notes-on module-vst3)
-                    (delete (cons (.key note) (.channel note))
-                            (.notes-on process-data)
-                            :test #'equal))))))
+              ;; FIXME
+              ;; (setf (.notes-on module-vst3)
+              ;;       (delete (cons (.key note) (.channel note))
+              ;;               (.notes-on process-data)
+              ;;               :test #'equal))
+              ))))
 
