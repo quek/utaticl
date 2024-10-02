@@ -71,7 +71,7 @@
   (setf (sb:vst-process-data.output-parameter-changes (.wrap self))
         (vst3-impl::ptr (.parameter-changes-in module)))
 
-  (note-buffer->vst3 module)
+  (note-buffer->vst3 self)
 
   (prepare (.parameter-changes-in module))
   (prepare (.parameter-changes-out module))
@@ -92,11 +92,11 @@
                                  changes id-ptr (cffi:null-pointer))))))
                (vst3-impl::add-point queue sample-offset value (cffi:null-pointer))))))
 
-(defun note-buffer->vst3 (module-vst3)
-  (prepare (.input-events (.process-data module-vst3)))
-  (prepare (.output-events (.process-data module-vst3)))
+(defmethod note-buffer->vst3 ((self process-data-vst3))
+  (prepare (.input-events self))
+  (prepare (.output-events self))
   (loop with note-buffer = (.input-events *process-data*)
-        with process-data = (.process-data module-vst3)
+        with process-data = self
         for event across (.events note-buffer)
         for note across (.notes note-buffer)
         for sample-offset across (.sample-offsets note-buffer)
@@ -116,11 +116,7 @@
                 (setf (sb:vst-event.vst-event-note-on.note-id event) -1)
                 (setf (sb:vst-event.vst-event-note-on.length event) 0)
                 (vst3-impl::add-event (.input-events process-data)
-                                      (autowrap:ptr event)))
-              ;; FIXME
-              ;; (pushnew (cons (.key note) (.channel note))
-              ;;          (.notes-on process-data) :test #'equal)
-              )
+                                      (autowrap:ptr event))))
              (:off
               (autowrap:with-alloc (event '(:struct (sb:vst-event)))
                 (setf (sb:vst-event.bus-index event) 0) ;TODO
@@ -134,11 +130,5 @@
                 (setf (sb:vst-event.vst-event-note-off.velocity event) 1.0)
                 (setf (sb:vst-event.vst-event-note-off.note-id event) -1)
                 (vst3-impl::add-event (.input-events process-data)
-                                      (autowrap:ptr event)))
-              ;; FIXME
-              ;; (setf (.notes-on module-vst3)
-              ;;       (delete (cons (.key note) (.channel note))
-              ;;               (.notes-on process-data)
-              ;;               :test #'equal))
-              ))))
+                                      (autowrap:ptr event)))))))
 

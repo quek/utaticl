@@ -105,6 +105,23 @@
   (loop for event across (input-events-list self)
         do (terminate event)))
 
+(defmethod event-add ((self input-events) (event (eql :midi)) data sample-offset)
+  (let ((clap-event-midi (autowrap::calloc 'clap:clap-event-midi-t)))
+    (setf (clap:clap-event-midi.header.size clap-event-midi)
+          (autowrap:sizeof 'clap:clap-event-midi-t))
+    (setf (clap:clap-event-midi.header.time clap-event-midi)
+          sample-offset)
+    (setf (clap:clap-event-midi.header.space-id clap-event-midi)
+          clap:+clap-core-event-space-id+)
+    (setf (clap:clap-event-midi.header.type clap-event-midi)
+          clap:+clap-event-midi+)
+    (setf (clap:clap-event-midi.header.flags clap-event-midi)
+          0)
+    (loop for i below 3
+          do (setf (cffi:mem-aref (clap:clap-event-midi.data[]& clap-event-midi)
+                                  :unsigned-char i)
+                   (nth i data)))))
+
 (defmethod event-add ((self input-events) event note sample-offset)
   (let ((clap-event-note (autowrap:calloc 'clap:clap-event-note-t)))
     (setf (clap:clap-event-note.header.size clap-event-note)

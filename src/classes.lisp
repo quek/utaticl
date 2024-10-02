@@ -411,8 +411,7 @@
    (outputs :accessor .outputs)
    (input-events :accessor .input-events)
    (output-events :accessor .output-events)
-   (context :accessor .context)
-   (notes-on :initform nil :accessor .notes-on)))
+   (context :accessor .context)))
 
 (defclass audio-bus ()
   ((buffer :accessor .buffer)

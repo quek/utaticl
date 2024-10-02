@@ -20,19 +20,22 @@
   (prepare (.input-events self))
   (prepare (.output-events self)))
 
-(defmethod note-off ((process-data process-data) note sample-offset)
-  (note-off (.input-events process-data) note sample-offset)
-  (values))
+(defmethod note-off ((self process-data) note sample-offset)
+  (note-off (.input-events self) note sample-offset)
+  (setf (.notes-on self)
+        (delete note (.notes-on self)
+                :test #'(lambda (a b)
+                          (and (= (.key a) (.key b))
+                               (= (.channel a) (.channel b)))))))
 
-;;; TODO これ系は vst3 じゃなくて、ここでよかったかも
 (defmethod note-off-all ((self process-data))
-  (loop for (key . channel) in (.notes-on self)
-        do (note-off self key channel 1.0 0))
+  (loop for note in (.notes-on self)
+        do (note-off self note 0))
   (setf (.notes-on self) nil))
 
-(defmethod note-on ((process-data process-data) note sample-offset)
-  (note-on (.input-events process-data) note sample-offset)
-  (values))
+(defmethod note-on ((self process-data) note sample-offset)
+  (note-on (.input-events self) note sample-offset)
+  (setf (.notes-on self) (cons note (.notes-on self))))
 
 (Defmethod swap-in-out ((self process-data))
   (psetf (.inputs self)
