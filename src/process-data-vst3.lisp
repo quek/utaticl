@@ -93,6 +93,8 @@
                (vst3-impl::add-point queue sample-offset value (cffi:null-pointer))))))
 
 (defun note-buffer->vst3 (module-vst3)
+  (prepare (.input-events (.process-data module-vst3)))
+  (prepare (.output-events (.process-data module-vst3)))
   (loop with note-buffer = (.input-events *process-data*)
         with process-data = (.process-data module-vst3)
         for event across (.events note-buffer)
@@ -128,10 +130,11 @@
                 (setf (sb:vst-event.type event) sb:+vst-event-event-types-k-note-off-event+)
                 (setf (sb:vst-event.vst-event-note-off.channel event) (.channel note))
                 (setf (sb:vst-event.vst-event-note-off.pitch event) (.key note))
+                (setf (sb:vst-event.vst-event-note-off.tuning event) .0)
                 (setf (sb:vst-event.vst-event-note-off.velocity event) 1.0)
                 (setf (sb:vst-event.vst-event-note-off.note-id event) -1)
-                (setf (sb:vst-event.vst-event-note-off.tuning event) .0)
-                (vst3-impl::add-event (.input-events process-data) (autowrap:ptr event)))
+                (vst3-impl::add-event (.input-events process-data)
+                                      (autowrap:ptr event)))
               ;; FIXME
               ;; (setf (.notes-on module-vst3)
               ;;       (delete (cons (.key note) (.channel note))
