@@ -95,6 +95,7 @@
 (defmethod note-buffer->vst3 ((self process-data-vst3))
   (prepare (.input-events self))
   (prepare (.output-events self))
+  ;; TODO vst3-impl::param-value-queue に移す
   (loop with note-buffer = (.input-events *process-data*)
         with process-data = self
         for event across (.events note-buffer)
