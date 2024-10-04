@@ -74,6 +74,7 @@
       (setf (.host self) (utaticl.clap::make-host :module self))
       (setf (.clap-host-gui self) (utaticl.clap::make-host-gui :module self))
       (setf (.clap-host-audio-ports self) (utaticl.clap::make-host-audio-ports :module self))
+      (setf (.clap-host-params self) (utaticl.clap::make-host-params :module self))
       (setf (.clap-process self) (utaticl.clap::make-process))
 
       (multiple-value-bind (factory library)
@@ -106,6 +107,8 @@
                        (fdefinition '(setf .ext-latency)))
             (extension "clap.note-ports" #'clap::make-clap-plugin-note-ports
                        (fdefinition '(setf .ext-note-ports)))
+            (extension "clap.params" #'clap::make-clap-plugin-params
+                       (fdefinition '(setf .ext-params)))
             (extension "clap.state" #'clap::make-clap-plugin-state
                        (fdefinition '(setf .ext-state))))))
 

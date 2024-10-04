@@ -261,6 +261,36 @@
     (log:trace "gui.request-closed" self)
     (closed (host-gui-module self) was-destroyed))))
 
+(def-clap-struct host-params
+    ((module nil))
+  ((rescan
+    ((flags :int)) :void
+    ;; TODO
+    ;; Rescan the full list of parameters according to the flags.
+    ;; [main-thread]
+    )
+   (clear
+    ((param-id :unsigned-int)
+     (flags :int)) :void
+    ;; TODO
+    ;; Clears references to a parameter.
+    ;; [main-thread]
+    )
+   (request-flush
+    () :void
+    ;; TODO
+    ;; Request a parameter flush.
+    ;;
+    ;; The host will then schedule a call to either:
+    ;; - clap_plugin.process()
+    ;; - clap_plugin_params.flush()
+    ;;
+    ;; This function is always safe to use and should not be called from an [audio-thread] as the
+    ;; plugin would already be within process() or flush().
+    ;;
+    ;; [thread-safe,!audio-thread]
+    )))
+
 (alexandria:define-constant +host-name+ "UTATICL" :test 'equal)
 (alexandria:define-constant +host-url+ "https://github.com/quek/utaticl" :test 'equal)
 (alexandria:define-constant +host-version+ "0.0.1" :test 'equal)
@@ -276,6 +306,8 @@
              (autowrap:ptr (.clap-host-gui module)))
             ((equal extension-id "clap.audio-ports")
              (autowrap:ptr (.clap-host-audio-ports module)))
+            ((equal extension-id "clap.params")
+             (autowrap:ptr (.clap-host-params module)))
             (t (cffi:null-pointer)))))
    (request-restart
     () :void
@@ -416,4 +448,3 @@
   `(let ((,var (make-ostream)))
      (unwind-protect (progn ,@body)
        (terminate ,var))))
-
