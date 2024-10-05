@@ -29,7 +29,7 @@
 
 (defserialize connection (:ref from) (:ref to) from-bus-index to-bus-index)
 
-(defserialize param id short-title units step-count default-normalized-value
+(defserialize param id short-title units step-count default-value
   unit-id flags value)
 
 (defserialize sceen-matrix (:list sceens :writer sceen-add))

@@ -381,22 +381,25 @@
    (pdc-buffer :initform (make-instance 'ring-buffer :size 0) :accessor .pdc-buffer)))
 
 (defclass param (neko)
-  ((id :initarg :id :initform nil :accessor .id)
-   (module :initarg :module :initform nil :accessor .module)
-   (short-title :initarg :short-title :initform nil :accessor .short-title)
-   (units :initarg :units :initform nil :accessor .units)
-   (step-count :initarg :step-count :initform nil :accessor .step-count)
-   (default-normalized-value :initarg :default-normalized-value :initform nil
-                             :accessor .default-normalized-value)
-   (unit-id :initarg :unit-id :initform nil :accessor .unit-id)
-   (flags :initarg :flags :initform nil :accessor .flags)
-   (value :initarg :value :initform .0d0 :accessor .value)))
-
-(defclass param-vst3 (param)
   ((begin-edit-p :initform nil :accessor .begin-edit-p)
    (begin-edit-value :initform .0d0 :accessor .begin-edit-value)
+   (default-value :initarg :default-value :initform nil :accessor .default-value)
    (editing-p :initform nil :accessor .editing-p)
-   (perform-at :initform (get-internal-real-time) :accessor .perform-at)))
+   (flags :initarg :flags :initform nil :accessor .flags)
+   (id :initarg :id :initform nil :accessor .id)
+   (module :initarg :module :initform nil :accessor .module)
+   (perform-at :initform (get-internal-real-time) :accessor .perform-at)
+   (short-title :initarg :short-title :initform nil :accessor .short-title)
+   (value :initarg :value :initform .0d0 :accessor .value)))
+
+(defclass param-clap (param)
+  ((max-value :initarg :max-value :initform nil :accessor .max-value)
+   (min-value :initarg :min-value :initform nil :accessor .min-value)))
+
+(defclass param-vst3 (param)
+  ((step-count :initarg :step-count :initform nil :accessor .step-count)
+   (unit-id :initarg :unit-id :initform nil :accessor .unit-id)
+   (units :initarg :units :initform nil :accessor .units)))
 
 (defclass process-data ()
   ((bpm :accessor .bpm)

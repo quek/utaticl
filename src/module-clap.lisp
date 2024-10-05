@@ -121,6 +121,20 @@
   ;; TODO
   )
 
+(defmethod params-prepare ((self module-clap))
+  (params-clear self)
+  (loop for i below (utaticl.clap::call
+                     (clap:clap-plugin-params.count (.ext-params self))
+                     :unsigned-int)
+        do (autowrap:with-alloc (info 'clap:clap-plugin-track-info-t)
+             (utaticl.clap::ecall
+              (clap:clap-plugin-params.get-info (.ext-params self))
+              :unsigned-int i
+              :pointer info
+              :bool)
+             (param-add self
+                        (make-instance 'param-clap :clap-param-info info)))))
+
 (defun plugin-scan-clap (&optional (dir "c:\\Program Files\\Common Files\\CLAP"))
   (loop for %path in (directory (merge-pathnames "**/*.clap" dir))
         for path = (namestring %path)

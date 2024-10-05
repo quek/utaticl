@@ -75,6 +75,7 @@
    (:file "preset-vst3")
    (:file "connection")
    (:file "param")
+   (:file "param-clap")
    (:file "param-vst3")
    (:file "midi")
    (:file "commands")
