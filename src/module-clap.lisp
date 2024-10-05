@@ -75,7 +75,7 @@
       (setf (.clap-host-gui self) (utaticl.clap::make-host-gui :module self))
       (setf (.clap-host-audio-ports self) (utaticl.clap::make-host-audio-ports :module self))
       (setf (.clap-host-params self) (utaticl.clap::make-host-params :module self))
-      (setf (.clap-process self) (utaticl.clap::make-process))
+      (setf (.clap-process self) (utaticl.clap::make-process :module self))
 
       (multiple-value-bind (factory library)
           (utaticl.clap::get-factory (.path plugin-info))

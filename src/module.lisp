@@ -88,7 +88,9 @@
   (setf (.module param) module))
 
 (defmethod param-editing ((module module) id value)
-  (param-editing module (gethash id (.params module)) value))
+  (let ((param (gethash id (.params module))))
+    (when param
+      (param-editing module param value))))
 
 (defmethod param-editing ((module module) (param param) value)
   (setf (.value param) value))

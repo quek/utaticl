@@ -199,26 +199,35 @@
   (setf (fill-pointer (input-events-list self)) 0))
 
 (def-clap-struct output-events
-    ((list (make-array 16 :fill-pointer 0)))
+    ((module nil))
   ((try-push
     ((event :pointer)) ;const clap_event_header_t *event
     :bool
-    (vector-push-extend (clap::make-clap-event-header-t :ptr event)
-                        (output-events-list self))
+    (print event)
+    (let ((event (clap::make-clap-event-header-t :ptr event)))
+      (case (clap:clap-event-header.type event)
+        (#.clap:+clap-event-param-value+
+         (let ((event (clap::make-clap-event-param-value-t :ptr (autowrap:ptr event))))
+           (param-editing (output-events-module self)
+                          (clap:clap-event-param-value.param-id event)
+                          (clap:clap-event-param-value.value event))))))
+
     t)))
 
-(defmethod prepare ((self output-events))
-  (setf (fill-pointer (output-events-list self)) 0))
+(defmethod prepare ((self output-events)))
 
 (def-clap-struct process
-    ((transport (make-event-transport))
+    ((module nil)
+     (transport (make-event-transport))
      (audio-inputs (make-audio-buffer :ptr (cffi:null-pointer)))
      (audio-outputs (make-audio-buffer :ptr (cffi:null-pointer)))
      (input-events (make-input-events))
-     (output-events (make-output-events)))
+     (output-events nil))
   ())
 
 (defmethod initialize ((self process))
+  (setf (process-output-events self)
+        (make-output-events :module (process-module self)))
   (setf (clap:clap-process.frames-count self) (.frames-per-buffer *config*))
   (pointer-set self))
 

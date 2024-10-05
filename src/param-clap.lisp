@@ -30,11 +30,13 @@
         (self (.module self))
         (buffer-size 80))
     (cffi:with-foreign-object (buffer :char buffer-size)
-      (utaticl.clap::ecall
-       (clap:clap-plugin-params.value-to-text (.ext-params self))
-       :unsigned-int (.id param)
-       :double (.value param)
-       :pointer buffer
-       :unsigned-int buffer-size
-       :bool)
-      (cffi:foreign-string-to-lisp buffer))))
+      ;; FIXME surge だと動くに vcv rack だと nil が返ってくる
+      (if (utaticl.clap::call
+           (clap:clap-plugin-params.value-to-text (.ext-params self))
+           :unsigned-int (.id param)
+           :double (.value param)       ;surge はこの引数を無視してプラグイン側の値を返してくる
+           :pointer buffer
+           :unsigned-int buffer-size
+           :bool)
+          (cffi:foreign-string-to-lisp buffer)
+          (format nil "x ~a" (.value param))))))

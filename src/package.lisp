@@ -98,6 +98,7 @@
    #:offset-mixin
    #:on-resize
    #:param
+   #:param-editing
    #:params-prepare
    #:perform-edit
    #:piano-roll
