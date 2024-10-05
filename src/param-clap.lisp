@@ -26,8 +26,6 @@
   (param-change-add (.module self) self))
 
 (defmethod value-text ((self param-clap))
-  (format nil "~a" (.value self))
-  #+nil
   (let ((param self)
         (self (.module self))
         (buffer-size 80))
@@ -37,4 +35,6 @@
        :unsigned-int (.id param)
        :double (.value param)
        :pointer buffer
-       :unsigned-int buffer-size))))
+       :unsigned-int buffer-size
+       :bool)
+      (cffi:foreign-string-to-lisp buffer))))
