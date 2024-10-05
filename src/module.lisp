@@ -7,7 +7,7 @@
   (loop for i below 4
         for param in (.params-ordered module)
         do (ig:set-next-item-width 200.0)
-           (when (ig:drag-scalar (format nil "~a ~d" (.name param) (.step-count param))
+           (when (ig:drag-scalar (.name param)
                                  ig:+im-gui-data-type-double+
                                  (.value param)
                                  :speed .005

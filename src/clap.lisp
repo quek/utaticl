@@ -23,12 +23,21 @@
     (let ((this (gensym "SELF"))
           (method (intern (format nil "~a.~a" class method))))
       `(progn
-         (defmethod ,method ((self ,class) ,@(mapcar #'car args))
+         (defmethod ,method ,(if (eq (caar args) 'self)
+                                 `(,(car args)
+                                   ,@(mapcar #'car (cdr args)))
+                                 `((self ,class)
+                                   ,@(mapcar #'car args)))
            ,@body)
          (cffi:defcallback ,method ,return-type
              ((,this :pointer)
-              ,@args)
-           (,method (object-get ,this) ,@(mapcar #'car args))))))
+              ,@ (if (eq (caar args) 'self)
+                     (cdr args)
+                     args))
+           (,method (object-get ,this) ,@(mapcar #'car
+                                                 (if (eq (caar args) 'self)
+                                                     (cdr args)
+                                                     args)))))))
 
   (defun %set-clap-struct-callback (struct field)
     (let* ((writer (intern (format nil "CLAP-~a.~a" struct field) :clap))
@@ -261,36 +270,6 @@
     (log:trace "gui.request-closed" self)
     (closed (host-gui-module self) was-destroyed))))
 
-(def-clap-struct host-params
-    ((module nil))
-  ((rescan
-    ((flags :int)) :void
-    ;; TODO
-    ;; Rescan the full list of parameters according to the flags.
-    ;; [main-thread]
-    )
-   (clear
-    ((param-id :unsigned-int)
-     (flags :int)) :void
-    ;; TODO
-    ;; Clears references to a parameter.
-    ;; [main-thread]
-    )
-   (request-flush
-    () :void
-    ;; TODO
-    ;; Request a parameter flush.
-    ;;
-    ;; The host will then schedule a call to either:
-    ;; - clap_plugin.process()
-    ;; - clap_plugin_params.flush()
-    ;;
-    ;; This function is always safe to use and should not be called from an [audio-thread] as the
-    ;; plugin would already be within process() or flush().
-    ;;
-    ;; [thread-safe,!audio-thread]
-    )))
-
 (alexandria:define-constant +host-name+ "UTATICL" :test 'equal)
 (alexandria:define-constant +host-url+ "https://github.com/quek/utaticl" :test 'equal)
 (alexandria:define-constant +host-version+ "0.0.1" :test 'equal)
@@ -328,6 +307,37 @@
   (setf (clap:clap-host.vendor self) (sb-sys:vector-sap +host-name+))
   (setf (clap:clap-host.url self) (sb-sys:vector-sap +host-url+))
   (setf (clap:clap-host.version self) (sb-sys:vector-sap +host-version+)))
+
+(def-clap-struct host-params
+    ((module nil))
+  ((rescan
+    ((self host) (flags :int)) :void
+    ;; TODO
+    ;; Rescan the full list of parameters according to the flags.
+    ;; [main-thread]
+    )
+   (clear
+    ((self host)
+     (param-id :unsigned-int)
+     (flags :int)) :void
+    ;; TODO
+    ;; Clears references to a parameter.
+    ;; [main-thread]
+    )
+   (request-flush
+    ((self host)) :void
+    ;; TODO
+    ;; Request a parameter flush.
+    ;;
+    ;; The host will then schedule a call to either:
+    ;; - clap_plugin.process()
+    ;; - clap_plugin_params.flush()
+    ;;
+    ;; This function is always safe to use and should not be called from an [audio-thread] as the
+    ;; plugin would already be within process() or flush().
+    ;;
+    ;; [thread-safe,!audio-thread]
+    )))
 
 (defmacro call (function &rest args-and-return-type)
   `(cffi:foreign-funcall-pointer

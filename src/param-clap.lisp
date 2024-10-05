@@ -26,14 +26,15 @@
   (param-change-add (.module self) self))
 
 (defmethod value-text ((self param-clap))
-  (let ((buffer-size 80))
+  (format nil "~a" (.value self))
+  #+nil
+  (let ((param self)
+        (self (.module self))
+        (buffer-size 80))
     (cffi:with-foreign-object (buffer :char buffer-size)
       (utaticl.clap::ecall
-       (clap:clap-plugin-params.value-to-text (.ext-params (.module self)))
-       :unsigned-int (.id self)
-       :double (.value self)
+       (clap:clap-plugin-params.value-to-text (.ext-params self))
+       :unsigned-int (.id param)
+       :double (.value param)
        :pointer buffer
-       :unsigned-int buffer-size)
-      (cffi:foreign-string-to-lisp buffer))))
-
-
+       :unsigned-int buffer-size))))
