@@ -129,7 +129,39 @@
     (loop for i below 3
           do (setf (cffi:mem-aref (clap:clap-event-midi.data[]& clap-event-midi)
                                   :unsigned-char i)
-                   (nth i data)))))
+                   (nth i data)))
+
+    (vector-push-extend clap-event-midi (input-events-list self))))
+
+(defmethod event-add ((self input-events) (event (eql :param)) id-value sample-offset)
+  (let ((clap-event-param-value (autowrap:calloc 'clap:clap-event-param-value-t)))
+    (setf (clap:clap-event-param-value.header.size clap-event-param-value)
+          (autowrap:sizeof 'clap:clap-event-param-value-t))
+    (setf (clap:clap-event-param-value.header.time clap-event-param-value)
+          sample-offset)
+    (setf (clap:clap-event-param-value.header.space-id clap-event-param-value)
+          clap:+clap-core-event-space-id+)
+    (setf (clap:clap-event-param-value.header.type clap-event-param-value)
+          clap:+clap-event-param-value+)
+    (setf (clap:clap-event-param-value.header.flags clap-event-param-value)
+          0)
+
+    (setf (clap:clap-event-param-value.param-id clap-event-param-value)
+          (car id-value))
+    (setf (clap:clap-event-param-value.cookie clap-event-param-value)
+          (cffi:null-pointer))
+    (setf (clap:clap-event-param-value.note-id clap-event-param-value)
+          -1)                           ;-1 meaning wildcard
+    (setf (clap:clap-event-param-value.port-index clap-event-param-value)
+          -1)
+    (setf (clap:clap-event-param-value.channel clap-event-param-value)
+          -1)
+    (setf (clap:clap-event-param-value.key clap-event-param-value)
+          -1)
+    (setf (clap:clap-event-param-value.value clap-event-param-value)
+          (cadr id-value))
+
+    (vector-push-extend clap-event-param-value (input-events-list self))))
 
 (defmethod event-add ((self input-events) event note sample-offset)
   (let ((clap-event-note (autowrap:calloc 'clap:clap-event-note-t)))
@@ -197,7 +229,7 @@
   (terminate (process-input-events self))
   (terminate (process-output-events self)))
 
-(defmethod apply-from ((self process) (process-data process-data) &key)
+(defmethod apply-from ((self process) (process-data process-data) &key module)
   (setf (clap:clap-process.steady-time self) (.steady-time *app*))
   (loop for input in (.inputs process-data)
         for bus below (clap:clap-process.audio-inputs-count self)
@@ -211,7 +243,14 @@
         for event across (.events from-events)
         for note across (.notes from-events)
         for sample-offset across (.sample-offsets from-events)
-        do (event-add input-events event note sample-offset)))
+        do (event-add input-events event note sample-offset))
+
+  (loop for message = (sb-concurrency:receive-message-no-hang
+                       (.param-changes-mbox-in module))
+        with input-events = (process-input-events self)
+        while message
+        do (destructuring-bind (id value sample-offset) message
+             (event-add input-events :param (list id value) sample-offset))))
 
 (defmethod prepare ((self process))
   (prepare (process-input-events self))

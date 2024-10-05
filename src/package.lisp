@@ -48,6 +48,7 @@
    #:.notes
    #:.outputs
    #:.output-events
+   #:.param-changes-mbox-in
    #:.params-ordered
    #:.sample-offsets
    #:.steady-time

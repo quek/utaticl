@@ -224,13 +224,6 @@
         (setf (sb:view-rect.bottom rect) height)
         (vst3-ffi::on-size view (autowrap:ptr rect))))))
 
-(defmethod param-change-add ((module-vst3 module-vst3) (param-vst3 param-vst3)
-                             &optional (sample-offset 0))
-  (sb-concurrency:send-message (.param-changes-mbox-in module-vst3)
-                               (list (.id param-vst3)
-                                     (.value param-vst3)
-                                     sample-offset)))
-
 (defmethod param-editing :after ((module-vst3 module-vst3) (param-vst3 param-vst3)
                                  value)
   (param-change-add module-vst3 param-vst3))

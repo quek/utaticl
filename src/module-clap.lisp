@@ -169,7 +169,7 @@
   (let* ((plugin (.plugin self))
          (clap-process (.clap-process self)))
 
-    (apply-from clap-process *process-data*)
+    (apply-from clap-process *process-data* :module self)
 
     (case (utaticl.clap::call (clap:clap-plugin.process plugin)
                               :pointer (autowrap:ptr clap-process)
