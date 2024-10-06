@@ -49,3 +49,7 @@
         (nth (min (max (+ pos delta) 0)
                   (1- (length all)))
              all))))
+
+(defmethod terminate ((self lane) &key)
+  (loop for clip in (.clips self)
+        do (terminate clip)))

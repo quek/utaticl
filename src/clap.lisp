@@ -205,12 +205,22 @@
     :bool
     (print event)
     (let ((event (clap::make-clap-event-header-t :ptr event)))
-      (case (clap:clap-event-header.type event)
-        (#.clap:+clap-event-param-value+
-         (let ((event (clap::make-clap-event-param-value-t :ptr (autowrap:ptr event))))
-           (param-editing (output-events-module self)
-                          (clap:clap-event-param-value.param-id event)
-                          (clap:clap-event-param-value.value event))))))
+      (when (= (clap:clap-event-header.space-id event)
+               clap:+clap-core-event-space-id+)
+        (case (clap:clap-event-header.type event)
+          (#.clap:+clap-event-param-value+
+           (let ((event (clap::make-clap-event-param-value-t :ptr (autowrap:ptr event))))
+             (perform-edit (output-events-module self)
+                           (clap:clap-event-param-value.param-id event)
+                           (clap:clap-event-param-value.value event))))
+          (#.clap:+clap-event-param-gesture-begin+
+           (let ((event (clap::make-clap-event-param-gesture-t :ptr (autowrap:ptr event))))
+             (begin-edit (output-events-module self)
+                         (clap:clap-event-param-gesture.param-id event))))
+          (#.clap:+clap-event-param-gesture-end+
+           (let ((event (clap::make-clap-event-param-gesture-t :ptr (autowrap:ptr event))))
+             (end-edit (output-events-module self)
+                       (clap:clap-event-param-gesture.param-id event)))))))
 
     t)))
 

@@ -580,6 +580,22 @@
 (defmethod execute ((self cmd-open) project)
   (open-project project))
 
+(defcommand cmd-param-value (command)
+  ((param :initarg :param :accessor .param)
+   (value-new :initarg :value-new :accessor .value-new)
+   (value-old :initarg :value-old :accessor .value-old)))
+
+(defmethod execute ((self cmd-param-value) project)
+  (setf (.value (.param self)) (.value-new self)))
+
+(defmethod undo ((self cmd-param-value) project)
+  (setf (.value (.param self)) (.value-old self))
+  (value-changed-by-host (.param self)))
+
+(defmethod redo ((self cmd-param-value) project)
+  (call-next-method)
+  (value-changed-by-host (.param self)))
+
 (defcommand cmd-plugin-scan (command)
   ())
 
@@ -605,8 +621,8 @@
 (defmethod execute ((self cmd-range-d&d) project)
   (let ((notes (range-copy (.clip self) (.range-src self))))
     (loop for note in notes
-          with (time-delta key-delta)
-            = (mapcar #'- (.range-dst self) (.range-src self))
+          with time-delta = (- (car (.range-dst self)) (car (.range-src self)))
+          with key-delta = (- (cadr (.range-dst self)) (cadr (.range-src self)))
           do (incf (.time note) time-delta)
              (incf (.key note) key-delta)
              (note-add (.clip self) note))

@@ -87,14 +87,6 @@
         (append (.params-ordered module) (list param)))
   (setf (.module param) module))
 
-(defmethod param-editing ((module module) id value)
-  (let ((param (gethash id (.params module))))
-    (when param
-      (param-editing module param value))))
-
-(defmethod param-editing ((module module) (param param) value)
-  (setf (.value param) value))
-
 (defmethod params-clear ((module module))
   (clrhash (.params module))
   ;; TODO 順番は保持したいからクリアすべきではない？

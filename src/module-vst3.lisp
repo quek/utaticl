@@ -146,15 +146,6 @@
           (setf (.connection-controller self) nil))
       (vst3::no-interface-error ()))))
 
-(defmethod begin-edit ((self module-vst3) id)
-  (declare (ignore id)))
-
-(defmethod perform-edit ((self module-vst3) id value-normalized)
-  (param-editing self id value-normalized))
-
-(defmethod end-edit ((self module-vst3) id)
-  (declare (ignore id)))
-
 (defmethod editor-close ((self module-vst3))
   (when (.view self)
     (vst3-ffi::set-frame (.view self) (cffi:null-pointer))
@@ -224,10 +215,6 @@
         (setf (sb:view-rect.bottom rect) height)
         (vst3-ffi::on-size view (autowrap:ptr rect))))))
 
-(defmethod param-editing :after ((module-vst3 module-vst3) (param-vst3 param-vst3)
-                                 value)
-  (param-change-add module-vst3 param-vst3))
-
 (defmethod params-prepare ((module-vst3 module-vst3))
   (params-clear module-vst3)
   (loop with controller = (.controller module-vst3)
@@ -242,6 +229,10 @@
         for param in (.params-ordered module-vst3)
         for value = (vst3-ffi::get-param-normalized controller (.id param))
         do (setf (.value param) value)))
+
+(defmethod perform-edit :after ((self module-vst3) (param-vst3 param-vst3)
+                                value)
+  (param-change-add self param-vst3))
 
 (defmethod process ((self module-vst3))
   (let ((process-data (.process-data self)))

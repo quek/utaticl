@@ -25,6 +25,10 @@
   (setf (.track lane) self)
   (setf (.lanes self) (append (.lanes self) (list lane))))
 
+(defmethod lane-delete ((self track) lane)
+  (setf (.lanes self) (remove lane (.lanes self)))
+  (terminate lane))
+
 (defmethod next ((self track))
   (cadr (member self (.tracks (.parent self)))))
 
