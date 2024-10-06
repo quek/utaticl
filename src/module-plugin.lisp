@@ -2,7 +2,10 @@
 
 (defmethod begin-edit ((self module-plugin) id)
   (let ((param (gethash id (.params self))))
-    (begin-edit param id)))
+    (begin-edit param id)
+    (setf (.params-ordered self)
+          (cons param
+                (remove param (.params-ordered self))))))
 
 (defmethod end-edit ((self module-plugin) id)
   (let ((param (gethash id (.params self))))
