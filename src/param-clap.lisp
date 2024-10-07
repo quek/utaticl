@@ -4,7 +4,7 @@
   (when clap-param-info
     (setf (.id self) (clap:clap-param-info.id clap-param-info))
     (setf (.name self)
-          (format nil "~a/~a"
+          (format nil "~a~a"
                   (cffi:foreign-string-to-lisp (clap:clap-param-info.module[]& clap-param-info))
                   (cffi:foreign-string-to-lisp (clap:clap-param-info.name[]& clap-param-info))))
     (setf (.short-title self)

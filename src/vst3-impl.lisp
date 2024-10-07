@@ -784,7 +784,7 @@
       nil))
 
 (def-vst3-impl event-list (unknown)
-  ((events :initform nil :accessor .events))
+  ((events :initform (make-array 8 :fill-pointer 0) :accessor .events))
   ((get-event-count ()
                     :int
                     (length (.events self)))
@@ -792,7 +792,7 @@
                (e :pointer))
               sb:tresult
               (utaticl.core:memcpy e
-                           (autowrap:ptr (nth index (.events self)))
+                           (autowrap:ptr (aref (.events self) index))
                            (autowrap:sizeof '(:struct (sb:vst-event))))
               sb:+k-result-ok+)
    (add-event ((e :pointer))
@@ -801,15 +801,60 @@
                 (utaticl.core:memcpy (autowrap:ptr event)
                              e
                              (autowrap:sizeof '(:struct (sb:vst-event))))
-                (setf (.events self) (append (.events self) (list event))))
+                (vector-push-extend event (.events self)))
               sb:+k-result-ok+))
   :iid vst3-ffi::+vst-ievent-list-iid+
   :vst3-c-api-class sb:vst-i-event-list)
 
+(defmethod utaticl.core:apply-from ((self event-list)
+                                    (note-buffer utaticl.core:note-buffer)
+                                    &key)
+  (loop for event across (utaticl.core:.events note-buffer)
+        for note across (utaticl.core:.notes note-buffer)
+        for sample-offset across (utaticl.core:.sample-offsets note-buffer)
+        do (case event
+             (:on
+              (let ((event (autowrap:alloc '(:struct (sb:vst-event)))))
+                (setf (sb:vst-event.bus-index event) 0) ;TODO
+                (setf (sb:vst-event.sample-offset event) sample-offset)
+                (setf (sb:vst-event.ppq-position event) .0d0) ;TODO
+                (setf (sb:vst-event.flags event) sb:+vst-event-event-flags-k-is-live+) ;TODO
+                (setf (sb:vst-event.type event) sb:+vst-event-event-types-k-note-on-event+)
+                (setf (sb:vst-event.vst-event-note-on.channel event)
+                      (utaticl.core:.channel  note))
+                (setf (sb:vst-event.vst-event-note-on.pitch event)
+                      (utaticl.core:.key note))
+                (setf (sb:vst-event.vst-event-note-on.tuning event) .0)
+                (setf (sb:vst-event.vst-event-note-on.velocity event)
+                      (coerce (utaticl.core:.velocity note) 'single-float))
+                (setf (sb:vst-event.vst-event-note-on.note-id event) -1)
+                (setf (sb:vst-event.vst-event-note-on.length event) 0)
+                (vector-push-extend event (.events self))))
+             (:off
+              (let ((event (autowrap:alloc '(:struct (sb:vst-event)))))
+                (setf (sb:vst-event.bus-index event) 0) ;TODO
+                (setf (sb:vst-event.sample-offset event) sample-offset)
+                (setf (sb:vst-event.ppq-position event) .0d0) ;TODO
+                (setf (sb:vst-event.flags event) sb:+vst-event-event-flags-k-is-live+) ;TODO
+                (setf (sb:vst-event.type event) sb:+vst-event-event-types-k-note-off-event+)
+                (setf (sb:vst-event.vst-event-note-off.channel event)
+                      (utaticl.core:.channel note))
+                (setf (sb:vst-event.vst-event-note-off.pitch event)
+                      (utaticl.core:.key note))
+                (setf (sb:vst-event.vst-event-note-off.tuning event) .0)
+                (setf (sb:vst-event.vst-event-note-off.velocity event) 1.0)
+                (setf (sb:vst-event.vst-event-note-off.note-id event) -1)
+                (vector-push-extend event (.events self)))))))
+
+(autowrap:with-alloc (event '(:struct (sb:vst-event)))
+ (type-of event))
+;;⇒ SB:VST-EVENT
+
+
 (defmethod utaticl.core:prepare ((self event-list))
-  (loop for event in (.events self)
+  (loop for event across (.events self)
         do (autowrap:free event))
-  (setf (.events self) nil))
+  (setf (fill-pointer (.events self)) 0))
 
 (defmethod release :around ((self event-list))
   (let ((ref-count (call-next-method)))

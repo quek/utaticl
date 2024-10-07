@@ -95,6 +95,7 @@
    #:neko
    #:neko-id
    #:note
+   #:note-buffer
    #:offset-mixin
    #:on-resize
    #:param
