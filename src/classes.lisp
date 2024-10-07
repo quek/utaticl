@@ -387,7 +387,7 @@
    (flags :initarg :flags :initform nil :accessor .flags)
    (id :initarg :id :initform nil :accessor .id)
    (module :initarg :module :initform nil :accessor .module)
-   (perform-at :initform (get-internal-real-time) :accessor .perform-at)
+   (perform-timer :initform nil :accessor .perform-timer)
    (short-title :initarg :short-title :initform nil :accessor .short-title)
    (value :initarg :value :initform .0d0 :accessor .value)))
 
