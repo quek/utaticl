@@ -29,7 +29,8 @@
 
 
 (defmethod cmd-add ((project project) cmd-class &rest args)
-  (push (apply #'make-instance cmd-class args) (.cmd-queue project)))
+  (sb-concurrency:send-message (.cmd-mailbox project)
+                               (apply #'make-instance cmd-class args)))
 
 (defmethod cmd-redo ((self project))
   (let ((cmd (pop (.cmd-redo-stack self))))
@@ -38,7 +39,8 @@
       (push cmd (.cmd-undo-stack self)))))
 
 (defmethod cmd-run ((self project))
-  (loop for cmd in (nreverse (.cmd-queue self))
+  (loop for cmd = (sb-concurrency:receive-message-no-hang (.cmd-mailbox self))
+        while cmd
         do (if (.with-mutex-p cmd)
                (sb-thread:with-mutex ((.mutex *app*))
                  (execute cmd self))
@@ -46,8 +48,7 @@
            (when (.undo-p cmd)
              (setf (.cmd-redo-stack self) nil)
              (push cmd (.cmd-undo-stack self))
-             (setf (.dirty-p self) t)))
-  (setf (.cmd-queue self) nil))
+             (setf (.dirty-p self) t))))
 
 (defmethod cmd-undo ((self project))
   (let ((cmd (pop (.cmd-undo-stack self))))

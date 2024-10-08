@@ -27,7 +27,7 @@
    (bpm :accessor .bpm)
    (sec-per-beat :accessor .sec-per-beat)
    (samples-per-beat :accessor .samples-per-beat)
-   (cmd-queue :initform nil :accessor .cmd-queue)
+   (cmd-mailbox :initform (sb-concurrency:make-mailbox) :accessor .cmd-mailbox)
    (cmd-undo-stack :initform nil :accessor .cmd-undo-stack)
    (cmd-redo-stack :initform nil :accessor .cmd-redo-stack)
    (mailbox :initform (sb-concurrency:make-mailbox) :accessor .mailbox)

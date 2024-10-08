@@ -30,7 +30,6 @@
     (let ((timer (sb-ext:make-timer
                   (lambda ()
                     (setf (.perform-timer self) nil)
-                    ;; TODO cmd-add をスレッドセーフにすべき？
                     (end-edit self nil)))))
       (sb-ext:schedule-timer timer 2)
       (setf (.perform-timer self) timer)))
