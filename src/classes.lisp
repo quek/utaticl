@@ -17,6 +17,12 @@
    (x2 :initform .0 :initarg :time-end :accessor .time-end)
    (y2 :initform .0 :initarg :key-end :accessor .key-end)))
 
+(defclass dd ()
+  ((at :initform nil :accessor .at)
+   (src :initform nil :accessor .src)))
+
+(defvar *dd* (make-instance 'dd))
+
 (defclass project (neko)
   ((arrangement :accessor .arrangement)
    (sceen-matrix :accessor .sceen-matrix)

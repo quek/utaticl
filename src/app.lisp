@@ -45,9 +45,7 @@
              (cmd-run project))))
 
 (defmethod drag-enter ((app app) files)
-  (setf *dd-at* (car files))
-  (setf *dd-srcs* files)
-  (setf (.dragging-p app) t))
+  (dd-start *dd* files))
 
 (defmethod drop ((app app))
   (setf (.dragging-p app) nil))
@@ -60,21 +58,18 @@
 
 (defmethod render ((app app))
   (let ((*mouse-pos* (ig:get-mouse-pos)))
-    (when (.dragging-p app)
-      (ig:with-drag-drop-source (ig:+im-gui-drag-drop-flags-source-extern+)
-        (ig:set-drag-drop-payload +dd-extern+)
-        (ig:with-tooltip
-          (loop for file in *dd-srcs*
-                do (ig:text file)))))
+
     (loop for project in (.projects app)
           do (let ((*project* project))
                (render project)))
     (render (.color-window app))
     (render *report-window*)
-    (unless (ig:is-mouse-down ig:+im-gui-mouse-button-left+)
-      (setf *dd-at* nil)
-      (setf *dd-srcs* nil)
-      (setf (.dragging-p app) nil))))
+    (if (ig:is-mouse-down ig:+im-gui-mouse-button-left+)
+        (dd-reset *dd*)
+        (awhen (.src *dd*)
+          (ig:with-tooltip
+            (loop for src in it
+                  do (dd-show src)))))))
 
 (defmethod process ((self app))
   (sb-thread:with-mutex ((.mutex self))

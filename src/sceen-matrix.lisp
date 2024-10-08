@@ -41,25 +41,24 @@
           do (setf (gethash clip-from map)
                    (list clip sceen lane)))
     (multiple-value-bind (times-to sceens-to lanes-to)
-        (loop for clip in *dd-srcs*
+        (loop for clip in (.src *dd*)
               for (clip-to sceen lane) = (gethash clip map)
               collect 0 into times-to
               collect sceen into sceens-to
               collect lane into lanes-to
               finally (return (values times-to sceens-to lanes-to)))
       (cmd-add (.project sceen-matrix) 'cmd-clips-d&d-move
-               :clips *dd-srcs*
+               :clips (.src *dd*)
                :times-to times-to
                :sceens-to sceens-to
                :lanes-to lanes-to))))
 
 (defmethod handle-drag-end :after ((sceen-matrix sceen-matrix) drag-mode key-ctrl-p sceen)
-  (setf *dd-at* nil)
-  (setf *dd-srcs* nil)
+  (dd-reset *dd*)
   (clrhash (.clips-dragging sceen-matrix)))
 
 (defmethod handle-drag-start ((sceen-matrix sceen-matrix))
-  (cond ((and (typep *dd-at* 'clip) (null (.sceen *dd-at*)))
+  (cond ((and (typep *dd-at* 'clip) (null (.sceen (.at *dd*))))
          ;; arrangement からのドラッグ
          (handle-dragging-intern sceen-matrix))
         ((.clip-at-mouse sceen-matrix)
@@ -71,14 +70,14 @@
                do (setf (gethash (list (.sceen clip) (.lane clip))
                                  (.clips-dragging sceen-matrix))
                         (list (copy clip) (.sceen clip) (.lane clip) clip)))
-         (setf *dd-at* (.clip-at-mouse sceen-matrix))
-         (setf *dd-srcs* (.clips-selected sceen-matrix))
+         (dd-start (.clips-selected sceen-matrix)
+                   (.clip-at-mouse sceen-matrix))
          (multiple-value-bind (sceen lane)
              (world-pos-to-sceen-lane sceen-matrix *mouse-pos*)
            (declare (ignore sceen))
            (setf (.drag-offset-sceen sceen-matrix) 0)
            (setf (.drag-offset-lane sceen-matrix)
-                 (diff (.lane *dd-at*) lane))))
+                 (diff (.lane (.at *dd*)) lane))))
         (t                              ;範囲選択
          (setf (.range-selecting-mode sceen-matrix) :clip)
          (setf (.range-selecting-pos1 sceen-matrix) *mouse-pos*))))
@@ -87,10 +86,10 @@
   (if (ig:is-mouse-down ig:+im-gui-mouse-button-left+)
       (handle-dragging-move sceen-matrix)
       (handle-drag-end sceen-matrix :move (key-ctrl-p)
-                       (and *dd-srcs* (.sceen (car *dd-srcs*))))))
+                       (and (.src *dd*) (.sceen (car (.src *dd*)))))))
 
 (defmethod handle-dragging-intern ((sceen-matrix sceen-matrix))
-  (loop for clip in *dd-srcs*
+  (loop for clip in (.src *dd*)
         with sceen = (car (.sceens sceen-matrix))
         do (setf (gethash (list (.sceen clip) (.lane clip))
                           (.clips-dragging sceen-matrix))
@@ -100,16 +99,16 @@
     (declare (ignore sceen))
     (setf (.drag-offset-sceen sceen-matrix) 0)
     (setf (.drag-offset-lane sceen-matrix)
-          (diff (.lane *dd-at*) lane))))
+          (diff (.lane (.at *dd*)) lane))))
 
 (defmethod handle-dragging-move ((sceen-matrix sceen-matrix))
   (multiple-value-bind (sceen lane)
       (world-pos-to-sceen-lane sceen-matrix *mouse-pos*)
-    (let ((sceen-delta (diff sceen (or (.sceen *dd-at*)
+    (let ((sceen-delta (diff sceen (or (.sceen (.at *dd*))
                                        (car (.sceens sceen-matrix)))))
-          (lane-delta (diff lane (.lane *dd-at*))))
+          (lane-delta (diff lane (.lane (.at *dd*)))))
       (unless (and (zerop sceen-delta) (zerop lane-delta)
-                   (.sceen *dd-at*))
+                   (.sceen (.at *dd*)))
         (loop with map = (make-hash-table :test 'equal)
               for value being the hash-value in (.clips-dragging sceen-matrix)
               for (clip sceen-start lane-start clip-from) = value
@@ -123,7 +122,7 @@
               finally (setf (.clips-dragging sceen-matrix) map))))))
 
 (defmethod handle-mouse ((sceen-matrix sceen-matrix))
-  (unless *dd-srcs*
+  (unless (.src *dd*)
     ;; arrangement にドロップしたときのクリア処理
     (clrhash (.clips-dragging sceen-matrix)))
   (if (can-handle-mouse-p sceen-matrix)
@@ -282,8 +281,8 @@
                             (sceen sceen)
                             (lane lane)
                             (key-ctrl-p (eql t)))
-  (let* ((lane-delta (diff (.lane *dd-at*) lane))
-         (clips (loop for x in *dd-srcs*
+  (let* ((lane-delta (diff (.lane (.at *dd*)) lane))
+         (clips (loop for x in (.src *dd*)
                       for clip = (copy x)
                       do (setf (.lane clip)
                                (relative-at (.lane clip) lane-delta))
@@ -296,9 +295,9 @@
                             (lane lane)
                             (key-ctrl-p (eql nil)))
   (cmd-add *project* 'cmd-clips-d&d-move-from-arrangement-to-sceen-matrix
-           :clips-from *dd-srcs*
+           :clips-from (.src *dd*)
            :sceen-to sceen
-           :lane-from (.lane *dd-at*)
+           :lane-from (.lane (.at *dd*))
            :lane-to lane))
 
 (defmethod sceen-add ((sceen-matrix sceen-matrix) (sceen sceen) &key before)

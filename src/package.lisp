@@ -9,8 +9,7 @@
   (:export
    #:*app*
    #:*config*
-   #:*dd-at*
-   #:*dd-srcs*
+   #:*dd*
    #:*default-lane-width*
    #:*done*
    #:drag-enter
@@ -25,6 +24,7 @@
    #:*thread-pool*
    #:*working-directory*
    #:+side-threshold+
+   #:.at
    #:.audio-input-bus-count
    #:.audio-output-bus-count
    #:.backend
@@ -51,6 +51,7 @@
    #:.param-changes-mbox-in
    #:.params-ordered
    #:.sample-offsets
+   #:.src
    #:.steady-time
    #:.step-count
    #:.targets

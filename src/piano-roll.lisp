@@ -83,8 +83,8 @@
          (setf (.drag-mode self) :move)
          (setf (.note-drag-offset self)
                (@- (.range-selecting-pos1 self) *mouse-pos*))
-         (setf *dd-srcs* (mapcar #'copy (.notes-dragging self)))
-         (setf *dd-at* *mouse-pos*))
+         (dd-start (mapcar #'copy (.notes-dragging self))
+                   *mouse-pos*))
         ((.notes-selected self)
          ;; 選択ノートのドラッグ開始
          (progn
@@ -171,7 +171,7 @@
               (setf (.notes-dragging self) nil)))
         ;; ドラッグ中の表示
         (if (range-selecting-p self)
-            (let* ((pos-delta (@- *mouse-pos* *dd-at*))
+            (let* ((pos-delta (@- *mouse-pos* (at. *dd*)))
                    (pos1 (@+ (.range-selecting-pos1 self) pos-delta))
                    (pos2 (@+ (.range-selecting-pos2 self) pos-delta))
                    (time-delta (- (world-y-to-time self (.y pos1))
@@ -193,7 +193,7 @@
 
                 )
               (loop for note-dragging in (.notes-dragging self)
-                    for note-src in *dd-srcs*
+                    for note-src in (.src *dd*)
                     for time = (max .0 (+ (.time note-src) time-delta))
                     for key = (min 127 (max 0 (+ (.key note-src) key-delta)))
                     do (move note-dragging time key)))
@@ -363,7 +363,7 @@
       (call-next-method)))
 
 (defmethod range-dst ((piano-roll piano-roll))
-  (let* ((pos-delta (@- *mouse-pos* *dd-at*))
+  (let* ((pos-delta (@- *mouse-pos* (.at *dd*)))
          (pos1 (@+ (.range-selecting-pos1 piano-roll) pos-delta))
          (pos2 (@+ (.range-selecting-pos2 piano-roll) pos-delta)))
     (multiple-value-bind (pos1-grid pos2-grid)
@@ -371,7 +371,7 @@
       `(,@pos1-grid ,@pos2-grid))))
 
 (defmethod range-dst-time-key ((piano-roll piano-roll))
-  (let* ((pos-delta (@- *mouse-pos* *dd-at*))
+  (let* ((pos-delta (@- *mouse-pos* (.at *dd*)))
          (pos1 (@+ (.range-selecting-pos1 piano-roll) pos-delta))
          (pos2 (@+ (.range-selecting-pos2 piano-roll) pos-delta)))
     (multiple-value-bind (pos1-grid pos2-grid)

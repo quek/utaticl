@@ -8,8 +8,6 @@
 (sb-ext:defglobal *app* nil)
 (sb-ext:defglobal *hwnd* nil)
 (sb-ext:defglobal *done* nil)
-(sb-ext:defglobal *dd-at* nil)
-(sb-ext:defglobal *dd-srcs* nil)
 (defparameter *invoke-debugger-p* t)
 
 (defvar *mouse-pos*)
