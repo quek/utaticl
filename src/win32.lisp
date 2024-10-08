@@ -24,7 +24,7 @@
 
 (sb-ext:defglobal *registered-class* nil)
 
-(defun make-window (width height resizable)
+(defun make-window (width height resizable title)
   (unless *registered-class*
     (setf *registered-class*
           (ftw:register-class "Plugin Editor" (cffi:callback wnd-proc)
@@ -50,7 +50,7 @@
              (height (- (ftw:rect-bottom rect) (ftw:rect-top rect)))
              (width (- (ftw:rect-right rect) (ftw:rect-left rect)))
              (hwnd (ftw:create-window "Plugin Editor"
-                                      :window-name "Plugin Editor"
+                                      :window-name title
                                       :ex-styles ex-styles
                                       :styles styles
                                       :height height

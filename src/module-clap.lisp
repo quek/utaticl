@@ -51,7 +51,8 @@
                                               :bool)
                          (@ (cffi:mem-ref width :unsigned-int)
                             (cffi:mem-ref height :unsigned-int))))
-                 (hwnd (win32::make-window (.x size) (.y size) resize-p))
+                 (hwnd (win32::make-window (.x size) (.y size) resize-p
+                                           (.name self)))
                  (clap-window (autowrap:alloc 'clap:clap-window-t)))
             (setf (gethash (cffi:pointer-address hwnd) *hwnd-module-map*)
                   self)

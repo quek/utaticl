@@ -171,7 +171,8 @@
                        (sb:view-rect.left size)))
              (height (- (sb:view-rect.bottom size)
                         (sb:view-rect.top size)))
-             (hwnd (win32::make-window width height resizable)))
+             (hwnd (win32::make-window width height resizable
+                                       (.name self))))
         (setf (.hwnd self) hwnd)
         (setf (gethash (cffi:pointer-address hwnd) *hwnd-module-map*) self)
         (vst3::ensure-ok (vst3-ffi::attached view hwnd vst3-ffi::+k-platform-type-hwnd+))
