@@ -36,6 +36,7 @@
    (:file "debugger")
    (:file "thread-pool")
    (:file "ring-buffer")
+   (:file "rect")
    (:file "grid")
    (:file "macro-serialize")
    (:file "config")

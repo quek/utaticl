@@ -6,7 +6,8 @@
 (defmethod render-params ((module module))
   (loop for i below 4
         for param in (.params-ordered module)
-        do (ig:set-next-item-width 200.0)
+        with item-width = 200.0
+        do (ig:set-next-item-width item-width)
            (when (ig:drag-scalar (.name param)
                                  ig:+im-gui-data-type-double+
                                  (.value param)
@@ -14,7 +15,17 @@
                                  :min .0d0
                                  :max 1.0d0
                                  :format (format nil "%.2f (~a)" (value-text param)))
-             (value-changed-by-host param))))
+             (value-changed-by-host param))
+           (when (include-p (make-instance 'rect :min (@+ (ig:get-item-rect-min) (@ item-width .0))
+                                                 :max (ig:get-item-rect-max))
+                            *mouse-pos*)
+             (when (ig:is-mouse-clicked ig:+im-gui-mouse-button-left+)
+               (setf (.targets *project*) param)))
+           (when (and (null *dd-srcs*)
+                      (eq (.targets *project*) param)
+                      (ig:is-mouse-dragging ig:+im-gui-mouse-button-left+))
+             (setf *dd-at* (.targets *project*))
+             (setf *dd-srcs* (list (.targets *project*))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (in-package :utaticl.core)

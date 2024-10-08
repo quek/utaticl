@@ -53,9 +53,13 @@
    #:.sample-offsets
    #:.steady-time
    #:.step-count
+   #:.targets
    #:.value
    #:.velocity
    #:.window
+   #:@
+   #:@-
+   #:@+
    #:app
    #:apply-from
    #:arrangement
@@ -80,6 +84,8 @@
    #:editor-open
    #:end-edit
    #:grid-mixin
+   #:in-p
+   #:include-p
    #:lane
    #:master-track
    #:memcpy

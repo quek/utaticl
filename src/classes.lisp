@@ -41,7 +41,8 @@
    (loop-end :initarg :loop-end :initform 16.0d0 :accessor .loop-end)
    (loop-p :initarg :loop-p :initform t :accessor .loop-p)
    (transposer :accessor .transposer)
-   (target-track :initform :nil :accessor .target-track)))
+   (target-track :initform :nil :accessor .target-track)
+   (targets :initform nil :accessor .targets)))
 
 (defclass show-mixin ()
   ((show-p :initarg :show-p :initform nil :accessor .show-p)))

@@ -70,7 +70,11 @@
           do (let ((*project* project))
                (render project)))
     (render (.color-window app))
-    (render *report-window*)))
+    (render *report-window*)
+    (unless (ig:is-mouse-down ig:+im-gui-mouse-button-left+)
+      (setf *dd-at* nil)
+      (setf *dd-srcs* nil)
+      (setf (.dragging-p app) nil))))
 
 (defmethod process ((self app))
   (sb-thread:with-mutex ((.mutex self))
