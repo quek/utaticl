@@ -1,10 +1,13 @@
 (in-package :utaticl.core)
 
+(defun dd-at ()
+  (.at *dd*))
+
 (defmethod dd-drop (x)
   "drop を受け入れたら t を返す"
-  (if (and (.src *dd*)
+  (if (and (dd-src)
            (not (ig:is-mouse-down ig:+im-gui-mouse-button-left+)))
-      (dd-drop-at x (car (.src *dd*)))
+      (dd-drop-at x (car (dd-src)))
       nil))
 
 (defmethod dd-drop-at (at src)
@@ -14,16 +17,19 @@
 (defmethod dd-show (x)
   (ig:text (princ-to-string x)))
 
-(defmethod dd-start ((self dd) (src list) &optional at)
-  (setf (.at self) at)
-  (setf (.src self) src))
+(defun dd-src ()
+  (.src *dd*))
 
-(defmethod dd-start ((self dd) src &optional at)
-  (dd-start self (list src) at))
+(defmethod dd-start ((src list) &optional at)
+  (setf (.at *dd*) at)
+  (setf (.src *dd*) src))
 
-(defmethod dd-start-p ((self dd))
-  (.src self))
+(defmethod dd-start (src &optional at)
+  (dd-start (list src) at))
 
-(defmethod dd-reset ((self dd))
-  (setf (.at self) nil)
-  (setf (.src self) nil))
+(defun dd-start-p ()
+  (dd-src))
+
+(defun dd-reset ()
+  (setf (.at *dd*) nil)
+  (setf (.src *dd*) nil))

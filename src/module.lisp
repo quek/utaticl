@@ -21,11 +21,11 @@
                             *mouse-pos*)
              (when (ig:is-mouse-clicked ig:+im-gui-mouse-button-left+)
                (setf (.targets *project*) param)))
-           (when (and (null (.src *dd*))
+           (when (and (null (dd-src))
                       (eq (.targets *project*) param)
                       (ig:is-mouse-dragging ig:+im-gui-mouse-button-left+))
-             (setf (.at *dd*) (.targets *project*))
-             (setf (.src *dd*) (list (.targets *project*))))))
+             (setf (dd-at) (.targets *project*))
+             (setf (dd-src) (list (.targets *project*))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (in-package :utaticl.core)

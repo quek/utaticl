@@ -45,7 +45,7 @@
              (cmd-run project))))
 
 (defmethod drag-enter ((app app) files)
-  (dd-start *dd* files))
+  (dd-start files))
 
 (defmethod drop ((app app))
   (setf (.dragging-p app) nil))
@@ -65,8 +65,8 @@
     (render (.color-window app))
     (render *report-window*)
     (if (ig:is-mouse-down ig:+im-gui-mouse-button-left+)
-        (dd-reset *dd*)
-        (awhen (.src *dd*)
+        (dd-reset)
+        (awhen (dd-src)
           (ig:with-tooltip
             (loop for src in it
                   do (dd-show src)))))))

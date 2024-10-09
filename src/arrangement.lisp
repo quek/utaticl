@@ -54,7 +54,7 @@
                                   (edit (.clip cmd) (list (.clip cmd)))))))))
 
 (defmethod handle-drag-start ((self arrangement))
-  (cond ((and (typep (.at *dd*) 'clip) (.sceen (.at *dd*)))
+  (cond ((and (typep (dd-at) 'clip) (.sceen (dd-at)))
          ;; sceen-matrix からのドラッグ
          (handle-dragging-intern self))
         ((and (.clips-selected self) (.clip-at-mouse self))
@@ -114,7 +114,7 @@
                             (sceen sceen))
   (cmd-add (.project self)
            'cmd-clips-d&d-move-from-sceen-matrix-to-self
-           :clips-from (.src *dd*)
+           :clips-from (dd-src)
            :clips-to (.clips-dragging self)))
 
 (defmethod handle-drag-end ((self arrangement)
@@ -146,7 +146,7 @@
 
 ;;; TODO (render app) でもリセットしているので不要では？
 (defmethod handle-drag-end :after ((self arrangement) mode key-ctrl-p sceen)
-  (dd-reset *dd*))
+  (dd-reset))
 
 (defmethod handle-dragging ((self arrangement))
   (labels ((%time ()
@@ -156,14 +156,14 @@
                   .0d0)))
     (if (not (ig:is-mouse-down ig:+im-gui-mouse-button-left+))
         ;; ドラッグの終了
-        (if (.src *dd*)
+        (if (dd-src)
             (handle-drag-end self (.drag-mode self) (key-ctrl-p)
-                             (.sceen (car (.src *dd*))))
+                             (.sceen (car (dd-src))))
             (progn
               (loop for clip in (.clips-dragging self)
                     for lane = (.lane clip)
                     do (clip-delete lane clip))
-              (dd-reset *dd*)
+              (dd-reset)
               (setf (.clips-dragging self) nil)))
         ;; ドラッグ中の表示
         (ecase (.drag-mode self)
@@ -206,7 +206,7 @@
     (ig:with-drag-drop-target
       ;; マウスボタン離してなくても accept しちゃう
       (when (ig:accept-drag-drop-payload +dd-extern+  ig:+im-gui-drag-drop-flags-source-extern+)
-        (setf (.dragging-source-extern self) (.src *dd*))))))
+        (setf (.dragging-source-extern self) (dd-src))))))
 
 (defmethod handle-dragging-extern-drop ((self arrangement))
   (when (ig:is-mouse-down-nil ig:+im-gui-mouse-button-left+)
@@ -218,13 +218,13 @@
                    :time time :lane lane :path path
                    :execute-after (lambda (cmd)
                                     (edit (.clip cmd) (list (.clip cmd))))))))
-    (dd-reset *dd*)
+    (dd-reset)
     (setf (.dragging-source-extern self) nil)))
 
 (defmethod handle-dragging-intern ((self arrangement))
   (setf (.drag-mode self) :move)
   (setf (.clips-dragging self)
-        (mapcar #'copy (.src *dd*)))
+        (mapcar #'copy (dd-src)))
   (loop for clip in (.clips-dragging self)
         for lane = (.lane clip)
         do (setf (.sceen clip) nil)
@@ -239,10 +239,10 @@
     (loop for clip in (.clips-dragging self)
           do (setf (.time clip) time))
     (setf (.drag-offset-lane self)
-          (diff (.lane (.at *dd*)) lane))))
+          (diff (.lane (dd-at)) lane))))
 
 (defmethod handle-mouse ((self arrangement))
-  (unless (.src *dd*)
+  (unless (dd-src)
     ;; sceen-matrix にドロップしたときのクリア処理
     (loop for clip in (.clips-dragging self)
           do (clip-delete (.lane clip) clip))
