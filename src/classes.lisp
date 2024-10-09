@@ -192,7 +192,7 @@
 
 (defclass lane (neko)
   ((automation-param :initform nil :accessor .automation-param)
-   (automation-default-value :initform nil :accessor .automation-default-value)
+   (automation-default-value :initform .0d0 :accessor .automation-default-value)
    (clips :initarg :clips :initform nil :accessor .clips)
    (track :initarg :track :accessor .track)
    (width :initarg :width
