@@ -1,5 +1,8 @@
 (in-package :utaticl.core)
 
+(defun @@ (x1 y1 x2 y2)
+    (make-instance 'rect :x1 x1 :y1 y1 :x2 x2 :y2 y2))
+
 (defmethod initialize-instance :after ((self rect) &key min max)
   (when min
     (setf (.x1 self) (.x min))

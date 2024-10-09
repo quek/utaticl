@@ -58,7 +58,7 @@
   (clrhash (.clips-dragging sceen-matrix)))
 
 (defmethod handle-drag-start ((sceen-matrix sceen-matrix))
-  (cond ((and (typep *dd-at* 'clip) (null (.sceen (dd-at))))
+  (cond ((and (typep (dd-at) 'clip) (null (.sceen (dd-at))))
          ;; arrangement からのドラッグ
          (handle-dragging-intern sceen-matrix))
         ((.clip-at-mouse sceen-matrix)

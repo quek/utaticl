@@ -80,6 +80,7 @@
    #:connection
    #:dd-at
    #:dd-src
+   #:dd-start
    #:editor-close
    #:editor-open
    #:end-edit

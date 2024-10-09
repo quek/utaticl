@@ -3,10 +3,11 @@
 (defun dd-at ()
   (.at *dd*))
 
-(defmethod dd-drop (x)
+(defmethod dd-drop (x rect)
   "drop を受け入れたら t を返す"
   (if (and (dd-src)
-           (not (ig:is-mouse-down ig:+im-gui-mouse-button-left+)))
+           (not (ig:is-mouse-down ig:+im-gui-mouse-button-left+))
+           (include-p rect *mouse-pos*))
       (dd-drop-at x (car (dd-src)))
       nil))
 

@@ -24,8 +24,7 @@
            (when (and (null (dd-src))
                       (eq (.targets *project*) param)
                       (ig:is-mouse-dragging ig:+im-gui-mouse-button-left+))
-             (setf (dd-at) (.targets *project*))
-             (setf (dd-src) (list (.targets *project*))))))
+             (utaticl.core:dd-start (.targets *project*)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (in-package :utaticl.core)
