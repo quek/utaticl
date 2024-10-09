@@ -33,3 +33,7 @@
 (defun dd-reset ()
   (setf (.at *dd*) nil)
   (setf (.src *dd*) nil))
+
+(defmethod print-object ((self dd) stream)
+  (print-unreadable-object (self stream :type t)
+    (format stream "~a ~a" (.src self) (.at self))))

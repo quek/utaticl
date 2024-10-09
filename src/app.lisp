@@ -64,12 +64,12 @@
                (render project)))
     (render (.color-window app))
     (render *report-window*)
-    (if (ig:is-mouse-down ig:+im-gui-mouse-button-left+)
-        (dd-reset)
-        (awhen (dd-src)
+    (when (dd-src)
+      (if (ig:is-mouse-down ig:+im-gui-mouse-button-left+)
           (ig:with-tooltip
-            (loop for src in it
-                  do (dd-show src)))))))
+            (loop for src in (dd-src)
+                  do (dd-show src)))
+          (dd-reset)))))
 
 (defmethod process ((self app))
   (sb-thread:with-mutex ((.mutex self))
