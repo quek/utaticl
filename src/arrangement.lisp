@@ -409,8 +409,9 @@
                  (draw-vertical-line (@ x (.offset-y self))))
         do (funcall line)
            (setf x (render-clip self track lane nil x)))
-  (loop for track in (.tracks track)
-        do (setf x (render-clip self track nil nil x)))
+  (when (.tracks-show-p track)
+    (loop for track in (.tracks track)
+          do (setf x (render-clip self track nil nil x))))
   x)
 
 (defmethod render-clip ((self arrangement) (track track) (lane lane) (clip null) x)
