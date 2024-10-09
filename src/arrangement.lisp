@@ -144,10 +144,6 @@
              :delta delta
              :stretch-p (key-alt-p))))
 
-;;; TODO (render app) でもリセットしているので不要では？
-(defmethod handle-drag-end :after ((self arrangement) mode key-ctrl-p sceen)
-  (dd-reset))
-
 (defmethod handle-dragging ((self arrangement))
   (labels ((%time ()
              (max (time-grid-applied self
@@ -156,15 +152,10 @@
                   .0d0)))
     (if (not (ig:is-mouse-down ig:+im-gui-mouse-button-left+))
         ;; ドラッグの終了
-        (if (dd-src)
-            (handle-drag-end self (.drag-mode self) (key-ctrl-p)
-                             (.sceen (car (dd-src))))
-            (progn
-              (loop for clip in (.clips-dragging self)
-                    for lane = (.lane clip)
-                    do (clip-delete lane clip))
-              (dd-reset)
-              (setf (.clips-dragging self) nil)))
+        (progn
+          (handle-drag-end self (.drag-mode self) (key-ctrl-p)
+                           (.sceen (car (dd-src))))
+          (setf (.clips-dragging self) nil))
         ;; ドラッグ中の表示
         (ecase (.drag-mode self)
           (:move
