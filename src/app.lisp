@@ -2,6 +2,7 @@
 
 (defmethod initialize-instance :before ((self app) &key)
   (clrhash *neko-map*)
+  (dd-reset)
   (setf *config* (make-instance 'config))
   (config-load *config*)
   (setf *theme* (make-instance 'theme))
