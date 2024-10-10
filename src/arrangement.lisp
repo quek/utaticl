@@ -8,6 +8,7 @@
                  group-level)))
     (setf (.offset-y self)
           (+ 20.0
+             40.0                       ;automation の分
              (* (.offset-group self)
                 (f (.master-track (.project self)) 1))))))
 
