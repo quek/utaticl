@@ -462,6 +462,12 @@
             (setf (.lane-at-mouse self) lane)
             (setf (.clip-at-mouse self) clip)))))))
 
+(defmethod render-lane ((arrangement arrangement) (lane lane))
+  (let ((param (.automation-param lane)))
+    (when param
+      (ig:text (.name param))
+      (ig:input-double "##a-d-v" (.automation-default-value lane)))))
+
 (defmethod render-track ((self arrangement) track group-level)
   (ig:with-id (track)
     (let* ((offset-group (* (.offset-group self) (max 0 (1- group-level))))
@@ -507,6 +513,13 @@
             (when (ig:button (if (.tracks-show-p track) "≪" "≫")
                              (@ group-button-width button-height))
               (setf (.tracks-show-p track) (not (.tracks-show-p track)))))))
+
+      (ig:set-cursor-pos pos)
+      (loop for lane in (.lanes track)
+            do (ig:set-next-item-width (.width lane))
+               (ig:with-group
+                 (render-lane self lane))
+               (ig:same-line))
 
       (ig:same-line)
       (ig:set-cursor-pos (@+ pos (@ track-width (- offset-group)))))
