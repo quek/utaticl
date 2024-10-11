@@ -1,5 +1,17 @@
 (in-package :utaticl.core)
 
+(defun arrangement-render-lane (lane x)
+  (let ((param (.automation-param lane)))
+    (when param
+      ;; TODO set-cursor-pos
+      (ig:set-cursor-pos-x (+ x (.offset-x (.arrangement *project*))))
+      (ig:set-next-item-width (.width lane))
+      (ig:with-group
+        (ig:text (.name param))
+        (ig:input-double "##a-d-v" (.automation-default-value lane)))
+      (ig:same-line)))
+  (+ x (.width lane)))
+
 (defmethod compute-offset-y ((self arrangement))
   (labels ((f (track group-level)
              (if (and (.tracks-show-p track) (.tracks track))
@@ -354,7 +366,8 @@
 
         (ig:with-clip-rect ((@+ window-pos (@ (- (.x pos) scroll-x 3.0) .0))
                             (@+ window-pos (ig:get-window-size)))
-          (render-track self (.master-track (.project self)) 0))
+          (ig:with-styles ((ig:+im-gui-style-var-item-spacing+ (@ .0 .0)))
+            (render-track self (.master-track (.project self)) 0)))
 
         (draw-vertical-line (@- (ig:get-cursor-pos) (@ .0 scroll-y)))
 
@@ -366,6 +379,17 @@
                                     (let ((track (find-neko (.track-id-new cmd))))
                                       (unselect-all-tracks (.project self))
                                       (setf (.select-p track) t)))))
+
+        (ig:with-clip-rect ((@+ window-pos (@ (- (.x pos) scroll-x 3.0) .0))
+                            (@+ window-pos (ig:get-window-size)))
+          (ig:with-styles ((ig:+im-gui-style-var-item-spacing+ (@ .0 .0)))
+            (map-lanes *project* (lambda (lane x)
+                                   (let ((track-parent (.parent (.track lane))))
+                                     (if (or (null track-parent)
+                                             (.tracks-show-p track-parent))
+                                         (arrangement-render-lane lane x)
+                                         x)))
+                       .0)))
 
         (render-clip self (.master-track (.project self)) nil nil
                      (- (.time-ruler-width self) scroll-x)))
@@ -463,12 +487,6 @@
             (setf (.lane-at-mouse self) lane)
             (setf (.clip-at-mouse self) clip)))))))
 
-(defmethod render-lane ((arrangement arrangement) (lane lane))
-  (let ((param (.automation-param lane)))
-    (when param
-      (ig:text (.name param))
-      (ig:input-double "##a-d-v" (.automation-default-value lane)))))
-
 (defmethod render-track ((self arrangement) track group-level)
   (ig:with-id (track)
     (let* ((offset-group (* (.offset-group self) (max 0 (1- group-level))))
@@ -514,13 +532,6 @@
             (when (ig:button (if (.tracks-show-p track) "≪" "≫")
                              (@ group-button-width button-height))
               (setf (.tracks-show-p track) (not (.tracks-show-p track)))))))
-
-      (ig:set-cursor-pos pos)
-      (loop for lane in (.lanes track)
-            do (ig:set-next-item-width (.width lane))
-               (ig:with-group
-                 (render-lane self lane))
-               (ig:same-line))
 
       (ig:same-line)
       (ig:set-cursor-pos (@+ pos (@ track-width (- offset-group)))))

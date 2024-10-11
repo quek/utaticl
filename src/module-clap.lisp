@@ -73,9 +73,9 @@
     (when plugin-info
       (setf id (.id plugin-info))
       (setf (.host self) (utaticl.clap::make-host :module self))
-      (setf (.clap-host-gui self) (utaticl.clap::make-host-gui :module self))
+      (setf (.clap-host-gui self) (utaticl.clap::make-host-gui))
       (setf (.clap-host-audio-ports self) (utaticl.clap::make-host-audio-ports :module self))
-      (setf (.clap-host-params self) (utaticl.clap::make-host-params :module self))
+      (setf (.clap-host-params self) (utaticl.clap::make-host-params))
       (setf (.clap-process self) (utaticl.clap::make-process :module self))
 
       (multiple-value-bind (factory library)

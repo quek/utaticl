@@ -203,7 +203,6 @@
   ((try-push
     ((event :pointer)) ;const clap_event_header_t *event
     :bool
-    (print event)
     (let ((event (clap::make-clap-event-header-t :ptr event)))
       (when (= (clap:clap-event-header.space-id event)
                clap:+clap-core-event-space-id+)
@@ -303,30 +302,31 @@
     )))
 
 (def-clap-struct host-gui
-    ((module nil))
+    ()
   ((resize-hints-changed
-    () :void
+    ((self host)) :void
     (log:trace "gui.resize-hints-changed" self)
-    (resize-hints-changed (host-gui-module self)))
+    (resize-hints-changed (host-module self)))
    (request-resize
-    ((width :unsigned-int)
+    ((self host)
+     (width :unsigned-int)
      (height :unsigned-int)) :bool
     (log:trace "gui.request-resize" self)
-    (request-resize (host-gui-module self) width height))
+    (request-resize (host-module self) width height))
    (request-show
-    () :bool
+    ((self host)) :bool
     (log:trace "gui.request-show" self)
-    (editor-open (host-gui-module self))
+    (editor-open (host-module self))
     t)
    (request-hide
-    () :bool
+    ((self host)) :bool
     (log:trace "gui.request-hide" self)
-    (editor-close (host-gui-module self))
+    (editor-close (host-module self))
     t)
    (closed
-    ((was-destroyed :bool)) :void
+    ((self host) (was-destroyed :bool)) :void
     (log:trace "gui.request-closed" self)
-    (closed (host-gui-module self) was-destroyed))))
+    (closed (host-module self) was-destroyed))))
 
 (alexandria:define-constant +host-name+ "UTATICL" :test 'equal)
 (alexandria:define-constant +host-url+ "https://github.com/quek/utaticl" :test 'equal)
@@ -367,7 +367,7 @@
   (setf (clap:clap-host.version self) (sb-sys:vector-sap +host-version+)))
 
 (def-clap-struct host-params
-    ((module nil))
+    ()
   ((rescan
     ((self host) (flags :int)) :void
     ;; TODO
