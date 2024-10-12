@@ -1,15 +1,25 @@
+(defpackage :utaticl.arrangement
+  (:use :cl :utaticl.core))
+
+(in-package :utaticl.arrangement)
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (in-package :utaticl.core)
 
 (defun arrangement-render-lane (lane x)
   (let ((param (.automation-param lane)))
     (when param
       ;; TODO set-cursor-pos
-      (ig:set-cursor-pos-x (+ x (.offset-x (.arrangement *project*))))
-      (ig:set-next-item-width (.width lane))
+      (ig:set-cursor-pos (@ (+ x (.offset-x (.arrangement *project*)))
+                            (- (.offset-y (.arrangement *project*))
+                               30.0)))
       (ig:with-id (lane)
         (ig:with-group
+          (ig:set-next-item-width (.width lane))
           (ig:text (.name param))
-          (ig:input-double "##a-d-v" (.automation-default-value lane))))
+          (ig:set-next-item-width (.width lane))
+          (ig:input-double "##default-value" (.automation-default-value lane))))
       (ig:same-line)))
   (+ x (.width lane)))
 
