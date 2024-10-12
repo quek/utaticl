@@ -288,46 +288,6 @@
   (setf (clap:clap-process.out-events self)
         (autowrap:ptr (process-output-events self))))
 
-(def-clap-struct host-audio-ports
-    ((module nil))
-  ((is-rescan-flag-supported
-    ((flag :unsigned-int)) :bool
-    ;; TODO
-    (break "~a" flag)
-    nil)
-   (rescan
-    ((flags :unsigned-int)) :void
-    ;; TODO
-    (break "~a" flags)
-    )))
-
-(def-clap-struct host-gui
-    ()
-  ((resize-hints-changed
-    ((self host)) :void
-    (log:trace "gui.resize-hints-changed" self)
-    (resize-hints-changed (host-module self)))
-   (request-resize
-    ((self host)
-     (width :unsigned-int)
-     (height :unsigned-int)) :bool
-    (log:trace "gui.request-resize" self)
-    (request-resize (host-module self) width height))
-   (request-show
-    ((self host)) :bool
-    (log:trace "gui.request-show" self)
-    (editor-open (host-module self))
-    t)
-   (request-hide
-    ((self host)) :bool
-    (log:trace "gui.request-hide" self)
-    (editor-close (host-module self))
-    t)
-   (closed
-    ((self host) (was-destroyed :bool)) :void
-    (log:trace "gui.request-closed" self)
-    (closed (host-module self) was-destroyed))))
-
 (alexandria:define-constant +host-name+ "UTATICL" :test 'equal)
 (alexandria:define-constant +host-url+ "https://github.com/quek/utaticl" :test 'equal)
 (alexandria:define-constant +host-version+ "0.0.1" :test 'equal)
@@ -365,6 +325,46 @@
   (setf (clap:clap-host.vendor self) (sb-sys:vector-sap +host-name+))
   (setf (clap:clap-host.url self) (sb-sys:vector-sap +host-url+))
   (setf (clap:clap-host.version self) (sb-sys:vector-sap +host-version+)))
+
+(def-clap-struct host-audio-ports
+    ()
+  ((is-rescan-flag-supported
+    ((self host) (flag :unsigned-int)) :bool
+    ;; TODO
+    (break "~a" flag)
+    nil)
+   (rescan
+    ((self host) (flags :unsigned-int)) :void
+    ;; TODO
+    (break "~a" flags)
+    )))
+
+(def-clap-struct host-gui
+    ()
+  ((resize-hints-changed
+    ((self host)) :void
+    (log:trace "gui.resize-hints-changed" self)
+    (resize-hints-changed (host-module self)))
+   (request-resize
+    ((self host)
+     (width :unsigned-int)
+     (height :unsigned-int)) :bool
+    (log:trace "gui.request-resize" self)
+    (request-resize (host-module self) width height))
+   (request-show
+    ((self host)) :bool
+    (log:trace "gui.request-show" self)
+    (editor-open (host-module self))
+    t)
+   (request-hide
+    ((self host)) :bool
+    (log:trace "gui.request-hide" self)
+    (editor-close (host-module self))
+    t)
+   (closed
+    ((self host) (was-destroyed :bool)) :void
+    (log:trace "gui.request-closed" self)
+    (closed (host-module self) was-destroyed))))
 
 (def-clap-struct host-params
     ()
