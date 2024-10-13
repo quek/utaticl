@@ -22,6 +22,9 @@
     (deserialize (with-serialize-context ()
                    (serialize self)))))
 
+(defmethod dd-show ((self neko))
+  (ig:text (.name self)))
+
 (defmethod deserialize-slot ((self neko) (slot (eql 'neko-id)) value)
   (if (.copy *serialize-context*)
       (setf (.neko-id self) (uid))

@@ -1,27 +1,4 @@
-(defpackage :utaticl.arrangement
-  (:use :cl :utaticl.core))
-
-(in-package :utaticl.arrangement)
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (in-package :utaticl.core)
-
-(defun arrangement-render-lane (lane x)
-  (let ((param (.automation-param lane)))
-    (when param
-      ;; TODO set-cursor-pos
-      (ig:set-cursor-pos (@ (+ x (.offset-x (.arrangement *project*)))
-                            (- (.offset-y (.arrangement *project*))
-                               30.0)))
-      (ig:with-id (lane)
-        (ig:with-group
-          (ig:set-next-item-width (.width lane))
-          (ig:text (.name param))
-          (ig:set-next-item-width (.width lane))
-          (ig:input-double "##default-value" (.automation-default-value lane))))
-      (ig:same-line)))
-  (+ x (.width lane)))
 
 (defmethod compute-offset-y ((self arrangement))
   (labels ((f (track group-level)
@@ -31,7 +8,7 @@
                  group-level)))
     (setf (.offset-y self)
           (+ 20.0
-             40.0                       ;automation の分
+             (%arrangement-height-lane-param)
              (* (.offset-group self)
                 (f (.master-track (.project self)) 1))))))
 
@@ -398,7 +375,7 @@
                                    (let ((track-parent (.parent (.track lane))))
                                      (if (or (null track-parent)
                                              (.tracks-show-p track-parent))
-                                         (arrangement-render-lane lane x)
+                                         (%arrangement-render-lane lane x)
                                          x)))
                        .0)))
 
@@ -578,3 +555,23 @@
                        width)))
                .0)
     last-lane))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defun %arrangement-render-lane (lane x)
+  (let ((param (.automation-param lane)))
+    (when param
+      ;; TODO set-cursor-pos
+      (ig:set-cursor-pos (@ (+ x (.offset-x (.arrangement *project*)))
+                            (- (.offset-y (.arrangement *project*))
+                               (%arrangement-height-lane-param))))
+      (ig:with-id (lane)
+        (ig:with-group
+          (ig:set-next-item-width (.width lane))
+          (ig:text (.name param))
+          (ig:set-next-item-width (.width lane))
+          (ig:input-double "##default-value" (.automation-default-value lane))))
+      (ig:same-line)))
+  (+ x (.width lane)))
+
+(defun %arrangement-height-lane-param ()
+  40.0)
