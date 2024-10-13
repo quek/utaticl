@@ -461,7 +461,8 @@
           (ig:text (format nil "  ~:[~;∞~]~a" (link-p clip) (.name clip)))
           (ig:set-cursor-pos pos1)
           (ig:invisible-button "##" (@- pos2 pos1))
-          (when (contain-p mouse-pos pos1-world pos2-world)
+          (when (and (contain-p mouse-pos pos1-world pos2-world)
+                     (null (dd-src)))
             (ig:with-tooltip
               (ig:text (.name clip)))))
 
