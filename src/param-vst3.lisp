@@ -32,11 +32,11 @@
                                   (.id self)
                                   (.value self)))
 
-(defmethod value-text ((self param-vst3))
+(defmethod value-text ((self param-vst3) &optional (value (.value self)))
   (let ((text (autowrap:with-alloc (string128 'sb:vst-string128)
                 (vst3-ffi::get-param-string-by-value (.controller (.module self))
                                                      (.id self)
-                                                     (.value self)
+                                                     value
                                                      string128)
                 (vst3:from-string128 string128))))
     ;; Khz のプラグイン ナローノンブレイクスペース U+202F が入っていて化けるので

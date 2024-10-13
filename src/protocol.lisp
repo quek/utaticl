@@ -39,4 +39,4 @@
 (defgeneric render (x)
   (:method ((x null))))
 
-(defgeneric value-text (x))
+(defgeneric value-text (x &optional value))

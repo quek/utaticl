@@ -418,8 +418,6 @@
         with y2 = (+ window-pos-y (ig:get-window-height))
         do (funcall line)
            (dd-drop lane (@@ x y1 x2 y2))
-           (awhen (.automation-param lane)
-             (ig:text (.name it)))
            (setf x (render-clip self track lane nil x)))
   (when (.tracks-show-p track)
     (loop for track in (.tracks track)
@@ -484,7 +482,8 @@
            (group-p (and (.tracks track) (not (typep track 'master-track))))
            (group-button-width 17.0)
            (button-width (- track-width (if group-p group-button-width .0)))
-           (button-height (- (.offset-y self) offset-group)))
+           (button-height (- (.offset-y self) offset-group
+                             (%arrangement-height-lane-param))))
       (draw-vertical-line (@- (ig:get-cursor-pos) (@ 0.0 (ig:get-scroll-y))))
       (ig:set-cursor-pos pos)
       (let ((color (color-selected (.color track) (.select-p track))))
@@ -560,17 +559,20 @@
 (defun %arrangement-render-lane (lane x)
   (let ((param (.automation-param lane)))
     (when param
-      ;; TODO set-cursor-pos
-      (ig:set-cursor-pos (@ (+ x (.offset-x (.arrangement *project*)))
-                            (- (.offset-y (.arrangement *project*))
-                               (%arrangement-height-lane-param))))
-      (ig:with-id (lane)
-        (ig:with-group
-          (ig:set-next-item-width (.width lane))
-          (ig:text (.name param))
-          (ig:set-next-item-width (.width lane))
-          (ig:input-double "##default-value" (.automation-default-value lane))))
-      (ig:same-line)))
+      (let ((pos (@ (+ x (.offset-x (.arrangement *project*)))
+                    (- (.offset-y (.arrangement *project*))
+                       (%arrangement-height-lane-param)))))
+        (ig:set-cursor-pos pos)
+        (ig:with-id (lane)
+          (ig:with-group
+            (ig:set-next-item-width (.width lane))
+            (ig:set-cursor-pos-x (+ (.x pos) 4.0))
+            (ig:text (.name param))
+            (ig:set-next-item-width (.width lane))
+            (ig:drag-double
+             "##default-value" (.automation-default-value lane)
+             :min 0d0 :max 1d0 :speed .01
+             :format (value-text param (.automation-default-value lane))))))))
   (+ x (.width lane)))
 
 (defun %arrangement-height-lane-param ()

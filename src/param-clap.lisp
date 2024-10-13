@@ -25,7 +25,7 @@
 (defmethod value-changed-by-host ((self param-clap))
   (param-change-add (.module self) self))
 
-(defmethod value-text ((self param-clap))
+(defmethod value-text ((self param-clap) &optional (value (.value self)))
   (let ((param self)
         (self (.module self))
         (buffer-size 80))
@@ -34,7 +34,7 @@
       (if (utaticl.clap::call
            (clap:clap-plugin-params.value-to-text (.ext-params self))
            :unsigned-int (.id param)
-           :double (.value param)       ;surge はこの引数を無視してプラグイン側の値を返してくる
+           :double value ;surge はこの引数を無視してプラグイン側の値を返してくる
            :pointer buffer
            :unsigned-int buffer-size
            :bool)

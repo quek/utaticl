@@ -40,6 +40,6 @@
 
 (defmethod value-changed-by-host ((self param)))
 
-(defmethod value-text ((param param))
-  (format nil "~,2f" (.value param)))
+(defmethod value-text ((self param) &optional (value (.value self)))
+  (format nil "~,2f" value))
 
