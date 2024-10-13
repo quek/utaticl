@@ -1,5 +1,9 @@
 (in-package :utaticl.core)
 
+(defmethod initialize-instance :after ((self seq-note) &key)
+  (when (string= "" (.name self))
+    (setf (.name self) (name-new 'seq-note "N"))))
+
 (defmethod note-add ((self seq-note) (note note))
   (setf (.seq-note note) self)
   (setf (.notes self)

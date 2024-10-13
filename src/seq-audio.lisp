@@ -1,10 +1,12 @@
 (in-package :utaticl.core)
 
-(defmethod initialize-instance :after ((seq-audio seq-audio) &key name path)
+(defmethod initialize-instance :after ((self seq-audio) &key name path)
   (when path
-    (setf (.path seq-audio) path)
+    (setf (.path self) path)
     (unless name
-      (setf (.name seq-audio) (pathname-name path)))))
+      (setf (.name self) (pathname-name path))))
+  (when (string= "" (.name self))
+    (setf (.name self) (name-new 'seq-audio "A"))))
 
 (defmethod (setf .data) :after (data (seq-audio seq-audio))
   (unless (.data-original seq-audio)

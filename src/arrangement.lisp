@@ -49,7 +49,9 @@
       (setf time (time-grid-applied self time #'floor))
       (when (and (not (minusp time)) lane)
         (cmd-add (.project self) 'cmd-clip-add
-                 :clip (make-instance 'clip-note :time time :color (.color lane))
+                 :clip (make-instance (if (.automation-param lane)
+                                          'clip-automation
+                                          'clip-note) :time time :color (.color lane))
                  :lane lane
                  :execute-after (lambda (cmd)
                                   (edit (.clip cmd) (list (.clip cmd)))))))))
@@ -403,6 +405,8 @@
   (defshortcut (ig:+im-gui-mod-ctrl+ ig:+im-gui-key-g+)
     (cmd-add (.project self) 'cmd-tracks-group
              :tracks (tracks-selected (.project self))))
+  (defshortcut (ig:+im-gui-mod-ctrl+ ig:+im-gui-key-l+)
+    (cmd-add *project* 'cmd-lane-add :track (.target-track *project*)))
 
   (shortcut-common (.project self)))
 

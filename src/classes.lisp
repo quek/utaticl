@@ -238,7 +238,8 @@
   ())
 
 (defclass clip-automation (clip)
-  ())
+  ()
+  (:default-initargs :seq (make-instance 'seq-automation)))
 
 (defclass clip-note (clip)
   ()
