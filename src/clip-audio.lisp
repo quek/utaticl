@@ -7,9 +7,9 @@
 (defmethod clip-add :after ((lane lane) (clip-audio clip-audio) &key)
   (update-duration clip-audio (.bpm *project*)))
 
-(defmethod edit ((clip-audio clip-audio) clips)
-  ;; TODO
-  (print "edit clip-audio."))
+(defmethod edit ((self clip-audio) clips)
+  (setf (.editor-audio *project*)
+        (make-instance 'editor-audio  :target self)))
 
 (defmethod prepare-event ((clip-audio clip-audio) start end loop-p offset-samples)
   (let ((clip-time (.time clip-audio)))

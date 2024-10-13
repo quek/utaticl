@@ -28,6 +28,8 @@
    (sceen-matrix :accessor .sceen-matrix)
    (dirty-p :initform nil :accessor .dirty-p)
    (piano-roll :initform nil :accessor .piano-roll)
+   (editor-automation :initform nil :accessor .editor-automation)
+   (editor-audio :initform nil :accessor .editor-audio)
    (commander :accessor .commander)
    (rack :accessor .rack)
    (bpm :accessor .bpm)
@@ -160,6 +162,22 @@
    (threshold-text-hide :initform 18.0 :accessor .threshold-text-hide))
   (:default-initargs :zoom-x 25.0 :zoom-y 60.0 :zoom-y-min 5.0
                      :grid-unit +grid-1/16+))
+
+(defclass editor (time-ruler-mixin grid-mixin offset-mixin scroll-mixin zoom-mixin view)
+  ((name :initarg :name :accessor .name)
+   (offset-x :initform 25.0 :accessor .offset-x)
+   (offset-y :initform 30.0 :accessor .offset-y)
+   (project :initarg :project :accessor .project)
+   (render-first-p :initform t :accessor .render-first-p)
+   (target :initarg :target :initform nil :accessor .target)))
+
+(defclass editor-audio (editor)
+  ()
+  (:default-initargs :name "##editor-audio"))
+
+(defclass editor-automation (editor)
+  ()
+  (:default-initargs :name "##editor-automation"))
 
 (defclass rack (view)
   ((plugin-selector :accessor .plugin-selector)

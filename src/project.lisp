@@ -159,6 +159,14 @@
   (when piano-roll
     (setf (.project piano-roll) self)))
 
+(defmethod (setf .editor-audio) :after (editor-audio (self project))
+  (when editor-audio
+    (setf (.project editor-audio) self)))
+
+(defmethod (setf .editor-automation) :after (editor-automation (self project))
+  (when editor-automation
+    (setf (.project editor-automation) self)))
+
 (defmethod (setf .play-p) :after (value (self project))
   (unless value
     (setf (.play-just-stop-p self) t)
@@ -216,6 +224,8 @@
   (render (.arrangement self))
   (render (.sceen-matrix self))
   (render (.piano-roll self))
+  (render (.editor-audio self))
+  (render (.editor-automation self))
   (render (.rack self))
   (render (.commander self)))
 
