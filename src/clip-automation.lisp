@@ -2,4 +2,4 @@
 
 (defmethod edit ((self clip-automation) clips)
   (setf (.editor-automation *project*)
-        (make-instance 'editor-automation  :target self)))
+        (make-instance 'editor-automation :clip self)))

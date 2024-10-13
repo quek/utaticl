@@ -429,7 +429,8 @@
   x)
 
 (defmethod dd-drop-at ((lane lane) (param param))
-  (setf (.automation-param lane) param))
+  (setf (.automation-param lane) param)
+  (dd-reset))
 
 (defmethod render-clip ((self arrangement) (track track) (lane lane) (clip null) x)
   (loop for clip in (.clips lane)

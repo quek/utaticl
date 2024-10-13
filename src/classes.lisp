@@ -169,7 +169,7 @@
    (offset-y :initform 30.0 :accessor .offset-y)
    (project :initarg :project :accessor .project)
    (render-first-p :initform t :accessor .render-first-p)
-   (target :initarg :target :initform nil :accessor .target)))
+   (clip :initarg :clip :initform nil :accessor .clip)))
 
 (defclass editor-audio (editor)
   ()

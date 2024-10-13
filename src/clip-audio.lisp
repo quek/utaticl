@@ -9,7 +9,7 @@
 
 (defmethod edit ((self clip-audio) clips)
   (setf (.editor-audio *project*)
-        (make-instance 'editor-audio  :target self)))
+        (make-instance 'editor-audio :clip self)))
 
 (defmethod prepare-event ((clip-audio clip-audio) start end loop-p offset-samples)
   (let ((clip-time (.time clip-audio)))
