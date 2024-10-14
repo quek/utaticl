@@ -1,5 +1,13 @@
 (in-package :utaticl.core)
 
+(progn
+  (setf *config* (make-instance 'config))
+  (let ((clip
+          (make-instance 'clip-audio :path "D:\\Samples\\Audiolatry - Anime Vocals\\Vocal_Shots\\Audiolatry_AV_Vocal_One_Shot_Female_Yuck.wav")))
+    (copy clip)))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (let* ((process-data (.process-data (.master-track (car (.projects *app*)))))
        (module (cadr (.modules (.master-track (car (.projects *app*))))))
        (pd (.process-data module))

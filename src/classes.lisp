@@ -267,13 +267,7 @@
   ((clips :initarg :clips :initform nil :accessor .clips)))
 
 (defclass seq-audio (seq)
-  ((nchannels :initform 1 :accessor .nchannels)
-   (sample-rate :initform 48000 :accessor .sample-rate)
-   (data :initform (make-array 0 :element-type '(unsigned-byte 8)) :accessor .data)
-   (data-original :initform nil :accessor .data-original)
-   (duration-original :initform nil :accessor .duration-original)
-   (path :initform nil :accessor .path)
-   (waveform-cache :initform nil :accessor .waveform-cache)))
+  ((samples :initarg :samples :initform nil :accessor .samples)))
 
 (defclass seq-automation (seq)
   ((points :initarg :points :initform nil :accessor .points)))
@@ -281,6 +275,15 @@
 (defclass seq-note (seq)
   ((notes :initarg :notes :initform nil :accessor .notes))
   (:default-initargs :color (color #x30 #xc0 #x30 #x80)))
+
+(defclass sample (time-thing)
+  ((nchannels :initform 1 :accessor .nchannels)
+   (sample-rate :initform 48000 :accessor .sample-rate)
+   (data :initform (make-array 0 :element-type '(unsigned-byte 8)) :accessor .data)
+   (data-original :initform nil :accessor .data-original)
+   (duration-original :initform nil :accessor .duration-original)
+   (path :initform nil :accessor .path)
+   (waveform-cache :initform nil :accessor .waveform-cache)))
 
 (defclass sceen (neko)
   ((clips :initform (make-hash-table) :accessor .clips)

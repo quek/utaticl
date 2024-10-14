@@ -99,6 +99,7 @@
    (:file "seq-audio")
    (:file "seq-automation")
    (:file "seq-note")
+   (:file "sample")
    (:file "note")
    (:file "view")
    (:file "drag-drop-ffi")

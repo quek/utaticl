@@ -23,5 +23,5 @@
      (setf (.duration clip-audio) duration)
      (stretch (.seq clip-audio) duration))))
 
-(defmethod update-duration ((clip-audio clip-audio) bpm)
-  (setf (.duration clip-audio) (update-duration (.seq clip-audio) bpm)))
+(defmethod update-duration ((self clip-audio) bpm)
+  (setf (.duration self) (update-duration (.seq self) bpm)))

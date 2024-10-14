@@ -21,7 +21,8 @@
 
 (defserialize seq-note notes)
 
-(defserialize seq-audio nchannels sample-rate data-original duration-original path)
+(defserialize seq-audio samples)
+(defserialize sample nchannels sample-rate data-original duration-original path)
 
 (defserialize plugin-info id name path file-write-date)
 
