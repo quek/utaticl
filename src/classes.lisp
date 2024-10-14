@@ -96,7 +96,6 @@
    (clips-dragging :initform nil :accessor .clips-dragging)
    (clips-dragging-time :initform nil :accessor .clips-dragging-time)
    (clips-dragging-duration :initform nil :accessor .clips-dragging-duration)
-   (dragging-source-extern :initform nil :accessor .dragging-source-extern)
    (drag-mode :initform :move :accessor .drag-mode
               :type (member :start :move :end))
    (drag-offset-lame :initform nil :accessor .drag-offset-lane)

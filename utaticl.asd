@@ -102,7 +102,6 @@
    (:file "note")
    (:file "view")
    (:file "drag-drop-ffi")
-   (:file "drag-drop")
    (:file "report")
    (:file "transposer")
    (:file "arrangement")

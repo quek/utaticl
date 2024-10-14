@@ -193,28 +193,6 @@
                (loop for clip in (.clips-dragging self)
                      do (incf (.duration clip) delta)))))))))
 
-(defmethod handle-dragging-extern ((self arrangement))
-  (let ((pos (@- (ig:get-mouse-pos) (ig:get-window-pos))))
-    (ig:set-cursor-pos pos)
-    (ig:invisible-button +dd-extern+ (@ 0.1 0.1))
-    (ig:with-drag-drop-target
-      ;; マウスボタン離してなくても accept しちゃう
-      (when (ig:accept-drag-drop-payload +dd-extern+  ig:+im-gui-drag-drop-flags-source-extern+)
-        (setf (.dragging-source-extern self) (dd-src))))))
-
-(defmethod handle-dragging-extern-drop ((self arrangement))
-  (when (ig:is-mouse-down ig:+im-gui-mouse-button-left+)
-    (let ((path (car (.dragging-source-extern self)))) ;TODO 複数ファイル
-      (multiple-value-bind (time lane) (world-pos-to-time-lane self (ig:get-mouse-pos))
-        (setf time (time-grid-applied self time #'floor))
-        (when (and (not (minusp time)) lane)
-          (cmd-add (.project self) 'cmd-clip-audio-add
-                   :time time :lane lane :path path
-                   :execute-after (lambda (cmd)
-                                    (edit (.clip cmd) (list (.clip cmd))))))))
-    (dd-reset)
-    (setf (.dragging-source-extern self) nil)))
-
 (defmethod handle-dragging-intern ((self arrangement))
   (setf (.drag-mode self) :move)
   (setf (.clips-dragging self)
@@ -244,11 +222,7 @@
   (if (can-handle-mouse-p self)
       (let ((io (ig:get-io))
             (mouse-in-cavas-p (mouse-in-cavas-p self)))
-        (cond ((dragging-extern-p)
-               (handle-dragging-extern self))
-              ((.dragging-source-extern self)
-               (handle-dragging-extern-drop self))
-              ((.clips-dragging self)
+        (cond ((.clips-dragging self)
                (handle-dragging self))
               ((and mouse-in-cavas-p (.range-selecting-mode self))
                (handle-range-selecting self))
@@ -433,7 +407,16 @@
   t)
 
 (defmethod dd-drop-at ((lane lane) (pathname pathname))
-  (print (dd-src))
+  (let ((arrangement (.arrangement *project*))
+        (path (namestring (car (dd-src))))) ;TODO 複数ファイル
+    (multiple-value-bind (time lane)
+        (world-pos-to-time-lane arrangement (ig:get-mouse-pos))
+      (setf time (time-grid-applied arrangement time #'floor))
+      (when (and (not (minusp time)) lane)
+        (cmd-add *project* 'cmd-clip-audio-add
+                 :time time :lane lane :path path
+                 :execute-after (lambda (cmd)
+                                  (edit (.clip cmd) (list (.clip cmd))))))))
   t)
 
 (defmethod render-clip ((self arrangement) (track track) (lane lane) (clip null) x)
