@@ -43,15 +43,14 @@
         (setf (.sample-rate seq-audio) (.sample-rate *config*))))))
 
 (defmethod prepare-event ((seq-audio seq-audio) start end loop-p offset-samples)
-  (loop with bus = 0
-        with nchannels = (.nchannels seq-audio)
+  (loop with nchannels = (.nchannels seq-audio)
         with data = (.data seq-audio)
         with frame-rate = (* (/ 60 (.bpm *project*)) (.sample-rate *config*))
         with start-frame = (round (* start frame-rate))
         with end-frame = (round (* end frame-rate))
         with nframes = (min (- end-frame start-frame) (- (/ (length data) nchannels) start-frame))
         for channel below (min nchannels 2)
-        for buffer = (buffer (.outputs *process-data*) bus channel)
+        for buffer = (buffer-at (car (.outputs *process-data*)) channel)
         do (assert (<= nframes (.frames-per-buffer *config*)))
         do (loop for i below nframes
                  do (setf (cffi:mem-aref buffer :float i)
