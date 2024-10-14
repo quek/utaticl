@@ -19,6 +19,7 @@
 
 (defclass dd ()
   ((at :initform nil :accessor .at)
+   (drop-p :initform nil :accessor .drop-p)
    (src :initform nil :accessor .src)))
 
 (defvar *dd* (make-instance 'dd))
@@ -538,7 +539,6 @@
             :type (member :glfw-opengl3 :sdl-vulkan))
    (color-window :initform (make-instance 'color-window)
                  :accessor .color-window)
-   (dragging-p :initform nil :accessor .dragging-p)
    (mutex :initform (sb-thread:make-mutex :name "APP") :accessor .mutex)
    (projects :initform nil :accessor .projects)
    (render-audio-device-window-p :initform nil :accessor .render-audio-device-window-p)

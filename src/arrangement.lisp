@@ -203,7 +203,7 @@
         (setf (.dragging-source-extern self) (dd-src))))))
 
 (defmethod handle-dragging-extern-drop ((self arrangement))
-  (when (ig:is-mouse-down-nil ig:+im-gui-mouse-button-left+)
+  (when (ig:is-mouse-down ig:+im-gui-mouse-button-left+)
     (let ((path (car (.dragging-source-extern self)))) ;TODO 複数ファイル
       (multiple-value-bind (time lane) (world-pos-to-time-lane self (ig:get-mouse-pos))
         (setf time (time-grid-applied self time #'floor))
@@ -430,7 +430,11 @@
 
 (defmethod dd-drop-at ((lane lane) (param param))
   (setf (.automation-param lane) param)
-  (dd-reset))
+  t)
+
+(defmethod dd-drop-at ((lane lane) (pathname pathname))
+  (print (dd-src))
+  t)
 
 (defmethod render-clip ((self arrangement) (track track) (lane lane) (clip null) x)
   (loop for clip in (.clips lane)

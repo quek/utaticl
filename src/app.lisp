@@ -49,7 +49,8 @@
   (dd-start files))
 
 (defmethod drop ((app app))
-  (setf (.dragging-p app) nil))
+  (print "drop!!!!!")
+  (dd-drop-did))
 
 (defmethod render :around ((self app))
   (call-next-method)
@@ -59,7 +60,6 @@
 
 (defmethod render ((app app))
   (let ((*mouse-pos* (ig:get-mouse-pos)))
-
     (loop for project in (.projects app)
           do (let ((*project* project))
                (render project)))

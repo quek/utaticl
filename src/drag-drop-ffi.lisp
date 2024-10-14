@@ -258,7 +258,7 @@
                                                                      :external-format :utf16le
                                                                      :end (* len 2)))))
                         if (and file (member (pathname-type file) '("ogg" "wav") :test #'equalp))
-                          collect file)))
+                          collect (pathname file))))
             (when files
               (setf (cffi:mem-ref effect :unsigned-long) +dropeffect-copy+)
               (utaticl.core:drag-enter utaticl.core:*app* files)))))
