@@ -279,7 +279,7 @@
 
 (defclass sample (time-thing)
   ((nchannels :initform 1 :accessor .nchannels)
-   (sample-rate :initform 48000 :accessor .sample-rate)
+   (sample-rate :initform 48000d0 :accessor .sample-rate)
    (data :initform (make-array 0 :element-type '(unsigned-byte 8)) :accessor .data)
    (data-original :initform nil :accessor .data-original)
    (duration-original :initform nil :accessor .duration-original)

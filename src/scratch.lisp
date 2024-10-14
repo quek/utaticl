@@ -1,11 +1,17 @@
 (in-package :utaticl.core)c
 
+(let ((*project* (make-instance 'project)))
+ (with-open-file (in "c:/Users/ancient/quicklisp/local-projects/utaticl/user/project/20241015.lisp"
+                     :direction :input)
+   (let ((project (with-serialize-context () (deserialize (read in)))))
+     project)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (progn
   (setf *config* (make-instance 'config))
   (let ((clip
           (make-instance 'clip-audio :path "D:\\Samples\\Audiolatry - Anime Vocals\\Vocal_Shots\\Audiolatry_AV_Vocal_One_Shot_Female_Yuck.wav")))
     (copy clip)))
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (let* ((process-data (.process-data (.master-track (car (.projects *app*)))))
@@ -40,12 +46,6 @@
 ;;   #.(SB-SYS:INT-SAP #X02ABE260)
 ;;   #.(SB-SYS:INT-SAP #X02ABEA60)
 ;;   #.(SB-SYS:INT-SAP #X1E30BCF0)
-
-
-
-
-
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (let ((n 0))

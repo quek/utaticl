@@ -49,7 +49,6 @@
   (dd-start files))
 
 (defmethod drop ((app app))
-  (print "drop!!!!!")
   (dd-drop-did))
 
 (defmethod render :around ((self app))
