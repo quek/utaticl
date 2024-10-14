@@ -1,4 +1,4 @@
-(in-package :utaticl.core)
+(in-package :utaticl.core)c
 
 (progn
   (setf *config* (make-instance 'config))

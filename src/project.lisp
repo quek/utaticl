@@ -168,9 +168,12 @@
     (setf (.project editor-automation) self)))
 
 (defmethod (setf .play-p) :after (value (self project))
-  (unless value
-    (setf (.play-just-stop-p self) t)
-    (setf (.play-p (.sceen-matrix self)) nil)))
+  (if value
+      (setf (.play-start-last self) (.play-start self))
+      (progn
+        (setf (.play-just-stop-p self) t)
+        (setf (.play-p (.sceen-matrix self)) nil)
+        (setf (.play-start self) (.play-start-last self)))))
 
 (defmethod process :around ((project project))
   (let ((*project* project))

@@ -2,9 +2,9 @@
 
 (defmethod initialize-instance :after ((self sample) &key path)
   (when path
-    (setf (.path self) path))
-  (when (string= "" (.name self))
-    (setf (.name self) (pathname-name path))))
+    (setf (.path self) path)
+    (when (string= "" (.name self))
+      (setf (.name self) (pathname-name path)))))
 
 (defmethod (setf .data) :after (data (self sample))
   (unless (.data-original self)

@@ -45,6 +45,7 @@
    (play-p :initform nil :accessor .play-p)
    (play-just-stop-p :initform nil :accessor .play-just-stop-p)
    (play-start :initarg :play-start :initform .0d0 :accessor .play-start)
+   (play-start-last :initarg :play-start-last :initform .0d0 :accessor .play-start-last)
    (play-end :initarg :play-end :initform .0d0 :accessor .play-end)
    (loop-start :initarg :loop-start :initform .0d0 :accessor .loop-start)
    (loop-end :initarg :loop-end :initform 16.0d0 :accessor .loop-end)
