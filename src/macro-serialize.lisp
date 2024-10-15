@@ -25,18 +25,19 @@
                  collect
                  (cond ((atom spec)
                         `((eq slot ',spec)
-                          ,(let ((accessor (find-symbol (format nil ".~a" spec) :utaticl.core)))
+                          ,(let* ((accessor (find-symbol (format nil ".~a" spec) :utaticl.core))
+                                  (accessor (if (fboundp accessor)
+                                                `(,accessor self)
+                                                `(slot-value self slot))))
                              `(if (and (consp value) (eq :ref (car value)))
-                                  (after-add *serialize-context*
-                                             (lambda ()
-                                               (setf ,(if (fboundp accessor)
-                                                          `(,accessor self)
-                                                          `(slot-value self slot))
-                                                     (find-neko (cadr value)))))
-                                  (setf ,(if (fboundp accessor)
-                                             `(,accessor self)
-                                             `(slot-value self slot))
-                                        (deserialize value))))))
+                                  (let ((neko (find-neko (cadr value))))
+                                    (if neko
+                                        (setf ,accessor neko)
+                                        (after-add *serialize-context*
+                                                   (lambda ()
+                                                     (setf ,accessor
+                                                           (find-neko (cadr value)))))))
+                                  (setf ,accessor (deserialize value))))))
                        ((eq :ref (car spec))
                         `((eq slot ',(cadr spec))
                           (after-add *serialize-context*

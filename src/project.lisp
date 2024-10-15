@@ -56,6 +56,10 @@
       (undo cmd self)
       (push cmd (.cmd-redo-stack self)))))
 
+(defmethod deserialize-neko :around ((self project) slots)
+  (let ((*project* self))
+    (call-next-method)))
+
 (defun find-lane (project lane-id)
   (labels ((f (track)
              (or (find lane-id (.lanes track) :test #'equal :key #'.neko-id)
