@@ -89,6 +89,25 @@
 (defmethod undo ((self cmd-clip-audio-add) project)
   (clip-delete (.lane self) (.clip self)))
 
+(defcommand cmd-automation-poin-add (commnad)
+  ((seq :initarg :seq :accessor .seq)
+   (time :initarg :time :accessor .time)
+   (value :initarg :value :accessor .value)
+   (automation-point :accessor .automation-point)))
+
+(defmethod execute ((self cmd-automation-poin-add) project)
+  (let ((point (make-instance 'automation-point
+                              :time (.time self)
+                              :value (.value self))))
+    (automation-point-add (.seq self) point)
+    (setf (.automation-point self) point)))
+
+(defmethod undo ((self cmd-automation-poin-add) project)
+  (let ((point (.automation-point self)))
+    (automation-point-delete (.seq self) point)
+    (terminate point))
+  (setf (.automation-point self) nil))
+
 (defcommand cmd-clip-delete (command)
   ((clip :accessor .clip)
    (clip-id :initarg :clip-id :accessor .clip-id)

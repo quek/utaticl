@@ -5,7 +5,6 @@
 (defmethod render-body ((self editor-automation))
   (loop for point in (.points (.seq (.clip self)))
         do (%editor-automation-render-point self point))
-
   (when (in-p *mouse-pos* *rect-body*)
     (%editor-automation-body-handle self)))
 
@@ -42,10 +41,22 @@
 
 (defmethod value-to-world-x ((self editor-automation) value)
   (+ (.x *window-pos*)
-     (* (.x *window-size*) value)))
+     (.offset-x self)
+     (* (.width *rect-body*) value)))
+
+(defmethod world-x-to-value ((self editor-automation) x)
+  (/ (- x (.x *window-pos*) (.offset-x self))
+     (.width *rect-body*)))
 
 (defun %editor-automation-body-handle (self)
-  self)
+  (let ((time (world-x-to-value self (.x *mouse-pos*)))
+        (value (world-y-to-time self (.y *mouse-pos*))))
+   (cond ((and (null (.item-at-mouse self)))
+          (cond ((ig:is-mouse-double-clicked ig:+im-gui-mouse-button-left+)
+                 (cmd-add *project* 'cmd-automation-poin-add
+                          :seq (.seq (.clip self))
+                          :time time
+                          :value value)))))))
 
 (defun %editor-automation-render-point (self point)
   (let* ((x (value-to-world-x self (.value point)))
@@ -54,15 +65,16 @@
     (ig:path-arc-to-fast *draw-list*
                          center
                          *editor-automation-point-radius* 0 12)
-    (ig:path-stroke *draw-list* (color #xcc #xcc #xcc #xff) :thickness 2.0))
-  #|
-  (Ig:path-arc-to-fast *draw-list*
-  (@+ center (@ 200.0 .0))
-  *editor-automation-point-radius* 0 12)
-  (ig:path-stroke *draw-list* (color #xcc #xcc #xcc #xff) :thickness 2.0)
-  (ig:path-arc-to-fast *draw-list*
-  (@+ center (@ 300.0 100.0))
-  *editor-automation-point-radius* -6 6)
-  (ig:path-stroke *draw-list* (color #xcc #xcc #xcc #xff) :thickness 2.0)
-  |#
-  )
+    (ig:path-stroke *draw-list* (color #xcc #xcc #xcc #xff) :thickness 2.0)
+    (when (%editor-automation-point-at-mouse-p center)
+      (setf (.item-at-mouse self) point)
+      ;; TODO click, drag, etc...
+      )))
+
+(defun %editor-automation-point-at-mouse-p (center)
+  (and (<= (- (.x center) *editor-automation-point-radius*)
+           (.x *mouse-pos*)
+           (+ (.x center) *editor-automation-point-radius*))
+       (<= (- (.y center) *editor-automation-point-radius*)
+           (.y *mouse-pos*)
+           (+ (.y center) *editor-automation-point-radius*))))

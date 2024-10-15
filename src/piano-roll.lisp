@@ -556,11 +556,6 @@
          (key (world-x-to-key self (.x pos))))
     (values time key)))
 
-(defmethod world-y-to-time ((self piano-roll) y)
-  (/ (+ (- y (.y (ig:get-window-pos)) (.offset-y self))
-        (ig:get-scroll-y))
-     (.zoom-y self)))
-
 (defmethod world-x-to-key ((self piano-roll) x)
   (let ((local-x (+ (- x (.x (ig:get-window-pos)) (.offset-x self))
                     (ig:get-scroll-x))))
