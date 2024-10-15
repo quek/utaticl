@@ -49,14 +49,18 @@
      (.width *rect-body*)))
 
 (defun %editor-automation-body-handle (self)
-  (let ((time (world-x-to-value self (.x *mouse-pos*)))
-        (value (world-y-to-time self (.y *mouse-pos*))))
-   (cond ((and (null (.item-at-mouse self)))
-          (cond ((ig:is-mouse-double-clicked ig:+im-gui-mouse-button-left+)
-                 (cmd-add *project* 'cmd-automation-poin-add
-                          :seq (.seq (.clip self))
-                          :time time
-                          :value value)))))))
+  (let ((value (world-x-to-value self (.x *mouse-pos*)))
+        (time (world-y-to-time self (.y *mouse-pos*))))
+    #+nil
+    (progn
+      (ig:set-cursor-pos (@ 100.0 100.0))
+      (ig:text (format nil "~a $ ~a" time value)))
+    (cond ((and (null (.item-at-mouse self)))
+           (cond ((ig:is-mouse-double-clicked ig:+im-gui-mouse-button-left+)
+                  (cmd-add *project* 'cmd-automation-point-add
+                           :seq (.seq (.clip self))
+                           :time time
+                           :value value)))))))
 
 (defun %editor-automation-render-point (self point)
   (let* ((x (value-to-world-x self (.value point)))

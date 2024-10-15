@@ -89,20 +89,20 @@
 (defmethod undo ((self cmd-clip-audio-add) project)
   (clip-delete (.lane self) (.clip self)))
 
-(defcommand cmd-automation-poin-add (commnad)
+(defcommand cmd-automation-point-add (command)
   ((seq :initarg :seq :accessor .seq)
    (time :initarg :time :accessor .time)
    (value :initarg :value :accessor .value)
    (automation-point :accessor .automation-point)))
 
-(defmethod execute ((self cmd-automation-poin-add) project)
+(defmethod execute ((self cmd-automation-point-add) project)
   (let ((point (make-instance 'automation-point
                               :time (.time self)
                               :value (.value self))))
     (automation-point-add (.seq self) point)
     (setf (.automation-point self) point)))
 
-(defmethod undo ((self cmd-automation-poin-add) project)
+(defmethod undo ((self cmd-automation-point-add) project)
   (let ((point (.automation-point self)))
     (automation-point-delete (.seq self) point)
     (terminate point))

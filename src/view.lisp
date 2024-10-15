@@ -6,7 +6,7 @@
 
 (defmethod rect-body ((self view))
   (@@ (@+ *window-pos* (@ (.offset-x self) (.offset-y self)))
-      (@+ *window-pos* *window-size* (- 0.0 (.y *scrollbar-size*)))))
+      (@+ *window-pos* *window-size* (@ 0.0 (- *scrollbar-size*)))))
 
 (defmethod world-y-to-time ((self view) y)
   (/ (+ (- y (.y (ig:get-window-pos)) (.offset-y self))
