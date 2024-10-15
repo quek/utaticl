@@ -6,10 +6,8 @@
    (color :initarg :color :initform (color #x80 #x80 #x80 #x80) :accessor .color)))
 
 (defclass rect ()
-  ((x1 :initform .0 :initarg :x1 :accessor .x1)
-   (y1 :initform .0 :initarg :y1 :accessor .y1)
-   (x2 :initform .0 :initarg :x2 :accessor .x2)
-   (y2 :initform .0 :initarg :y2 :accessor .y2)))
+  ((min :initarg :min :initform (@ .0 .0) :accessor .min)
+   (max :initarg :max :initform (@ .0 .0) :accessor .max)))
 
 (defclass rect-piano-roll (rect)
   ((x1 :initform .0 :initarg :time-start :accessor .time-start)
@@ -170,7 +168,8 @@
    (offset-y :initform 30.0 :accessor .offset-y)
    (project :initarg :project :accessor .project)
    (render-first-p :initform t :accessor .render-first-p)
-   (clip :initarg :clip :initform nil :accessor .clip)))
+   (clip :initarg :clip :initform nil :accessor .clip)
+   (item-mouse :initform nil :accessor .item-at-mouse)))
 
 (defclass editor-audio (editor)
   ()

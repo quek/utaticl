@@ -1,15 +1,18 @@
 (in-package :utaticl.core)
 
-(defun @@ (x1 y1 x2 y2)
-    (make-instance 'rect :x1 x1 :y1 y1 :x2 x2 :y2 y2))
+(defun @@ (min-or-x1 max-or-y1 &optional x2 y2)
+    (if (consp min-or-x1)
+        (make-instance 'rect :min min-or-x1 :max max-or-y1)
+        (make-instance 'rect :min (@ min-or-x1 max-or-y1)
+                             :max (@ x2 y2))))
 
-(defmethod initialize-instance :after ((self rect) &key min max)
-  (when min
-    (setf (.x1 self) (.x min))
-    (setf (.y1 self) (.y min)))
-  (when max
-    (setf (.x2 self) (.x max))
-    (setf (.y2 self) (.y max))))
+(defmethod initialize-instance :after ((self rect) &key)
+  (when (> (.x (.min self)) (.x (.max self)))
+    (psetf (.x (.min self)) (.x (.max self))
+           (.x (.max self)) (.x (.min self))))
+  (when (> (.y (.min self)) (.y (.max self)))
+    (psetf (.y (.min self)) (.y (.max self))
+           (.y (.max self)) (.y (.min self)))))
 
 (defmethod include-p ((self rect) point)
   (and (<= (.x1 self) (.x point))
@@ -19,3 +22,21 @@
 
 (defmethod print-object ((self rect) stream)
   (format stream "(~a ~a ~a ~a)" (.x1 self) (.y1 self) (.x2 self) (.y2 self)))
+
+(defmethod .x1 ((self rect))
+  (.x (.min self)))
+
+(defmethod .y1 ((self rect))
+  (.y (.min self)))
+
+(defmethod .x2 ((self rect))
+  (.x (.max self)))
+
+(defmethod .y2 ((self rect))
+  (.y (.max self)))
+
+(defmethod .width ((self rect))
+  (- (.x2 self) (.x1 self)))
+
+(defmethod height ((self rect))
+  (- (.y2 self) (.y1 self)))
