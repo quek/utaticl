@@ -101,6 +101,7 @@
    (:file "seq-note")
    (:file "sample")
    (:file "note")
+   (:file "automation-point")
    (:file "view")
    (:file "drag-drop-ffi")
    (:file "report")

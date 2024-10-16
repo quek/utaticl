@@ -2,6 +2,26 @@
 
 (defparameter *editor-automation-point-radius* 4.0)
 
+(defmethod @ ((point automation-point) (window editor-automation))
+  (let ((x (value-to-world-x window (.value point)))
+        (y (time-to-world-y window (.time point))))
+    (@ x y)))
+
+(defmethod dd-drop-at ((self editor-automation) (point automation-point))
+  t)
+
+(defmethod dd-over-at ((self editor-automation) (point automation-point))
+  (let* ((delta (@- *mouse-pos* (@ point self))))
+    (loop for point in (dd-src)
+          do (move-delta point self delta))))
+
+(defmethod move-delta ((point automation-point) (window editor-automation) delta)
+  (let* ((center (@ point window))
+         (value (world-x-to-value window (+ (.x center) (.x delta))))
+         (time (world-y-to-time window (+ (.y center) (.y delta)))))
+    (setf (.value point) value)
+    (setf (.time point) time)))
+
 (defmethod .points ((self editor-automation))
   (.points (.clip self)))
 
@@ -59,19 +79,24 @@
     (progn
       (ig:set-cursor-pos (@ 100.0 100.0))
       (ig:text (format nil "~a $ ~a" time value)))
-    (cond ((and (null (.item-at-mouse self)))
+    (cond ((and (.items-selected self)
+                (ig:is-mouse-dragging ig:+im-gui-mouse-button-left+))
+           (dd-start (.items-selected self)
+                     (car (.items-selected self))))
+          ((null (.item-at-mouse self))
            (cond ((ig:is-mouse-double-clicked ig:+im-gui-mouse-button-left+)
                   (cmd-add *project* 'cmd-automation-point-add
                            :seq (.seq (.clip self))
                            :time time
-                           :value value)))))))
+                           :value value))
+                 ((ig:is-mouse-clicked ig:+im-gui-mouse-button-left+)
+                  (setf (.items-selected self) nil)))))
+    (dd-drop self *rect-body*)))
 
 (defun %editor-automation-render-point (self point)
-  (let* ((x (value-to-world-x self (.value point)))
-         (y (time-to-world-y self (.time point)))
-         (center (@ x y))
-         (color (color-selected (.color-automation-point *theme*)
-                                (member point (.items-selected self)))))
+  (let ((center (@ point self))
+        (color (color-selected (.color-automation-point *theme*)
+                               (member point (.items-selected self)))))
     (ig:path-arc-to-fast *draw-list*
                          center
                          *editor-automation-point-radius* 0 12)

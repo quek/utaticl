@@ -11,7 +11,7 @@
              (t (not (ig:is-mouse-down ig:+im-gui-mouse-button-left+))))
            (include-p rect *mouse-pos*))
       (dd-drop-at x (car (dd-src)))
-      nil))
+      (dd-over-at x (car (dd-src)))))
 
 (defmethod dd-drop-at :around (at src)
   (if (call-next-method)
@@ -26,6 +26,8 @@
 
 (defun dd-drop-did ()
   (setf (.drop-p *dd*) t))
+
+(defmethod dd-over-at (at src))
 
 (defmethod dd-show (x)
   (ig:text (princ-to-string x)))

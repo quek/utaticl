@@ -1,6 +1,6 @@
 (in-package :utaticl.core)
 
-(defun @ (x y)
+(defmethod @ ((x number) (y number))
     (list x y))
 
 (defun @= (x y)
