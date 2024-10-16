@@ -123,6 +123,7 @@
   )
 
 (defmethod params-prepare ((self module-clap))
+  ;; TODO 同じ id のものは残す？ オートメーションのために
   (params-clear self)
   (loop for i below (utaticl.clap::call
                      (clap:clap-plugin-params.count (.ext-params self))

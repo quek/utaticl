@@ -5,11 +5,12 @@
 (defserialize project bpm loop-start loop-end loop-p
   master-track sceen-matrix)
 
-(defserialize track (:list lanes :writer lane-add)
-  (:list modules :writer module-add)
+(defserialize track
+    (:list modules :writer module-add)
+  (:list lanes :writer lane-add)
   (:list tracks :writer track-add-without-connect))
 
-(defserialize lane (:list clips :writer clip-add))
+(defserialize lane (:list clips :writer clip-add) )
 
 (defserialize time-thing time duration)
 
@@ -19,10 +20,12 @@
 
 (defserialize clip-note)
 
-(defserialize seq-note notes)
-
 (defserialize seq-audio samples)
 (defserialize sample nchannels sample-rate data-original duration-original path)
+
+(defserialize seq-automation (:list points :writer automation-point-add))
+
+(defserialize seq-note notes)
 
 (defserialize plugin-info id name path file-write-date)
 
