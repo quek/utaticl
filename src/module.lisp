@@ -91,6 +91,9 @@
                        (- value (.latency-pdc (.from connection)))
                        0))))
 
+(defmethod param ((self module) id)
+  (gethash id (.params self)))
+
 (defmethod param-add ((module module) (param param))
   (setf (gethash (.id param) (.params module)) param)
   (setf (.params-ordered module)

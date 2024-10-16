@@ -211,8 +211,9 @@
   (:default-initargs :name "MASTER"))
 
 (defclass lane (neko)
-  ((automation-param :initform nil :accessor .automation-param)
-   (automation-default-value :initform .0d0 :accessor .automation-default-value)
+  ((automation-default-value :initform .0d0 :accessor .automation-default-value)
+   (automation-param-id :initform nil :accessor .automation-param-id)
+   (automation-module :initform nil :accessor .automation-module)
    (clips :initarg :clips :initform nil :accessor .clips)
    (track :initarg :track :accessor .track)
    (width :initarg :width

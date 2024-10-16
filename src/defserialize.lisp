@@ -7,10 +7,11 @@
 
 (defserialize track
     (:list modules :writer module-add)
-  (:list lanes :writer lane-add)
+  (:list lanes :writer lane-add) ;automation-module があるので modules の後に
   (:list tracks :writer track-add-without-connect))
 
-(defserialize lane (:list clips :writer clip-add) )
+(defserialize lane (:list clips :writer clip-add)
+  (:ref automation-module) automation-param-id)
 
 (defserialize time-thing time duration)
 

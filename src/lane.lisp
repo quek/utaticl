@@ -1,5 +1,16 @@
 (in-package :utaticl.core)
 
+(defmethod .automation-param ((self lane))
+  (let ((module (.automation-module self))
+        (param-id (.automation-param-id self)))
+    (if (and module param-id)
+        (param module param-id)
+        nil)))
+
+(defmethod (setf .automation-param) ((param param) (self lane))
+  (setf (.automation-module self) (.module param))
+  (setf (.automation-param-id self) (.id param)))
+
 (defmethod clip-add ((self lane) clip &key)
   (setf (.lane clip) self)
   (setf (.clips self)

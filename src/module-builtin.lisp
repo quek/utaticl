@@ -1,8 +1,5 @@
 (in-package :utaticl.core)
 
-(defmethod param ((self module-builtin) symbol)
-  (gethash symbol (.params self)))
-
 (defmethod process ((self module-builtin))
   (if (and (plusp (length (.inputs *process-data*)))
            (plusp (length (.outputs *process-data*))))
