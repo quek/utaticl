@@ -169,7 +169,8 @@
    (project :initarg :project :accessor .project)
    (render-first-p :initform t :accessor .render-first-p)
    (clip :initarg :clip :initform nil :accessor .clip)
-   (item-mouse :initform nil :accessor .item-at-mouse)))
+   (item-at-mouse :initform nil :accessor .item-at-mouse)
+   (items-selected :initform nil :accessor .items-selected)))
 
 (defclass editor-audio (editor)
   ()

@@ -4,6 +4,7 @@
 
 (defclass theme (config-mixin)
   ((color-automation-fill :initform (color #x22 #x22 #xff #x44) :accessor .color-automation-fill)
+   (color-automation-point :initform (color #x44 #x44 #xcc #xcc) :accessor .color-automation-point)
    (color-button-toggle-on :initform (color #x20 #x20 #xff #xff) :accessor .color-button-toggle-on)
    (color-button-toggle-off :initform (color #x20 #x20 #x80 #xc0) :accessor .color-button-toggle-off)
    (color-line :initform (color #xff #xff #xff #x80) :accessor .color-line)

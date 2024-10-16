@@ -69,38 +69,47 @@
 (defun %editor-automation-render-point (self point)
   (let* ((x (value-to-world-x self (.value point)))
          (y (time-to-world-y self (.time point)))
-         (center (@ x y)))
+         (center (@ x y))
+         (color (color-selected (.color-automation-point *theme*)
+                                (member point (.items-selected self)))))
     (ig:path-arc-to-fast *draw-list*
                          center
                          *editor-automation-point-radius* 0 12)
-    (ig:path-stroke *draw-list* (color #xcc #xcc #xcc #xff) :thickness 2.0)
+    (ig:path-stroke *draw-list* color :thickness 2.0)
     (when (%editor-automation-point-at-mouse-p center)
       (setf (.item-at-mouse self) point)
-      ;; TODO click, drag, etc...
-      )))
+      (when (ig:is-mouse-clicked ig:+im-gui-mouse-button-left+)
+        (if (key-ctrl-p)
+            (setf (.items-selected self)
+                  (if (member point (.items-selected self))
+                      (remove point (.items-selected self))
+                      (cons point (.items-selected self))))
+            (setf (.items-selected self)
+                  (list point)))))))
 
 (defun %editor-automation-render-point-area (self)
-  (loop for point in (.points self)
-        for x = (value-to-world-x self (.value point))
-        for y = (time-to-world-y self (.time point))
-        for center = (@ x y)
-        for first-p = t then nil
-        with default-value = (.automation-default-value (.lane (.clip self)))
-        if first-p
-          do (ig:path-line-to *draw-list*
-                              (@ (value-to-world-x self .0)
-                                 (time-to-world-y self .0)))
-             (ig:path-line-to *draw-list*
-                              (@ x     ;initially だと x が nil になる
-                                 (time-to-world-y self .0)))
-        do (ig:path-line-to *draw-list* center)
-        finally (ig:path-line-to *draw-list*
-                                 (@ x
-                                    (time-to-world-y self (.duration (.clip self)))))
-                (ig:path-line-to *draw-list*
-                                 (@ (value-to-world-x self default-value)
-                                    (time-to-world-y self (.duration (.clip self))))))
-  (ig:path-fill-concave *draw-list* (.color-automation-fill *theme*)))
+  (when (.points self)
+    (loop for point in (.points self)
+          for x = (value-to-world-x self (.value point))
+          for y = (time-to-world-y self (.time point))
+          for center = (@ x y)
+          for first-p = t then nil
+          with default-value = (.automation-default-value (.lane (.clip self)))
+          if first-p
+            do (ig:path-line-to *draw-list*
+                                (@ (value-to-world-x self .0)
+                                   (time-to-world-y self .0)))
+               (ig:path-line-to *draw-list*
+                                (@ x    ;initially だと x が nil になる
+                                   (time-to-world-y self .0)))
+          do (ig:path-line-to *draw-list* center)
+          finally (ig:path-line-to *draw-list*
+                                   (@ x
+                                      (time-to-world-y self (.duration (.clip self)))))
+                  (ig:path-line-to *draw-list*
+                                   (@ (value-to-world-x self default-value)
+                                      (time-to-world-y self (.duration (.clip self))))))
+    (ig:path-fill-concave *draw-list* (.color-automation-fill *theme*))))
 
 (defun %editor-automation-point-at-mouse-p (center)
   (and (<= (- (.x center) *editor-automation-point-radius*)
