@@ -94,7 +94,6 @@
           for y = (time-to-world-y self (.time point))
           for center = (@ x y)
           for first-p = t then nil
-          with default-value = (.automation-default-value (.lane (.clip self)))
           if first-p
             do (ig:path-line-to *draw-list*
                                 (@ (value-to-world-x self .0)
@@ -107,7 +106,7 @@
                                    (@ x
                                       (time-to-world-y self (.duration (.clip self)))))
                   (ig:path-line-to *draw-list*
-                                   (@ (value-to-world-x self default-value)
+                                   (@ (value-to-world-x self .0)
                                       (time-to-world-y self (.duration (.clip self))))))
     (ig:path-fill-concave *draw-list* (.color-automation-fill *theme*))))
 
