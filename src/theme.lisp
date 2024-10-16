@@ -3,7 +3,8 @@
 (defvar *theme*)
 
 (defclass theme (config-mixin)
-  ((color-button-toggle-on :initform (color #x20 #x20 #xff #xff) :accessor .color-button-toggle-on)
+  ((color-automation-fill :initform (color #x22 #x22 #xff #x44) :accessor .color-automation-fill)
+   (color-button-toggle-on :initform (color #x20 #x20 #xff #xff) :accessor .color-button-toggle-on)
    (color-button-toggle-off :initform (color #x20 #x20 #x80 #xc0) :accessor .color-button-toggle-off)
    (color-line :initform (color #xff #xff #xff #x80) :accessor .color-line)
    (color-line-sub :initform (color #x80 #x80 #x80 #x80) :accessor .color-line-sub)

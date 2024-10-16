@@ -2,9 +2,13 @@
 
 (defparameter *editor-automation-point-radius* 4.0)
 
+(defmethod .points ((self editor-automation))
+  (.points (.clip self)))
+
 (defmethod render-body ((self editor-automation))
   (loop for point in (.points (.seq (.clip self)))
         do (%editor-automation-render-point self point))
+  (%editor-automation-render-point-area self)
   (when (in-p *mouse-pos* *rect-body*)
     (%editor-automation-body-handle self)))
 
@@ -74,6 +78,29 @@
       (setf (.item-at-mouse self) point)
       ;; TODO click, drag, etc...
       )))
+
+(defun %editor-automation-render-point-area (self)
+  (loop for point in (.points self)
+        for x = (value-to-world-x self (.value point))
+        for y = (time-to-world-y self (.time point))
+        for center = (@ x y)
+        for first-p = t then nil
+        with default-value = (.automation-default-value (.lane (.clip self)))
+        if first-p
+          do (ig:path-line-to *draw-list*
+                              (@ (value-to-world-x self .0)
+                                 (time-to-world-y self .0)))
+             (ig:path-line-to *draw-list*
+                              (@ x     ;initially だと x が nil になる
+                                 (time-to-world-y self .0)))
+        do (ig:path-line-to *draw-list* center)
+        finally (ig:path-line-to *draw-list*
+                                 (@ x
+                                    (time-to-world-y self (.duration (.clip self)))))
+                (ig:path-line-to *draw-list*
+                                 (@ (value-to-world-x self default-value)
+                                    (time-to-world-y self (.duration (.clip self))))))
+  (ig:path-fill-concave *draw-list* (.color-automation-fill *theme*)))
 
 (defun %editor-automation-point-at-mouse-p (center)
   (and (<= (- (.x center) *editor-automation-point-radius*)
