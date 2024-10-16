@@ -152,7 +152,10 @@
     (when ok
       (let ((path (car path)))
         (with-open-file (in path :direction :input)
-          (let ((project (with-serialize-context () (deserialize (read in)))))
+          (let ((project (with-serialize-context ()
+                           (deserialize
+                            (let ((*package* (find-package :utaticl.core)))
+                              (read in))))))
             (setf (.path project) path)
             (terminate self)
             (setf (.projects *app*)
@@ -240,7 +243,8 @@
   (if (.path self)
       (let ((sexp (with-serialize-context () (serialize self))))
         (with-open-file (out (.path self) :direction :output :if-exists :supersede)
-          (write sexp :stream out))
+          (let ((*package* (find-package :utaticl.core)))
+            (write sexp :stream out)))
         (setf (.dirty-p self) nil))
       (save-as self)))
 
