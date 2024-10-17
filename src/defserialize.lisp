@@ -26,6 +26,8 @@
 
 (defserialize seq-automation (:list points :writer automation-point-add))
 
+(defserialize automation-point value)
+
 (defserialize seq-note notes)
 
 (defserialize plugin-info id name path file-write-date)
