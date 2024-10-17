@@ -170,8 +170,8 @@
    (render-first-p :initform t :accessor .render-first-p)
    (clip :initarg :clip :initform nil :accessor .clip)
    (item-at-mouse :initform nil :accessor .item-at-mouse)
-   (items-dragging :initform nil :accessor .items-dragging)
-   (items-selected :initform nil :accessor .items-selected)))
+   (items-selected :initform nil :accessor .items-selected)
+   (state-before-drag :initform nil :accessor .state-before-drag)))
 
 (defclass editor-audio (editor)
   ()

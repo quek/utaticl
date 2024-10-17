@@ -8,6 +8,14 @@
     (@ x y)))
 
 (defmethod dd-drop-at ((self editor-automation) (point automation-point))
+  (let ((to (loop for point in (dd-src)
+                    for (value time) in (.state-before-drag self)
+                    collect (list (.value point) (.time point))
+                    do (setf (.value point) value)
+                       (setf (.time point) time))))
+    (cmd-add *project* 'cmd-automation-point-dd-move
+             :points (dd-src)
+             :to to))
   t)
 
 (defmethod dd-over-at ((self editor-automation) (point automation-point))
@@ -81,6 +89,9 @@
       (ig:text (format nil "~a $ ~a" time value)))
     (cond ((and (.items-selected self)
                 (ig:is-mouse-dragging ig:+im-gui-mouse-button-left+))
+           (setf (.state-before-drag self)
+                 (loop for point in (.items-selected self)
+                       collect (list (.value point) (.time point))))
            (dd-start (.items-selected self)
                      (car (.items-selected self))))
           ((null (.item-at-mouse self))

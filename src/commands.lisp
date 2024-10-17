@@ -89,6 +89,25 @@
 (defmethod undo ((self cmd-clip-audio-add) project)
   (clip-delete (.lane self) (.clip self)))
 
+(defcommand cmd-automation-point-dd-move (command)
+  ((points :initarg :points :accessor .points)
+   (to :initarg :to :accessor .to)
+   (from :initarg :to :accessor .from)))
+
+(defmethod execute ((self cmd-automation-point-dd-move) project)
+  (setf (.from self)
+        (loop for point in (.points self)
+              for (value time) in (.to self)
+              collect (list (.value point) (.time point))
+              do (setf (.value point) value)
+                 (setf (.time point) time))))
+
+(defmethod undo ((self cmd-automation-point-dd-move) project)
+  (loop for point in (.points self)
+        for (value time) in (.from self)
+        do (setf (.value point) value)
+           (setf (.time point) time)))
+
 (defcommand cmd-automation-point-add (command)
   ((seq :initarg :seq :accessor .seq)
    (time :initarg :time :accessor .time)
