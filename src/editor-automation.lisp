@@ -24,6 +24,11 @@
           do (move-delta point self delta))))
 
 (defmethod handle-shortcut ((self editor-automation))
+  (defshortcut (ig:+im-gui-key-delete+)
+    (when (.items-selected self)
+      (cmd-add (.project self) 'cmd-automation-point-delete
+               :points (.items-selected self)
+               :seq (.seq (.clip self)))))
   (call-next-method))
 
 (defmethod move-delta ((point automation-point) (window editor-automation) delta)
