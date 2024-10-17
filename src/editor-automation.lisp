@@ -105,9 +105,10 @@
     (dd-drop self *rect-body*)))
 
 (defun %editor-automation-render-point (self point)
-  (let ((center (@ point self))
-        (color (color-selected (.color-automation-point *theme*)
-                               (member point (.items-selected self)))))
+  (let* ((center (@ point self))
+         (point-selected-p (member point (.items-selected self)))
+         (color (color-selected (.color-automation-point *theme*)
+                                point-selected-p)))
     (ig:path-arc-to-fast *draw-list*
                          center
                          *editor-automation-point-radius* 0 12)
@@ -117,11 +118,16 @@
       (when (ig:is-mouse-clicked ig:+im-gui-mouse-button-left+)
         (if (key-ctrl-p)
             (setf (.items-selected self)
-                  (if (member point (.items-selected self))
+                  (if point-selected-p
                       (remove point (.items-selected self))
                       (cons point (.items-selected self))))
-            (setf (.items-selected self)
-                  (list point)))))))
+            (unless point-selected-p
+              (setf (.items-selected self)
+                    (list point)))))
+      (when (and (null (dd-src))
+                 (ig:is-mouse-released ig:+im-gui-mouse-button-left+)
+                 (not (key-ctrl-p)))
+        (setf (.items-selected self) (list point))))))
 
 (defun %editor-automation-render-point-area (self)
   (when (.points self)
