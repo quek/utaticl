@@ -23,6 +23,9 @@
     (loop for point in (dd-src)
           do (move-delta point self delta))))
 
+(defmethod handle-shortcut ((self editor-automation))
+  (call-next-method))
+
 (defmethod move-delta ((point automation-point) (window editor-automation) delta)
   (let* ((center (@ point window))
          (value (world-x-to-value window (+ (.x center) (.x delta))))
@@ -87,7 +90,8 @@
     (progn
       (ig:set-cursor-pos (@ 100.0 100.0))
       (ig:text (format nil "~a $ ~a" time value)))
-    (cond ((and (.items-selected self)
+    (cond ((and (null (dd-src))
+                (.items-selected self)
                 (ig:is-mouse-dragging ig:+im-gui-mouse-button-left+))
            (setf (.state-before-drag self)
                  (loop for point in (.items-selected self)

@@ -1,6 +1,7 @@
 (in-package :utaticl.core)
 
-(defmethod handle-shortcut ((self editor)))
+(defmethod handle-shortcut ((self editor))
+  (shortcut-common (.project self)))
 
 (defmethod render ((self editor))
   (setf (.item-at-mouse self) nil)
