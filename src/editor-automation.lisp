@@ -85,8 +85,8 @@
      (* (.width *rect-body*) value)))
 
 (defmethod world-x-to-value ((self editor-automation) x)
-  (/ (- x (.x *window-pos*) (.offset-x self))
-     (.width *rect-body*)))
+  (/ (coerce (- x (.x *window-pos*) (.offset-x self)) 'double-float)
+     (coerce (.width *rect-body*) 'double-float)))
 
 (defun %editor-automation-body-handle (self)
   (let ((value (world-x-to-value self (.x *mouse-pos*)))

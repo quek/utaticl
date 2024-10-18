@@ -9,9 +9,10 @@
       (@+ *window-pos* *window-size* (@ 0.0 (- *scrollbar-size*)))))
 
 (defmethod world-y-to-time ((self view) y)
-  (/ (+ (- y (.y (ig:get-window-pos)) (.offset-y self))
-        (ig:get-scroll-y))
-     (.zoom-y self)))
+  (/ (coerce (+ (- y (.y (ig:get-window-pos)) (.offset-y self))
+                (ig:get-scroll-y))
+             'double-float)
+     (coerce (.zoom-y self) 'double-float)))
 
 
 

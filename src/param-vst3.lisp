@@ -24,7 +24,7 @@
   (vst3-ffi::set-param-normalized (.controller (.module self))
                                   (.id self)
                                   (.value self))
-  (param-change-add (.module self) self))
+  (param-change-add (.module self) (.id self) (.value self)))
 
 (defmethod value-changed-by-processor ((self param-vst3))
   (break "value-changed-by-processor ~a" self)

@@ -233,7 +233,7 @@
 
 (defmethod perform-edit :after ((self module-vst3) (param-vst3 param-vst3)
                                 value)
-  (param-change-add self param-vst3))
+  (param-change-add self (.id param-vst3) (.value param-vst3)))
 
 (defmethod process ((self module-vst3))
   (let ((process-data (.process-data self)))

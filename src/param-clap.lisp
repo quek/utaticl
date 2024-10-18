@@ -23,7 +23,7 @@
                  clap:+clap-param-is-automatable+)))
 
 (defmethod value-changed-by-host ((self param-clap))
-  (param-change-add (.module self) self))
+  (param-change-add (.module self) (.id self) (.value self)))
 
 (defmethod value-text ((self param-clap) &optional (value (.value self)))
   (let ((param self)

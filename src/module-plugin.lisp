@@ -9,11 +9,11 @@
   (let ((param (gethash id (.params self))))
     (end-edit param id)))
 
-(defmethod param-change-add ((self module-plugin) (param param)
+(defmethod param-change-add ((self module-plugin) param-id param-value
                              &optional (sample-offset 0))
   (sb-concurrency:send-message (.param-changes-mbox-in self)
-                               (list (.id param)
-                                     (.value param)
+                               (list param-id
+                                     param-value
                                      sample-offset)))
 
 (defmethod params-ordered-update ((self module-plugin) param)
