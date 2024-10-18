@@ -41,10 +41,12 @@
                         (param-change-add module param-id (.value param)))
                        (t
                         (loop for i from start-frame below end-frame
+                              for value-n-1 = -1d0 then value
                               for value = (+ (* (- i start-frame) delta)
                                              value-prev)
-                              do (param-change-add module param-id value
-                                                   (- i start-frame))
+                              if (/= value value-n-1)
+                                do (param-change-add module param-id value
+                                                     (- i start-frame))
                               finally (setf (.value param) value)))))
 
                (loop-finish))))
