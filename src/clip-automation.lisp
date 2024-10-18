@@ -47,6 +47,7 @@
                               if (/= value value-n-1)
                                 do (param-change-add module param-id value
                                                      (- i start-frame))
-                              finally (setf (.value param) value)))))
+                              finally (setf (.value param) value)
+                                      (value-changed-by-host-without-process param)))))
 
                (loop-finish))))

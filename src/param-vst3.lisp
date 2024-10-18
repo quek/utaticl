@@ -21,10 +21,13 @@
                  sb:+vst-parameter-info-parameter-flags-k-can-automate+)))
 
 (defmethod value-changed-by-host ((self param-vst3))
+  (value-changed-by-host-without-process self)
+  (param-change-add (.module self) (.id self) (.value self)))
+
+(defmethod value-changed-by-host-without-process ((self param-vst3))
   (vst3-ffi::set-param-normalized (.controller (.module self))
                                   (.id self)
-                                  (.value self))
-  (param-change-add (.module self) (.id self) (.value self)))
+                                  (.value self)))
 
 (defmethod value-changed-by-processor ((self param-vst3))
   (break "value-changed-by-processor ~a" self)
