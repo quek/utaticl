@@ -100,7 +100,7 @@
         (progn
           ;; 値の変化なし
           (setf (.value param) value1)
-          (param-change-add module param-id value1))
+          (param-change-add module param-id value1 (round (* time-offset frame-rate))))
         (progn
           (loop for i from start-frame below end-frame
                 for value-n-1 = -1d0 then value
