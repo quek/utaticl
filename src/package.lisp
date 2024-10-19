@@ -1,3 +1,5 @@
+(log4cl:set-log-level log4cl:*root-logger* :info)
+
 (defpackage :utaticl
   (:use :cl)
   (:export #:main))

@@ -96,17 +96,17 @@
                    (- time2-frame time1-frame)))
          (start-frame (round (* start frame-rate)))
          (end-frame (round (* end frame-rate))))
-
     (if (zerop delta)
         (progn
           ;; 値の変化なし
           (setf (.value param) value1)
-          (param-change-add module param-id (.value param)))
+          (param-change-add module param-id value1))
         (progn
           (loop for i from start-frame below end-frame
                 for value-n-1 = -1d0 then value
-                for value = (+ (* (- i start-frame) delta)
+                for value = (+ (* (- i time1-frame) delta)
                                value1)
+                for j from 0
                 if (/= value value-n-1)
                   do (param-change-add module param-id value
                                        (round (+ (- i start-frame)
