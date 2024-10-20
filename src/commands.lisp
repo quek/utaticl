@@ -92,7 +92,7 @@
 (defcommand cmd-automation-point-add (command)
   ((seq :initarg :seq :accessor .seq)
    (time :initarg :time :accessor .time)
-   (value :initarg :value :accessor .value)
+   (value :initarg :value :accessor .value :type double-float)
    (automation-point :accessor .automation-point)))
 
 (defmethod execute ((self cmd-automation-point-add) project)

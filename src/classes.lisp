@@ -235,7 +235,7 @@
   (:default-initargs :duration 1.0d0 :color (color #x30 #xc0 #x30 #x80)))
 
 (defclass automation-point (time-thing)
-  ((value :initarg :value :initform .5d0 :accessor .value))
+  ((value :initarg :value :initform .5d0 :accessor .value :type doule-float))
   (:default-initargs :duration .0d0))
 
 (defmethod print-object ((self note) stream)
@@ -423,7 +423,7 @@
    (module :initarg :module :initform nil :accessor .module)
    (perform-timer :initform nil :accessor .perform-timer)
    (short-title :initarg :short-title :initform nil :accessor .short-title)
-   (value :initarg :value :initform .0d0 :accessor .value)))
+   (value :initarg :value :initform .0d0 :accessor .value :type double-float)))
 
 (defclass param-clap (param)
   ((max-value :initarg :max-value :initform nil :accessor .max-value)
