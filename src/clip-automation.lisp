@@ -95,7 +95,9 @@
          (delta (/ (- value2 value1)
                    (- time2-frame time1-frame)))
          (start-frame (round (* start frame-rate)))
-         (end-frame (round (* end frame-rate))))
+         (end-frame (max (round (* end frame-rate))
+                         ;; ループの終わりとか1フレームに満たない場合
+                         (1+ start-frame))))
     (if (zerop delta)
         (progn
           ;; 値の変化なし

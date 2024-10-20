@@ -784,27 +784,39 @@
       nil))
 
 (def-vst3-impl event-list (unknown)
-  ((events :initform (make-array 8 :fill-pointer 0) :accessor .events))
+  ((events :accessor .events)
+   (events-index :initform 0 :accessor .events-index)
+   (events-size :initform 64 :accessor .events-size))
   ((get-event-count ()
                     :int
-                    (length (.events self)))
+                    (.events-index self))
    (get-event ((index :int)
                (e :pointer))
               sb:tresult
-              (utaticl.core:memcpy e
-                           (autowrap:ptr (aref (.events self) index))
-                           (autowrap:sizeof '(:struct (sb:vst-event))))
+              (utaticl.core:memcpy
+               e
+               (autowrap:c-aptr (.events self)
+                                index
+                                '(:struct (sb:vst-event)))
+               (autowrap:sizeof '(:struct (sb:vst-event))))
               sb:+k-result-ok+)
    (add-event ((e :pointer))
               sb:tresult
-              (let ((event (autowrap:alloc '(:struct (sb:vst-event)))))
-                (utaticl.core:memcpy (autowrap:ptr event)
-                             e
-                             (autowrap:sizeof '(:struct (sb:vst-event))))
-                (vector-push-extend event (.events self)))
+              (when (= (.events-size self) (incf (.events-index self)))
+                (autowrap:realloc (.events self) '(:struct (sb:vst-event))
+                                  (setf (.events-size self) (* (.events-size self) 2))))
+              (utaticl.core:memcpy
+               (autowrap:c-aptr (.events self)
+                                (.events-index self)
+                                '(:struct (sb:vst-event)))
+               e
+               (autowrap:sizeof '(:struct (sb:vst-event))))
               sb:+k-result-ok+))
   :iid vst3-ffi::+vst-ievent-list-iid+
   :vst3-c-api-class sb:vst-i-event-list)
+
+(defmethod initialize-instance :after ((self event-list) &key)
+  (setf (.events self) (autowrap:alloc '(:struct (sb:vst-event)) (.events-size self))))
 
 (defmethod utaticl.core:apply-from ((self event-list)
                                     (note-buffer utaticl.core:note-buffer)
@@ -852,12 +864,10 @@
 
 
 (defmethod utaticl.core:prepare ((self event-list))
-  (loop for event across (.events self)
-        do (autowrap:free event))
-  (setf (fill-pointer (.events self)) 0))
+  (setf (.events-index self) 0))
 
 (defmethod release :around ((self event-list))
   (let ((ref-count (call-next-method)))
     (when (zerop ref-count)
-      (utaticl.core:prepare self))
+      (autowrap:free (.events self)))
     ref-count))
