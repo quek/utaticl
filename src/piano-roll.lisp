@@ -483,7 +483,7 @@
            (unless black-p
              (ig:add-rect-filled draw-list (@+ pos1 (@ .0 (.offset-y self)))
                                  (@+ pos2 (@ .0 window-height))
-                                 (color #xff #xff #xff #x10)))
+                                 (color #xff #xff #xff #x0d)))
            (ig:add-line draw-list pos1 (@+ pos1 (@ .0 window-height)) (.color-line *theme*))
            (when (text-show-p self)
              (let ((pos-text (@ (key-to-local-x self key) (ig:get-scroll-y))))
