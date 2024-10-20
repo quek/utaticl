@@ -706,10 +706,12 @@
   :vst3-c-api-class sb:i-plug-frame)
 
 (def-vst3-impl parameter-changes (unknown)
-  ((changes :initform (make-array 16 :fill-pointer 0) :accessor .changes))
+  ((changes :accessor .changes)
+   (changes-index :initform 0 :accessor .changes-index)
+   (changes-size :initform 4 :accessor .changes-size))
   ((get-parameter-count ()
                         :int
-                        (length (.changes self)))
+                        (.changes-index self))
    (get-parameter-data ((index :int))
                        :pointer
                        (ptr (get-parameter-data-wrap self index)))
@@ -720,26 +722,42 @@
   :iid vst3-ffi::+vst-iparameter-changes-iid+
   :vst3-c-api-class sb:vst-i-parameter-changes)
 
+(defmethod initialize-instance :after ((self parameter-changes) &key)
+  (setf (.changes self)
+        (make-array (.changes-size self) :fill-pointer 0))
+  (loop repeat (.changes-size self)
+        do (vector-push-extend (make-instance 'param-value-queue)
+                               (.changes self))))
+
 (defmethod get-parameter-data-wrap ((self parameter-changes) index)
   (aref (.changes self) index))
 
+(defmethod add-parameter-data-wrap ((self parameter-changes) (id sb-sys:system-area-pointer) index)
+  (add-parameter-data-wrap self (cffi:mem-ref id :uint) index))
+
 (defmethod add-parameter-data-wrap ((self parameter-changes) id index)
-  (let ((queue (make-instance 'param-value-queue
-                              :id (cffi:mem-ref id :uint))))
+  (when (= (.changes-size self) (.changes-index self))
+    (loop repeat (.changes-size self)
+          for queue = (make-instance 'param-value-queue)
+          do (vector-push-extend queue (.changes self)))
+    (incf (.changes-size self) (.changes-size self)))
+  (let ((queue (aref (.changes self) (.changes-index self))))
+    (setf (.id queue) id)
     (unless (cffi:null-pointer-p index)
-      (setf (cffi:mem-ref index :int) (length (.changes self))))
-    (vector-push-extend queue (.changes self))
+      (setf (cffi:mem-ref index :int) (.changes-index self)))
+    (incf (.changes-index self))
     queue))
 
 (defmethod utaticl.core:prepare ((self parameter-changes))
-  (loop for change across (.changes self)
-        do (release change))
-  (setf (fill-pointer (.changes self)) 0))
+  (setf (.changes-index self) 0)
+  (loop for queue across (.changes self)
+        do (utaticl.core:prepare queue)))
 
 (defmethod release :around ((self parameter-changes))
   (let ((ref-count (call-next-method)))
     (when (zerop ref-count)
-      (utaticl.core:prepare self))
+      (loop for queue across (.changes self)
+            do (autowrap:free queue)))
     ref-count))
 
 (def-vst3-impl param-value-queue (unknown)
@@ -783,6 +801,10 @@
         (aref (.sample-offsets self) index))
       nil))
 
+(defmethod utaticl.core:prepare ((self param-value-queue))
+  (setf (fill-pointer (.sample-offsets self)) 0)
+  (setf (fill-pointer (.values self)) 0))
+
 (def-vst3-impl event-list (unknown)
   ((events :accessor .events)
    (events-index :initform 0 :accessor .events-index)
@@ -802,7 +824,7 @@
               sb:+k-result-ok+)
    (add-event ((e :pointer))
               sb:tresult
-              (when (= (.events-size self) (incf (.events-index self)))
+              (when (= (.events-size self) (.events-index self))
                 (autowrap:realloc (.events self) '(:struct (sb:vst-event))
                                   (setf (.events-size self) (* (.events-size self) 2))))
               (utaticl.core:memcpy
@@ -811,6 +833,7 @@
                                 '(:struct (sb:vst-event)))
                e
                (autowrap:sizeof '(:struct (sb:vst-event))))
+              (incf (.events-index self))
               sb:+k-result-ok+))
   :iid vst3-ffi::+vst-ievent-list-iid+
   :vst3-c-api-class sb:vst-i-event-list)

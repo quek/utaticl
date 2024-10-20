@@ -86,10 +86,8 @@
                                       thereis (and (= (vst3-impl::get-parameter-id queue)
                                                       id)
                                                    queue))
-                              (cffi:with-foreign-object (id-ptr :uint)
-                                (setf (cffi:mem-ref id-ptr :uint) id)
-                                (vst3-impl::add-parameter-data-wrap
-                                 changes id-ptr (cffi:null-pointer))))))
+                              (vst3-impl::add-parameter-data-wrap
+                               changes id (cffi:null-pointer)))))
                (vst3-impl::add-point queue sample-offset value (cffi:null-pointer))))))
 
 (defmethod note-buffer->vst3 ((self process-data-vst3))
