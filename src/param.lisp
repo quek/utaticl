@@ -45,3 +45,5 @@
 (defmethod value-text ((self param) &optional (value (.value self)))
   (format nil "~,2f" value))
 
+(defmethod (setf .value) ((value null) (self param))
+  (break "BUG ~a ~a" self value))

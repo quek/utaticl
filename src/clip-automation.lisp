@@ -40,15 +40,15 @@
                             ((<= end time)
                              (setf point-next point)
                              (loop-finish))))
-             ;(break "~a ~a ~a" point-prev point-current point-next)
              (cond (point-current
-                    (%clip-automation-prepare-event
-                     self
-                     (if point-prev (.time point-prev) start)
-                     (if point-prev (.value point-prev) (.value point-current))
-                     (.time point-current)
-                     (.value point-current)
-                     start (.time point-current) 0)
+                    (when (/= start (.time point-current))
+                      (%clip-automation-prepare-event
+                       self
+                       (if point-prev (.time point-prev) start)
+                       (if point-prev (.value point-prev) (.value point-current))
+                       (.time point-current)
+                       (.value point-current)
+                       start (.time point-current) 0))
                     (%clip-automation-prepare-event
                      self
                      (.time point-current)
