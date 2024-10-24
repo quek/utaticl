@@ -95,7 +95,7 @@
          (setf (.state-before-drag self)
                (loop for point in (.items-selected self)
                      collect (list (.value point) (.time point))))
-         (dd-start (.items-selected self)
+         (dd-start-force (.items-selected self)
                    (car (.items-selected self))))
         ((null (.item-at-mouse self))
          (cond ((ig:is-mouse-double-clicked ig:+im-gui-mouse-button-left+)

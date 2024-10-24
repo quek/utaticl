@@ -65,7 +65,7 @@
          (ecase (.drag-mode self)
            (:move
             (setf (.clips-dragging self) (mapcar #'copy (.clips-selected self)))
-            (dd-start (.clips-selected self) (.clip-at-mouse self))
+            (dd-start-force (.clips-selected self) (.clip-at-mouse self))
             (loop for clip in (.clips-dragging self)
                   for lane = (.lane clip)
                   do (clip-add lane clip))
@@ -485,7 +485,8 @@
             (when (ig:button (.name track) (@ button-width button-height))
               (unless (key-ctrl-p)
                 (unselect-all-tracks (.project self)))
-              (setf (.select-p track) t))
+              (setf (.select-p track) t)
+              (setf (.target *project*) track))
             (ig:with-popup-context-item ()
               (when (ig:menu-item "Copy" :shortcut "C-c")
                 )
@@ -493,10 +494,13 @@
                 )
               (when (ig:menu-item "Add Lane" :shortcut "C-l")
                 (cmd-add *project* 'cmd-lane-add
-                         :track track))))
+                         :track track)))
+            (dd-start track :src (tracks-selected *project*)))
+          #+TODO-DELETE
           (ig:with-drag-drop-source ()
             (ig:set-drag-drop-payload +dd-tracks+)
             (ig:text (.name track)))
+          #+TODO-DELETE
           (ig:with-drag-drop-target
             (when (ig:accept-drag-drop-payload +dd-tracks+)
               (let ((tracks (tracks-selected (.project self))))

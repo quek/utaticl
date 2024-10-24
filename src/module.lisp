@@ -1,32 +1,3 @@
-(defpackage :utaticl.module
-  (:use :cl :utaticl.core))
-
-(in-package :utaticl.module)
-
-(defmethod render-params ((module module))
-  (loop for i below 4
-        for param in (.params-ordered module)
-        with item-width = 200.0
-        do (ig:set-next-item-width item-width)
-           (when (ig:drag-scalar (.name param)
-                                 ig:+im-gui-data-type-double+
-                                 (.value param)
-                                 :speed .005
-                                 :min .0d0
-                                 :max 1.0d0
-                                 :format (format nil "%.2f (~a)" (value-text param)))
-             (value-changed-by-host param))
-           (when (include-p (make-instance 'rect :min (@+ (ig:get-item-rect-min) (@ item-width .0))
-                                                 :max (ig:get-item-rect-max))
-                            *mouse-pos*)
-             (when (ig:is-mouse-clicked ig:+im-gui-mouse-button-left+)
-               (setf (.targets *project*) param)))
-           (when (and (null (dd-src))
-                      (eq (.targets *project*) param)
-                      (ig:is-mouse-dragging ig:+im-gui-mouse-button-left+))
-             (utaticl.core:dd-start (.targets *project*)))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (in-package :utaticl.core)
 
 (sb-ext:defglobal *hwnd-module-map* (make-hash-table :weakness :value))
@@ -141,7 +112,7 @@
           (setf (state module) state))))
 
     (render-module-delete-button module)
-    (utaticl.module::render-params module)))
+    (%module-render-params module)))
 
 (defmethod render-module-delete-button ((module module))
   (when (ig:button "x")
@@ -174,3 +145,23 @@
   (some (lambda (connection)
           (not (.process-done (.to connection))))
         (connections-to self)))
+
+(defmethod %module-render-params ((module module))
+  (loop for i below 4
+        for param in (.params-ordered module)
+        with item-width = 200.0
+        do (ig:set-next-item-width item-width)
+           (when (ig:drag-scalar (.name param)
+                                 ig:+im-gui-data-type-double+
+                                 (.value param)
+                                 :speed .005
+                                 :min .0d0
+                                 :max 1.0d0
+                                 :format (format nil "%.2f (~a)" (value-text param)))
+             (value-changed-by-host param))
+           (when (include-p (make-instance 'rect :min (@+ (ig:get-item-rect-min) (@ item-width .0))
+                                                 :max (ig:get-item-rect-max))
+                            *mouse-pos*)
+             (when (ig:is-mouse-clicked ig:+im-gui-mouse-button-left+)
+               (setf (.target *project*) param)))
+           (dd-start param :check-hovered-p nil)))

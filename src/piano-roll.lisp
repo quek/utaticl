@@ -83,7 +83,7 @@
          (setf (.drag-mode self) :move)
          (setf (.note-drag-offset self)
                (@- (.range-selecting-pos1 self) *mouse-pos*))
-         (dd-start (mapcar #'copy (.notes-dragging self))
+         (dd-start-force (mapcar #'copy (.notes-dragging self))
                    *mouse-pos*))
         ((.notes-selected self)
          ;; 選択ノートのドラッグ開始

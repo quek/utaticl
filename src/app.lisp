@@ -46,7 +46,7 @@
              (cmd-run project))))
 
 (defmethod drag-enter ((app app) files)
-  (dd-start files))
+  (dd-start-force files))
 
 (defmethod drop ((app app))
   (dd-drop-did))

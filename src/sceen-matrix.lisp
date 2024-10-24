@@ -70,7 +70,7 @@
                do (setf (gethash (list (.sceen clip) (.lane clip))
                                  (.clips-dragging sceen-matrix))
                         (list (copy clip) (.sceen clip) (.lane clip) clip)))
-         (dd-start (.clips-selected sceen-matrix)
+         (dd-start-force (.clips-selected sceen-matrix)
                    (.clip-at-mouse sceen-matrix))
          (multiple-value-bind (sceen lane)
              (world-pos-to-sceen-lane sceen-matrix *mouse-pos*)

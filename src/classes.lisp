@@ -50,7 +50,7 @@
    (loop-p :initarg :loop-p :initform t :accessor .loop-p)
    (transposer :accessor .transposer)
    (target-track :initform :nil :accessor .target-track)
-   (targets :initform nil :accessor .targets)))
+   (target :initform nil :accessor .target)))
 
 (defclass show-mixin ()
   ((show-p :initarg :show-p :initform nil :accessor .show-p)))
