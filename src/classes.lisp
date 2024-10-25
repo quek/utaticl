@@ -407,7 +407,6 @@
 (defclass connection (neko)
   ((from :initarg :from :accessor .from)
    (from-bus-index :initarg :from-bus-index :initform 0 :accessor .from-bus-index)
-   (from-process-data :accessor .from-process-data)
    (latency-pdc :initform 0 :accessor .latency-pdc)
    (to :initarg :to :accessor .to)
    (to-bus-index :initarg :to-bus-index :initform 0 :accessor .to-bus-index)

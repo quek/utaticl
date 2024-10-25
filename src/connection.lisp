@@ -9,7 +9,7 @@
 
 (defmethod process ((self connection))
   (when (.start-p (.from self))
-    (let* ((from-process-data (.from-process-data self))
+    (let* ((from-process-data (.process-data (.track (.from self))))
            (from-buses (.outputs from-process-data))
            (to-process-data *process-data*)
            (to-buses (.inputs to-process-data))

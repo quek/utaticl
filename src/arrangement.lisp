@@ -33,8 +33,9 @@
            (if (key-ctrl-p)
                'cmd-tracks-dd-copy
                'cmd-tracks-dd-move)
-           :tracks (tracks-selected arrangement)
-           :before dst))
+           :tracks (tracks-selected *project*)
+           :before dst)
+  t)
 
 (defmethod drag-mode ((arrangement arrangement) clip)
   (let* ((mouse-pos (ig:get-mouse-pos))
@@ -419,7 +420,7 @@
                      (.offset-y self))
         with y2 = (+ window-pos-y (ig:get-window-height))
         do (funcall line)
-           (dd-drop lane :rect (@@ x y1 x2 y2))
+           (dd-drop self lane :rect (@@ x y1 x2 y2))
            (setf x (render-clip self track lane nil x)))
   (when (.tracks-show-p track)
     (loop for track in (.tracks track)
@@ -503,7 +504,7 @@
                 (cmd-add *project* 'cmd-lane-add
                          :track track)))
             (dd-start track :src (tracks-selected *project*))
-            (dd-drop track))
+            (dd-drop self track))
           #+TODO-DELETE
           (ig:with-drag-drop-source ()
             (ig:set-drag-drop-payload +dd-tracks+)

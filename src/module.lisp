@@ -88,8 +88,6 @@
         do (process connection-from)))
 
 (defmethod process ((self module))
-  (loop for connection in (connections-to self)
-        do (setf (.from-process-data connection) *process-data*))
   (setf (.process-done self) t))
 
 (defmethod .project ((self module))
