@@ -3,31 +3,35 @@
 (defun dd-at ()
   (.at *dd*))
 
-(defmethod dd-drop (x rect)
+(defmethod dd-drop (view dst &key rect (check-hovered-p (null rect)))
   (if (and (dd-src)
            (typecase (car (dd-src))
              ;; 外部からの dd は ig:is-mouse-down が使えない
              (pathname (.drop-p *dd*))
              (t (not (ig:is-mouse-down ig:+im-gui-mouse-button-left+))))
-           (include-p rect *mouse-pos*))
-      (dd-drop-at x (car (dd-src)))
-      (dd-over-at x (car (dd-src)))))
+           (cond (rect
+                  (include-p rect *mouse-pos*))
+                 (check-hovered-p
+                  (ig:is-item-hovered))
+                 (t t)))
+      (dd-drop-at view dst (car (dd-src)))
+      (dd-over-at view dst (car (dd-src)))))
 
-(defmethod dd-drop-at :around (at src)
+(defmethod dd-drop-at :around (view dst src)
   (if (call-next-method)
       (progn
         (dd-reset)
         t)
       nil))
 
-(defmethod dd-drop-at (at src)
+(defmethod dd-drop-at (view dst src)
   "drop を受け入れたら t を返す"
   nil)
 
 (defun dd-drop-did ()
   (setf (.drop-p *dd*) t))
 
-(defmethod dd-over-at (at src))
+(defmethod dd-over-at (view dst src))
 
 (defmethod dd-show (x)
   (ig:text (princ-to-string x)))

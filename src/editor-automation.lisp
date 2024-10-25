@@ -7,7 +7,7 @@
         (y (time-to-world-y window (.time point))))
     (@ x y)))
 
-(defmethod dd-drop-at ((self editor-automation) (point automation-point))
+(defmethod dd-drop-at ((view editor-automation) (self editor-automation) (point automation-point))
   (let ((to (loop for point in (dd-src)
                     for (value time) in (.state-before-drag self)
                     collect (list (.value point) (.time point))
@@ -18,7 +18,7 @@
              :to to))
   t)
 
-(defmethod dd-over-at ((self editor-automation) (point automation-point))
+(defmethod dd-over-at ((self editor-automation) (dst editor-automation) (point automation-point))
   (let* ((delta (@- *mouse-pos* (@ point self))))
     (loop for point in (dd-src)
           do (move-delta point self delta))))
@@ -107,7 +107,7 @@
                            :value value)))
                ((ig:is-mouse-clicked ig:+im-gui-mouse-button-left+)
                 (setf (.items-selected self) nil)))))
-  (dd-drop self *rect-body*))
+  (dd-drop self self :rect *rect-body*))
 
 (defun %editor-automation-render-point (self point)
   (let* ((center (@ point self))

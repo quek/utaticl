@@ -12,6 +12,30 @@
              (* (.offset-group self)
                 (f (.master-track (.project self)) 1))))))
 
+(defmethod dd-drop-at ((view arrangement) (lane lane) (param param))
+  (setf (.automation-param lane) param)
+  t)
+
+(defmethod dd-drop-at ((view arrangement) (lane lane) (pathname pathname))
+  (let ((path (namestring (car (dd-src))))) ;TODO 複数ファイル
+    (multiple-value-bind (time lane)
+        (world-pos-to-time-lane view (ig:get-mouse-pos))
+      (setf time (time-grid-applied view time #'floor))
+      (when (and (not (minusp time)) lane)
+        (cmd-add *project* 'cmd-clip-audio-add
+                 :time time :lane lane :path path
+                 :execute-after (lambda (cmd)
+                                  (edit (.clip cmd) (list (.clip cmd))))))))
+  t)
+
+(defmethod dd-drop-at ((arrangement arrangement) (dst track) (src track))
+  (cmd-add *project*
+           (if (key-ctrl-p)
+               'cmd-tracks-dd-copy
+               'cmd-tracks-dd-move)
+           :tracks (tracks-selected arrangement)
+           :before dst))
+
 (defmethod drag-mode ((arrangement arrangement) clip)
   (let* ((mouse-pos (ig:get-mouse-pos))
          (y1 (time-to-world-y arrangement (.time clip)))
@@ -395,29 +419,12 @@
                      (.offset-y self))
         with y2 = (+ window-pos-y (ig:get-window-height))
         do (funcall line)
-           (dd-drop lane (@@ x y1 x2 y2))
+           (dd-drop lane :rect (@@ x y1 x2 y2))
            (setf x (render-clip self track lane nil x)))
   (when (.tracks-show-p track)
     (loop for track in (.tracks track)
           do (setf x (render-clip self track nil nil x))))
   x)
-
-(defmethod dd-drop-at ((lane lane) (param param))
-  (setf (.automation-param lane) param)
-  t)
-
-(defmethod dd-drop-at ((lane lane) (pathname pathname))
-  (let ((arrangement (.arrangement *project*))
-        (path (namestring (car (dd-src))))) ;TODO 複数ファイル
-    (multiple-value-bind (time lane)
-        (world-pos-to-time-lane arrangement (ig:get-mouse-pos))
-      (setf time (time-grid-applied arrangement time #'floor))
-      (when (and (not (minusp time)) lane)
-        (cmd-add *project* 'cmd-clip-audio-add
-                 :time time :lane lane :path path
-                 :execute-after (lambda (cmd)
-                                  (edit (.clip cmd) (list (.clip cmd))))))))
-  t)
 
 (defmethod render-clip ((self arrangement) (track track) (lane lane) (clip null) x)
   (loop for clip in (.clips lane)
@@ -495,7 +502,8 @@
               (when (ig:menu-item "Add Lane" :shortcut "C-l")
                 (cmd-add *project* 'cmd-lane-add
                          :track track)))
-            (dd-start track :src (tracks-selected *project*)))
+            (dd-start track :src (tracks-selected *project*))
+            (dd-drop track))
           #+TODO-DELETE
           (ig:with-drag-drop-source ()
             (ig:set-drag-drop-payload +dd-tracks+)
