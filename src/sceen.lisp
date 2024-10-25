@@ -27,8 +27,7 @@
                (declare (ignore acc))
                (let ((clip (gethash lane (.clips sceen))))
                  (when clip
-                   (enqueue (.sceen-matrix sceen) clip)))))
-  (print (list (setf (.play-p sceen) t) (.play-p sceen) t)))
+                   (enqueue (.sceen-matrix sceen) clip))))))
 
 (defmethod prepare-event ((sceen sceen) start end loop-p offset-samples)
   (loop for lane being the hash-key in (.clips sceen)

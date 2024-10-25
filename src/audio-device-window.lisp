@@ -10,11 +10,7 @@
                                      output-parameters
                                      sample-rate)
             t)
-          collect sample-rate
-        ;; else
-        ;;   do (print (list device-info-host-api device-info-name))
-        ;;      (describe (pa::get-last-host-error-info))
-        ))
+          collect sample-rate))
 
 (defmethod render :before ((self audio-device-window))
   (unless (.host-apis self)

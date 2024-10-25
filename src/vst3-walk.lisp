@@ -140,16 +140,13 @@
 
 (defmethod initialize-instance :after ((self %funknown) &key ptr)
   (let ((release (sb:f-unknown.lp-vtbl*.release
-                  (sb::make-f-unknown :ptr ptr)))
-        (class (type-of self)))
+                  (sb::make-f-unknown :ptr ptr))))
     (sb-ext:finalize self
                      (lambda ()
-                       (print (list 'finalize class ptr))
-                       (print
-                        (cffi::foreign-funcall-pointer
-                         release ()
-                         :pointer ptr
-                         :uint32))))))
+                       (cffi::foreign-funcall-pointer
+                        release ()
+                        :pointer ptr
+                        :uint32)))))
 
 (defmethod vst3-ffi::release :around ((self %funknown))
   (let ((ret (call-next-method)))

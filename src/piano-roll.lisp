@@ -185,13 +185,7 @@
               (multiple-value-bind (pos1-grid pos2-grid)
                   (range-selecting-region self pos1 pos2)
                 (ig:add-rect-filled (ig:get-window-draw-list) pos1-grid pos2-grid
-                                    (.color-selected-region *theme*))
-                (print (list "dragging" pos-delta pos1
-                             (.range-selecting-pos1 self)
-                             pos1-grid
-                             ))
-
-                )
+                                    (.color-selected-region *theme*)))
               (loop for note-dragging in (.notes-dragging self)
                     for note-src in (dd-src)
                     for time = (max .0 (+ (.time note-src) time-delta))
