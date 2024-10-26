@@ -491,6 +491,8 @@
         (ig:with-button-color (color)
           (with-renaming (track (.track-renaming self) track-width)
             (let ((cursor-pos (ig:get-cursor-pos)))
+              ;; クリックしてそのままドラッグしたいので
+              ;; ig:button の戻り値は使わない
               (ig:button (.name track) (@ button-width button-height))
               (when (.selected-p track)
                 (ig:add-rect *draw-list*
@@ -499,8 +501,6 @@
                                  (@ button-width button-height))
                              (color #xff #xff #x00 #xaa)
                              :thickness 3.0)))
-            ;; クリックしてそのままドラッグしたいので
-            ;; ig:button の戻り値は使わない
             (when (ig:is-item-hovered)
               (mouse-handle (.selection-track *project*) track))
             (ig:with-popup-context-item ()
