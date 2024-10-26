@@ -68,6 +68,41 @@
 (defmethod ig:push-id ((self neko))
   (ig:push-id (.neko-id self)))
 
+(defmethod render-in ((self neko) window
+                      &key
+                        (pos (ig:get-cursor-pos) pos-supplied-p)
+                        (size (@ .0 .0))
+                        (rename-p t)
+                        (drag-p t)
+                        (drop-p t)
+                        selection)
+  (when pos-supplied-p
+    (ig:set-cursor-pos pos))
+  (flet ((f ()
+           (let ((color (if selection
+                            (color-selected (.color self) (include-p selection self))
+                            (.color self))))
+             (ig:with-button-color (color)
+               ;; クリックしてそのままドラッグしたいので
+               ;; ig:button の戻り値は使わない
+               (ig:button (.name self) size)
+               (when (and selection (include-p selection self))
+                 (ig:add-rect *draw-list*
+                              (@+ pos *window-pos*)
+                              (@+ pos *window-pos* size)
+                              (color #xff #xff #x00 #xaa)
+                              :thickness 3.0)))
+             (when (and selection (ig:is-item-hovered))
+               (mouse-handle selection self))
+             (when drag-p
+               (dd-start self :src (tracks-selected *project*)))
+             (when drop-p
+               (dd-drop window self)))))
+    (if rename-p
+        (with-renaming (self (.track-renaming window) (.x size))
+          (f))
+        (f))))
+
 (defmethod serialize :around ((self neko))
   (if (gethash self (.map *serialize-context*))
       `(:ref ,(.neko-id self))

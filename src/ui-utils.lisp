@@ -88,11 +88,8 @@
 (defmacro defshortcut ((&rest key-chord) &body body)
   (let ((code (gensym)))
     `(let ((,code (logior ,@key-chord)))
-       (ig:set-next-item-shortcut ,code)
-       (ig:push-id-int ,code)
-       (when (ig:button "##_" (@ ig:+flt-min+ ig:+flt-min+))
-         ,@body)
-       (ig:pop-id))))
+       (when (ig:shortcut ,code 0)
+         ,@body))))
 
 (defun draw-vertical-line (pos)
   (let* ((draw-list (ig:get-window-draw-list))

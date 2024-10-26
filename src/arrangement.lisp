@@ -486,36 +486,18 @@
            (button-height (- (.offset-y self) offset-group
                              (%arrangement-height-lane-param))))
       (draw-vertical-line (@- (ig:get-cursor-pos) (@ 0.0 (ig:get-scroll-y))))
-      (ig:set-cursor-pos pos)
-      (let ((color (color-selected (.color track) (.selected-p track))))
-        (ig:with-button-color (color)
-          (with-renaming (track (.track-renaming self) track-width)
-            (let ((cursor-pos (ig:get-cursor-pos)))
-              ;; クリックしてそのままドラッグしたいので
-              ;; ig:button の戻り値は使わない
-              (ig:button (.name track) (@ button-width button-height))
-              (when (.selected-p track)
-                (ig:add-rect *draw-list*
-                             (@+ cursor-pos *window-pos*)
-                             (@+ cursor-pos *window-pos*
-                                 (@ button-width button-height))
-                             (color #xff #xff #x00 #xaa)
-                             :thickness 3.0)))
-            (ig:with-popup-context-item ()
-              (when (ig:menu-item "Add Lane" :shortcut "C-l")
-                (cmd-add *project* 'cmd-lane-add
-                         :track track)))
-            (when (ig:is-item-hovered)
-              (mouse-handle (.selection-track *project*) track))
-            (dd-start track :src (tracks-selected *project*))
-            (dd-drop self track))
-          (when group-p
-            (ig:same-line)
-            (ig:set-cursor-pos (@+ pos (@ (- track-width group-button-width) .0)))
-            (when (ig:button (if (.tracks-show-p track) "≪" "≫")
-                             (@ group-button-width button-height))
-              (setf (.tracks-show-p track) (not (.tracks-show-p track)))))))
-
+      (render-in track self :pos pos :selection (.selection-track *project*)
+                            :size (@ button-width button-height))
+      (ig:with-popup-context-item ()
+        (when (ig:menu-item "Add Lane" :shortcut "C-l")
+          (cmd-add *project* 'cmd-lane-add
+                   :track track)))
+      (when group-p
+        (ig:same-line)
+        (ig:set-cursor-pos (@+ pos (@ (- track-width group-button-width) .0)))
+        (when (ig:button (if (.tracks-show-p track) "≪" "≫")
+                         (@ group-button-width button-height))
+          (setf (.tracks-show-p track) (not (.tracks-show-p track)))))
       (ig:same-line)
       (ig:set-cursor-pos (@+ pos (@ track-width (- offset-group)))))
     (when (and (.tracks-show-p track) (.tracks track))
