@@ -59,7 +59,7 @@
                     (not (key-ctrl-p)))
            (setf (.clips-selected self) (list it)))
          (unless (key-ctrl-p)
-           (unselect-all-tracks (.project self)))
+           (erase-all (.selection-track *project*)))
          (setf (.selected-p (.track (.lane it))) t)
          (edit it (copy-list (.clips-selected self))))
        (progn

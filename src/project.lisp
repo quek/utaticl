@@ -286,15 +286,8 @@
                                nconc (f x)))))
     (f (.master-track self))))
 
-(defmethod tracks-selected ((project project))
-  (map-tracks project
-              (lambda (track acc)
-                (if (.selected-p track)
-                    (cons track acc)
-                    acc))))
-
-(defmethod unselect-all-tracks ((self project))
-  (unselect-all-tracks (.master-track self)))
+(defmethod tracks-selected ((self project))
+  (.items (.selection-track self)))
 
 (defmethod update-play-position ((self project))
   (let ((delta-sec (/ (.frames-per-buffer *config*) (.sample-rate *config*)))

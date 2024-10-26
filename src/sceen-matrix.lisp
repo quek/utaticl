@@ -163,7 +163,7 @@
              :track-id-parent (.neko-id (.master-track (.project sceen-matrix)))
              :execute-after (lambda (cmd)
                               (let ((track (find-neko (.track-id-new cmd))))
-                                (unselect-all-tracks (.project sceen-matrix))
+                                (erase-all (.selection-track *project*))
                                 (setf (.selected-p track) t)))))
 
   (shortcut-common (.project sceen-matrix)))
