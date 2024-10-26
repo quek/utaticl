@@ -95,7 +95,9 @@
              (when (and selection (ig:is-item-hovered))
                (mouse-handle selection self))
              (when drag-p
-               (dd-start self :src (tracks-selected *project*)))
+               (dd-start self :src (if selection
+                                       (.items selection)
+                                       self)))
              (when drop-p
                (dd-drop window self)))))
     (if rename-p
