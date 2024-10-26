@@ -22,6 +22,10 @@
 
 (defvar *dd* (make-instance 'dd))
 
+(defclass selection ()
+  ((clicked-p :initform nil :accessor .clicked-p)
+   (items :initform nil :accessor .items)))
+
 (defclass project (neko)
   ((arrangement :accessor .arrangement)
    (sceen-matrix :accessor .sceen-matrix)
@@ -48,6 +52,8 @@
    (loop-start :initarg :loop-start :initform .0d0 :accessor .loop-start)
    (loop-end :initarg :loop-end :initform 16.0d0 :accessor .loop-end)
    (loop-p :initarg :loop-p :initform t :accessor .loop-p)
+   (selection-track :initform (make-instance 'selection)
+                    :accessor .selection-track)
    (transposer :accessor .transposer)
    (target-track :initform :nil :accessor .target-track)
    (target :initform nil :accessor .target)))
@@ -201,7 +207,6 @@
    (nbus-event-out :initform 1 :accessor .nbus-event-out)
    (parent :initarg :parent :initform nil :accessor .parent)
    (process-data :accessor .process-data)
-   (select-p :initform nil :accessor .select-p)
    (tracks :initform nil :accessor .tracks)
    (tracks-show-p :initform t :accessor .tracks-show-p))
   (:default-initargs :color (color #x33 #x33 #x33)))

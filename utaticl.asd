@@ -84,6 +84,7 @@
    (:file "commands")
    (:file "theme")
    (:file "ui-utils")
+   (:file "selection")
    (:file "neko")
    (:file "project")
    (:file "rack")

@@ -237,7 +237,9 @@
   (render (.editor-audio self))
   (render (.editor-automation self))
   (render (.rack self))
-  (render (.commander self)))
+  (render (.commander self))
+  (when (ig:is-mouse-released ig:+im-gui-mouse-button-left+)
+    (mouse-released (.selection-track self))))
 
 (defmethod save ((self project))
   (if (.path self)
@@ -287,7 +289,7 @@
 (defmethod tracks-selected ((project project))
   (map-tracks project
               (lambda (track acc)
-                (if (.select-p track)
+                (if (.selected-p track)
                     (cons track acc)
                     acc))))
 

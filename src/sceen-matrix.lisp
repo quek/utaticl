@@ -164,7 +164,7 @@
              :execute-after (lambda (cmd)
                               (let ((track (find-neko (.track-id-new cmd))))
                                 (unselect-all-tracks (.project sceen-matrix))
-                                (setf (.select-p track) t)))))
+                                (setf (.selected-p track) t)))))
 
   (shortcut-common (.project sceen-matrix)))
 

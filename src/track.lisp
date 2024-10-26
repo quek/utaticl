@@ -147,7 +147,13 @@
   (ig:button (.name self))
   (ig:pop-id))
 
-(defmethod (setf .select-p) :after ((value (eql t)) (self track))
+(defmethod .selected-p ((self track))
+  (include-p (.selection-track *project*) self))
+
+(defmethod (setf .selected-p) (value (self track))
+  (add (.selection-track *project*) self))
+
+(defmethod (setf .selected-p) :after ((value (eql t)) (self track))
   (setf (.target-track (.project self)) self))
 
 (defmethod terminate ((self track) &key)
@@ -178,7 +184,7 @@
               (gain self)))
 
 (defmethod unselect-all-tracks ((self track))
-  (setf (.select-p self) nil)
+  (setf (.selected-p self) nil)
   (mapc #'unselect-all-tracks (.tracks self)))
 
 (defmethod .width ((track track))

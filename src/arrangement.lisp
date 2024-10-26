@@ -60,7 +60,7 @@
            (setf (.clips-selected self) (list it)))
          (unless (key-ctrl-p)
            (unselect-all-tracks (.project self)))
-         (setf (.select-p (.track (.lane it))) t)
+         (setf (.selected-p (.track (.lane it))) t)
          (edit it (copy-list (.clips-selected self))))
        (progn
          (setf (.clips-selected self) nil)
@@ -274,7 +274,7 @@
       (if (member (.clip-at-mouse self) (.clips-selected self))
           (if (key-ctrl-p)
               (setf (.clips-selected self)
-                    (delete (.clip-at-mouse self) (.clips-selected self)))
+                    (remove (.clip-at-mouse self) (.clips-selected self)))
               (setf (.clips-selected self) (list (.clip-at-mouse self))))
           (if (key-ctrl-p)
               (push (.clip-at-mouse self) (.clips-selected self))))))
@@ -343,47 +343,47 @@
   (ig:with-begin ("##arrangement" :flags ig:+im-gui-window-flags-no-scrollbar+)
     (render-grid self)
     (ig:with-child ("##canvas" :window-flags ig:+im-gui-window-flags-horizontal-scrollbar+)
+      (with-window-info (self)
+        (render-time-ruler self)
 
-      (render-time-ruler self)
+        (let ((pos (@ (.time-ruler-width self) .0))
+              (scroll-x (ig:get-scroll-x))
+              (scroll-y (ig:get-scroll-y))
+              (window-pos (ig:get-window-pos)))
 
-      (let ((pos (@ (.time-ruler-width self) .0))
-            (scroll-x (ig:get-scroll-x))
-            (scroll-y (ig:get-scroll-y))
-            (window-pos (ig:get-window-pos)))
+          (ig:set-cursor-pos (@+ pos (@ (- scroll-x) scroll-y)))
 
-        (ig:set-cursor-pos (@+ pos (@ (- scroll-x) scroll-y)))
+          (ig:with-clip-rect ((@+ window-pos (@ (- (.x pos) scroll-x 3.0) .0))
+                              (@+ window-pos (ig:get-window-size)))
+            (ig:with-styles ((ig:+im-gui-style-var-item-spacing+ (@ .0 .0)))
+              (render-track self (.master-track (.project self)) 0)))
 
-        (ig:with-clip-rect ((@+ window-pos (@ (- (.x pos) scroll-x 3.0) .0))
-                            (@+ window-pos (ig:get-window-size)))
-          (ig:with-styles ((ig:+im-gui-style-var-item-spacing+ (@ .0 .0)))
-            (render-track self (.master-track (.project self)) 0)))
+          (draw-vertical-line (@- (ig:get-cursor-pos) (@ .0 scroll-y)))
 
-        (draw-vertical-line (@- (ig:get-cursor-pos) (@ .0 scroll-y)))
+          (ig:set-next-item-shortcut (logior ig:+im-gui-mod-ctrl+ ig:+im-gui-key-t+))
+          (when (ig:button "+" (@ *default-lane-width* (.offset-y self)))
+            (cmd-add (.project self) 'cmd-track-add
+                     :track-id-parent (.neko-id (.master-track (.project self)))
+                     :execute-after (lambda (cmd)
+                                      (let ((track (find-neko (.track-id-new cmd))))
+                                        (unselect-all-tracks (.project self))
+                                        (setf (.selected-p track) t)))))
 
-        (ig:set-next-item-shortcut (logior ig:+im-gui-mod-ctrl+ ig:+im-gui-key-t+))
-        (when (ig:button "+" (@ *default-lane-width* (.offset-y self)))
-          (cmd-add (.project self) 'cmd-track-add
-                   :track-id-parent (.neko-id (.master-track (.project self)))
-                   :execute-after (lambda (cmd)
-                                    (let ((track (find-neko (.track-id-new cmd))))
-                                      (unselect-all-tracks (.project self))
-                                      (setf (.select-p track) t)))))
+          (ig:with-clip-rect ((@+ window-pos (@ (- (.x pos) scroll-x 3.0) .0))
+                              (@+ window-pos (ig:get-window-size)))
+            (ig:with-styles ((ig:+im-gui-style-var-item-spacing+ (@ .0 .0)))
+              (map-lanes *project* (lambda (lane x)
+                                     (let ((track-parent (.parent (.track lane))))
+                                       (if (or (null track-parent)
+                                               (.tracks-show-p track-parent))
+                                           (%arrangement-render-lane lane x)
+                                           x)))
+                         .0)))
 
-        (ig:with-clip-rect ((@+ window-pos (@ (- (.x pos) scroll-x 3.0) .0))
-                            (@+ window-pos (ig:get-window-size)))
-          (ig:with-styles ((ig:+im-gui-style-var-item-spacing+ (@ .0 .0)))
-            (map-lanes *project* (lambda (lane x)
-                                   (let ((track-parent (.parent (.track lane))))
-                                     (if (or (null track-parent)
-                                             (.tracks-show-p track-parent))
-                                         (%arrangement-render-lane lane x)
-                                         x)))
-                       .0)))
+          (render-clip self (.master-track (.project self)) nil nil
+                       (- (.time-ruler-width self) scroll-x)))
 
-        (render-clip self (.master-track (.project self)) nil nil
-                     (- (.time-ruler-width self) scroll-x)))
-
-      (handle-mouse self))
+        (handle-mouse self)))
     (handle-shortcut self)))
 
 (defmethod handle-shortcut ((self arrangement))
@@ -487,14 +487,22 @@
                              (%arrangement-height-lane-param))))
       (draw-vertical-line (@- (ig:get-cursor-pos) (@ 0.0 (ig:get-scroll-y))))
       (ig:set-cursor-pos pos)
-      (let ((color (color-selected (.color track) (.select-p track))))
+      (let ((color (color-selected (.color track) (.selected-p track))))
         (ig:with-button-color (color)
           (with-renaming (track (.track-renaming self) track-width)
-            (when (ig:button (.name track) (@ button-width button-height))
-              (unless (key-ctrl-p)
-                (unselect-all-tracks (.project self)))
-              (setf (.select-p track) t)
-              (setf (.target *project*) track))
+            (let ((cursor-pos (ig:get-cursor-pos)))
+              (ig:button (.name track) (@ button-width button-height))
+              (when (.selected-p track)
+                (ig:add-rect *draw-list*
+                             (@+ cursor-pos *window-pos*)
+                             (@+ cursor-pos *window-pos*
+                                 (@ button-width button-height))
+                             (color #xff #xff #x00 #xaa)
+                             :thickness 3.0)))
+            ;; クリックしてそのままドラッグしたいので
+            ;; ig:button の戻り値は使わない
+            (when (ig:is-item-hovered)
+              (mouse-handle (.selection-track *project*) track))
             (ig:with-popup-context-item ()
               (when (ig:menu-item "Copy" :shortcut "C-c")
                 )
@@ -505,20 +513,6 @@
                          :track track)))
             (dd-start track :src (tracks-selected *project*))
             (dd-drop self track))
-          #+TODO-DELETE
-          (ig:with-drag-drop-source ()
-            (ig:set-drag-drop-payload +dd-tracks+)
-            (ig:text (.name track)))
-          #+TODO-DELETE
-          (ig:with-drag-drop-target
-            (when (ig:accept-drag-drop-payload +dd-tracks+)
-              (let ((tracks (tracks-selected (.project self))))
-                (if (key-ctrl-p)
-                    (cmd-add (.project self) 'cmd-tracks-dd-copy
-                             :tracks tracks :before track)
-                    (cmd-add (.project self) 'cmd-tracks-dd-move
-                             :tracks tracks :before track)))))
-
           (when group-p
             (ig:same-line)
             (ig:set-cursor-pos (@+ pos (@ (- track-width group-button-width) .0)))
