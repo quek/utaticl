@@ -366,7 +366,7 @@
                      :track-id-parent (.neko-id (.master-track (.project self)))
                      :execute-after (lambda (cmd)
                                       (let ((track (find-neko (.track-id-new cmd))))
-                                        (unselect-all-tracks (.project self))
+                                        (erase-all (.selection-track *project*))
                                         (setf (.selected-p track) t)))))
 
           (ig:with-clip-rect ((@+ window-pos (@ (- (.x pos) scroll-x 3.0) .0))
@@ -502,10 +502,6 @@
                              (color #xff #xff #x00 #xaa)
                              :thickness 3.0)))
             (ig:with-popup-context-item ()
-              (when (ig:menu-item "Copy" :shortcut "C-c")
-                )
-              (when (ig:menu-item "Paste" :shortcut "C-v")
-                )
               (when (ig:menu-item "Add Lane" :shortcut "C-l")
                 (cmd-add *project* 'cmd-lane-add
                          :track track)))
