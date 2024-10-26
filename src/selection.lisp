@@ -6,6 +6,9 @@
   ;; ここだと都合がいい
   (setf (.target *project*) item))
 
+(defmethod add :after ((self selection) (item track))
+  (setf (.target-track *project*) item))
+
 (defmethod mouse-handle ((self selection) item)
   (cond ((ig:is-mouse-clicked ig:+im-gui-mouse-button-left+)
          (if (key-ctrl-p)
