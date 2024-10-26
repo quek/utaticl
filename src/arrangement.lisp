@@ -501,8 +501,6 @@
                                  (@ button-width button-height))
                              (color #xff #xff #x00 #xaa)
                              :thickness 3.0)))
-            (when (ig:is-item-hovered)
-              (mouse-handle (.selection-track *project*) track))
             (ig:with-popup-context-item ()
               (when (ig:menu-item "Copy" :shortcut "C-c")
                 )
@@ -511,6 +509,8 @@
               (when (ig:menu-item "Add Lane" :shortcut "C-l")
                 (cmd-add *project* 'cmd-lane-add
                          :track track)))
+            (when (ig:is-item-hovered)
+              (mouse-handle (.selection-track *project*) track))
             (dd-start track :src (tracks-selected *project*))
             (dd-drop self track))
           (when group-p

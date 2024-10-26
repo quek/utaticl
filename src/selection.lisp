@@ -1,7 +1,10 @@
 (in-package :utaticl.core)
 
 (defmethod add ((self selection) item)
-  (push item (.items self)))
+  (push item (.items self))
+  ;; 役割的にここじゃない気がするけど
+  ;; ここだと都合がいい
+  (setf (.target *project*) item))
 
 (defmethod mouse-handle ((self selection) item)
   (cond ((ig:is-mouse-clicked ig:+im-gui-mouse-button-left+)
