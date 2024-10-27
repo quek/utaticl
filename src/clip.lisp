@@ -35,15 +35,18 @@
 
 (defmethod render-content ((self clip) (arrangement arrangement)
                            &key pos size selection)
-  (ig:set-cursor-pos-x (+ (.x pos) *text-margin*))
-  (ig:text (format nil "~:[~;∞~]~a" (link-p self) (.name self)))
-  (let ((color (color-selected (.color self) (include-p selection self)))
-        (pos (local-to-world arrangement pos)))
-    (ig:add-rect-filled *draw-list*
-                        (@+ pos (@ 2.0 1.0))
-                        (@+ pos size (@ -1.0 0.0))
-                        color
-                        :rounding 3.0)))
+  (ig:with-id (self)
+    (ig:set-cursor-pos-x (+ (.x pos) *text-margin*))
+    (ig:text (format nil "~:[~;∞~]~a" (link-p self) (.name self)))
+    (let ((color (color-selected (.color self) (include-p selection self)))
+          (pos (local-to-world arrangement pos)))
+      (ig:add-rect-filled *draw-list*
+                          (@+ pos (@ 2.0 1.0))
+                          (@+ pos size (@ -1.0 0.0))
+                          color
+                          :rounding 3.0))
+    (ig:set-cursor-pos pos)
+    (ig:invisible-button "##" size)))
 
 (defmethod render-in ((self clip) (arrangement arrangement)
                       &key pos size selection)

@@ -37,6 +37,12 @@
            :before dst)
   t)
 
+(defmethod dd-drop-at ((self arrangement) (_ arrangement) (src clip))
+  (print (list "dd-drop-at" src)))
+
+(defmethod dd-over-at ((self arrangement) (_ arrangement) (src clip))
+  (print (list "dd-over-at" src)))
+
 (defmethod drag-mode ((arrangement arrangement) clip)
   (let* ((mouse-pos (ig:get-mouse-pos))
          (y1 (time-to-world-y arrangement (.time clip)))
@@ -242,25 +248,27 @@
   (if (can-handle-mouse-p self)
       (let ((io (ig:get-io))
             (mouse-in-cavas-p (mouse-in-cavas-p self)))
-        (cond ((.clips-dragging self)
-               (handle-dragging self))
-              ((and mouse-in-cavas-p (.range-selecting-mode self))
-               (handle-range-selecting self))
-              ((and mouse-in-cavas-p (ig:is-mouse-dragging ig:+im-gui-mouse-button-left+ 0.1))
-               (handle-drag-start self))
-              ((ig:is-mouse-double-clicked ig:+im-gui-mouse-button-left+)
-               (handle-double-click self))
-              ((ig:is-mouse-clicked ig:+im-gui-mouse-button-left+)
-               (handle-click self))
-              ((ig:is-mouse-released ig:+im-gui-mouse-button-left+)
-               (handle-mouse-released self)))
+        (cond ;; ((.clips-dragging self)
+              ;;  (handle-dragging self))
+              ;; ((and mouse-in-cavas-p (.range-selecting-mode self))
+              ;;  (handle-range-selecting self))
+              ;; ((and mouse-in-cavas-p (ig:is-mouse-dragging ig:+im-gui-mouse-button-left+ 0.1))
+              ;;  (handle-drag-start self))
+              ;; ((ig:is-mouse-double-clicked ig:+im-gui-mouse-button-left+)
+              ;;  (handle-double-click self))
+              ;; ((ig:is-mouse-clicked ig:+im-gui-mouse-button-left+)
+              ;;  (handle-click self))
+              ;; ((ig:is-mouse-released ig:+im-gui-mouse-button-left+)
+              ;;  (handle-mouse-released self))
+              )
         (zoom-y-update self io))
-      (when (.clips-dragging self)
-        (loop for dragging in (.clips-dragging self)
-              for selected in (.items (.selection-clip self))
-              for time = (.time selected)
-              for lane = (.lane selected)
-              do (move dragging time lane))))
+      ;; (when (.clips-dragging self)
+      ;;   (loop for dragging in (.clips-dragging self)
+      ;;         for selected in (.items (.selection-clip self))
+      ;;         for time = (.time selected)
+      ;;         for lane = (.lane selected)
+      ;;         do (move dragging time lane)))
+      )
 
   (mouse-cursor self))
 
@@ -378,6 +386,7 @@
           (render-clip self (.master-track (.project self)) nil nil
                        (- (.time-ruler-width self) scroll-x)))
 
+        (dd-drop self self :rect (@@ *window-pos* (@+ *window-pos* *window-size*)))
         (handle-mouse self)))
     (handle-shortcut self)))
 
@@ -448,6 +457,7 @@
                    :selection (.selection-clip self)
                    :pos pos1
                    :size (@ (.width lane) (- y2 y1))
+                   :drop-p nil
                    :visible-pos pos1-visible
                    :visible-size (@- pos2-visible pos1-visible))
 #|        
