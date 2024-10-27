@@ -42,9 +42,9 @@
            (pos (local-to-world arrangement pos))
            (pos1 (@+ pos (@ 2.0 1.0)))
            (pos2 (@+ pos size (@ -1.0 0.0))))
-      (ig:add-rect-filled *draw-list* pos1 pos2 color :rounding 3.0)
-      (ig:set-cursor-pos pos)
-      (ig:invisible-button "##" size))))
+      (ig:add-rect-filled *draw-list* pos1 pos2 color :rounding 3.0))
+    (ig:set-cursor-pos pos)
+    (ig:invisible-button "##" size)))
 
 (defmethod render-in ((self clip) (arrangement arrangement)
                       &key pos size selection)

@@ -38,7 +38,10 @@
   t)
 
 (defmethod dd-drop-at ((self arrangement) (dst arrangement) (src clip))
-  )
+  (handle-drag-end self (.drag-mode self) (key-ctrl-p)
+                   (.sceen (car (dd-src))))
+  (setf (.clips-dragging self) nil)
+  t)
 
 (defmethod dd-over-at ((self arrangement) (dst arrangement) (src clip))
   (multiple-value-bind (time lane)
@@ -58,7 +61,9 @@
 
 (defmethod dd-start ((self arrangement) (target clip) &key)
   (when (call-next-method)
-    (setf (.clips-dragging self) (copy-list (dd-src)))
+    (setf (.clips-dragging self) (mapcar #'copy (dd-src)))
+    (setf (.drag-mode self) (drag-mode self target))
+    (setf (.clip-target self) target)
     (loop for clip in (.clips-dragging self)
           for lane = (.lane clip)
           do (clip-add lane clip))
@@ -74,15 +79,14 @@
             (diff (.lane target) lane)))))
 
 (defmethod drag-mode ((arrangement arrangement) clip)
-  (let* ((mouse-pos (ig:get-mouse-pos))
-         (y1 (time-to-world-y arrangement (.time clip)))
+  (let* ((y1 (time-to-world-y arrangement (.time clip)))
          (y2 (time-to-world-y arrangement (+ (.time clip) (.duration clip)))))
     (cond ((or (< (- y2 y1) (* +side-threshold+ 2))
                (< (+ y1 +side-threshold+)
-                  (.y mouse-pos)
+                  (.y *mouse-pos*)
                   (- y2 +side-threshold+)))
            :move)
-          ((<= (.y mouse-pos) (+ y1 +side-threshold+))
+          ((<= (.y *mouse-pos*) (+ y1 +side-threshold+))
            :start)
           (t :end))))
 

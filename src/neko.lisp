@@ -90,14 +90,14 @@
                ;; ig:button の戻り値は使わない
                (render-content self window :pos pos :size size
                                            :selection selection)
+               (when (and selection (ig:is-item-hovered))
+                 (mouse-handle selection self))
                (when (and selection (include-p selection self))
                  (ig:add-rect *draw-list*
                               (local-to-world window pos)
                               (@+ pos *window-pos* size)
                               (color #xff #xff #x00 #xaa)
                               :thickness 3.0)))
-             (when (and selection (ig:is-item-hovered))
-               (mouse-handle selection self))
              (when drag-p
                (dd-start window self :src (if selection
                                               (.items selection)
