@@ -61,8 +61,11 @@
 
 (defmethod dd-start ((self arrangement) (target clip) &key)
   (when (call-next-method)
-    (setf (.clips-dragging self) (mapcar #'copy (dd-src)))
     (setf (.drag-mode self) (drag-mode self target))
+    (setf (.clips-dragging self)
+          (if (eq (.drag-mode self) :move)
+              (mapcar #'copy (dd-src))
+              (copy-list (dd-src))))
     (setf (.clip-target self) target)
     (loop for clip in (.clips-dragging self)
           for lane = (.lane clip)
@@ -472,17 +475,14 @@
 (defmethod render-clip ((self arrangement) (track track) (lane lane) (clip clip) x)
   (let* ((y1 (time-to-local-y self (.time clip)))
          (y2 (time-to-local-y self (time-end clip)))
-         (scroll-pos (@ (ig:get-scroll-x) (ig:get-scroll-y)))
          (pos1 (@ x y1))
-         (pos2 (@ (+ x (.width lane)) y2))
-         (window-pos (ig:get-window-pos))
-         (window-size (ig:get-window-size))
-         (pos1-world (@+ pos1 window-pos (@- scroll-pos)))
-         (pos2-world (@+ pos2 window-pos (@- scroll-pos)))
-         (pos1-visible (@ (max (.x pos1-world) (+ (.x window-pos) (.offset-x self)))
-                          (max (.y pos1-world) (+ (.y window-pos) (.offset-y self)))))
-         (pos2-visible (@ (min (.x pos2-world) (+ (.x window-pos) (.x window-size)))
-                          (min (.y pos2-world) (+ (.y window-pos) (.y window-size))))))
+         (pos2 (@+ pos1 (@ (.width lane) (- y2 y1))))
+         (pos1-world (local-to-world self pos1))
+         (pos2-world (local-to-world self pos2))
+         (pos1-visible (@ (max (.x pos1-world) (+ (.x *window-pos*) (.offset-x self)))
+                          (max (.y pos1-world) (+ (.y *window-pos*) (.offset-y self)))))
+         (pos2-visible (@ (min (.x pos2-world) (+ (.x *window-pos*) (.x *window-size*)))
+                          (min (.y pos2-world) (+ (.y *window-pos*) (.y *window-size*))))))
     (when (and (< (.x pos1-visible) (.x pos2-visible))
                (< (.y pos1-visible) (.y pos2-visible)))
       (ig:with-clip-rect (pos1-visible pos2-visible)
@@ -493,34 +493,9 @@
                    :drop-p nil
                    :visible-pos pos1-visible
                    :visible-size (@- pos2-visible pos1-visible))
-        (when (contain-p *mouse-pos* pos1 pos2)
+        (when (contain-p *mouse-pos* pos1-world pos2-world)
           (setf (.lane-at-mouse self) lane)
-          (setf (.clip-at-mouse self) clip))
-        #|
-        (ig:set-cursor-pos pos1)
-        (with-renaming (clip (.clip-renaming self) (.width lane))
-        (ig:text (format nil "  ~:[~;∞~]~a" (link-p clip) (.name clip)))
-        (ig:set-cursor-pos pos1)
-        (ig:invisible-button "##" (@- pos2 pos1))
-        (when (and (contain-p *mouse-pos* pos1-world pos2-world)
-        (null (dd-src)))
-        (ig:with-tooltip
-        (ig:text (.name clip)))))
-
-        (let ((pos1 (@+ pos1-world (@ 2.0 .0)))
-        (pos2 (@+ pos2-world (@ -1.0 .0)))
-        (color (color-selected (.color clip) (member clip (.items (.selection-clip self))))))
-        (ig:add-rect-filled draw-list
-        pos1
-        pos2
-        color
-        :rounding 3.0)
-        (render-in-arrangement clip pos1 pos2 pos1-visible pos2-visible)
-        (when (contain-p *mouse-pos* pos1 pos2)
-        (setf (.lane-at-mouse self) lane)
-        (setf (.clip-at-mouse self) clip)))
-        |#
-        ))))
+          (setf (.clip-at-mouse self) clip))))))
 
 (defmethod render-track ((self arrangement) track group-level)
   (ig:with-id (track)
