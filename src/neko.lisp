@@ -78,7 +78,8 @@
                         (rename-p t)
                         (drag-p t)
                         (drop-p t)
-                        selection)
+                        selection
+                        if-at-mouse)
   (when pos-supplied-p
     (ig:set-cursor-pos pos))
   (flet ((f ()
@@ -91,7 +92,8 @@
                (render-content self window :pos pos :size size
                                            :selection selection)
                (when (and selection (ig:is-item-hovered))
-                 (mouse-handle selection self))
+                 (mouse-handle selection self)
+                 (when if-at-mouse (funcall if-at-mouse)))
                (when (and selection (include-p selection self))
                  (ig:add-rect *draw-list*
                               (local-to-world window pos)

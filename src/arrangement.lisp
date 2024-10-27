@@ -84,7 +84,6 @@
 
 (defmethod dd-start ((self arrangement) (target clip) &key)
   (when (call-next-method)
-    (setf (.drag-mode self) (drag-mode self target))
     (setf (.clips-dragging self)
           (if (eq (.drag-mode self) :move)
               (mapcar #'copy (dd-src))
@@ -377,13 +376,11 @@
 
 (defmethod mouse-cursor ((self arrangement))
   (when (can-handle-mouse-p self)
-    (print (list "hovered" (.clips-dragging self) (.drag-mode self)))
     (if (.clips-dragging self)
         (ecase (.drag-mode self)
           (:move
            (ig:set-mouse-cursor ig:+im-gui-mouse-cursor-arrow+))
           ((:start :end)
-           (print :start)
            (ig:set-mouse-cursor ig:+im-gui-mouse-cursor-resize-ns+)))
         (aif (.clip-at-mouse self)
              (ecase (drag-mode self it)
@@ -520,7 +517,10 @@
                    :size (@ (.width lane) (- y2 y1))
                    :drop-p nil
                    :visible-pos pos1-visible
-                   :visible-size (@- pos2-visible pos1-visible))
+                   :visible-size (@- pos2-visible pos1-visible)
+                   :if-at-mouse (lambda ()
+                                  (when (ig:is-mouse-clicked ig:+im-gui-mouse-button-left+)
+                                    (setf (.drag-mode self) (drag-mode self clip)))))
         (when (contain-p *mouse-pos* pos1-world pos2-world)
           (setf (.lane-at-mouse self) lane)
           (setf (.clip-at-mouse self) clip))))))

@@ -47,8 +47,9 @@
     (ig:invisible-button "##" size)))
 
 (defmethod render-in ((self clip) (arrangement arrangement)
-                      &key pos size selection)
-  (call-next-method self arrangement :pos pos :size size :selection selection))
+                      &key pos size selection if-at-mouse)
+  (call-next-method self arrangement :pos pos :size size :selection selection
+                    :if-at-mouse if-at-mouse))
 
 (defmethod (setf .seq) :after ((seq seq) (self clip))
   (push self (.clips seq)))
