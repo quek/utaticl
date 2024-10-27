@@ -44,20 +44,43 @@
   t)
 
 (defmethod dd-over-at ((self arrangement) (dst arrangement) (src clip))
-  (multiple-value-bind (time lane)
-      (world-pos-to-time-lane self
-                              (@+ *mouse-pos*
-                                  (@ .0 (* (.drag-offset-time self)
-                                           (.zoom-y self)))))
-    (setf time (max (time-grid-applied self time #'floor) .0d0))
-    (let ((delta-time (- time (car (.drag-start-times self))))
-          (delta-lane (diff lane (car (.drag-start-lanes self)))))
-      (loop for dragging in (.clips-dragging self)
-            for drag-start-time in (.drag-start-times self)
-            for drag-start-lane in (.drag-start-lanes self)
-            for time = (+ drag-start-time delta-time)
-            for lane = (relative-at drag-start-lane delta-lane)
-            do (move dragging time lane)))))
+  (labels ((%time ()
+             (max (time-grid-applied self
+                                     (world-y-to-time self (.y (ig:get-mouse-pos)))
+                                     #'round)
+                  .0d0)))
+    (ecase (.drag-mode self)
+      (:move
+       (multiple-value-bind (time lane)
+           (world-pos-to-time-lane self
+                                   (@+ *mouse-pos*
+                                       (@ .0 (* (.drag-offset-time self)
+                                                (.zoom-y self)))))
+         (setf time (max (time-grid-applied self time #'floor) .0d0))
+         (let ((delta-time (- time (car (.drag-start-times self))))
+               (delta-lane (diff lane (car (.drag-start-lanes self)))))
+           (loop for dragging in (.clips-dragging self)
+                 for drag-start-time in (.drag-start-times self)
+                 for drag-start-lane in (.drag-start-lanes self)
+                 for time = (+ drag-start-time delta-time)
+                 for lane = (relative-at drag-start-lane delta-lane)
+                 do (move dragging time lane)))))
+      (:start
+       (let* ((delta (- (%time) (.time (.clip-target self)))))
+         (when (every (lambda (clip)
+                        (plusp (- (.duration clip) delta)))
+                      (.clips-dragging self))
+           (loop for clip in (.clips-dragging self)
+                 do (incf (.time clip) delta)
+                    (decf (.duration clip) delta)))))
+      (:end
+       (let* ((clip (.clip-target self))
+              (delta (- (%time) (+ (.time clip) (.duration clip)))))
+         (when (every (lambda (clip)
+                        (plusp (+ (.duration clip) delta)))
+                      (.clips-dragging self))
+           (loop for clip in (.clips-dragging self)
+                 do (incf (.duration clip) delta))))))))
 
 (defmethod dd-start ((self arrangement) (target clip) &key)
   (when (call-next-method)
@@ -79,7 +102,9 @@
       (setf (.drag-offset-time self)
             (- (.time target) time))
       (setf (.drag-offset-lane self)
-            (diff (.lane target) lane)))))
+            (diff (.lane target) lane)))
+    (setf (.clips-dragging-duration self)
+          (mapcar #'.duration (dd-src)))))
 
 (defmethod drag-mode ((arrangement arrangement) clip)
   (let* ((y1 (time-to-world-y arrangement (.time clip)))
