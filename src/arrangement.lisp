@@ -93,11 +93,9 @@
 (defmethod handle-click ((self arrangement))
   (aif (.clip-at-mouse self)
        (progn
-         ;; (setf (.drag-mode self) (drag-mode self it))
          ;; (setf (.clip-target self) it)
          ;; (setf (.selected-p (.track (.lane it))) t)
-         ;; (edit it (copy-list (.items (.selection-clip self))))
-         )
+         (edit it (copy-list (.items (.selection-clip self)))))
        (progn
          (erase-all (.selection-clip self))
          (let* ((time (max (world-y-to-time self (.y (ig:get-mouse-pos))) .0))
