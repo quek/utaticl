@@ -376,19 +376,22 @@
     (setf (.range-selecting-mode self) nil)))
 
 (defmethod mouse-cursor ((self arrangement))
-  (if (.clips-dragging self)
-      (ecase (.drag-mode self)
-        (:move
-         (ig:set-mouse-cursor ig:+im-gui-mouse-cursor-arrow+))
-        ((:start :end)
-         (ig:set-mouse-cursor ig:+im-gui-mouse-cursor-resize-ns+)))
-      (aif (.clip-at-mouse self)
-           (ecase (drag-mode self it)
-             (:move
-              (ig:set-mouse-cursor ig:+im-gui-mouse-cursor-arrow+))
-             ((:start :end)
-              (ig:set-mouse-cursor ig:+im-gui-mouse-cursor-resize-ns+)))
-           (ig:set-mouse-cursor ig:+im-gui-mouse-cursor-arrow+))))
+  (when (can-handle-mouse-p self)
+    (print (list "hovered" (.clips-dragging self) (.drag-mode self)))
+    (if (.clips-dragging self)
+        (ecase (.drag-mode self)
+          (:move
+           (ig:set-mouse-cursor ig:+im-gui-mouse-cursor-arrow+))
+          ((:start :end)
+           (print :start)
+           (ig:set-mouse-cursor ig:+im-gui-mouse-cursor-resize-ns+)))
+        (aif (.clip-at-mouse self)
+             (ecase (drag-mode self it)
+               (:move
+                (ig:set-mouse-cursor ig:+im-gui-mouse-cursor-arrow+))
+               ((:start :end)
+                (ig:set-mouse-cursor ig:+im-gui-mouse-cursor-resize-ns+)))
+             (ig:set-mouse-cursor ig:+im-gui-mouse-cursor-arrow+)))))
 
 (defmethod mouse-in-cavas-p ((self arrangement))
   (let* ((window-pos (ig:get-window-pos))

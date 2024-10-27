@@ -250,19 +250,20 @@
         (ig:add-rect-filled draw-list pos1 pos2
                             (.color-selected-region *theme*)))))
 
-  (if (.notes-dragging self)
-      (ecase (.drag-mode self)
-        (:move
-         (ig:set-mouse-cursor ig:+im-gui-mouse-cursor-arrow+))
-        ((:start :end)
-         (ig:set-mouse-cursor ig:+im-gui-mouse-cursor-resize-ns+)))
-      (aif (.note-at-mouse self)
-           (ecase (drag-mode self it)
-             (:move
-              (ig:set-mouse-cursor ig:+im-gui-mouse-cursor-arrow+))
-             ((:start :end)
-              (ig:set-mouse-cursor ig:+im-gui-mouse-cursor-resize-ns+)))
-           (ig:set-mouse-cursor ig:+im-gui-mouse-cursor-arrow+))))
+  (when (can-handle-mouse-p self)
+    (if (.notes-dragging self)
+        (ecase (.drag-mode self)
+          (:move
+           (ig:set-mouse-cursor ig:+im-gui-mouse-cursor-arrow+))
+          ((:start :end)
+           (ig:set-mouse-cursor ig:+im-gui-mouse-cursor-resize-ns+)))
+        (aif (.note-at-mouse self)
+             (ecase (drag-mode self it)
+               (:move
+                (ig:set-mouse-cursor ig:+im-gui-mouse-cursor-arrow+))
+               ((:start :end)
+                (ig:set-mouse-cursor ig:+im-gui-mouse-cursor-resize-ns+)))
+             (ig:set-mouse-cursor ig:+im-gui-mouse-cursor-arrow+)))))
 
 (defmethod handle-range-dragging ((piano-roll piano-roll))
   (if (ig:is-mouse-released ig:+im-gui-mouse-button-left+)
