@@ -33,7 +33,21 @@
 (defmethod .project ((self clip))
   (.project (.lane self)))
 
-(defmethod render-in-arrangement ((clip clip) pos1 pos2 pos1-visible pos2-visible))
+(defmethod render-content ((self clip) (arrangement arrangement)
+                           &key pos size selection)
+  (ig:set-cursor-pos-x (+ (.x pos) *text-margin*))
+  (ig:text (format nil "~:[~;∞~]~a" (link-p self) (.name self)))
+  (let ((color (color-selected (.color self) (include-p selection self)))
+        (pos (local-to-world arrangement pos)))
+    (ig:add-rect-filled *draw-list*
+                        (@+ pos (@ 2.0 1.0))
+                        (@+ pos size (@ -1.0 0.0))
+                        color
+                        :rounding 3.0)))
+
+(defmethod render-in ((self clip) (arrangement arrangement)
+                      &key pos size selection)
+  (call-next-method self arrangement :pos pos :size size :selection selection))
 
 (defmethod (setf .seq) :after ((seq seq) (self clip))
   (push self (.clips seq)))

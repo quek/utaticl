@@ -15,6 +15,6 @@
 (defvar *process-data*)
 
 (defconstant +side-threshold+ 5.0)
-
+(defparameter *text-margin* 4.0)
 
 (defparameter *default-lane-width* 60.0)

@@ -97,7 +97,6 @@
   ((clip-at-mouse :initform nil :accessor .clip-at-mouse)
    (clip-renaming :initform nil :accessor .clip-renaming)
    (clip-target :initform nil :accessor .clip-target)
-   (clips-selected :initform nil :accessor .clips-selected)
    (clips-dragging :initform nil :accessor .clips-dragging)
    (clips-dragging-time :initform nil :accessor .clips-dragging-time)
    (clips-dragging-duration :initform nil :accessor .clips-dragging-duration)
@@ -115,6 +114,8 @@
                          :type (member nil :region :clip))
    (range-selecting-pos1 :initform nil :accessor .range-selecting-pos1)
    (range-selecting-pos2 :initform nil :accessor .range-selecting-pos2)
+   (selection-clip :initform (make-instance 'selection)
+                   :accessor .selection-clip)
    (time-ruler-width :initform 60.0
                      :accessor .time-ruler-width
                      :accessor .offset-x)
