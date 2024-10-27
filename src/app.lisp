@@ -45,8 +45,8 @@
         do (let ((*project* project))
              (cmd-run project))))
 
-(defmethod drag-enter ((app app) files)
-  (dd-start-force files))
+(defmethod drag-enter ((self app) files)
+  (dd-start-force self files))
 
 (defmethod drop ((app app))
   (dd-drop-did))

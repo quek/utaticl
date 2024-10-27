@@ -39,23 +39,23 @@
 (defun dd-src ()
   (.src *dd*))
 
-(defmethod dd-start-force ((src list) &optional at)
+(defmethod dd-start-force (window (src list) &optional at)
   (setf (.at *dd*) at)
   (setf (.src *dd*) src))
 
-(defmethod dd-start-force (src &optional at)
+(defmethod dd-start-force (window src &optional at)
   (dd-start-force (list src) at))
 
-(defmethod dd-start-here-p (src &key (check-hovered-p t))
+(defmethod dd-start-here-p (window src &key (check-hovered-p t))
   (and (null (dd-src))
        (eq (.target *project*) src)
        (or (not check-hovered-p) (ig:is-item-hovered))
        (ig:is-mouse-dragging ig:+im-gui-mouse-button-left+)))
 
-(defmethod dd-start (target &key (src target) at (check-hovered-p t))
-  (if (dd-start-here-p target :check-hovered-p check-hovered-p)
+(defmethod dd-start (window target &key (src target) at (check-hovered-p t))
+  (if (dd-start-here-p window target :check-hovered-p check-hovered-p)
       (progn
-        (dd-start-force src at)
+        (dd-start-force window src at)
         t)
       nil))
 

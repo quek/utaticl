@@ -89,7 +89,7 @@
                ;; クリックしてそのままドラッグしたいので
                ;; ig:button の戻り値は使わない
                (render-content self window :pos pos :size size
-                               :selection selection)
+                                           :selection selection)
                (when (and selection (include-p selection self))
                  (ig:add-rect *draw-list*
                               (local-to-world window pos)
@@ -99,9 +99,9 @@
              (when (and selection (ig:is-item-hovered))
                (mouse-handle selection self))
              (when drag-p
-               (dd-start self :src (if selection
-                                       (.items selection)
-                                       self)))
+               (dd-start window self :src (if selection
+                                              (.items selection)
+                                              self)))
              (when drop-p
                (dd-drop window self)))))
     (if rename-p

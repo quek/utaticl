@@ -59,10 +59,11 @@
 (defmethod handle-click ((self arrangement))
   (aif (.clip-at-mouse self)
        (progn
-         (setf (.drag-mode self) (drag-mode self it))
-         (setf (.clip-target self) it)
-         (setf (.selected-p (.track (.lane it))) t)
-         (edit it (copy-list (.items (.selection-clip self)))))
+         ;; (setf (.drag-mode self) (drag-mode self it))
+         ;; (setf (.clip-target self) it)
+         ;; (setf (.selected-p (.track (.lane it))) t)
+         ;; (edit it (copy-list (.items (.selection-clip self))))
+         )
        (progn
          (erase-all (.selection-clip self))
          (let* ((time (max (world-y-to-time self (.y (ig:get-mouse-pos))) .0))
@@ -91,7 +92,7 @@
          (ecase (.drag-mode self)
            (:move
             (setf (.clips-dragging self) (mapcar #'copy (.items (.selection-clip self))))
-            (dd-start-force (.items (.selection-clip self)) (.clip-at-mouse self))
+            (dd-start-force self (.items (.selection-clip self)) (.clip-at-mouse self))
             (loop for clip in (.clips-dragging self)
                   for lane = (.lane clip)
                   do (clip-add lane clip))
@@ -249,18 +250,18 @@
       (let ((io (ig:get-io))
             (mouse-in-cavas-p (mouse-in-cavas-p self)))
         (cond ;; ((.clips-dragging self)
-              ;;  (handle-dragging self))
-              ;; ((and mouse-in-cavas-p (.range-selecting-mode self))
-              ;;  (handle-range-selecting self))
-              ;; ((and mouse-in-cavas-p (ig:is-mouse-dragging ig:+im-gui-mouse-button-left+ 0.1))
-              ;;  (handle-drag-start self))
-              ;; ((ig:is-mouse-double-clicked ig:+im-gui-mouse-button-left+)
-              ;;  (handle-double-click self))
-              ;; ((ig:is-mouse-clicked ig:+im-gui-mouse-button-left+)
-              ;;  (handle-click self))
-              ;; ((ig:is-mouse-released ig:+im-gui-mouse-button-left+)
-              ;;  (handle-mouse-released self))
-              )
+          ;;  (handle-dragging self))
+          ;; ((and mouse-in-cavas-p (.range-selecting-mode self))
+          ;;  (handle-range-selecting self))
+          ;; ((and mouse-in-cavas-p (ig:is-mouse-dragging ig:+im-gui-mouse-button-left+ 0.1))
+          ;;  (handle-drag-start self))
+          ((ig:is-mouse-double-clicked ig:+im-gui-mouse-button-left+)
+           (handle-double-click self))
+          ((ig:is-mouse-clicked ig:+im-gui-mouse-button-left+)
+           (handle-click self))
+          ;; ((ig:is-mouse-released ig:+im-gui-mouse-button-left+)
+          ;;  (handle-mouse-released self))
+          )
         (zoom-y-update self io))
       ;; (when (.clips-dragging self)
       ;;   (loop for dragging in (.clips-dragging self)
@@ -460,30 +461,33 @@
                    :drop-p nil
                    :visible-pos pos1-visible
                    :visible-size (@- pos2-visible pos1-visible))
-#|        
+        (when (contain-p *mouse-pos* pos1 pos2)
+          (setf (.lane-at-mouse self) lane)
+          (setf (.clip-at-mouse self) clip))
+        #|
         (ig:set-cursor-pos pos1)
         (with-renaming (clip (.clip-renaming self) (.width lane))
-          (ig:text (format nil "  ~:[~;∞~]~a" (link-p clip) (.name clip)))
-          (ig:set-cursor-pos pos1)
-          (ig:invisible-button "##" (@- pos2 pos1))
-          (when (and (contain-p *mouse-pos* pos1-world pos2-world)
-                     (null (dd-src)))
-            (ig:with-tooltip
-              (ig:text (.name clip)))))
+        (ig:text (format nil "  ~:[~;∞~]~a" (link-p clip) (.name clip)))
+        (ig:set-cursor-pos pos1)
+        (ig:invisible-button "##" (@- pos2 pos1))
+        (when (and (contain-p *mouse-pos* pos1-world pos2-world)
+        (null (dd-src)))
+        (ig:with-tooltip
+        (ig:text (.name clip)))))
 
         (let ((pos1 (@+ pos1-world (@ 2.0 .0)))
-              (pos2 (@+ pos2-world (@ -1.0 .0)))
-              (color (color-selected (.color clip) (member clip (.items (.selection-clip self))))))
-          (ig:add-rect-filled draw-list
-                              pos1
-                              pos2
-                              color
-                              :rounding 3.0)
-          (render-in-arrangement clip pos1 pos2 pos1-visible pos2-visible)
-          (when (contain-p *mouse-pos* pos1 pos2)
-            (setf (.lane-at-mouse self) lane)
+        (pos2 (@+ pos2-world (@ -1.0 .0)))
+        (color (color-selected (.color clip) (member clip (.items (.selection-clip self))))))
+        (ig:add-rect-filled draw-list
+        pos1
+        pos2
+        color
+        :rounding 3.0)
+        (render-in-arrangement clip pos1 pos2 pos1-visible pos2-visible)
+        (when (contain-p *mouse-pos* pos1 pos2)
+        (setf (.lane-at-mouse self) lane)
         (setf (.clip-at-mouse self) clip)))
-|#
+        |#
         ))))
 
 (defmethod render-track ((self arrangement) track group-level)
