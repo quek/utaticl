@@ -255,6 +255,7 @@
   ((clip-next :initform nil :accessor .clip-next)
    (lane :initform nil :initarg :lane :accessor .lane)
    (play-p :initform nil :accessor .play-p)
+   (offset-start :initform 0.0d0 :accessor .offset-start)
    (sceen :initarg :sceen :initform nil :accessor .sceen)
    (seq :initarg :seq :accessor .seq)
    (will-start :initform nil :accessor .will-start)

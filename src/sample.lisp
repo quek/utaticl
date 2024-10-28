@@ -118,7 +118,7 @@
   (let* ((nframes (/ (length (.data self)) (.nchannels self))))
     (setf (.duration self) (/ nframes (.sample-rate self) (/ 60.0 bpm)))))
 
-(defmethod render-content ((self sample) (arrangement arrangement)
+(defmethod draw ((self sample) (arrangement arrangement)
                            &key pos size visible-pos visible-size)
   (let* ((width (.x size))
          (height (.y size))
@@ -129,8 +129,7 @@
          (height-cache (or (car waveform-cache) 0))
          (start-cache (or (cadr waveform-cache) 0))
          (end-cache (or (caddr waveform-cache) 0))
-         (waveform (cadddr waveform-cache))
-         (draw-list (ig:get-window-draw-list)))
+         (waveform (cadddr waveform-cache)))
     (when (and (plusp width) (plusp height))
       (when (or (/= height height-cache)
                 (< start start-cache)
@@ -169,12 +168,12 @@
             if (< (+ (.y visible-pos) (.y visible-size)) (.y p1))
               do (loop-finish)
             if (<= (.y visible-pos) (.y p1))
-              do (ig:add-line draw-list p1 p2 (color #xff #xff #xff #x80))
+              do (ig:add-line *draw-list* p1 p2 (color #xff #xff #xff #x80))
                  ;; ギャップを埋める
                  (cond ((and p1-last (< (.x p1-last) (.x p2)))
-                        (ig:add-line draw-list (@+ p1-last (@ .0 1.0)) p2 (color #xff #xff #xff #x80)))
+                        (ig:add-line *draw-list* (@+ p1-last (@ .0 1.0)) p2 (color #xff #xff #xff #x80)))
                        ((and p2-last (< (.x p1) (.x p2-last)))
-                        (ig:add-line draw-list (@+ p2-last (@ .0 1.0)) p1 (color #xff #xff #xff #x80))))))))
+                        (ig:add-line *draw-list* (@+ p2-last (@ .0 1.0)) p1 (color #xff #xff #xff #x80))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (in-package :wav)

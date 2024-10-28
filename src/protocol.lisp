@@ -39,7 +39,7 @@
 (defgeneric render (x)
   (:method ((x null))))
 
-(defgeneric render-content (neko window &key &allow-other-keys))
-(defgeneric render-in (neko window &key &allow-other-keys))
+(defgeneric draw (neko view &key &allow-other-keys))
+(defgeneric render-in (neko view &key &allow-other-keys))
 
 (defgeneric value-text (x &optional value))

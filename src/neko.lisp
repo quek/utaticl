@@ -68,10 +68,10 @@
 (defmethod ig:push-id ((self neko))
   (ig:push-id (.neko-id self)))
 
-(defmethod render-content ((self neko) window &key size)
+(defmethod draw ((self neko) view &key size)
   (ig:button (.name self) size))
 
-(defmethod render-in ((self neko) window
+(defmethod render-in ((self neko) view
                       &key
                         (pos (ig:get-cursor-pos) pos-supplied-p)
                         (size (@ .0 .0))
@@ -91,7 +91,7 @@
              (ig:with-button-color (color)
                ;; クリックしてそのままドラッグしたいので
                ;; ig:button の戻り値は使わない
-               (render-content self window :pos pos :size size
+               (draw self view :pos pos :size size
                                            :selection selection
                                            :visible-pos visible-pos
                                            :visible-size visible-size)
@@ -99,7 +99,7 @@
                  (mouse-handle selection self)
                  (when if-at-mouse (funcall if-at-mouse)))
                (when (and selection (include-p selection self))
-                 (let* ((pos1 (local-to-world window pos))
+                 (let* ((pos1 (local-to-world view pos))
                         (pos2 (@+ pos1 size)))
                   (ig:add-rect *draw-list*
                                pos1
@@ -107,13 +107,13 @@
                                (color #xff #xff #x00 #xaa)
                                :thickness 3.0))))
              (when drag-p
-               (dd-start window self :src (if selection
+               (dd-start view self :src (if selection
                                               (.items selection)
                                               self)))
              (when drop-p
-               (dd-drop window self)))))
+               (dd-drop view self)))))
     (if rename-p
-        (with-renaming (self (.track-renaming window) (.x size))
+        (with-renaming (self (.track-renaming view) (.x size))
           (f))
         (f))))
 
