@@ -118,11 +118,13 @@
   (let* ((nframes (/ (length (.data self)) (.nchannels self))))
     (setf (.duration self) (/ nframes (.sample-rate self) (/ 60.0 bpm)))))
 
-(defmethod render-in-arrangement ((self sample) pos1 pos2 pos1-visible pos2-visible)
-  (let* ((width (- (.x pos2) (.x pos1)))
-         (height (round (- (.y pos2) (.y pos1))))
-         (start (- (.y pos1-visible) (.y pos1)))
-         (end (- (.y pos2-visible) (.y pos1)))
+(defmethod render-content ((self sample) (arrangement arrangement)
+                           &key pos size visible-pos visible-size)
+  (let* ((width (.x size))
+         (height (.y size))
+         (pos (local-to-world arrangement pos))
+         (start (- (.y visible-pos) (.y pos)))
+         (end (- (+ (.y visible-pos) (.y visible-size)) (.y pos)))
          (waveform-cache (.waveform-cache self))
          (height-cache (or (car waveform-cache) 0))
          (start-cache (or (cadr waveform-cache) 0))
@@ -158,15 +160,15 @@
             with width-half = (float (/ width 2))
             for p1-last = nil then p1
             for p2-last = nil then p2
-            for p1 = (@+ pos1-visible (@ (+ (* width-half min) width-half) (float i)))
-            for p2 = (let ((p2 (@+ pos1-visible (@ (+ (* width-half max) width-half) (float i)))))
+            for p1 = (@+ visible-pos (@ (+ (* width-half min) width-half) (float i)))
+            for p2 = (let ((p2 (@+ visible-pos (@ (+ (* width-half max) width-half) (float i)))))
                        ;; min と max の差が1より小さいと線が途切れるので
                        (when (< (- (.x p2) (.x p1)) 1.0)
                          (setf (.x p2) (+ (.x p1) 1.0)))
                        p2)
-            if (< (.y pos2-visible) (.y p1))
+            if (< (+ (.y visible-pos) (.y visible-size)) (.y p1))
               do (loop-finish)
-            if (<= (.y pos1-visible) (.y p1))
+            if (<= (.y visible-pos) (.y p1))
               do (ig:add-line draw-list p1 p2 (color #xff #xff #xff #x80))
                  ;; ギャップを埋める
                  (cond ((and p1-last (< (.x p1-last) (.x p2)))

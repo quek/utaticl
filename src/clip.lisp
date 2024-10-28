@@ -34,7 +34,7 @@
   (.project (.lane self)))
 
 (defmethod render-content ((self clip) (arrangement arrangement)
-                           &key pos size selection)
+                           &key pos size selection visible-pos visible-size)
   (ig:with-id (self)
     (ig:set-cursor-pos-x (+ (.x pos) *text-margin*))
     (ig:text (format nil "~:[~;∞~]~a" (link-p self) (.name self)))
@@ -47,9 +47,12 @@
     (ig:invisible-button "##" size)))
 
 (defmethod render-in ((self clip) (arrangement arrangement)
-                      &key pos size selection if-at-mouse)
-  (call-next-method self arrangement :pos pos :size size :selection selection
-                    :if-at-mouse if-at-mouse))
+                      &key pos size selection if-at-mouse visible-pos visible-size)
+  (call-next-method self arrangement
+                    :pos pos :size size :selection selection
+                    :if-at-mouse if-at-mouse
+                    :visible-pos visible-pos
+                    :visible-size visible-size))
 
 (defmethod (setf .seq) :after ((seq seq) (self clip))
   (push self (.clips seq)))

@@ -20,6 +20,9 @@
         do (setf (.duration self) (update-duration sample bpm)))
   (.duration self))
 
-(defmethod render-in-arrangement ((self seq-audio) pos1 pos2 pos1-visible pos2-visible)
+(defmethod render-content ((self seq-audio) (arrangement arrangement)
+                           &key pos size selection visible-pos visible-size)
   (loop for sample in (.samples self)
-        do (render-in-arrangement sample pos1 pos2 pos1-visible pos2-visible)))
+        do (render-content sample arrangement
+                           :pos pos :size size :selection selection
+                           :visible-pos visible-pos :visible-size visible-size)))

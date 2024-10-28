@@ -79,6 +79,8 @@
                         (drag-p t)
                         (drop-p t)
                         selection
+                        visible-pos
+                        visible-size
                         if-at-mouse)
   (when pos-supplied-p
     (ig:set-cursor-pos pos))
@@ -90,7 +92,9 @@
                ;; クリックしてそのままドラッグしたいので
                ;; ig:button の戻り値は使わない
                (render-content self window :pos pos :size size
-                                           :selection selection)
+                                           :selection selection
+                                           :visible-pos visible-pos
+                                           :visible-size visible-size)
                (when (and selection (ig:is-item-hovered))
                  (mouse-handle selection self)
                  (when if-at-mouse (funcall if-at-mouse)))

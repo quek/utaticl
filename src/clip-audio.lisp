@@ -14,8 +14,12 @@
   (let ((clip-time (.time clip-audio)))
    (prepare-event (.seq clip-audio) (max (- start clip-time) .0d0) (- end clip-time) loop-p offset-samples)))
 
-(defmethod render-in-arrangement ((clip-audio clip-audio) pos1 pos2 pos1-visible pos2-visible)
-  (render-in-arrangement (.seq clip-audio) pos1 pos2 pos1-visible pos2-visible))
+(defmethod render-content ((clip-audio clip-audio) (arrangement arrangement)
+                           &key pos size selection visible-pos visible-size)
+  (call-next-method)
+  (render-content (.seq clip-audio) arrangement
+                  :pos pos :size size :selection selection
+                  :visible-pos visible-pos :visible-size visible-size))
 
 (defmethod stretch ((clip-audio clip-audio) duration)
   (let ((old-duration (.duration clip-audio)))
