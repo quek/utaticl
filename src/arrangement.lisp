@@ -71,8 +71,7 @@
                         (plusp (- (.duration clip) delta)))
                       (.clips-dragging self))
            (loop for clip in (.clips-dragging self)
-                 do (incf (.time clip) delta)
-                    (decf (.duration clip) delta)))))
+                 do (change-start clip delta)))))
       (:end
        (let* ((clip (.clip-target self))
               (delta (- (%time) (+ (.time clip) (.duration clip)))))
@@ -80,7 +79,7 @@
                         (plusp (+ (.duration clip) delta)))
                       (.clips-dragging self))
            (loop for clip in (.clips-dragging self)
-                 do (incf (.duration clip) delta))))))))
+                 do (change-end clip delta))))))))
 
 (defmethod dd-start ((self arrangement) (target clip) &key)
   (when (call-next-method)
@@ -210,15 +209,15 @@
                             (drag-mode (eql :start))
                             key-ctrl-p
                             sceen)
-  (let ((delta (- (.duration (car (.clips-dragging self)))
-                  (car (.clips-dragging-duration self)))))
+  (let ((delta (%arrangement-drag-time-delta self)))
     (loop for clip in (.clips-dragging self)
           do (incf (.time clip) delta)
              (decf (.duration clip) delta))
-    (cmd-add (.project self) 'cmd-clips-start-change
+    (cmd-add (.project self) (if (key-alt-p)
+                                 'cmd-clips-stretch-start
+                                 'cmd-clips-change-start)
              :clips (.clips-dragging self)
-             :delta delta
-             :stretch-p (key-alt-p))))
+             :delta delta)))
 
 (defmethod handle-drag-end ((self arrangement)
                             (drag-mode (eql :end))
@@ -228,10 +227,11 @@
                   (car (.clips-dragging-duration self)))))
     (loop for clip in (.clips-dragging self)
           do (decf (.duration clip) delta))
-    (cmd-add (.project self) 'cmd-clips-end-change
+    (cmd-add (.project self) (if (key-alt-p)
+                                 'cmd-clips-stretch-end
+                                 'cmd-clips-change-end)
              :clips (.clips-dragging self)
-             :delta delta
-             :stretch-p (key-alt-p))))
+             :delta delta)))
 
 (defmethod handle-dragging ((self arrangement))
   (labels ((%time ()
@@ -263,7 +263,7 @@
                      for lane = (relative-at drag-start-lane delta-lane)
                      do (move dragging time lane)))))
           (:start
-           (let* ((delta (- (%time) (.time (.clip-target self)))))
+           (let* ((delta (%arrangement-drag-time-delta self)))
              (when (every (lambda (clip)
                             (plusp (- (.duration clip) delta)))
                           (.clips-dragging self))
@@ -580,6 +580,14 @@
     last-lane))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defun %arrangement-drag-time-delta (arrangement)
+  (let ((time (max (time-grid-applied
+                    arrangement
+                    (world-y-to-time arrangement (.y *mouse-pos*))
+                    #'round)
+                   .0d0)))
+    (- time (.time (.clip-target arrangement)))))
+
 (defun %arrangement-render-lane (lane x)
   (let ((param (.automation-param lane)))
     (when param

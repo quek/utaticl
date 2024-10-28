@@ -146,6 +146,35 @@
           do (automation-point-add (.seq self) point))
     (setf (.points self) points)))
 
+(defcommand cmd-clips-change-end (command)
+  ((clips :initarg :clips :accessor .clips)
+   (delta :initarg :delta :accessor .delta)
+   (stretch-p :initarg :stretch-p :accessor .stretch-p)))
+
+(defmethod execute ((self cmd-clips-change-end) project)
+  (loop with delta = (.delta self)
+        for clip in (.clips self)
+        do (change-end clip delta)))
+
+(defmethod undo ((self cmd-clips-change-end) project)
+  (loop with delta = (- (.delta self))
+        for clip in (.clips self)
+        do (change-end clip delta)))
+
+(defcommand cmd-clips-change-start (command)
+  ((clips :initarg :clips :accessor .clips)
+   (delta :initarg :delta :accessor .delta)))
+
+(defmethod execute ((self cmd-clips-change-start) project)
+  (loop with delta = (.delta self)
+        for clip in (.clips self)
+        do (change-start clip delta)))
+
+(defmethod undo ((self cmd-clips-change-start) project)
+  (loop with delta = (- (.delta self))
+        for clip in (.clips self)
+        do (change-start clip delta)))
+
 (defcommand cmd-clip-delete (command)
   ((clip :accessor .clip)
    (clip-id :initarg :clip-id :accessor .clip-id)
@@ -359,49 +388,23 @@
         else
           do (clip-add lane clip)))
 
-(defcommand cmd-clips-start-change (command)
+(defcommand cmd-clips-stretch-start (command)
   ((clips :initarg :clips :accessor .clips)
-   (delta :initarg :delta :accessor .delta)
-   (stretch-p :initarg :stretch-p :accessor .stretch-p)))
+   (delta :initarg :delta :accessor .delta)))
 
-(defmethod execute ((self cmd-clips-start-change) project)
+(defmethod execute ((self cmd-clips-stretch-start) project)
   (loop with delta = (.delta self)
         for clip in (.clips self)
-        do (decf (.time clip) delta)
-        if (.stretch-p self)
-          do (stretch clip (+ (.duration clip) delta))
-        else
-          do (incf (.duration clip) delta)))
+        do (stretch-start clip delta)
+           ;; (decf (.time clip) delta)
+           ;; (stretch clip (+ (.duration clip) delta))
+        ))
 
-(defmethod undo ((self cmd-clips-start-change) project)
+(defmethod undo ((self cmd-clips-stretch-start) project)
   (loop with delta = (.delta self)
         for clip in (.clips self)
         do (incf (.time clip) delta)
-        if (.stretch-p self)
-          do (stretch clip (- (.duration clip) delta))
-        else
-          do (decf (.duration clip) delta)))
-
-(defcommand cmd-clips-end-change (command)
-  ((clips :initarg :clips :accessor .clips)
-   (delta :initarg :delta :accessor .delta)
-   (stretch-p :initarg :stretch-p :accessor .stretch-p)))
-
-(defmethod execute ((self cmd-clips-end-change) project)
-  (loop with delta = (.delta self)
-        for clip in (.clips self)
-        if (.stretch-p self)
-          do (stretch clip (+ (.duration clip) delta))
-        else
-          do (incf (.duration clip) delta)))
-
-(defmethod undo ((self cmd-clips-end-change) project)
-  (loop with delta = (.delta self)
-        for clip in (.clips self)
-        if (.stretch-p self)
-          do (stretch clip (- (.duration clip) delta))
-        else
-          do (decf (.duration clip) delta)))
+           (stretch clip (- (.duration clip) delta))))
 
 (defcommand cmd-lane-add (command)
   ((track :initarg :track :accessor .track)

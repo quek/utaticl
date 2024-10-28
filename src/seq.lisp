@@ -10,3 +10,7 @@
   ;; see deserialize-slot ((self neko) (slot (eql 'neko-id)) value)
   ;; (.copy *serialize-context*) でも新し neko-id にしない
   (setf (.neko-id self) (deserialize value)))
+
+(defmethod stretch :around ((self clip-audio) duration)
+  (when (/= duration (.duration self))
+    (call-next-method)))

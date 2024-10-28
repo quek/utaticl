@@ -1,5 +1,15 @@
 (in-package :utaticl.core)
 
+(defmethod change-end ((self clip) delta)
+  (incf (.duration self) delta))
+
+(defmethod change-start ((self clip) delta)
+  (incf (.time self) delta)
+  (setf (.offset-start self)
+        (abs (mod (+ (.offset-start self) delta)
+                  (.duration (.seq self)))))
+  (decf (.duration self) delta))
+
 (defmethod .color :around ((self clip))
   (or (call-next-method)
       (.color (.seq self))))
@@ -72,14 +82,13 @@
 (defmethod stop-immediate ((clip clip))
   (setf (.play-p clip) nil))
 
+(defmethod stretch-end ((self clip) delta)
+  (incf (.duration self) delta))
+
+(defmethod stretch-start ((self clip) delta)
+  (incf (.time self) delta))
+
 (defmethod terminate ((self clip) &key)
   (let ((seq (.seq self)))
     (when seq
       (setf (.clips seq) (delete self (.clips seq))))))
-
-(defmethod (setf .time) :around (time (self clip))
-  (let ((delta (- time (.time self))))
-    (call-next-method)
-    (setf (.offset-start self)
-          (abs (mod (+ (.offset-start self) delta)
-                    (.duration (.seq self)))))))

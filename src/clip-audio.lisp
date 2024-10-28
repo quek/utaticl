@@ -22,10 +22,15 @@
                   :visible-pos visible-pos :visible-size visible-size))
 
 (defmethod stretch ((clip-audio clip-audio) duration)
-  (let ((old-duration (.duration clip-audio)))
-   (when (/= old-duration duration)
-     (setf (.duration clip-audio) duration)
-     (stretch (.seq clip-audio) duration))))
+  (stretch (.seq clip-audio) duration))
+
+(defmethod stretch-end ((self clip-audio) delta)
+  (call-next-method)
+  (stretch self (.duration self)))
+
+(defmethod stretch-start ((self clip-audio) delta)
+  (call-next-method)
+  (stretch self (.duration self)))
 
 (defmethod update-duration ((self clip-audio) bpm)
   (setf (.duration self) (update-duration (.seq self) bpm)))
