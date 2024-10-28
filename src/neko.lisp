@@ -99,11 +99,13 @@
                  (mouse-handle selection self)
                  (when if-at-mouse (funcall if-at-mouse)))
                (when (and selection (include-p selection self))
-                 (ig:add-rect *draw-list*
-                              (local-to-world window pos)
-                              (@+ pos *window-pos* size)
-                              (color #xff #xff #x00 #xaa)
-                              :thickness 3.0)))
+                 (let* ((pos1 (local-to-world window pos))
+                        (pos2 (@+ pos1 size)))
+                  (ig:add-rect *draw-list*
+                               pos1
+                               pos2
+                               (color #xff #xff #x00 #xaa)
+                               :thickness 3.0))))
              (when drag-p
                (dd-start window self :src (if selection
                                               (.items selection)
