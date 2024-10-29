@@ -62,6 +62,18 @@
   (or (call-next-method)
       (.name (.seq self))))
 
+(defmethod prepare-event :around ((self clip) start end loop-p offset-samples)
+  "clip loop"
+  (let* ((time-clip (.time self))
+         (offset-start (.offset-start self))
+         (duration-seq (.duration (.seq self)))
+         (offset (+ time-clip
+                    (- offset-start)
+                    (* (floor (/ (+ start (- time-clip) offset-start)
+                                 duration-seq))
+                       duration-seq))))
+    (call-next-method self (- start offset) (- end offset) loop-p offset-samples)))
+
 (defmethod .project ((self clip))
   (.project (.lane self)))
 

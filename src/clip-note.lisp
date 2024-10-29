@@ -53,15 +53,7 @@
 
 (defmethod prepare-event ((self clip-note) start end loop-p offset-samples)
   (loop for note in (.notes self)
-        for time-clip = (.time self)
-        for offset-start = (.offset-start self)
-        for duration-seq = (.duration (.seq self))
-        for note-start = (+ (.time note)
-                            time-clip
-                            (- offset-start)
-                            (* (floor (/ (+ start (- time-clip) offset-start)
-                                         duration-seq))
-                               duration-seq))
+        for note-start = (.time note)
         for note-end = (+ note-start (.duration note))
         do (cond ((and (<= start note-start)
                        (< note-start end))
