@@ -50,12 +50,10 @@
       (ig:add-rect-filled draw-list pos1 pos2 (color #xff #xff #xff)))))
 
 (defmethod render-playhead ((self time-ruler-mixin))
-  (let* ((draw-list (ig:get-window-draw-list))
-         (window-pos (ig:get-window-pos))
-         (y (playhead-y self))
-         (pos1 (@+ (@ .0 y) window-pos))
-         (pos2 (@+ pos1 (@ (ig:get-window-width) .0))))
-    (ig:add-line draw-list pos1 pos2 (.color-playhead *theme*))))
+  (let* ((y (playhead-y self))
+         (pos1 (@+ (@ .0 y) *window-pos*))
+         (pos2 (@+ pos1 (@ (.x *window-size*) .0))))
+    (ig:add-line *draw-list* pos1 pos2 (.color-playhead *theme*))))
 
 (defun compute-time-y-delta (time-ruler-threshold zoom-y)
   (values-list
