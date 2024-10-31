@@ -162,13 +162,14 @@
                             (key-ctrl-p (eql nil))
                             (sceen null))
   (cmd-add (.project self) 'cmd-clips-dd-move
-           :clips (.items (.selection-clip self))
+           :clips (dd-src)
            :times-to (mapcar #'.time (.clips-dragging self))
            :lanes-to (mapcar #'.lane (.clips-dragging self))
            :sceens-to (mapcar #'.sceen (.clips-dragging self)))
   (loop for clip in (.clips-dragging self)
         for lane = (.lane clip)
-        do (clip-delete lane clip)))
+        do (clip-delete lane clip)
+           (terminate clip)))
 
 (defmethod handle-drag-end ((self arrangement)
                             (drag-mode (eql :move))
