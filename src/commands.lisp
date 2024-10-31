@@ -216,16 +216,16 @@
                         (deserialize (.clips self))))
   (execute self project))
 
-(defcommand cmd-clips-d&d-copy (command)
+(defcommand cmd-clips-dd-copy (command)
   ((clips :initarg :clips :accessor .clips)
    (clip-ids :accessor .clip-ids)
    (lane-ids :initarg :lane-ids :accessor .lane-ids)))
 
-(defmethod execute ((self cmd-clips-d&d-copy) project)
+(defmethod execute ((self cmd-clips-dd-copy) project)
   ;; ドラッグ中の表示が確定されるだけなので、何もしない。
   )
 
-(defmethod undo ((self cmd-clips-d&d-copy) project)
+(defmethod undo ((self cmd-clips-dd-copy) project)
   (let ((clips-serialized (with-serialize-context ()
                             (serialize (.clips self)))))
     (loop for clip in (.clips self)
@@ -235,12 +235,12 @@
              (terminate clip))
     (setf (.clips self) clips-serialized)))
 
-(defmethod redo ((self cmd-clips-d&d-copy) project)
+(defmethod redo ((self cmd-clips-dd-copy) project)
   (setf (.clips self) (with-serialize-context ()
                         (deserialize (.clips self))))
   (execute self project ))
 
-(defcommand cmd-clips-d&d-move (command)
+(defcommand cmd-clips-dd-move (command)
   ((clips :initarg :clips :accessor .clips)
    (times-from :accessor .times-from)
    (lanes-from :accessor .lanes-from)
@@ -249,12 +249,12 @@
    (lanes-to :initarg :lanes-to :accessor .lanes-to)
    (sceens-to :initarg :sceens-to :accessor .sceens-to)))
 
-(defmethod initialize-instance :after ((self cmd-clips-d&d-move) &key clips)
+(defmethod initialize-instance :after ((self cmd-clips-dd-move) &key clips)
   (setf (.times-from self) (mapcar #'.time clips))
   (setf (.lanes-from self) (mapcar #'.lane clips))
   (setf (.sceens-from self) (mapcar #'.sceen clips)))
 
-(defmethod execute ((self cmd-clips-d&d-move) project)
+(defmethod execute ((self cmd-clips-dd-move) project)
   (loop for clip in (.clips self)
         for time-to in (.times-to self)
         for lane-to in (.lanes-to self)
@@ -269,7 +269,7 @@
                  (clip-add sceen-to clip :lane lane-to)
                  (clip-add lane-to clip)))))
 
-(defmethod undo ((self cmd-clips-d&d-move) project)
+(defmethod undo ((self cmd-clips-dd-move) project)
   (loop for clip in (.clips self)
         for time-from in (.times-from self)
         for lane-from in (.lanes-from self)
@@ -284,11 +284,11 @@
                  (clip-add sceen-from clip :lane lane-from)
                  (clip-add lane-from clip)))))
 
-(defcommand cmd-clips-d&d-move-from-arrangement-to-sceen-matrix (command)
+(defcommand cmd-clips-dd-move-from-arrangement-to-sceen-matrix (command)
   ((clips-from :initarg :clips-from :accessor .clips-from)
    (clips-to :initarg :clips-to :initform nil :accessor .clips-to)))
 
-(defmethod initialize-instance :after ((self cmd-clips-d&d-move-from-arrangement-to-sceen-matrix)
+(defmethod initialize-instance :after ((self cmd-clips-dd-move-from-arrangement-to-sceen-matrix)
                                        &key sceen-to lane-from lane-to)
   (loop with lane-delta = (diff lane-from lane-to)
         for clip-from in (.clips-from self)
@@ -297,7 +297,7 @@
            (setf (.lane clip-to) (relative-at (.lane clip-to) lane-delta))
            (push (.clips-to self) clip-to)))
 
-(defmethod execute ((self cmd-clips-d&d-move-from-arrangement-to-sceen-matrix) project)
+(defmethod execute ((self cmd-clips-dd-move-from-arrangement-to-sceen-matrix) project)
   (let ((clips-from-serialized (with-serialize-context ()
                                  (serialize (.clips-from self)))))
     (loop for clip-from in (.clips-from self)
@@ -306,7 +306,7 @@
   (loop for clip-to in (.clips-to self)
         do (clip-add (.sceen clip-to) clip-to)))
 
-(defmethod undo ((self cmd-clips-d&d-move-from-arrangement-to-sceen-matrix) project)
+(defmethod undo ((self cmd-clips-dd-move-from-arrangement-to-sceen-matrix) project)
   (let ((clips-to-serialized (with-serialize-context ()
                                (serialize (.clips-to self)))))
     (loop for clip-to in (.clips-to self)
@@ -318,31 +318,31 @@
               do (clip-add (.lane clip-from) clip-from)
               collect clip-from)))
 
-(defmethod redo ((self cmd-clips-d&d-move-from-arrangement-to-sceen-matrix) project)
+(defmethod redo ((self cmd-clips-dd-move-from-arrangement-to-sceen-matrix) project)
   (setf (.clips-to self) (with-serialize-context ()
                            (deserialize (.clips-to self))))
   (execute self project))
 
-(defcommand cmd-clips-d&d-move-from-sceen-matrix-to-arrangement (command)
+(defcommand cmd-clips-dd-move-from-sceen-matrix-to-arrangement (command)
   ((clips-from :initarg :clips-from :accessor .clips-from)
    (clips-to :initform nil :accessor .clips-to)
    (lanes-to :initform nil :accessor .lanes-to)
    (times-to :initform nil :accessor .times-to)))
 
-(defmethod initialize-instance :after ((self cmd-clips-d&d-move-from-sceen-matrix-to-arrangement)
+(defmethod initialize-instance :after ((self cmd-clips-dd-move-from-sceen-matrix-to-arrangement)
                                        &key clips-to)
   (loop for clip in clips-to
         do (push (.lane clip) (.lanes-to self))
            (push (.time clip) (.times-to self))))
 
-(defmethod execute ((self cmd-clips-d&d-move-from-sceen-matrix-to-arrangement) project)
+(defmethod execute ((self cmd-clips-dd-move-from-sceen-matrix-to-arrangement) project)
   (let ((clips-from-serialized (with-serialize-context ()
                                  (serialize (.clips-from self)))))
     (loop for clip-from in (.clips-from self)
           do (clip-delete (.sceen clip-from) clip-from))
     (setf (.clips-from self) clips-from-serialized)))
 
-(defmethod undo ((self cmd-clips-d&d-move-from-sceen-matrix-to-arrangement) project)
+(defmethod undo ((self cmd-clips-dd-move-from-sceen-matrix-to-arrangement) project)
   (loop for clip-to in (.clips-to self)
         do (clip-delete (.lane clip-to) clip-to))
   (setf (.clips-from self)
@@ -352,7 +352,7 @@
               collect clip-from))
   (setf (.clips-to self) nil))
 
-(defmethod redo ((self cmd-clips-d&d-move-from-sceen-matrix-to-arrangement) project)
+(defmethod redo ((self cmd-clips-dd-move-from-sceen-matrix-to-arrangement) project)
   (loop for clip-from in (.clips-from self)
         for clip-to = (copy clip-from)
         for time-to in (.times-to self)
@@ -487,43 +487,43 @@
          (note (with-serialize-context () (deserialize (.note self)))))
     (note-delete clip note)))
 
-(defcommand cmd-notes-d&d-copy (command)
+(defcommand cmd-notes-dd-copy (command)
   ((notes :initarg :notes :accessor .notes)
    (note-ids :accessor .note-ids)
    (clip-id :initarg :clip-id :accessor .clip-id)))
 
-(defmethod initialize-instance :after ((self cmd-notes-d&d-copy) &key notes)
+(defmethod initialize-instance :after ((self cmd-notes-dd-copy) &key notes)
   (setf (.note-ids self) (mapcar #'.neko-id notes))
   (setf (.notes self) (with-serialize-context () (serialize notes))))
 
-(defmethod execute ((self cmd-notes-d&d-copy) project)
+(defmethod execute ((self cmd-notes-dd-copy) project)
   ;; ドラッグ中の表示が確定されるだけなので、何もしない。
   )
 
-(defmethod undo ((self cmd-notes-d&d-copy) project)
+(defmethod undo ((self cmd-notes-dd-copy) project)
   (loop with clip = (find-neko (.clip-id self))
         for note-id in (.note-ids self)
         for note = (find-neko note-id)
         do (note-delete clip note)))
 
-(defmethod redo ((self cmd-notes-d&d-copy) project)
+(defmethod redo ((self cmd-notes-dd-copy) project)
   (loop with clip = (find-neko (.clip-id self))
         for note in (with-serialize-context () (deserialize (.notes self)))
         do (note-add clip note)))
 
-(defcommand cmd-notes-d&d-move (command)
+(defcommand cmd-notes-dd-move (command)
   ((note-ids :initarg :notes :accessor .note-ids)
    (times-from :accessor .times-from)
    (times-to :initarg :times-to :accessor .times-to)
    (keys-from :accessor .keys-from)
    (keys-to :initarg :keys-to :accessor .keys-to)))
 
-(defmethod initialize-instance :after ((self cmd-notes-d&d-move) &key notes)
+(defmethod initialize-instance :after ((self cmd-notes-dd-move) &key notes)
   (setf (.times-from self) (mapcar #'.time notes))
   (setf (.keys-from self) (mapcar #'.key notes))
   (setf (.note-ids self) (mapcar #'.neko-id notes)))
 
-(defmethod execute ((self cmd-notes-d&d-move) project)
+(defmethod execute ((self cmd-notes-dd-move) project)
   (loop for note-id in (.note-ids self)
         for note = (find-neko note-id)
         for time-to in (.times-to self)
@@ -531,7 +531,7 @@
         do (setf (.time note) time-to)
            (setf (.key note) key-to)))
 
-(defmethod undo ((self cmd-notes-d&d-move) project)
+(defmethod undo ((self cmd-notes-dd-move) project)
   (loop for note-id in (.note-ids self)
         for note = (find-neko note-id)
         for time-from in (.times-from self)
@@ -669,16 +669,16 @@
 
 
 
-(defcommand cmd-range-d&d (command)
+(defcommand cmd-range-dd (command)
   ((clip :initarg :clip :accessor .clip)
    (range-src :initarg :range-src :accessor .range-src)
    (range-dst :initarg :range-dst :accessor .range-dst)
    (notes :accessor .notes)))
 
-(defcommand cmd-range-d&d-copy (cmd-range-d&d)
+(defcommand cmd-range-dd-copy (cmd-range-dd)
   ())
 
-(defmethod execute ((self cmd-range-d&d) project)
+(defmethod execute ((self cmd-range-dd) project)
   (let ((notes (range-copy (.clip self) (.range-src self))))
     (loop for note in notes
           with time-delta = (- (car (.range-dst self)) (car (.range-src self)))
@@ -688,14 +688,14 @@
              (note-add (.clip self) note))
     (setf (.notes self) notes)))
 
-(defmethod undo ((self cmd-range-d&d) project)
+(defmethod undo ((self cmd-range-dd) project)
   (loop for note in (.notes self)
         do (note-delete (.clip self) note)))
 
-(defcommand cmd-range-d&d-move (cmd-range-d&d)
+(defcommand cmd-range-dd-move (cmd-range-dd)
   ((notes-src-serialized :accessor .notes-src-serialized)))
 
-(defmethod execute ((self cmd-range-d&d-move) project)
+(defmethod execute ((self cmd-range-dd-move) project)
   ;; TODO
   (let* ((notes-src (loop for note in (.notes (.clip self))
                           if (in-p note (.range-src self))
@@ -707,7 +707,7 @@
     (setf (.notes-src-serialized self) notes-src-serialized))
   (call-next-method))
 
-(defmethod undo ((self cmd-range-d&d-move) project)
+(defmethod undo ((self cmd-range-dd-move) project)
   (call-next-method)
   (loop for note in (with-serialize-context ()
                       (deserialize (.notes-src-serialized self)))

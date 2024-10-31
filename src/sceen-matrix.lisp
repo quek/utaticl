@@ -21,7 +21,7 @@
                             (key-ctrl-p (eql t))
                             sceen)
   "sceen-matrix 内、または arrangement からのコピー"
-  (cmd-add *project* 'cmd-clips-d&d-copy
+  (cmd-add *project* 'cmd-clips-dd-copy
            :clips (loop for (clip sceen-start lane-start clip-from)
                           being the hash-value in (.clips-dragging sceen-matrix)
                             using (hash-key (sceen lane))
@@ -47,7 +47,7 @@
               collect sceen into sceens-to
               collect lane into lanes-to
               finally (return (values times-to sceens-to lanes-to)))
-      (cmd-add (.project sceen-matrix) 'cmd-clips-d&d-move
+      (cmd-add (.project sceen-matrix) 'cmd-clips-dd-move
                :clips (dd-src)
                :times-to times-to
                :sceens-to sceens-to
@@ -294,7 +294,7 @@
                             (sceen sceen)
                             (lane lane)
                             (key-ctrl-p (eql nil)))
-  (cmd-add *project* 'cmd-clips-d&d-move-from-arrangement-to-sceen-matrix
+  (cmd-add *project* 'cmd-clips-dd-move-from-arrangement-to-sceen-matrix
            :clips-from (dd-src)
            :sceen-to sceen
            :lane-from (.lane (dd-at))

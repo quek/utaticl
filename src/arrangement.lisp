@@ -154,14 +154,14 @@
                             (drag-mode (eql :move))
                             (key-ctrl-p (eql t))
                             sceen)
-  (cmd-add (.project self) 'cmd-clips-d&d-copy
+  (cmd-add (.project self) 'cmd-clips-dd-copy
            :clips (.clips-dragging self)))
 
 (defmethod handle-drag-end ((self arrangement)
                             (drag-mode (eql :move))
                             (key-ctrl-p (eql nil))
                             (sceen null))
-  (cmd-add (.project self) 'cmd-clips-d&d-move
+  (cmd-add (.project self) 'cmd-clips-dd-move
            :clips (.items (.selection-clip self))
            :times-to (mapcar #'.time (.clips-dragging self))
            :lanes-to (mapcar #'.lane (.clips-dragging self))
@@ -175,7 +175,7 @@
                             (key-ctrl-p (eql nil))
                             (sceen sceen))
   (cmd-add (.project self)
-           'cmd-clips-d&d-move-from-sceen-matrix-to-self
+           'cmd-clips-dd-move-from-sceen-matrix-to-self
            :clips-from (dd-src)
            :clips-to (.clips-dragging self)))
 

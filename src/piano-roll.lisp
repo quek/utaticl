@@ -119,8 +119,8 @@
               (loop for note in (.notes-dragging self)
                     do (note-delete (.clip self) note))
               (cmd-add (.project self) (if (key-ctrl-p)
-                                           'cmd-range-d&d-copy
-                                           'cmd-range-d&d-move)
+                                           'cmd-range-dd-copy
+                                           'cmd-range-dd-move)
                        :clip (.clip self)
                        :range-src (range-src-time-key self)
                        :range-dst (range-dst-time-key self))
@@ -130,12 +130,12 @@
                 (:move
                  (if (key-ctrl-p)
                      ;; 複製
-                     (cmd-add (.project self) 'cmd-notes-d&d-copy
+                     (cmd-add (.project self) 'cmd-notes-dd-copy
                               :notes (.notes-dragging self)
                               :clip-id (.neko-id (.clip self)))
                      ;; 移動
                      (progn
-                       (cmd-add (.project self) 'cmd-notes-d&d-move
+                       (cmd-add (.project self) 'cmd-notes-dd-move
                                 :notes (.notes-selected self)
                                 :times-to (mapcar #'.time (.notes-dragging self))
                                 :keys-to (mapcar #'.key (.notes-dragging self)))
