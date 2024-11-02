@@ -24,7 +24,7 @@
 (defvar *dd* (make-instance 'dd))
 
 (defclass selection ()
-  ((clicked-p :initform nil :accessor .clicked-p)
+  ((item-clicked :initform nil :accessor .item-clicked)
    (items :initform nil :accessor .items)))
 
 (defclass project (neko)

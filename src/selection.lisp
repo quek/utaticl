@@ -10,22 +10,22 @@
   (cond ((ig:is-mouse-clicked ig:+im-gui-mouse-button-left+)
          (if (key-ctrl-p)
              (progn
-               (setf (.clicked-p self) t)
+               (setf (.item-clicked self) nil)
                (if (include-p self item)
                    (erase self item)
                    (add self item)))
              (if (include-p self item)
-                 (setf (.clicked-p self) nil)
+                 (setf (.item-clicked self) item)
                  (progn
                    (erase-all self)
                    (add self item)))))
         ((ig:is-mouse-released ig:+im-gui-mouse-button-left+)
-         (cond ((not (.clicked-p self))
+         (cond ((eq (.item-clicked self) item)
                 (erase-all self)
                 (add self item))))))
 
 (defmethod mouse-released ((self selection))
-  (setf (.clicked-p self) nil))
+  (setf (.item-clicked self) nil))
 
 (defmethod erase ((self selection) item)
   (setf (.items self)
