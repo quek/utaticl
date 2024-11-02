@@ -118,10 +118,7 @@
 
 (defmethod handle-click ((self arrangement))
   (unless (.clip-at-mouse self)
-    (erase-all (.selection-clip self))
-    (let* ((time (max (world-y-to-time self (.y (ig:get-mouse-pos))) .0))
-           (time (time-grid-applied self time #'round)))
-      (setf (.play-start (.project self)) time))))
+    (erase-all (.selection-clip self))))
 
 (defmethod handle-double-click ((self arrangement))
   (unless (.clip-at-mouse self)
