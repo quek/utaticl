@@ -117,16 +117,11 @@
           (t :end))))
 
 (defmethod handle-click ((self arrangement))
-  (aif (.clip-at-mouse self)
-       (progn
-         ;; (setf (.clip-target self) it)
-         ;; (setf (.selected-p (.track (.lane it))) t)
-         (edit it (copy-list (.items (.selection-clip self)))))
-       (progn
-         (erase-all (.selection-clip self))
-         (let* ((time (max (world-y-to-time self (.y (ig:get-mouse-pos))) .0))
-                (time (time-grid-applied self time #'round)))
-           (setf (.play-start (.project self)) time)))))
+  (unless (.clip-at-mouse self)
+    (erase-all (.selection-clip self))
+    (let* ((time (max (world-y-to-time self (.y (ig:get-mouse-pos))) .0))
+           (time (time-grid-applied self time #'round)))
+      (setf (.play-start (.project self)) time))))
 
 (defmethod handle-double-click ((self arrangement))
   (unless (.clip-at-mouse self)
@@ -442,6 +437,7 @@
                    :visible-size (@- pos2-visible pos1-visible)
                    :if-at-mouse (lambda ()
                                   (when (ig:is-mouse-clicked ig:+im-gui-mouse-button-left+)
+                                    (edit clip (copy-list (.items (.selection-clip self))))
                                     (setf (.drag-mode self) (drag-mode self clip)))))
         (when (contain-p *mouse-pos* pos1-world pos2-world)
           (setf (.lane-at-mouse self) lane)
