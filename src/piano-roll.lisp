@@ -519,7 +519,7 @@
         for pos2 = (@+ pos1 (@ key-width
                                (coerce (* (.duration note) (.zoom-y self)) 'single-float)))
         for color-weight = (if (eq (.clip self) clip)
-                               1.0 0.5)
+                               1.0 0.4)
         do (ig:with-id (note)
              (ig:add-rect-filled draw-list
                                  (@+ pos1 (@ 2.0 .0))
