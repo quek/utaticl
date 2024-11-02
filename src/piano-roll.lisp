@@ -340,6 +340,8 @@
                    :execute-after (lambda (cmd)
                                     (setf (.notes-selected self)
                                           (.notes-undo cmd)))))))
+  (defshortcut (ig:+im-gui-key-x+)
+    (setf (.view-fit-request-p self) t))
   (shortcut-common (.project self)))
 
 (defmethod key-to-local-x ((self piano-roll) key)
@@ -468,7 +470,7 @@
             (loop for clip in (.clips self)
                   do (render-notes self clip))))
 
-        (swhen (.render-first-p self)
+        (swhen (.view-fit-request-p self)
           (setf it (view-fit self)))
 
         (handle-mouse self)))

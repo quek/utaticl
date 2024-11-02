@@ -163,7 +163,7 @@
                          :type (member :note :region nil))
    (range-selecting-pos1 :initform nil :accessor .range-selecting-pos1)
    (range-selecting-pos2 :initform nil :accessor .range-selecting-pos2)
-   (render-first-p :initform t :accessor .render-first-p)
+   (view-fit-request-p :initform t :accessor .view-fit-request-p)
    (project :initarg :project :accessor .project)
    (threshold-text-hide :initform 18.0 :accessor .threshold-text-hide))
   (:default-initargs :zoom-x 25.0 :zoom-y 60.0 :zoom-y-min 5.0
@@ -174,7 +174,7 @@
    (offset-x :initform 25.0 :accessor .offset-x)
    (offset-y :initform 30.0 :accessor .offset-y)
    (project :initarg :project :accessor .project)
-   (render-first-p :initform t :accessor .render-first-p)
+   (view-fit-request-p :initform t :accessor .view-fit-request-p)
    (clip :initarg :clip :initform nil :accessor .clip)
    (item-at-mouse :initform nil :accessor .item-at-mouse)
    (items-selected :initform nil :accessor .items-selected)

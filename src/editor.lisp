@@ -25,7 +25,7 @@
                               (@+ window-pos window-size))
             (render-body self)))
 
-        (swhen (.render-first-p self)
+        (swhen (.view-fit-request-p self)
           (setf it (view-fit self)))))
 
     (handle-shortcut self)))
