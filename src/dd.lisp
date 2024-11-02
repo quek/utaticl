@@ -46,15 +46,20 @@
 (defmethod dd-start-force (window src &optional at)
   (dd-start-force (list src) at))
 
-(defmethod dd-start-here-p (window src &key (check-hovered-p t))
+(defmethod dd-start-here-p (window src)
+  "端の方をドラッグした場合 is-item-hovered じゃなくなるので
+is-item-hovered はチェックしない"
   (and (null (dd-src))
-       (eq (.target *project*) src)
-       ;; 端の方をドラッグした場合 is-item-hovered じゃなくなるのでいらない
-       ;; (or (not check-hovered-p) (ig:is-item-hovered))
+       (eq (.target *dd*) src)
        (ig:is-mouse-dragging ig:+im-gui-mouse-button-left+)))
 
-(defmethod dd-start (window target &key (src target) at (check-hovered-p t))
-  (if (dd-start-here-p window target :check-hovered-p check-hovered-p)
+(defmethod dd-start (window target &key (src target) at)
+  (when (and (ig:is-mouse-clicked ig:+im-gui-mouse-button-left+))
+    (if (ig:is-item-hovered)
+        (setf (.target *dd*) target)
+        (when (eq (.target *dd*) target)
+          (setf (.target *dd*) nil))))
+  (if (dd-start-here-p window target)
       (progn
         (dd-start-force window src at)
         t)

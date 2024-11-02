@@ -162,4 +162,4 @@
                             *mouse-pos*)
              (when (ig:is-mouse-clicked ig:+im-gui-mouse-button-left+)
                (setf (.target *project*) param)))
-           (dd-start (.rack *project*) param :check-hovered-p nil)))
+           (dd-start (.rack *project*) param)))

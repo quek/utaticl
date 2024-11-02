@@ -18,7 +18,8 @@
 (defclass dd ()
   ((at :initform nil :accessor .at)
    (drop-p :initform nil :accessor .drop-p)
-   (src :initform nil :accessor .src)))
+   (src :initform nil :accessor .src)
+   (target :initform nil :accessor .target)))
 
 (defvar *dd* (make-instance 'dd))
 
@@ -55,8 +56,7 @@
    (selection-track :initform (make-instance 'selection)
                     :accessor .selection-track)
    (transposer :accessor .transposer)
-   (target-track :initform :nil :accessor .target-track)
-   (target :initform nil :accessor .target)))
+   (target-track :initform :nil :accessor .target-track)))
 
 (defclass show-mixin ()
   ((show-p :initarg :show-p :initform nil :accessor .show-p)))

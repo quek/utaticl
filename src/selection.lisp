@@ -1,10 +1,7 @@
 (in-package :utaticl.core)
 
 (defmethod add ((self selection) item)
-  (push item (.items self))
-  ;; 役割的にここじゃない気がするけど
-  ;; ここだと都合がいい
-  (setf (.target *project*) item))
+  (push item (.items self)))
 
 (defmethod add :after ((self selection) (item track))
   (setf (.target-track *project*) item))
