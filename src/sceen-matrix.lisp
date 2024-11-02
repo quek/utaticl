@@ -12,9 +12,7 @@
           thereis (and clip (.play-p clip) clip)))
 
 (defmethod enqueue ((sceen-matrix sceen-matrix) (clip clip))
-  (push clip (.queue sceen-matrix))
-  (unless (.play-p (.project sceen-matrix))
-    (setf (.play-p (.project sceen-matrix)) t)))
+  (push clip (.queue sceen-matrix)))
 
 (defmethod handle-drag-end ((sceen-matrix sceen-matrix)
                             drag-mode

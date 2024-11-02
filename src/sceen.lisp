@@ -27,7 +27,9 @@
                (declare (ignore acc))
                (let ((clip (gethash lane (.clips sceen))))
                  (when clip
-                   (enqueue (.sceen-matrix sceen) clip))))))
+                   (enqueue (.sceen-matrix sceen) clip)))))
+  (unless (.play-p *project*)
+    (setf (.play-p *project*) t)))
 
 (defmethod prepare-event ((sceen sceen) start end loop-p offset-samples)
   (loop for lane being the hash-key in (.clips sceen)
