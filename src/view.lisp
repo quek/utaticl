@@ -7,6 +7,12 @@
 (defmethod local-to-world ((self view) pos)
   (@+ pos *window-pos* (@ (- *scroll-x*) (- *scroll-y*))))
 
+(defmethod mouse-in-canvas-p ((self view))
+  (include-p (@@ (@+ *window-pos* (@ (.offset-x self) (.offset-y self)))
+                 (@+ *window-pos* *window-size*
+                     (@ (- *scrollbar-size*) (- *scrollbar-size*))))
+             *mouse-pos*))
+
 (defmethod rect-body ((self view))
   (@@ (@+ *window-pos* (@ (.offset-x self) (.offset-y self)))
       (@+ *window-pos* *window-size* (@ 0.0 (- *scrollbar-size*)))))

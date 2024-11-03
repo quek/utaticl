@@ -20,6 +20,16 @@
        (<= (.x point) (.x2 self))
        (<= (.y point) (.y2 self))))
 
+(defmethod overlap ((self rect-piano-roll) (note note))
+  (if (and (< (.x1 self) (time-end note))
+           (< (.time note) (.x2 self))
+           (<= (.y1 self) (.key note) (.y2 self)))
+      (@@ (max (.x1 self) (.time note))
+          (.key note)
+          (min (.x2 self) (time-end note))
+          (.key note))
+      nil))
+
 (defmethod print-object ((self rect) stream)
   (format stream "(~a ~a ~a ~a)" (.x1 self) (.y1 self) (.x2 self) (.y2 self)))
 

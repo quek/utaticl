@@ -558,9 +558,17 @@
         for note in (.notes self)
         do (note-add clip note)))
 
-(defcommand cmd-notes-duplicate (command)
+(defclass cmd-notes-duplicate-mixin ()
+  ((clip :initarg :clip :accessor .clip)
+   (notes-undo :accessor .notes-undo)))
+
+(defmethod undo ((self cmd-notes-duplicate-mixin) project)
+  (loop with clip = (.clip self)
+        for note in (.notes-undo self)
+        do (note-delete clip note)))
+
+(defcommand cmd-notes-duplicate (command cmd-notes-duplicate-mixin)
   ((notes :initarg :notes :accessor .notes)
-   (clip :initarg :clip :accessor .clip)
    (notes-undo :accessor .notes-undo)))
 
 (defmethod execute ((self cmd-notes-duplicate) project)
@@ -579,10 +587,19 @@
              (note-add clip note))
     (setf (.notes-undo self) notes)))
 
-(defmethod undo ((self cmd-notes-duplicate) project)
+(defcommand cmd-notes-duplicate-region (command cmd-notes-duplicate-mixin)
+  ((rect :initarg :rect :accessor .rect)))
+
+(defmethod execute ((self cmd-notes-duplicate-region) command)
+  (describe self)
   (loop with clip = (.clip self)
-        for note in (.notes-undo self)
-        do (note-delete clip note)))
+        for note in (.notes clip)
+        for overlap = (overlap (.rect self) note)
+        if overlap
+          collect (aprog1 (copy note)
+                    (setf (.time it) (.x1 overlap))
+                    (setf (.duration it) (- (.x2 overlap) (.x1 overlap)))
+                    (note-add clip it))))
 
 (defcommand cmd-notes-end-change (command)
   ((notes-id :initarg :notes :accessor .notes-id)

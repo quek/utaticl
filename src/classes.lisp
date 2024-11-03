@@ -10,10 +10,7 @@
    (max :initarg :max :initform (@ .0 .0) :accessor .max)))
 
 (defclass rect-piano-roll (rect)
-  ((x1 :initform .0 :initarg :time-start :accessor .time-start)
-   (y1 :initform .0 :initarg :key-start :accessor .key-start)
-   (x2 :initform .0 :initarg :time-end :accessor .time-end)
-   (y2 :initform .0 :initarg :key-end :accessor .key-end)))
+  ())
 
 (defclass dd ()
   ((at :initform nil :accessor .at)

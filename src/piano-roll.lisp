@@ -66,7 +66,8 @@
 (defmethod handle-drag-start ((self piano-roll))
   (cond ((key-alt-p)
          (setf (.range-selecting-mode self) :region)
-         (setf (.range-selecting-pos1 self) *mouse-pos*))
+         (setf (.range-selecting-pos1 self) *mouse-pos*)
+         (dd-start-force self *mouse-pos* *mouse-pos*))
         ((range-selecting-p self)
          ;; リージョンのドラッグ開始
          (setf (.range-dragging self)
@@ -83,8 +84,9 @@
          (setf (.drag-mode self) :move)
          (setf (.note-drag-offset self)
                (@- (.range-selecting-pos1 self) *mouse-pos*))
-         (dd-start-force self (mapcar #'copy (.notes-dragging self))
-                   *mouse-pos*))
+         (dd-start-force self
+                         (mapcar #'copy (.notes-dragging self))
+                         *mouse-pos*))
         ((.notes-selected self)
          ;; 選択ノートのドラッグ開始
          (progn
@@ -222,12 +224,13 @@
                          do (incf (.duration note) delta))))))))))
 
 (defmethod handle-mouse ((self piano-roll))
-  (when (can-handle-mouse-p self)
+  (when (mouse-in-canvas-p self)
     (let* ((io (ig:get-io)))
       (cond ((.notes-dragging self)
              (handle-dragging self))
-            ((.range-dragging self)
-             (handle-range-dragging self))
+            ;; TODO  range 内にマウスがあるかみたいな判定を追加して uncomment する
+            ;; ((.range-dragging self)
+            ;;  (handle-range-dragging self))
             ((.range-selecting-mode self)
              (handle-range-selecting self))
             ((ig:is-mouse-dragging ig:+im-gui-mouse-button-left+ 0.1)
@@ -242,13 +245,12 @@
       (zoom-y-update self io)))
 
   (when (range-selecting-p self)
-    (let ((draw-list (ig:get-window-draw-list)))
-      (multiple-value-bind (pos1 pos2)
-          (range-selecting-region self
-                                  (.range-selecting-pos1 self)
-                                  (.range-selecting-pos2 self))
-        (ig:add-rect-filled draw-list pos1 pos2
-                            (.color-selected-region *theme*)))))
+    (multiple-value-bind (pos1 pos2)
+        (range-selecting-region self
+                                (.range-selecting-pos1 self)
+                                (.range-selecting-pos2 self))
+      (ig:add-rect-filled *draw-list* pos1 pos2
+                          (.color-selected-region *theme*))))
 
   (when (can-handle-mouse-p self)
     (if (.notes-dragging self)
@@ -330,9 +332,8 @@
   (defshortcut (ig:+im-gui-key-d+)
     (if (range-selecting-p self)
         (cmd-add (.project self) 'cmd-notes-duplicate-region
-                 :pos1 (.range-selecting-pos1 self)
-                 :pos2 (.range-selecting-pos2 self)
-                 :notes (.notes-selected self))
+                 :clip (.clip self)
+                 :rect (range-dst self))
         (when (.notes-selected self)
           (cmd-add (.project self) 'cmd-notes-duplicate
                    :notes (.notes-selected self)
@@ -373,13 +374,15 @@
                  0d0))
            *scroll-y*))))
 
-(defmethod range-dst ((piano-roll piano-roll))
-  (let* ((pos-delta (@- *mouse-pos* (dd-at)))
-         (pos1 (@+ (.range-selecting-pos1 piano-roll) pos-delta))
-         (pos2 (@+ (.range-selecting-pos2 piano-roll) pos-delta)))
-    (multiple-value-bind (pos1-grid pos2-grid)
-        (range-selecting-region piano-roll pos1 pos2)
-      `(,@pos1-grid ,@pos2-grid))))
+(defmethod range-dst ((self piano-roll))
+  (if (.range-selecting-pos2 self)
+      (destructuring-bind (time1 key1 time2 key2)
+          (range-selecting-region-time-key self
+                                           (.range-selecting-pos2 self)
+                                           (.range-selecting-pos1 self))
+        (make-instance 'rect-piano-roll
+                       :min (@ key1 time1)
+                       :max (@ key2 time2)))))
 
 (defmethod range-dst-time-key ((piano-roll piano-roll))
   (let* ((pos-delta (@- *mouse-pos* (dd-at)))
@@ -456,6 +459,37 @@
                (setf (.notes-selected self) nil)))
     (ig:with-child ("##canvas" :window-flags ig:+im-gui-window-flags-horizontal-scrollbar+)
       (with-window-info (self)
+
+        (progn
+          (ig:set-cursor-pos (@ (+ 100.0 *scroll-x*) (+ 100.0 *scroll-y*)))
+          (ig:with-group
+            (ig:text (format nil "range-dst ~a" (range-dst self)))
+            (ig:text (format nil "~a" (and (.range-selecting-pos1 self)
+                                           (.range-selecting-pos2 self)
+                                           (multiple-value-bind (pos1 pos2)
+                                               (range-selecting-region self
+                                                                       (.range-selecting-pos1 self)
+                                                                       (.range-selecting-pos2 self))
+                                             (list pos1 pos2)))))
+            (ig:text (format nil "~a" (and (.range-selecting-pos1 self)
+                                           (.range-selecting-pos2 self)
+                                           (destructuring-bind (time1 key1 time2 key2)
+                                               (range-selecting-region-time-key self
+                                                                                (.range-selecting-pos1 self)
+                                                                                (.range-selecting-pos2 self))
+                                             (list key1 time1 key2 time2)
+                                             #+nil
+                                             (let* ((x1 (key-to-world-x self key1))
+                                                    (y1 (time-to-world-y self time1))
+                                                    (x2 (key-to-world-x self key2))
+                                                    (y2 (time-to-world-y self time2))
+                                                    (pos1 (@ x1 y1))
+                                                    (pos2 (@ x2 y2)))
+                                               (values pos1 pos2))))))
+            (ig:text (format nil "~a" (world-x-to-key self (.x *mouse-pos*)))))
+          (ig:set-cursor-pos (@ 0.0 0.0)))
+
+        
         (render-time-ruler self)
 
         (let ((window-pos (ig:get-window-pos))
@@ -473,8 +507,8 @@
         (swhen (.view-fit-request-p self)
           (setf it (view-fit self)))
 
-        (handle-mouse self)))
-    (handle-shortcut self)))
+        (handle-mouse self)
+        (handle-shortcut self)))))
 
 (defmethod render-keyboard ((self piano-roll))
   (loop with draw-list = (ig:get-window-draw-list)
@@ -572,6 +606,7 @@
     (values time key)))
 
 (defmethod world-x-to-key ((self piano-roll) x)
-  (let ((local-x (+ (- x (.x (ig:get-window-pos)) (.offset-x self))
-                    (ig:get-scroll-x))))
+  (let ((local-x (+ (- x (.x *window-pos*) (.offset-x self))
+                    *scroll-x*)))
     (floor (/ local-x (.zoom-x self)))))
+
