@@ -7,7 +7,7 @@
 (defmethod note-add ((self seq-note) (note note))
   (setf (.seq-note note) self)
   (setf (.notes self)
-        (sort (cons note (.notes self))
+        (sort (cons note (copy-list (.notes self)))
               (lambda (x y) (< (.time x) (.time y))))))
 
 (defmethod note-delete ((self seq-note) (note note))

@@ -333,7 +333,14 @@
     (if (range-selecting-p self)
         (cmd-add (.project self) 'cmd-notes-duplicate-region
                  :clip (.clip self)
-                 :rect (range-dst self))
+                 :rect (range-dst self)
+                 :execute-after (lambda (cmd)
+                                  (declare (ignore cmd))
+                                  ;; TODO ずれる
+                                  (let ((delta (abs (- (.y (.range-selecting-pos2 self))
+                                                       (.y (.range-selecting-pos1 self))))))
+                                    (incf (.y (.range-selecting-pos1 self)) delta)
+                                    (incf (.y (.range-selecting-pos2 self)) delta))))
         (when (.notes-selected self)
           (cmd-add (.project self) 'cmd-notes-duplicate
                    :notes (.notes-selected self)

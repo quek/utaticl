@@ -48,5 +48,5 @@
 (defmethod .width ((self rect))
   (- (.x2 self) (.x1 self)))
 
-(defmethod height ((self rect))
+(defmethod .height ((self rect))
   (- (.y2 self) (.y1 self)))
