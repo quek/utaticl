@@ -588,18 +588,18 @@
     (setf (.notes-undo self) notes)))
 
 (defcommand cmd-notes-duplicate-region (command cmd-notes-duplicate-mixin)
-  ((rect :initarg :rect :accessor .rect)))
+  ((region :initarg :region :accessor .region)))
 
 (defmethod execute ((self cmd-notes-duplicate-region) command)
   (setf (.notes-undo self)
         (loop with clip = (.clip self)
-              with rect = (.rect self)
+              with region = (.region self)
               for note in (.notes clip)
-              for overlap = (overlap rect note)
+              for overlap = (overlap region note)
               if overlap
                 collect (aprog1 (copy note)
-                          ;; TODO rect からはみ出た部分を縮める
-                          (incf (.time it) (.height rect))
+                          ;; TODO region からはみ出た部分を縮める
+                          (incf (.time it) (.height region))
                           (note-add clip it)))))
 
 (defcommand cmd-notes-end-change (command)
