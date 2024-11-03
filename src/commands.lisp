@@ -593,11 +593,12 @@
 (defmethod execute ((self cmd-notes-duplicate-region) command)
   (describe self)
   (loop with clip = (.clip self)
+        with rect = (.rect self)
         for note in (.notes clip)
-        for overlap = (overlap (.rect self) note)
+        for overlap = (overlap rect note)
         if overlap
           collect (aprog1 (copy note)
-                    (setf (.time it) (.x1 overlap))
+                    (incf (.time it) (- (.y2 rect) (.y1 rect)))
                     (setf (.duration it) (- (.x2 overlap) (.x1 overlap)))
                     (note-add clip it))))
 

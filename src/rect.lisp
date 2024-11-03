@@ -21,12 +21,12 @@
        (<= (.y point) (.y2 self))))
 
 (defmethod overlap ((self rect-piano-roll) (note note))
-  (if (and (< (.x1 self) (time-end note))
-           (< (.time note) (.x2 self))
-           (<= (.y1 self) (.key note) (.y2 self)))
-      (@@ (max (.x1 self) (.time note))
+  (if (and (<= (.x1 self) (.key note) (.x2 self))
+           (< (.y1 self) (time-end note))
+           (< (.time note) (.y2 self)))
+      (@@ (max (.y1 self) (.time note))
           (.key note)
-          (min (.x2 self) (time-end note))
+          (min (.y2 self) (time-end note))
           (.key note))
       nil))
 
