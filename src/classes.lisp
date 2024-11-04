@@ -377,7 +377,8 @@
   ())
 
 (defclass module-fader (module-builtin)
-  ()
+  ((value-max0 :initform 0.0 :accessor .value-max0)
+   (value-max1 :initform 0.0 :accessor .value-max1))
   (:default-initargs :id 'module-fader :name "Fader"
                      :audio-input-bus-count 1
                      :audio-output-bus-count 1))

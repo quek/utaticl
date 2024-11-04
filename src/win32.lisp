@@ -24,6 +24,30 @@
 
 (sb-ext:defglobal *registered-class* nil)
 
+(defun window-styles ()
+  (logior ftw::+ws-caption+
+          ftw::+ws-sysmenu+
+          ftw::+ws-clipchildren+
+          ftw::+ws-clipsiblings+))
+
+(defun window-styles-resizable ()
+  (logior (window-styles)
+          ftw::+ws-sizebox+
+          ftw::+ws-maximizebox+
+          ftw::+ws-minimizebox+))
+
+(defun compute-window-size (width height styles)
+  (let ((ex-styles ftw::+ws-ex-appwindow+))
+    (cffi:with-foreign-objects ((rect '(:struct ftw::rect)))
+      (ftw:rect-foreign (ftw:make-rect :left 0 :top 0
+                                       :right width :bottom height)
+                        rect)
+      (adjust-window-rect-ex rect styles 0 ex-styles)
+      (let* ((rect (ftw:foreign-rect rect (ftw:make-rect)))
+             (width (- (ftw:rect-right rect) (ftw:rect-left rect)))
+             (height (- (ftw:rect-bottom rect) (ftw:rect-top rect))))
+        (values width height)))))
+
 (defun make-window (width height resizable title)
   (unless *registered-class*
     (setf *registered-class*
@@ -31,32 +55,19 @@
                               :styles ftw::+cs-dblclks+)))
 
   (let ((ex-styles ftw::+ws-ex-appwindow+)
-        (styles (logior ftw::+ws-overlapped+
-                        ftw::+ws-caption+
-                        ftw::+ws-sysmenu+
-                        ftw::+ws-clipsiblings+)))
-    (when resizable
-      (setf styles (logior styles
-                           ftw::+ws-sizebox+
-                           ftw::+ws-maximizebox+
-                           ftw::+ws-minimizebox+)))
-
-    (cffi:with-foreign-objects ((rect '(:struct ftw::rect)))
-      (ftw:rect-foreign (ftw:make-rect :left 0 :top 0 :right width :bottom height)
-                        rect)
-      (adjust-window-rect-ex rect styles 0 ex-styles)
-
-      (let* ((rect (ftw:foreign-rect rect (ftw:make-rect)))
-             (height (- (ftw:rect-bottom rect) (ftw:rect-top rect)))
-             (width (- (ftw:rect-right rect) (ftw:rect-left rect)))
-             (hwnd (ftw:create-window "Plugin Editor"
-                                      :window-name title
-                                      :ex-styles ex-styles
-                                      :styles styles
-                                      :height height
-                                      :width width
-                                      ;; エディタウインドが前面にとどまるように
-                                      :parent utaticl.core:*hwnd*)))
+        (styles (if resizable
+                    (window-styles-resizable)
+                    (window-styles))))
+    (multiple-value-bind (width height)
+        (compute-window-size width height styles)
+      (let ((hwnd (ftw:create-window "Plugin Editor"
+                                     :window-name title
+                                     :ex-styles ex-styles
+                                     :styles styles
+                                     :height height
+                                     :width width
+                                     ;; エディタウインドが前面にとどまるように
+                                     :parent utaticl.core:*hwnd*)))
         (show hwnd)
         hwnd))))
 
@@ -67,18 +78,12 @@
                  (= height (- (ftw:rect-bottom client-rect)
                               (ftw:rect-top client-rect))))
       (let ((window-info (ftw:get-window-info hwnd)))
-        (cffi:with-foreign-objects ((rect '(:struct ftw::rect)))
-          (ftw:rect-foreign (ftw:make-rect :left 0 :top 0 :right width :bottom height)
-                            rect)
-          (adjust-window-rect-ex rect
-                                 (ftw:info-style window-info)
-                                 0
-                                 (ftw:info-ex-style window-info))
-          (let ((rect (ftw:foreign-rect rect (ftw:make-rect))))
-            (ftw:set-window-pos hwnd :top 0 0
-                                (- (ftw:rect-right rect) (ftw:rect-left rect))
-                                (- (ftw:rect-bottom rect) (ftw:rect-top rect))
-                                '(:no-move :no-copy-bits :no-activate))))))))
+        (multiple-value-bind (width height)
+            (compute-window-size width height (ftw:info-style window-info))
+          (ftw:set-window-pos hwnd :top 0 0
+                              width
+                              height
+                              '(:no-move :no-copy-bits :no-activate)))))))
 
 (defun show (hwnd)
   (ftw:show-window hwnd :show-normal))

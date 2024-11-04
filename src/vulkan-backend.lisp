@@ -375,7 +375,7 @@
     (autowrap:with-alloc (glyph-ranges 'ig:im-wchar 3)
       (sdl2:with-init (:video :timer)
         (sdl2:with-window (window :title "UTATICL"
-                                  :x 10 :y 40
+                                  :x 0 :y 30
                                   :w 1600 :h 1200
                                   :flags '(:vulkan :resizable :allow-highdpi))
           ;; 一度 hide しないと表示されない

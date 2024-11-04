@@ -466,37 +466,6 @@
                (setf (.notes-selected self) nil)))
     (ig:with-child ("##canvas" :window-flags ig:+im-gui-window-flags-horizontal-scrollbar+)
       (with-window-info (self)
-
-        (progn
-          (ig:set-cursor-pos (@ (+ 100.0 *scroll-x*) (+ 100.0 *scroll-y*)))
-          (ig:with-group
-            (ig:text (format nil "range-dst ~a" (range-dst self)))
-            (ig:text (format nil "~a" (and (.range-selecting-pos1 self)
-                                           (.range-selecting-pos2 self)
-                                           (multiple-value-bind (pos1 pos2)
-                                               (range-selecting-region self
-                                                                       (.range-selecting-pos1 self)
-                                                                       (.range-selecting-pos2 self))
-                                             (list pos1 pos2)))))
-            (ig:text (format nil "~a" (and (.range-selecting-pos1 self)
-                                           (.range-selecting-pos2 self)
-                                           (destructuring-bind (time1 key1 time2 key2)
-                                               (range-selecting-region-time-key self
-                                                                                (.range-selecting-pos1 self)
-                                                                                (.range-selecting-pos2 self))
-                                             (list key1 time1 key2 time2)
-                                             #+nil
-                                             (let* ((x1 (key-to-world-x self key1))
-                                                    (y1 (time-to-world-y self time1))
-                                                    (x2 (key-to-world-x self key2))
-                                                    (y2 (time-to-world-y self time2))
-                                                    (pos1 (@ x1 y1))
-                                                    (pos2 (@ x2 y2)))
-                                               (values pos1 pos2))))))
-            (ig:text (format nil "~a" (world-x-to-key self (.x *mouse-pos*)))))
-          (ig:set-cursor-pos (@ 0.0 0.0)))
-
-        
         (render-time-ruler self)
 
         (let ((window-pos (ig:get-window-pos))
