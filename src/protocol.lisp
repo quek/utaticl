@@ -1,5 +1,7 @@
 (in-package :utaticl.core)
 
+(defgeneric change (self &rest values))
+
 (defgeneric prepare (self)
   (:method ((self list))
     (loop for x in self

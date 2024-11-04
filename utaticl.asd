@@ -71,6 +71,7 @@
    (:file "module-clap")
    (:file "module-vst3")
    (:file "module-builtin")
+   (:file "peak-meter")
    (:file "module-fader")
    (:file "module-gain")
    (:file "module-track-mixin")

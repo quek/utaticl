@@ -376,9 +376,14 @@
 (defclass module-builtin (module)
   ())
 
+(defclass peak-meter ()
+  ((values :initform (list 0.0 0.0) :accessor .values)
+   (ats :initform (list (get-internal-real-time) (get-internal-real-time))
+        :accessor .ats)))
+
 (defclass module-fader (module-builtin)
-  ((value-max0 :initform 0.0 :accessor .value-max0)
-   (value-max1 :initform 0.0 :accessor .value-max1))
+  ((peak-meter :initform (make-instance 'peak-meter)
+               :accessor .peak-meter))
   (:default-initargs :id 'module-fader :name "Fader"
                      :audio-input-bus-count 1
                      :audio-output-bus-count 1))
