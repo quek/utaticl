@@ -16,10 +16,14 @@
 
 (defmethod process-after ((self peak-meter))
   (loop for i from 0
-        for avg-tmp in (.avgs-tmp self)
+        for avg in (.avgs self)
+        for $avg-tmp in (.avgs-tmp self)
+        for avg-tmp = (/ $avg-tmp (.frames-per-buffer *config*))
         do (setf (nth i (.avgs self))
-                 (+ (* (nth i (.avgs self)) 0.8)
-                    (* (/ avg-tmp (.frames-per-buffer *config*)) 0.2)))))
+                 (if (< avg avg-tmp)
+                     avg-tmp
+                     (+ (* avg 0.98)
+                        (* avg-tmp 0.02))))))
 
 (defmethod render ((self peak-meter))
   (loop for value in (.values self)
@@ -29,9 +33,8 @@
         for i from 0
         do (ig:slider-float label value 0.0 1.0)
            (ig:slider-float label avg 0.0 1.0)
-           (ig:text (format nil "~,3f ~a"
-                            value
-                            at))
         if (< (* internal-time-units-per-second 1)
               (- (get-internal-real-time) at))
-          do (setf (nth i (.values self)) (max 0.0 (- value 0.003)))))
+          do (setf (nth i (.values self))
+                   ;; こっちはリニアに下がった方がよさそう
+                   (max 0.0 (- value 0.003)))))
