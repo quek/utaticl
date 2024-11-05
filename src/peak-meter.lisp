@@ -31,12 +31,21 @@
         for label in '("L" "R")
         for avg in (.avgs self)
         for i from 0
-        for value-db = (to-db-float value)
-        for avg-db = (to-db-float avg)
-        do (ig:slider-float label value-db +min-db-float+ 6.0)
-           (ig:slider-float label avg-db +min-db-float+ 6.0)
+        for value-db = (%peak-meter-db-to-normalized (to-db-float value))
+        for avg-db = (%peak-meter-db-to-normalized (to-db-float avg))
+        do (ig:slider-float label value-db 0.0 1.0)
+           (ig:slider-float label avg-db 0.0 1.0)
         if (< (* internal-time-units-per-second 1)
               (- (get-internal-real-time) at))
           do (setf (nth i (.values self))
                    ;; こっちはリニアに下がった方がよさそう
                    (max 0.0 (- value 0.003)))))
+
+(defun %peak-meter-db-to-normalized (db)
+  "最大が 6db 最小が -90db"
+  (let ((normalized (/ (+ db 90.0) 96.0)))
+    (if (< normalized 0.0)
+        0.0
+        (if (> normalized 1.0)
+            1.0
+            normalized))))
