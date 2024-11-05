@@ -31,8 +31,10 @@
         for label in '("L" "R")
         for avg in (.avgs self)
         for i from 0
-        do (ig:slider-float label value 0.0 1.0)
-           (ig:slider-float label avg 0.0 1.0)
+        for value-db = (to-db-float value)
+        for avg-db = (to-db-float avg)
+        do (ig:slider-float label value-db +min-db-float+ 6.0)
+           (ig:slider-float label avg-db +min-db-float+ 6.0)
         if (< (* internal-time-units-per-second 1)
               (- (get-internal-real-time) at))
           do (setf (nth i (.values self))

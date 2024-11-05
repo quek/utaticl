@@ -20,5 +20,16 @@
   (src :pointer)
   (size :size))
 
+(defconstant +min-db+ -180d0)
+(defconstant +min-db-float+ -180.0)
+
+(defun to-db (value)
+  (if (zerop value)
+      +min-db+
+      (* 20.0d0 (log (abs value) 10))))
+
+(defun to-db-float (value)
+  (coerce (to-db value) 'single-float))
+
 (defun uid ()
   (princ-to-string (uuid:make-v4-uuid)))
