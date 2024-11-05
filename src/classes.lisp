@@ -377,7 +377,9 @@
   ())
 
 (defclass peak-meter ()
-  ((values :initform (list 0.0 0.0) :accessor .values)
+  ((avgs :initform (list 0.0 0.0) :accessor .avgs)
+   (avgs-tmp :initform (list 0.0 0.0) :accessor .avgs-tmp)
+   (values :initform (list 0.0 0.0) :accessor .values)
    (ats :initform (list (get-internal-real-time) (get-internal-real-time))
         :accessor .ats)))
 

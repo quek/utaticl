@@ -6,6 +6,12 @@
   (param-add self (make-instance 'param :id 'solo :name "Solo" :value .0d0))
   (param-add self (make-instance 'param :id 'volume :name "Volume" :value 1.0d0)))
 
+(defmethod process :before ((self module-fader))
+  (process-before (.peak-meter self)))
+
+(defmethod process :after ((self module-fader))
+  (process-after (.peak-meter self)))
+
 (defmethod process-sample ((self module-fader) sample0 sample1)
   (let ((value0 (coerce (* sample0
                            (.value (param self 'volume))
