@@ -18,9 +18,15 @@
                                                4) ;"CMD-" を削除
                             if (fuzzy= name (.query self))
                               collect (cons class name)))
-             (classes (sort classes #'string<
-                            :key (lambda (x)
-                                   (symbol-name (class-name (car x)))))))
+             (classes (sort classes #'(lambda (a b)
+                                        (let ((name-a (cdr a))
+                                              (name-b (cdr b)))
+                                          (cond ((string-equal name-a (.query self))
+                                                 t)
+                                                ((string-equal name-b (.query self))
+                                                 nil)
+                                                (t
+                                                 (string< name-a name-b))))))))
         (loop for (class . name) in classes
               do (if run
                      (progn
