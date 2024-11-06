@@ -19,7 +19,7 @@
                 do (when (ig:button "+")
                      (open-plugin-selector (.plugin-selector self)))
                    (ig:same-line)
-              do (ig:with-group (render module))
+              do (ig:with-group (render-in module self))
                  (ig:same-line))
 
         (render (.plugin-selector self))

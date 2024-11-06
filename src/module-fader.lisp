@@ -26,20 +26,23 @@
     (change (.peak-meter self) value0 value1)
     (values value0 value1)))
 
-(defmethod render ((self module-fader))
-  (render (.peak-meter self))
-  (ig:drag-scalar "Vol"
-                  ig:+im-gui-data-type-double+
-                  (.value (param self 'volume))
-                  :speed .01
-                  :min .0d0
-                  :max 1.0d0
-                  :format "%.2f")
-  (ig:drag-scalar "Pan"
-                  ig:+im-gui-data-type-double+
-                  (.value (param self 'pan))
-                  :speed .01
-                  :min .0d0
-                  :max 1.0d0
-                  :format "%.2f"))
+(defmethod render-in ((self module-fader) (rack rack) &key)
+  (ig:with-group
+    (render-in (.peak-meter self) rack))
+  (ig:same-line)
+  (ig:with-group
+    (ig:drag-scalar "Vol"
+                    ig:+im-gui-data-type-double+
+                    (.value (param self 'volume))
+                    :speed .01
+                    :min .0d0
+                    :max 1.0d0
+                    :format "%.2f")
+    (ig:drag-scalar "Pan"
+                    ig:+im-gui-data-type-double+
+                    (.value (param self 'pan))
+                    :speed .01
+                    :min .0d0
+                    :max 1.0d0
+                    :format "%.2f")))
 

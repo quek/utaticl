@@ -25,21 +25,45 @@
                      (+ (* avg 0.98)
                         (* avg-tmp 0.02))))))
 
-(defmethod render ((self peak-meter))
-  (loop for value in (.values self)
-        for at in (.ats self)
-        for label in '("L" "R")
-        for avg in (.avgs self)
-        for i from 0
-        for value-db = (%peak-meter-db-to-normalized (to-db-float value))
-        for avg-db = (%peak-meter-db-to-normalized (to-db-float avg))
-        do (ig:slider-float label value-db 0.0 1.0)
-           (ig:slider-float label avg-db 0.0 1.0)
-        if (< (* internal-time-units-per-second 1)
-              (- (get-internal-real-time) at))
-          do (setf (nth i (.values self))
-                   ;; こっちはリニアに下がった方がよさそう
-                   (max 0.0 (- value 0.003)))))
+(defmethod render-in ((self peak-meter) (rack rack) &key)
+  (let* ((size (@ 21.0 (- (.y *window-size*) *scrollbar-size*
+                          (plus-c:c-ref *style* ig:im-gui-style :item-spacing :y))))
+         (cursor-pos (ig:get-cursor-pos))
+         (pos1 (local-to-world rack cursor-pos))
+         (pos2 (@+ pos1 size)))
+    (ig:invisible-button "##" size)
+    (ig:add-rect-filled *draw-list* pos1 pos2 (color #x03 #x03 #x03 #x80))
+    (loop for value in (.values self)
+          for at in (.ats self)
+          for avg in (.avgs self)
+          for i from 0
+          for peak-normalized = (%peak-meter-db-to-normalized (to-db-float value))
+          for avg-normalized = (%peak-meter-db-to-normalized (to-db-float avg))
+          do (let* ((p1 (@+ pos1 (@ (+ (* (/ (.x size) 2) i) (* 1.0 i))
+                                    (* (.y size) (- 1.0 avg-normalized)))))
+                    (p2 (@+ p1 (@ (/ (.x size) 2) (.y size)))))
+               (ig:add-rect-filled *draw-list* p1 p2 (color #x00 #xff #x00 #x80)))
+             (let* ((p1 (@+ pos1 (@ (+ (* (/ (.x size) 2) i) (* 1.0 i))
+                                    (* (.y size) (- 1.0 peak-normalized)))))
+                    (p2 (@+ p1 (@ (/ (.x size) 2) 3.0))))
+               (ig:add-rect-filled *draw-list* p1 p2 (color #xff #xff #x00 #xcc)))
+
+          if (< (* internal-time-units-per-second 1)
+                (- (get-internal-real-time) at))
+            do (setf (nth i (.values self))
+                     ;; こっちはリニアに下がった方がよさそう
+                     (max 0.0 (- value 0.003)))))
+
+  (ig:same-line)
+  (ig:with-group
+    (loop for value in (.values self)
+          for at in (.ats self)
+          for label in '("L" "R")
+          for avg in (.avgs self)
+          for i from 0
+          for peak-db = (to-db-float value)
+          for avg-db = (to-db-float avg)
+          do (ig:text (format nil "~a ~,2fdb ~,2fdb" label peak-db avg-db)))))
 
 (defun %peak-meter-db-to-normalized (db)
   "最大が 6db 最小が -90db"

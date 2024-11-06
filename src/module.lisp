@@ -93,7 +93,7 @@
 (defmethod .project ((self module))
   (.project (.track self)))
 
-(defmethod render ((module module))
+(defmethod render-in ((module module) (view rack) &key)
   (ig:with-id (module)
     (when (ig:button (.name module))
       (if (.editor-open-p module)
