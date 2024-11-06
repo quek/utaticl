@@ -73,9 +73,16 @@
 
     ;; 以下デバッグ
     (ig:set-cursor-pos (@+ cursor-pos (@ 25.0 0.0)))
-    (ig:text (format nil "~a ~a"
-                     (to-db-float 0.0)
-                     (%peak-meter-db-to-normalized -180.0)))))
+    (ig:text (format nil "~,3f ~,3f ~,3f"
+                     (car (.values self))
+                     (to-db-float (car (.values self)))
+                     (%peak-meter-db-to-normalized (to-db-float (car (.values self))))))
+    (ig:set-cursor-pos (@+ cursor-pos (@ 25.0 20.0)))
+    (ig:text (format nil "~,3f ~,3f ~,3f"
+                     (car (.avgs self))
+                     (to-db-float (car (.avgs self)))
+                     (%peak-meter-db-to-normalized (to-db-float (car (.values self))))))
+    ))
 
 (defun %peak-meter-db-to-normalized (db)
   "最大が 6db 最小が -180db"
@@ -84,4 +91,5 @@
                                 +min-db-float+))
                           7.0)))        ;適当なメモリの間隔
     (min 1.0 (max 0.0 normalized))))
+
 
