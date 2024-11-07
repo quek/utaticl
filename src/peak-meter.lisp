@@ -77,16 +77,23 @@
                         (@ 20.0 (.y size))
                         ig:+im-gui-data-type-double+
                         (.value (param fader 'volume))
-                        0.0d0 1.0d0)
+                        0.0d0 1.0d0
+                        :format (format nil "~,2f" (to-db (* (expt (.value (param fader 'volume))
+                                                                   3.10628)
+                                                             2.0))))
+    (when (and (ig:is-item-hovered)
+               (ig:is-mouse-clicked ig:+im-gui-mouse-button-right+))
+      (setf (.value (param fader 'volume)) 0.8d0))
     (ig:set-cursor-pos (@+ cursor-pos (@ 50.0 0.0)))
     (ig:text (format nil "~,3f ~,3f ~,3f"
                      (* (expt (.value (param fader 'volume))
                               3.10628)
                         2.0)
-                     (expt (* (.value (param fader 'volume))
-                              6.5)
-                           7.0)
-                     (%peak-meter-db-to-normalized (to-db (.value (param fader 'volume))))))
+                     (%peak-meter-db-to-normalized (to-db (.value (param fader 'volume))))
+                     (expt (.value (param fader 'volume)) 1/7)
+                     #+nil
+                     (/ (expt 10 (expt (.value (param fader 'volume)) 1/7))
+                        20)))
     ;; 以下デバッグ
     (ig:set-cursor-pos (@+ cursor-pos (@ 50.0 20.0)))
     (ig:text (format nil "~,3f ~,3f ~,3f"
@@ -108,4 +115,14 @@
                           7.0)))        ;適当なメモリの間隔
     (min 1.0 (max 0.0 normalized))))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(expt 2 3)
+;;⇒ 8
+(expt 8 1/3)
+;;⇒ 2.0
+
+(log 0.2 10)
+;;⇒ -0.69897
+(expt 10 -0.69897)
+;;⇒ 0.19999999
 
