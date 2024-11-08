@@ -71,12 +71,15 @@
              (ig:add-line *draw-list* p1 p2 (color #xff #xff #xff))
              (ig:text (format nil "~3d" db)))))
 
+(defparameter *meter-expt* 6.29 "適当なメモリの間隔")
+(defparameter *meter-max-db* 6.5 "最大 6db + 余白 0.5")
+(defparameter *meter-min-db* +min-db-float+)
+
 (defun %volume-meter-db-to-normalized (db)
   "最大が 6db 最小が -180db"
-  (let ((normalized (expt (/ (- db +min-db-float+)
-                             (- 6.5     ;最大 6db + 余白 0.5
-                                +min-db-float+))
-                          7.0)))        ;適当なメモリの間隔
+  (let ((normalized (expt (/ (- db *meter-min-db*)
+                             (- *meter-max-db* *meter-min-db*))
+                          *meter-expt*)))
     (min 1.0 (max 0.0 normalized))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

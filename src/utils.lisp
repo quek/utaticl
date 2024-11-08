@@ -28,6 +28,9 @@
       +min-db+
       (* 20.0d0 (log (abs value) 10))))
 
+(defun from-db (db)
+  (expt 10 (/ db 20.0d0)))
+
 (defun to-db-float (value)
   (coerce (to-db value) 'single-float))
 
