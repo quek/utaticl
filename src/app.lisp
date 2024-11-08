@@ -59,7 +59,6 @@
 
 (defmethod render ((app app))
   (let* ((*mouse-pos* (ig:get-mouse-pos))
-         (*draw-list* (ig:get-window-draw-list))
          (*style* (ig:get-style))
          (*scrollbar-size* (plus-c:c-ref *style* ig:im-gui-style :scrollbar-size))
          (*item-spacing-x* (plus-c:c-ref *style* ig:im-gui-style :item-spacing :x))

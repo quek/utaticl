@@ -172,5 +172,6 @@
      (setf *scroll-y* (ig:get-scroll-y))
      (setf *zoom-x* (.zoom-x ,self))
      (setf *zoom-y* (.zoom-y ,self))
+     (setf *draw-list* (ig:get-window-draw-list))
      (setf *rect-body* (rect-body ,self))
      ,@body))
