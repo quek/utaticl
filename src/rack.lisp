@@ -8,19 +8,18 @@
   (ig:with-begin ("##rack" :flags ig:+im-gui-window-flags-no-scrollbar+)
     (ig:with-child ("##canvas" :window-flags ig:+im-gui-window-flags-horizontal-scrollbar+)
       (with-window-info (self)
-        (loop for module in (.modules (.target-track (.project self)))
-              with first-p = t
-              if first-p
-                do (setf first-p nil)
-              else
-                do (ig:same-line)
-              end
-              if (typep module 'module-fader-track)
-                do (when (ig:button "+")
-                     (open-plugin-selector (.plugin-selector self)))
-                   (ig:same-line)
+        (let ((fader (find-if (lambda (x) (typep x 'module-fader-track))
+                              (.modules (.target-track *project*)))))
+          (render-in fader self))
+        (ig:same-line)
+        (loop for module in (.modules (.target-track *project*))
+              unless (typep module 'module-fader-track)
               do (ig:with-group (render-in module self))
                  (ig:same-line))
+        (when (ig:button "+" (@ 0.0 (- (.y *window-size*)
+                                       *item-spacing-y*
+                                       *scrollbar-size*)))
+          (open-plugin-selector (.plugin-selector self)))
 
         (render (.plugin-selector self))
 
