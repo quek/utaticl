@@ -27,7 +27,7 @@
 
 (defmethod render-in ((self peak-meter) (rack rack) &key fader)
   (let* ((size (@ 21.0 (- (.y *window-size*) *scrollbar-size*
-                          (* 2 (plus-c:c-ref *style* ig:im-gui-style :item-spacing :y)))))
+                          (plus-c:c-ref *style* ig:im-gui-style :item-spacing :y))))
          (cursor-pos (ig:get-cursor-pos))
          (pos1 (local-to-world rack cursor-pos))
          (pos2 (@+ pos1 size)))
@@ -74,7 +74,7 @@
     ;; おためし
     (ig:set-cursor-pos (@+ cursor-pos (@ 25.0 0.0)))
     (ig:v-slider-scalar "##"
-                        (@ 20.0 (.y size))
+                        (@ 22.0 (.y size))
                         ig:+im-gui-data-type-double+
                         (.value (param fader 'volume))
                         0.0d0 1.0d0
@@ -83,29 +83,7 @@
                                                              2.0))))
     (when (and (ig:is-item-hovered)
                (ig:is-mouse-clicked ig:+im-gui-mouse-button-right+))
-      (setf (.value (param fader 'volume)) 0.8d0))
-    (ig:set-cursor-pos (@+ cursor-pos (@ 50.0 0.0)))
-    (ig:text (format nil "~,3f ~,3f ~,3f"
-                     (* (expt (.value (param fader 'volume))
-                              3.10628)
-                        2.0)
-                     (%peak-meter-db-to-normalized (to-db (.value (param fader 'volume))))
-                     (expt (.value (param fader 'volume)) 1/7)
-                     #+nil
-                     (/ (expt 10 (expt (.value (param fader 'volume)) 1/7))
-                        20)))
-    ;; 以下デバッグ
-    (ig:set-cursor-pos (@+ cursor-pos (@ 50.0 20.0)))
-    (ig:text (format nil "~,3f ~,3f ~,3f"
-                     (car (.values self))
-                     (to-db-float (car (.values self)))
-                     (%peak-meter-db-to-normalized (to-db-float (car (.values self))))))
-    (ig:set-cursor-pos (@+ cursor-pos (@ 50.0 40.0)))
-    (ig:text (format nil "~,3f ~,3f ~,3f"
-                     (car (.avgs self))
-                     (to-db-float (car (.avgs self)))
-                     (%peak-meter-db-to-normalized (to-db-float (car (.values self))))))
-    ))
+      (setf (.value (param fader 'volume)) 0.8d0))))
 
 (defun %peak-meter-db-to-normalized (db)
   "最大が 6db 最小が -180db"

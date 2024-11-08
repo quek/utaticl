@@ -34,18 +34,11 @@
     (render-in (.peak-meter self) rack :fader self))
   (ig:same-line)
   (ig:with-group
-    (ig:drag-scalar "Vol"
-                    ig:+im-gui-data-type-double+
-                    (.value (param self 'volume))
-                    :speed .01
-                    :min .0d0
-                    :max 1.0d0
-                    :format "%.2f")
-    (ig:drag-scalar "Pan"
-                    ig:+im-gui-data-type-double+
-                    (.value (param self 'pan))
-                    :speed .01
-                    :min .0d0
-                    :max 1.0d0
-                    :format "%.2f")))
+    (ig:v-slider-scalar "Pan"
+                        (@ 22.0 (- (.y *window-size*) *scrollbar-size*
+                                   *item-spacing-y*))
+                        ig:+im-gui-data-type-double+
+                        (.value (param self 'pan))
+                        0.0d0
+                        1.0d0)))
 

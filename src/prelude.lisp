@@ -11,6 +11,12 @@
 (defparameter *invoke-debugger-p* t)
 
 (defvar *mouse-pos*)
+(defvar *draw-list*)
+(defvar *style*)
+(defvar *scrollbar-size*)
+(defvar *item-spacing-x*)
+(defvar *item-spacing-y*)
+
 (defvar *project*)
 (defvar *process-data*)
 

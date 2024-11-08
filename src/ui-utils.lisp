@@ -162,9 +162,6 @@
 (defvar *scroll-y*)
 (defvar *zoom-x*)
 (defvar *zoom-y*)
-(defvar *draw-list*)
-(defvar *style*)
-(defvar *scrollbar-size*)
 (defvar *rect-body*)
 
 (defmacro with-window-info ((self) &body body)
@@ -175,8 +172,5 @@
      (setf *scroll-y* (ig:get-scroll-y))
      (setf *zoom-x* (.zoom-x ,self))
      (setf *zoom-y* (.zoom-y ,self))
-     (setf *draw-list* (ig:get-window-draw-list))
-     (setf *style* (ig:get-style))
-     (setf *scrollbar-size* (plus-c:c-ref *style* ig:im-gui-style :scrollbar-size))
      (setf *rect-body* (rect-body ,self))
      ,@body))
