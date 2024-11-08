@@ -376,7 +376,7 @@
 (defclass module-builtin (module)
   ())
 
-(defclass peak-meter ()
+(defclass volume-meter ()
   ((avgs :initform (list 0.0 0.0) :accessor .avgs)
    (avgs-tmp :initform (list 0.0 0.0) :accessor .avgs-tmp)
    (values :initform (list 0.0 0.0) :accessor .values)
@@ -384,8 +384,8 @@
         :accessor .ats)))
 
 (defclass module-fader (module-builtin)
-  ((peak-meter :initform (make-instance 'peak-meter)
-               :accessor .peak-meter))
+  ((volume-meter :initform (make-instance 'volume-meter)
+               :accessor .volume-meter))
   (:default-initargs :id 'module-fader :name "Fader"
                      :audio-input-bus-count 1
                      :audio-output-bus-count 1))

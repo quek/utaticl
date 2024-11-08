@@ -7,10 +7,10 @@
   (param-add self (make-instance 'param :id 'volume :name "Volume" :value 0.8d0)))
 
 (defmethod process :before ((self module-fader))
-  (process-before (.peak-meter self)))
+  (process-before (.volume-meter self)))
 
 (defmethod process :after ((self module-fader))
-  (process-after (.peak-meter self)))
+  (process-after (.volume-meter self)))
 
 (defmethod process-sample ((self module-fader) sample0 sample1)
   (let* ((ratio (* (expt (.value (param self 'volume))
@@ -26,12 +26,12 @@
                            (* (.value (param self 'pan))
                               2.0))
                         'single-float)))
-    (change (.peak-meter self) value0 value1)
+    (change (.volume-meter self) value0 value1)
     (values value0 value1)))
 
 (defmethod render-in ((self module-fader) (rack rack) &key)
   (ig:with-group
-    (render-in (.peak-meter self) rack :fader self))
+    (render-in (.volume-meter self) rack :fader self))
   (ig:same-line)
   (ig:with-group
     (ig:v-slider-scalar "##Vol"

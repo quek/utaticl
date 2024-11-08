@@ -1,6 +1,6 @@
 (in-package :utaticl.core)
 
-(defmethod change ((self peak-meter) &rest values)
+(defmethod change ((self volume-meter) &rest values)
   (loop for svalue in values
         for value = (abs svalue)
         for i from 0
@@ -10,11 +10,11 @@
           do (setf (nth i (.values self)) value)
              (setf (nth i (.ats self)) (get-internal-real-time))))
 
-(defmethod process-before ((self peak-meter))
+(defmethod process-before ((self volume-meter))
   (loop for i below 2
         do (setf (nth i (.avgs-tmp self)) 0.0)))
 
-(defmethod process-after ((self peak-meter))
+(defmethod process-after ((self volume-meter))
   (loop for i from 0
         for avg in (.avgs self)
         for $avg-tmp in (.avgs-tmp self)
@@ -25,7 +25,7 @@
                      (+ (* avg 0.9)
                         (* avg-tmp 0.2))))))
 
-(defmethod render-in ((self peak-meter) (rack rack) &key fader)
+(defmethod render-in ((self volume-meter) (rack rack) &key fader)
   (let* ((size (@ 21.0 (- (.y *window-size*) *scrollbar-size*
                           (plus-c:c-ref *style* ig:im-gui-style :item-spacing :y))))
          (cursor-pos (ig:get-cursor-pos))
@@ -38,9 +38,9 @@
           for avg in (.avgs self)
           for i from 0
           for peak-db = (to-db-float value)
-          for peak-normalized = (%peak-meter-db-to-normalized peak-db)
+          for peak-normalized = (%volume-meter-db-to-normalized peak-db)
           for avg-db = (to-db-float avg)
-          for avg-normalized = (%peak-meter-db-to-normalized avg-db)
+          for avg-normalized = (%volume-meter-db-to-normalized avg-db)
           unless (zerop avg-normalized)
             do (let* ((p1 (@+ pos1 (@ (+ (* (/ (.x size) 2) i) (* 1.0 i))
                                       (* (.y size) (- 1.0 avg-normalized)))))
@@ -61,7 +61,7 @@
                      ;; こっちはリニアに下がった方がよさそう
                      (max 0.0 (- value 0.003))))
     (loop for db in '(6 0 -6 -12 -18 -24 -32 -50)
-          for db-normalized = (%peak-meter-db-to-normalized db)
+          for db-normalized = (%volume-meter-db-to-normalized db)
           for y = (* (.y size) (- 1.0 db-normalized))
           for pos = (@+ cursor-pos
                         (@ 0.0 y))
@@ -71,7 +71,7 @@
              (ig:add-line *draw-list* p1 p2 (color #xff #xff #xff))
              (ig:text (format nil "~3d" db)))))
 
-(defun %peak-meter-db-to-normalized (db)
+(defun %volume-meter-db-to-normalized (db)
   "最大が 6db 最小が -180db"
   (let ((normalized (expt (/ (- db +min-db-float+)
                              (- 6.5     ;最大 6db + 余白 0.5
@@ -79,14 +79,14 @@
                           7.0)))        ;適当なメモリの間隔
     (min 1.0 (max 0.0 normalized))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(expt 2 3)
-;;⇒ 8
-(expt 8 1/3)
-;;⇒ 2.0
-
-(log 0.2 10)
-;;⇒ -0.69897
-(expt 10 -0.69897)
-;;⇒ 0.19999999
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;(expt 2 3)
+;;;;⇒ 8
+;;(expt 8 1/3)
+;;;;⇒ 2.0
+;;
+;;(log 0.2 10)
+;;;;⇒ -0.69897
+;;(expt 10 -0.69897)
+;;;;⇒ 0.19999999
 
