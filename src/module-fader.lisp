@@ -34,7 +34,20 @@
     (render-in (.peak-meter self) rack :fader self))
   (ig:same-line)
   (ig:with-group
-    (ig:v-slider-scalar "Pan"
+    (ig:v-slider-scalar "##Vol"
+                        (@ 22.0 (- (.y *window-size*) *scrollbar-size*
+                                   *item-spacing-y*))
+                        ig:+im-gui-data-type-double+
+                        (.value (param self 'volume))
+                        0.0d0 1.0d0
+                        :format (format nil "~,2f" (to-db (* (expt (.value (param self 'volume))
+                                                                   3.10628)
+                                                             2.0))))
+    (when (and (ig:is-item-hovered)
+               (ig:is-mouse-clicked ig:+im-gui-mouse-button-right+))
+      (setf (.value (param self 'volume)) 0.8d0))
+    (ig:same-line)
+    (ig:v-slider-scalar "##Pan"
                         (@ 22.0 (- (.y *window-size*) *scrollbar-size*
                                    *item-spacing-y*))
                         ig:+im-gui-data-type-double+

@@ -69,21 +69,7 @@
           for p2 = (@+ p1 (@ (.x size) 0.0))
           do (ig:set-cursor-pos pos)
              (ig:add-line *draw-list* p1 p2 (color #xff #xff #xff))
-             (ig:text (format nil "~3d" db)))
-
-    ;; おためし
-    (ig:set-cursor-pos (@+ cursor-pos (@ 25.0 0.0)))
-    (ig:v-slider-scalar "##"
-                        (@ 22.0 (.y size))
-                        ig:+im-gui-data-type-double+
-                        (.value (param fader 'volume))
-                        0.0d0 1.0d0
-                        :format (format nil "~,2f" (to-db (* (expt (.value (param fader 'volume))
-                                                                   3.10628)
-                                                             2.0))))
-    (when (and (ig:is-item-hovered)
-               (ig:is-mouse-clicked ig:+im-gui-mouse-button-right+))
-      (setf (.value (param fader 'volume)) 0.8d0))))
+             (ig:text (format nil "~3d" db)))))
 
 (defun %peak-meter-db-to-normalized (db)
   "最大が 6db 最小が -180db"
