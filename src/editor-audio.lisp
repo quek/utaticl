@@ -25,13 +25,17 @@
                    for data-end = (min (+ data-start (ceiling frames-per-pixcel)) nframes)
                    with last-x = most-negative-short-float
                    with last-skipped-p = nil
+                   with last-min = (+ (.x *window-pos*)
+                                      (.offset-x self)
+                                      (round (/ width 2.0)))
+                   with last-max = last-min
                    nconc (let ((min most-positive-short-float)
                                (max most-negative-short-float))
                            (loop for data-index from data-start below data-end
                                  for value = (aref data (* data-index nchannels))
                                  for x = (+ (.x *window-pos*)
                                             (.offset-x self)
-                                            (* width (/ (+ value 1.0) 2.0)))
+                                            (round (* width (/ (+ value 1.0) 2.0))))
                                  do (setf min (min min x))
                                     (setf max (max max x)))
                            (if (<= frames-per-pixcel 1)
@@ -47,8 +51,15 @@
                                          (progn
                                            (setf last-x min)
                                            (list (cons y min))))))
-                               (list (cons y min)
-                                     (cons y max)))))))
+                               (if (oddp i)
+                                   (prog1 (list (cons y last-min)
+                                                (cons y (max max last-max)))
+                                     (setf last-min min)
+                                     (setf last-max (max max last-max)))
+                                   (prog1 (list (cons y last-max)
+                                                (cons y (min min last-min)))
+                                     (setf last-min (min min last-min))
+                                     (setf last-max max))))))))
     (autowrap:with-alloc (p 'ig:im-vec2 (length xs))
       (loop for (y . x) in xs
             for i from 0
