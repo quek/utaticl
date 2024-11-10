@@ -36,17 +36,18 @@
             for i from 0
             for pos = (@+ *window-pos*
                           (@ (* width (/ (+ max 1.0) 2.0)) i)
-                          (@ (.offset-x self) 0.0))
+                          (@ (.offset-x self) 0.0)
+                          (@ 0.0 (- *scroll-y*)))
             do (setf (plus-c:c-ref p ig:im-vec2 i :x) (.x pos))
                (setf (plus-c:c-ref p ig:im-vec2 i :y) (.y pos)))
-      (ig:im-draw-list-add-polyline *draw-list* p height (color #xff #xff #xff)
-                                    0 1.0))
+      (ig:im-draw-list-add-concave-poly-filled *draw-list* p height (color #xff #xff #xff)))
     (autowrap:with-alloc (p 'ig:im-vec2 height)
       (loop for (min max) in xs
             for i from 0
             for pos = (@+ *window-pos*
                           (@ (* width (/ (+ min 1.0) 2.0)) i)
-                          (@ (.offset-x self) 0.0))
+                          (@ (.offset-x self) 0.0)
+                          (@ 0.0 (- *scroll-y*)))
             do (setf (plus-c:c-ref p ig:im-vec2 i :x) (.x pos))
                (setf (plus-c:c-ref p ig:im-vec2 i :y) (.y pos)))
       (ig:im-draw-list-add-polyline *draw-list* p height (color #xff #xff #xff)
