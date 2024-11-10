@@ -168,8 +168,8 @@
 
 (defclass editor (time-ruler-mixin grid-mixin offset-mixin scroll-mixin zoom-mixin view)
   ((name :initarg :name :accessor .name)
-   (offset-x :initform 25.0 :accessor .offset-x)
-   (offset-y :initform 30.0 :accessor .offset-y)
+   (offset-x :initarg :oppset-x :initform 25.0 :accessor .offset-x)
+   (offset-y :initarg :offset-y :initform 30.0 :accessor .offset-y)
    (project :initarg :project :accessor .project)
    (view-fit-request-p :initform t :accessor .view-fit-request-p)
    (clip :initarg :clip :initform nil :accessor .clip)
@@ -179,7 +179,8 @@
 
 (defclass editor-audio (editor)
   ()
-  (:default-initargs :name "##editor-audio"))
+  (:default-initargs :name "##editor-audio"
+                     :offset-y 0.0))
 
 (defclass editor-automation (editor)
   ()
