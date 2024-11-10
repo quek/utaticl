@@ -20,7 +20,6 @@
          (i-end (min height sample-height))
          (data (.data sample))
          (xs (loop for i from 0 below i-end
-                   for last-y = 0.0 then y
                    for y = (+ (.y *window-pos*) i)
                    for data-start = (round (+ (* frames-per-pixcel (+ i *scroll-y*))))
                    for data-end = (min (+ data-start (ceiling frames-per-pixcel)) nframes)
@@ -42,7 +41,7 @@
                                      ())
                                    (progn
                                      (if last-skipped-p
-                                         (prog1 (list (cons last-y last-x) (cons y min))
+                                         (prog1 (list (cons y last-x) (cons y min))
                                            (setf last-skipped-p nil)
                                            (setf last-x min))
                                          (progn
