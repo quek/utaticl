@@ -11,17 +11,19 @@
         for clip = (gethash lane (.clips sceen))
           thereis (and clip (.play-p clip) clip)))
 
-(defmethod enqueue ((sceen-matrix sceen-matrix) (clip clip))
-  (push clip (.queue sceen-matrix)))
+(defmethod enqueue ((self sceen-matrix) (clip clip))
+  (push clip (.queue self))
+  (unless (.play-p *project*)
+    (setf (.play-p *project*) t)))
 
-(defmethod handle-drag-end ((sceen-matrix sceen-matrix)
+(defmethod handle-drag-end ((self sceen-matrix)
                             drag-mode
                             (key-ctrl-p (eql t))
                             sceen)
   "sceen-matrix 内、または arrangement からのコピー"
   (cmd-add *project* 'cmd-clips-dd-copy
            :clips (loop for (clip sceen-start lane-start clip-from)
-                          being the hash-value in (.clips-dragging sceen-matrix)
+                          being the hash-value in (.clips-dragging self)
                             using (hash-key (sceen lane))
                         ;; arrangement は clip-add 済なので合わせる
                         do (clip-add sceen clip :lane lane)

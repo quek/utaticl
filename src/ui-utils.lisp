@@ -121,7 +121,7 @@
 (defun shortcut-common (project)
   (defshortcut (ig:+im-gui-key-space+)
     (setf (.play-p project) (not (.play-p project))))
-  (defshortcut (ig:+im-gui-key-semicolon+)
+  (defshortcut (ig:+im-gui-key-slash+)
     (show (.commander project)))
   (defshortcut (ig:+im-gui-mod-ctrl+ ig:+im-gui-key-s+)
     (cmd-add project 'cmd-save))
