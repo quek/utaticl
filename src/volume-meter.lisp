@@ -77,7 +77,8 @@
 
 (defun %volume-meter-db-to-normalized (db)
   "最大が 6db 最小が -180db"
-  (let ((normalized (expt (/ (- db *meter-min-db*)
+  (let* ((db (max db *meter-min-db*))
+         (normalized (expt (/ (- db *meter-min-db*)
                              (- *meter-max-db* *meter-min-db*))
                           *meter-expt*)))
     (min 1.0 (max 0.0 normalized))))
