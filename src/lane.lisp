@@ -23,6 +23,9 @@
   (setf (.clips self)
         (delete clip (.clips self))))
 
+(defmethod .color ((self lane))
+  (.color (.track self)))
+
 (defmethod diff ((a lane) (b lane))
   (labels ((f (track lane)
              (let ((pos (position lane (.lanes track))))
