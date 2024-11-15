@@ -15,6 +15,9 @@
   (when (string= "" (.name self))
     (setf (.name self) (name-new 'track "TRK"))))
 
+(defmethod add-to ((self track) (to null))
+  (track-add (.parent self) self))
+
 (defmethod after ((self track))
   (cadr (member self (.tracks (.parent self)))))
 
