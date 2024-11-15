@@ -2,6 +2,11 @@
 
 (defgeneric change (self &rest values))
 
+(defgeneric erase-from (item from)
+  (:method ((items list) from)
+    (loop for item in items
+          do (erase-from item from))))
+
 (defgeneric prepare (self)
   (:method ((self list))
     (loop for x in self
@@ -28,6 +33,14 @@
 
 (defgeneric in-p (x y)
   (:method (x y) (include-p y x)))
+
+(defgeneric .items (self)
+  (:method ((self null))
+    nil))
+
+(defgeneric .owner (self)
+  (:method ((self null))
+    nil))
 
 (defgeneric params-prepare (module))
 

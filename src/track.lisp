@@ -21,6 +21,9 @@
 (defmethod before ((self track))
   (cadr (member self (reverse (.tracks (.parent self))))))
 
+(defmethod erase-from ((self track) from)
+  (track-delete (.parent self) self))
+
 (defmethod lane-add ((self track) lane)
   (setf (.track lane) self)
   (setf (.lanes self) (append (.lanes self) (list lane))))

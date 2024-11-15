@@ -407,7 +407,8 @@
            (stretch clip (- (.duration clip) delta))))
 
 (defcommand cmd-copy (command)
-  ())
+  ()
+  (:default-initargs :undo-p nil))
 
 (defmethod execute ((self cmd-copy) project)
   (awhen (.items (.selection-active project))
@@ -416,6 +417,28 @@
        (prin1-to-string
         (with-serialize-context (:copy t)
           (serialize it)))))))
+
+(defcommand cmd-cut (command)
+  ((items :accessor .items)
+   (owner :accessor .owner)))
+
+(defmethod execute ((self cmd-cut) project)
+  (awhen (.items (.selection-active project))
+    (ig:set-clipboard-text
+     (let ((*package* (find-package :utaticl.core)))
+       (prin1-to-string
+        (setf (.items self)
+              (with-serialize-context ()
+                (serialize it))))))
+    (erase-from it
+                (setf (.owner self)
+                      (.owner (.selection-active project))))))
+
+(defmethod undo ((self cmd-cut) project)
+  (let ((items (with-serialize-context ()
+                 (deserialize (.items self)))))
+    (loop for item in items
+          do (add-to item (.owner self)))))
 
 (defcommand cmd-lane-add (command)
   ((track :initarg :track :accessor .track)

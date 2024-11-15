@@ -22,7 +22,8 @@
 
 (defclass selection ()
   ((item-clicked :initform nil :accessor .item-clicked)
-   (items :initform nil :accessor .items)))
+   (items :initform nil :accessor .items)
+   (owner :initarg :owner :initform nil :accessor .owner)))
 
 (defclass project (neko)
   ((arrangement :accessor .arrangement)
