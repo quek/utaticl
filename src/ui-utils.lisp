@@ -123,6 +123,8 @@
     (setf (.play-p project) (not (.play-p project))))
   (defshortcut (ig:+im-gui-key-slash+)
     (show (.commander project)))
+  (defshortcut (ig:+im-gui-mod-ctrl+ ig:+im-gui-key-c+)
+    (cmd-add project 'cmd-copy))
   (defshortcut (ig:+im-gui-mod-ctrl+ ig:+im-gui-key-s+)
     (cmd-add project 'cmd-save))
   (defshortcut (ig:+im-gui-mod-ctrl+ ig:+im-gui-mod-shift+ ig:+im-gui-key-s+)

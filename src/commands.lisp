@@ -406,6 +406,17 @@
         do (incf (.time clip) delta)
            (stretch clip (- (.duration clip) delta))))
 
+(defcommand cmd-copy (command)
+  ())
+
+(defmethod execute ((self cmd-copy) project)
+  (awhen (.items (.selection-active project))
+    (ig:set-clipboard-text
+     (let ((*package* (find-package :utaticl.core)))
+       (prin1-to-string
+        (with-serialize-context (:copy t)
+          (serialize it)))))))
+
 (defcommand cmd-lane-add (command)
   ((track :initarg :track :accessor .track)
    (lane :initform :nil :accessor .lane)))

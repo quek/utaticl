@@ -50,6 +50,7 @@
    (loop-start :initarg :loop-start :initform .0d0 :accessor .loop-start)
    (loop-end :initarg :loop-end :initform 16.0d0 :accessor .loop-end)
    (loop-p :initarg :loop-p :initform t :accessor .loop-p)
+   (selection-active :initform nil :accessor .selection-active)
    (selection-track :initform (make-instance 'selection)
                     :accessor .selection-track)
    (transposer :accessor .transposer)
