@@ -5,7 +5,7 @@
 (defserialize project bpm loop-start loop-end loop-p
   master-track sceen-matrix)
 
-(defserialize track
+(defserialize track (:ref parent)
     (:list modules :writer module-add)
   (:list lanes :writer lane-add) ;automation-module があるので modules の後に
   (:list tracks :writer track-add-without-connect))
