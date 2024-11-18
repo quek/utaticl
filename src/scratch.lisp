@@ -1,6 +1,73 @@
 (in-package :utaticl.core)
 
 (setf *config* (make-instance 'config))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(cffi:load-foreign-library "Winmm.dll")
+;;⇒ #<CFFI:FOREIGN-LIBRARY WINMM.DLL-483 "Winmm.dll">
+
+(cffi:defcfun "midiInGetNumDevs" :unsigned-int)
+;;⇒ MIDIINGETNUMDEVS
+(midiInGetNumDevs)
+;;⇒ 1
+
+(cffi:defcfun "midiOutGetNumDevs" :unsigned-int)
+;;⇒ MIDIOUTGETNUMDEVS
+(midiOutGetNumDevs)
+;;⇒ 2
+
+(defconstant MAXPNAMELEN 32)
+
+(cffi:defcstruct MIDIINCAPS
+  (wMid :uint16)
+  (wPid :uint16)
+  (vDriverVersion :unsigned-int)
+  (szPname :uint16 :count #.MAXPNAMELEN)
+  (dwSupport :unsigned-int))
+;;⇒ (:STRUCT MIDIINCAPS)
+
+(cffi:defcstruct MIDIOUTCAPS
+  (wMid :uint16)
+  (wPid :uint16)
+  (vDriverVersion :unsigned-int)
+  (szPname :uint16 :count #.MAXPNAMELEN)
+  (wTechnology :uint16)
+  (wVoices :uint16)
+  (wNotes :uint16)
+  (wChannelMask :uint16)
+  (dwSupport :unsigned-int))
+;;⇒ (:STRUCT MIDIOUTCAPS)
+
+(cffi:defcfun "midiInGetDevCapsW" :unsigned-int
+  (uDeviceID :unsigned-int)
+  (pmic (:pointer (:struct MIDIINCAPS)))
+  (cbmic :unsigned-int))
+;;⇒ MIDIINGETDEVCAPS
+
+(cffi:defcfun "midiOutGetDevCapsW" :unsigned-int
+  (uDeviceID :unsigned-int)
+  (pmoc (:pointer (:struct MIDIOUTCAPS)))
+  (cbmoc :unsigned-int))
+;;⇒ MIDIOUTGETDEVCAPS
+
+(cffi:with-foreign-object (pmic '(:struct MIDIINCAPS))
+  (loop for device-id below (midiInGetNumDevs)
+        collect (progn
+                  (midiInGetDevCapsW 0 pmic (cffi:foreign-type-size '(:struct MIDIINCAPS)))
+                  (cffi:foreign-string-to-lisp
+                   (cffi:foreign-slot-value pmic '(:struct MIDIINCAPS) 'szPname)
+                   :encoding :utf-16le))))
+;;⇒ ("SP-404MKII-G")
+
+(cffi:with-foreign-object (pmic '(:struct MIDIOUTCAPS))
+  (loop for device-id below (midiOutGetNumDevs)
+        collect (progn
+                  (midiOutGetDevCapsW 0 pmic (cffi:foreign-type-size '(:struct MIDIOUTCAPS)))
+                  (cffi:foreign-string-to-lisp
+                   (cffi:foreign-slot-value pmic '(:struct MIDIOUTCAPS) 'szPname)
+                   :encoding :utf-16le))))
+;;⇒ ("Microsoft GS Wavetable Synth" "Microsoft GS Wavetable Synth")
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (let ((*project* (make-instance 'project)))
