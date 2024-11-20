@@ -57,7 +57,7 @@
   (phmi :pointer)
   (uDeviceID :unsigned-int)
   (dwCallback :pointer)
-  (dwInstance :pointer)
+  (dwInstance :unsigned-int)
   (fdwOpen :unsigned-int))
 
 (cffi:defcfun "midiInClose" :unsigned-int
@@ -66,13 +66,41 @@
 (cffi:defcallback MidiInProc :void
     ((hMidiIn :pointer)
      (wMsg :unsigned-int)
-     (dwInstance :pointer)
-     (dwParam1 :pointer)
-     (dwParam2 :pointer))
+     (dwInstance :unsigned-int)
+     (dwParam1 :unsigned-int)
+     (dwParam2 :unsigned-int))
   (midi-in-proc hMidiIn wMsg dwInstance dwParam1 dwParam2))
 
+(defconstant MIM_OPEN         #x3C1)
+(defconstant MIM_CLOSE        #x3C2)
+(defconstant MIM_DATA         #x3C3)
+(defconstant MIM_LONGDATA     #x3C4)
+(defconstant MIM_ERROR        #x3C5)
+(defconstant MIM_LONGERROR    #x3C6)
+(defconstant MIM_MOREDATA     #x3CC)
+
+(defvar *midi-in-callback* (make-hash-table))
+
 (defun midi-in-proc (hMidiIn wMsg dwInstance dwParam1 dwParam2)
-  (print (list hMidiIn wMsg dwInstance dwParam1 dwParam2)))
+  (declare (ignore hMidiIn dwParam2))
+  (ecase wMsg
+    (#.MIM_OPEN)
+    (#.MIM_CLOSE)
+    (#.MIM_DATA
+     (let* ((event (ldb (byte 4 4) dwParam1))
+            (event (case event
+                     (9 :on)
+                     (8 :off)
+                     (t event)))
+            (channel (ldb (byte 4 0) dwParam1))
+            (key (ldb (byte 8 8) dwParam1))
+            (velocity (ldb (byte 8 16) dwParam1)))
+       (funcall (gethash dwInstance *midi-in-callback*)
+                event channel key velocity)))
+    (#.MIM_LONGDATA)
+    (#.MIM_ERROR)
+    (#.MIM_LONGERROR)
+    (#.MIM_MOREDATA)))
 
 (cffi:defcfun "midiInStart" :unsigned-int
   (hmi :pointer))
@@ -80,28 +108,25 @@
 (cffi:defcfun "midiInStop" :unsigned-int
   (hmi :pointer))
 
-(defmacro with-midi-in-callback ((uDeviceID) &body body)
+(defmacro with-midi-in-callback ((uDeviceID event channel key velocity) &body body)
   (let ((hmi (gensym "HMI")))
     `(cffi:with-foreign-object (phmi :pointer)
-       (midiInOpen phmi ,uDeviceID (cffi:callback MidiInProc) (cffi:null-pointer)
+       (setf (gethash ,uDeviceID *midi-in-callback*)
+             (lambda (,event ,channel ,key ,velocity)
+               ,@body))
+       (midiInOpen phmi ,uDeviceID (cffi:callback MidiInProc) ,uDeviceID
                    CALLBACK_FUNCTION)
        (let ((,hmi (cffi:mem-ref phmi :pointer)))
          (unwind-protect
               (progn
                 (midiInStart ,hmi)
                 (unwind-protect
-                     (progn ,@body)
+                     (sleep 3)
                   (midiInStop ,hmi)))
            (midiInClose ,hmi))))))
 
 #+nil
-(with-midi-in-callback (0)
-  (sleep 3))
-;;→ 
-;;   (#.(SB-SYS:INT-SAP #X0077A7F0) 961 #.(SB-SYS:INT-SAP #X00000000)
-;;    #.(SB-SYS:INT-SAP #X00000000) #.(SB-SYS:INT-SAP #X00000000)) 
-;;   (#.(SB-SYS:INT-SAP #X0077A7F0) 962 #.(SB-SYS:INT-SAP #X00000000)
-;;    #.(SB-SYS:INT-SAP #X00000000) #.(SB-SYS:INT-SAP #X00000000)) 
-;;⇒ NIL
+(with-midi-in-callback (0 event channel key velocity)
+  (print (list "callback" event channel key velocity)))
 
 
