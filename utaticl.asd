@@ -51,6 +51,7 @@
    (:file "read-h")
    (:file "src-ffi")
    (:file "win32")
+   (:file "midi-device")
    (:file "ig")
    (:file "ig-backend")
    (:file "plugin-info")
