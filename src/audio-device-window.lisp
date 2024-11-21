@@ -60,6 +60,7 @@
 (defmethod render ((self audio-device-window))
   (ig:with-begin ("Audio Device Config")
     (when (ig:is-window-appearing)
+      (ig:set-window-focus)
       (setf (.api self) (.audio-device-api *config*))
       (setf (.name self) (.audio-device-name *config*))
       (setf (.sample-rate self) (.sample-rate *config*)))

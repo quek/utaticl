@@ -3,6 +3,7 @@
 (defmethod render ((self midi-device-window))
   (ig:with-begin ("Midi Device Config")
     (when (ig:is-window-appearing)
+      (ig:set-window-focus)
       (setf (.midi-devices-in self) (midi-devices-in))
       (setf (.midi-devices-out self) (midi-devices-out)))
     (ig:text "Input")
@@ -18,7 +19,8 @@
                        (setf (.midi-devices-in *config*)
                              (remove device-name (.midi-devices-in *config*) :test #'equal))
                        ;; TODO close device-name
-                       )))))
+                       ))
+                 (config-save *config*))))
     (ig:separator)
     (when (ig:button "Close")
       (hide self))))
