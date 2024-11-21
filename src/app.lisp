@@ -67,6 +67,7 @@
           do (let ((*project* project))
                (render project)))
     (render (.color-window app))
+    (render (.midi-device-window app))
     (render *report-window*)
     (when (dd-src)
       (ig:with-tooltip

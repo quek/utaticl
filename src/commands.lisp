@@ -462,6 +462,13 @@
 (defmethod execute ((self cmd-latency-compute) project)
   (latency-compute project))
 
+(defcommand cmd-midi-device-window (command)
+  ()
+  (:default-initargs :undo-p nil))
+
+(defmethod execute ((self cmd-midi-device-window) project)
+  (show (.midi-device-window *app*)))
+
 (defcommand cmd-module-add (command)
   ((track-id :initarg :track-id :accessor .track-id)
    (plugin-info :initarg :plugin-info :accessor .plugin-info)

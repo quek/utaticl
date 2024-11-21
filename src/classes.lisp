@@ -483,6 +483,10 @@
    (supported-standard-sample-reates :initform nil
                                      :accessor .supported-standard-sample-reates)))
 
+(defclass midi-device-window (show-mixin view)
+  ((midi-devices-in :initform nil :accessor .midi-devices-in)
+   (midi-devices-out :initform nil :accessor .midi-devices-out)))
+
 (defclass note-buffer ()
   ((events :initform (make-array 16 :fill-pointer 0) :accessor .events)
    (notes :initform (make-array 16 :fill-pointer 0) :accessor .notes)
@@ -552,6 +556,8 @@
   ((audio-device :initform nil :accessor .audio-device)
    (audio-device-window :initform (make-instance 'audio-device-window)
                         :accessor .audio-device-window)
+   (midi-device-window :initform (make-instance 'midi-device-window)
+                       :accessor .midi-device-window)
    (audio-thread :accessor .audio-thread)
    (audio-thread-mailbox :initform (sb-concurrency:make-mailbox) :accessor .audio-thread-mailbox)
    (backend :initarg :backend :initform :glfw-opengl3 :reader .backend
