@@ -193,6 +193,14 @@
     (note-off-all (.master-track self))
     (setf (.play-just-stop-p self) nil))
 
+  (loop for (event channel key velocity) in (notes-from-midi-device *app*)
+        for note = (make-instance 'note :key key :channel channel
+                                        :velocity (/ velocity 127d0))
+        do (loop for track in (.items (.selection-track self))
+                 do (case event
+                      (:on (note-on (.process-data track) note 0))
+                      (:off (note-off (.process-data track) note 0)))))
+
   (when (.play-p self)
     (update-play-position self)
 
@@ -201,9 +209,11 @@
           (prepare-event (.master-track self) (.play-start self) (.play-end self) nil 0)
           (prepare-event (.sceen-matrix self) (.play-start self) (.play-end self) nil 0))
         (progn
+          ;; ループの終わりまで
           (prepare-event (.master-track self) (.play-start self) (.loop-end self) t 0)
           (prepare-event (.master-track self) (.loop-start self) (.play-end self) nil
                          (time-to-sample self (- (.loop-end self) (.play-start self))))
+          ;; ループの先頭から
           (prepare-event (.sceen-matrix self) (.play-start self) (.loop-end self) t 0)
           (prepare-event (.sceen-matrix self) (.loop-start self) (.play-end self) nil
                          (time-to-sample self (- (.loop-end self) (.play-start self)))))))

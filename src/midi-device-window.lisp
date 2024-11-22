@@ -8,18 +8,23 @@
       (setf (.midi-devices-out self) (midi-devices-out)))
     (ig:text "Input")
     (loop for device-name in (.midi-devices-in self)
+          for device-id from 0
           do (let ((checked (member device-name (.midi-devices-in *config*) :test #'equal)))
                (when (ig:checkbox device-name checked)
                  (if checked
                      (progn
                        (push device-name (.midi-devices-in *config*))
-                       ;; TODO open device-name)
+                       (open-midi-device-in device-id device-name)
                        )
                      (progn
                        (setf (.midi-devices-in *config*)
                              (remove device-name (.midi-devices-in *config*) :test #'equal))
-                       ;; TODO close device-name
-                       ))
+                       (setf (.midi-devices-in *app*)
+                             (loop for device in (.midi-devices-in *app*)
+                                   if (equal device-name (.name device))
+                                     do (close-midi-device-in device)
+                                   else
+                                     collect device))))
                  (config-save *config*))))
     (ig:separator)
     (when (ig:button "Close")

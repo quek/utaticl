@@ -51,6 +51,14 @@
 (defmethod drop ((app app))
   (dd-drop-did))
 
+(defmethod notes-from-midi-device ((self app))
+  (loop for device in (.midi-devices-in self)
+        nconc (loop for message
+                      = (sb-concurrency:receive-message (.event-mailbox device)
+                                                        :timeout 0)
+                    while message
+                    collect message)))
+
 (defmethod render :around ((self app))
   (call-next-method)
   (when (or (not (.processing (.audio-device self)))

@@ -129,4 +129,22 @@
 (with-midi-in-callback (0 event channel key velocity)
   (print (list "callback" event channel key velocity)))
 
+(defun open-midi-device-in (id name)
+  (let ((midi-device (make-instance 'midi-device :id id :name name)))
+    (cffi:with-foreign-object (phmi :pointer)
+      (setf (gethash id *midi-in-callback*)
+            (lambda (event channel key velocity)
+              (sb-concurrency:send-message
+               (.event-mailbox midi-device)
+               (list event channel key velocity))))
+      (midiInOpen phmi id (cffi:callback MidiInProc) id
+                  CALLBACK_FUNCTION)
+      (let ((hmi (cffi:mem-ref phmi :pointer)))
+        (midiInStart hmi)
+        (setf (.handle midi-device) hmi)))
+    midi-device))
 
+(defun close-midi-device-in (midi-device)
+  (let ((hmi (.handle midi-device)))
+    (midiInStop hmi)
+    (midiInClose hmi)))

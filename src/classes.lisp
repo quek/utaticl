@@ -5,6 +5,12 @@
    (name :initarg :name :initform "" :accessor .name)
    (color :initarg :color :initform (color #x80 #x80 #x80 #x80) :accessor .color)))
 
+(defclass midi-device ()
+  ((id :initarg :id :accessor .id)
+   (event-mailbox :initform (sb-concurrency:make-mailbox) :accessor .event-mailbox)
+   (handle :initarg :handle :accessor .handle)
+   (name :initarg :name :accessor .name)))
+
 (defclass rect ()
   ((min :initarg :min :initform (@ .0 .0) :accessor .min)
    (max :initarg :max :initform (@ .0 .0) :accessor .max)))
@@ -564,6 +570,7 @@
             :type (member :glfw-opengl3 :sdl-vulkan))
    (color-window :initform (make-instance 'color-window)
                  :accessor .color-window)
+   (midi-devices-in :initform nil :accessor .midi-devices-in)
    (mutex :initform (sb-thread:make-mutex :name "APP") :accessor .mutex)
    (projects :initform nil :accessor .projects)
    (render-audio-device-window-p :initform nil :accessor .render-audio-device-window-p)
