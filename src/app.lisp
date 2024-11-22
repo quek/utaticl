@@ -9,8 +9,12 @@
   (config-load *theme*)
   (setf *report-window* (make-instance 'report-window))
 
-  (setf (.projects self) (list (make-instance 'project)))
-  )
+  (setf (.projects self) (list (make-instance 'project))))
+
+(defmethod initialize-instance :after ((self app) &key)
+  (setf (.midi-devices-in self)
+        (loop for device-name in (.midi-devices-in *config*)
+              collect (open-midi-device-in device-name))))
 
 (defmethod audio-device-close ((app app))
   (sb-concurrency:send-message (.audio-thread-mailbox app)
@@ -54,8 +58,8 @@
 (defmethod notes-from-midi-device ((self app))
   (loop for device in (.midi-devices-in self)
         nconc (loop for message
-                      = (sb-concurrency:receive-message (.event-mailbox device)
-                                                        :timeout 0)
+                      = (sb-concurrency:receive-message-no-hang
+                         (.event-mailbox device))
                     while message
                     collect message)))
 
