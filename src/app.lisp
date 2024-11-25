@@ -105,3 +105,44 @@
   (audio-thread-stop self)
   (loop for project in (.projects self)
         do (terminate project)))
+
+(defun run-audio-process (app)
+  (declare (ignore app))
+  (let ((socket (usocket:socket-connect nil nil
+					:protocol :datagram
+					:element-type '(unsigned-byte 8)
+					:local-host "127.0.0.1"
+					:local-port *osc-port-audio*))
+        (buffer (make-array 4096 :element-type '(unsigned-byte 8))))
+    (unwind-protect
+         (loop
+	   (multiple-value-bind (buffer size client receive-port)
+	       (usocket:socket-receive socket buffer (length buffer))
+             (declare (ignore size client receive-port))
+	     (format t "~A~%" buffer)
+             #+nil
+	     (usocket:socket-send socket (reverse buffer) size
+				  :port receive-port
+				  :host client)))
+      (usocket:socket-close socket))))
+
+
+(defun run-gui-process (app)
+  (declare (ignore app))
+  (let ((socket (usocket:socket-connect nil nil
+					:protocol :datagram
+					:element-type '(unsigned-byte 8)
+					:local-host "127.0.0.1"
+					:local-port *osc-port-gui*))
+        (buffer (make-array 4096 :element-type '(unsigned-byte 8))))
+    (unwind-protect
+         (loop
+	   (multiple-value-bind (buffer size client receive-port)
+	       (usocket:socket-receive socket buffer (length buffer))
+             (declare (ignore size client receive-port))
+	     (format t "~A~%" buffer)
+             #+nil
+	     (usocket:socket-send socket (reverse buffer) size
+				  :port receive-port
+				  :host client)))
+      (usocket:socket-close socket))))

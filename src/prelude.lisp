@@ -24,3 +24,6 @@
 (defparameter *text-margin* 4.0)
 
 (defparameter *default-lane-width* 60.0)
+
+(defparameter *osc-port-audio* 53007)
+(defparameter *osc-port-gui*   53008)

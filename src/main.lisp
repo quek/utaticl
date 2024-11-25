@@ -30,3 +30,33 @@
                  (utaticl.core:.backend utaticl.core:*app*))
              (utaticl.core:terminate utaticl.core:*app*))))))
    :name "UTATICL"))
+
+(defun main-gui ()
+    (sb-thread:make-thread
+   (lambda ()
+     (with-ole
+       (setf utaticl.core:*app* (make-instance 'utaticl.core:app :backend
+                                               ;;:glfw-opengl3
+                                               :sdl-vulkan
+                                               ))
+       (unwind-protect
+            (utaticl.core:run-with-backend
+             utaticl.core:*app*
+             (utaticl.core:.backend utaticl.core:*app*))
+         (utaticl.core:terminate utaticl.core:*app*))))
+   :name "UTATICL GUI"))
+
+(defun main-audio ()
+  (sb-thread:make-thread
+   (lambda ()
+     (sb-int:with-float-traps-masked (:invalid :inexact :overflow :divide-by-zero)
+       (utaticl.core:with-thraed-pool
+         (setf utaticl.core:*app* (make-instance 'utaticl.core:app :backend
+                                                 ;;:glfw-opengl3
+                                                 :sdl-vulkan
+                                                 ))
+         (utaticl.core::audio-thread-start utaticl.core:*app*)
+         (unwind-protect
+              (utaticl.core::run-audio-process utaticl.core:*app*)
+           (utaticl.core:terminate utaticl.core:*app*)))))
+   :name "UTATICL AUDIO"))

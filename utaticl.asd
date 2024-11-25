@@ -25,7 +25,9 @@
                "cl-wav"
                "cl-vorbis"
                "cl-glfw3"
-               "cl-opengl")
+               "cl-opengl"
+               "usocket"
+               "osc")
   :serial t
   :pathname "src"
   :components
