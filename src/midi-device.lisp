@@ -138,11 +138,13 @@
               (sb-concurrency:send-message
                (.event-mailbox midi-device)
                (list event channel key velocity))))
-      (midiInOpen phmi id (cffi:callback MidiInProc) id
-                  CALLBACK_FUNCTION)
-      (let ((hmi (cffi:mem-ref phmi :pointer)))
-        (midiInStart hmi)
-        (setf (.handle midi-device) hmi)))
+      ;; TODO エラー処理
+      (when (ignore-errors
+             (midiInOpen phmi id (cffi:callback MidiInProc) id
+                         CALLBACK_FUNCTION))
+        (let ((hmi (cffi:mem-ref phmi :pointer)))
+          (midiInStart hmi)
+          (setf (.handle midi-device) hmi))))
     midi-device))
 
 (defun close-midi-device-in (midi-device)

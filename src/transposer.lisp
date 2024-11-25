@@ -21,6 +21,7 @@
            (framerate (plus-c:c-ref io ig:im-gui-io :framerate))
            (ms (/ 1000.0  framerate)))
       (ig:text (format nil "   ~,3f ms/frame (~,1f FPS)" ms framerate)))
-    (ig:text (.statistic-summary (.audio-device *app*)))
+    ;; TODO 別プロセス
+    ;; (ig:text (.statistic-summary (.audio-device *app*)))
     (shortcut-common (.project self)))
   (ig:end))
