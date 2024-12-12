@@ -120,7 +120,7 @@
 	   (multiple-value-bind (buffer size client receive-port)
 	       (usocket:socket-receive socket buffer (length buffer))
              (declare (ignore size client receive-port))
-	     (format t "~A~%↑audio process received~%" buffer)
+	     (format t "~A~%↑audio process received~%" (osc:decode-message buffer))
              #+nil
 	     (usocket:socket-send socket (reverse buffer) size
 				  :port receive-port

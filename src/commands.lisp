@@ -824,7 +824,8 @@
 					  :element-type '(unsigned-byte 8))))
       (unwind-protect
 	   (let ((message (osc:encode-message (format nil "/track/~a/add" track-id-parent)
-                                              color track-id-before)))
+                                              color (or track-id-before ""))))
+             (print (list track-id-before color (or track-id-before "")))
              (usocket:socket-send socket message (length message)))
         (usocket:socket-close socket)))))
 
