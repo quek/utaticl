@@ -809,11 +809,24 @@
                     :accessor .track-id-parent)))
 
 (defmethod execute ((self cmd-track-add) project)
-  (let ((track-before (find-neko (.track-id-before self)))
-        (track-new (make-instance 'track :color (color-random)))
-        (track-parent (find-neko (.track-id-parent self))))
+  (let* ((track-id-before (.track-id-before self))
+         (track-id-parent (.track-id-parent self))
+         (track-before (find-neko track-id-before))
+         (color (color-random))
+         (track-new (make-instance 'track :color color))
+         (track-parent (find-neko track-id-parent)))
     (setf (.track-id-new self) (.neko-id track-new))
-    (track-add track-parent track-new :before track-before)))
+    (track-add track-parent track-new :before track-before)
+
+
+    (let ((socket (usocket:socket-connect "127.0.0.1" *osc-port-audio*
+					  :protocol :datagram
+					  :element-type '(unsigned-byte 8))))
+      (unwind-protect
+	   (let ((message (osc:encode-message (format nil "/track/~a/add" track-id-parent)
+                                              color track-id-before)))
+             (usocket:socket-send socket message (length message)))
+        (usocket:socket-close socket)))))
 
 (defmethod undo ((self cmd-track-add) project)
   (let ((track-new (find-neko (.track-id-new self)))

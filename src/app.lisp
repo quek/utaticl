@@ -65,6 +65,7 @@
 
 (defmethod render :around ((self app))
   (call-next-method)
+  #+TODO
   (when (or (not (.processing (.audio-device self)))
             (.render-audio-device-window-p self))
     (render (.audio-device-window self))))
@@ -119,7 +120,7 @@
 	   (multiple-value-bind (buffer size client receive-port)
 	       (usocket:socket-receive socket buffer (length buffer))
              (declare (ignore size client receive-port))
-	     (format t "~A~%" buffer)
+	     (format t "~A~%↑audio process received~%" buffer)
              #+nil
 	     (usocket:socket-send socket (reverse buffer) size
 				  :port receive-port

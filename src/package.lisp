@@ -2,7 +2,9 @@
 
 (defpackage :utaticl
   (:use :cl)
-  (:export #:main))
+  (:export #:main
+           #:main-audio
+           #:main-gui))
 
 (defpackage :utaticl.core
   (:use :cl :anaphora)
