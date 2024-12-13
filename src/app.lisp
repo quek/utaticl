@@ -1,7 +1,8 @@
 (in-package :utaticl.core)
 
 (defmethod initialize-instance :before ((self app) &key)
-  (clrhash *neko-map*)
+  ;; TODO GUI とオーディオでプロセス分けたのでコメントアウト
+  ;; (clrhash *neko-map*)
   (dd-reset)
   (setf *config* (make-instance 'config))
   (config-load *config*)
@@ -146,4 +147,15 @@
 	     (usocket:socket-send socket (reverse buffer) size
 				  :port receive-port
 				  :host client)))
+      (usocket:socket-close socket))))
+
+(defun send-to-audio (address &rest args)
+  (let ((socket (usocket:socket-connect "127.0.0.1" *osc-port-audio*
+					:protocol :datagram
+					:element-type '(unsigned-byte 8))))
+    (unwind-protect
+	 (let ((message (apply #'osc:encode-message
+                               address
+                               args)))
+           (usocket:socket-send socket message (length message)))
       (usocket:socket-close socket))))

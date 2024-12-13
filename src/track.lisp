@@ -18,6 +18,12 @@
 (defmethod add-to ((self track) (to null))
   (track-add (.parent self) self))
 
+(defmethod address ((self track))
+  (concatenate 'string
+               (address (.parent self))
+               "/track/"
+               (position self (.tracks (.parent self)))))
+
 (defmethod after ((self track))
   (cadr (member self (.tracks (.parent self)))))
 

@@ -25,5 +25,5 @@
 
 (defparameter *default-lane-width* 60.0)
 
-(defparameter *osc-port-audio* 53007)
-(defparameter *osc-port-gui*   53008)
+(defparameter *osc-port-audio* 53077)
+(defparameter *osc-port-gui*   53088)

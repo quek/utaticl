@@ -1,5 +1,9 @@
 (in-package :utaticl.core)
 
+(defgeneric address (self)
+  (:method ((slef null))
+    ""))
+
 (defgeneric change (self &rest values))
 
 (defgeneric erase-from (item from)
