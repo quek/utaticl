@@ -2,6 +2,7 @@
 
 (log:config :trace)
 
+(defvar *process-type*)
 (defparameter *working-directory* (asdf:system-source-directory :utaticl))
 
 (sb-ext:defglobal *thread-pool* nil)

@@ -176,8 +176,11 @@
 
 (defmethod (setf .play-p) :after (value (self project))
   (if value
-      (setf (.play-start-last self) (.play-start self))
       (progn
+        (send-to-audio "/play")
+        (setf (.play-start-last self) (.play-start self)))
+      (progn
+        (send-to-audio "/stop")
         (setf (.play-just-stop-p self) t)
         (setf (.play-p (.sceen-matrix self)) nil)
         (setf (.play-start self) (.play-start-last self)))))
