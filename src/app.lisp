@@ -15,7 +15,16 @@
 (defmethod initialize-instance :after ((self app) &key)
   (setf (.midi-devices-in self)
         (loop for device-name in (.midi-devices-in *config*)
-              collect (open-midi-device-in device-name))))
+              collect (open-midi-device-in device-name)))
+
+  (setf (.process-socket self)
+        (usocket:socket-connect nil nil
+				:protocol :datagram
+				:element-type '(unsigned-byte 8)
+				:local-host "127.0.0.1"
+				:local-port *osc-port-gui*))
+  (setf (.process-buffer self)
+        (make-array 4096 :element-type '(unsigned-byte 8))))
 
 (defmethod audio-device-close ((app app))
   (sb-concurrency:send-message (.audio-thread-mailbox app)
@@ -106,7 +115,8 @@
 (defmethod terminate ((self app) &key)
   (audio-thread-stop self)
   (loop for project in (.projects self)
-        do (terminate project)))
+        do (terminate project))
+  (usocket:socket-close (.process-socket self)))
 
 (defun run-audio-process (app)
   (declare (ignore app))
@@ -144,12 +154,15 @@
 	   (multiple-value-bind (buffer size client receive-port)
 	       (usocket:socket-receive socket buffer (length buffer))
              (declare (ignore size client receive-port))
-	     (format t "~A~%" buffer)
+             (apply 'gui-message-dispatch (osc:decode-message buffer))
              #+nil
 	     (usocket:socket-send socket (reverse buffer) size
 				  :port receive-port
 				  :host client)))
       (usocket:socket-close socket))))
+
+(defun gui-message-dispatch (message &rest args)
+  (print (list message args)))
 
 (defun send-to-audio (address &rest args)
   (let ((socket (usocket:socket-connect "127.0.0.1" *osc-port-audio*

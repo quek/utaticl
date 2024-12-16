@@ -574,5 +574,7 @@
    (mutex :initform (sb-thread:make-mutex :name "APP") :accessor .mutex)
    (projects :initform nil :accessor .projects)
    (render-audio-device-window-p :initform nil :accessor .render-audio-device-window-p)
+   (process-socket :initform nil :accessor .process-socket)
+   (process-buffer :initform nil :accessor .process-buffer)
    (steady-time :initform 0 :accessor .steady-time)
    (window :initarg :window :accessor .window)))

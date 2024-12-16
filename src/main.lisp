@@ -41,9 +41,12 @@
                                                  :sdl-vulkan
                                                  ))
          (unwind-protect
-              (utaticl.core:run-with-backend
-               utaticl.core:*app*
-               (utaticl.core:.backend utaticl.core:*app*))
+              (progn
+                (sb-thread:make-thread 'run-gui-process
+                                       :arguments (list utaticl.core:*app*))
+                (utaticl.core:run-with-backend
+                 utaticl.core:*app*
+                 (utaticl.core:.backend utaticl.core:*app*)))
            (utaticl.core:terminate utaticl.core:*app*)))))
    :name "UTATICL GUI"))
 
